@@ -430,3 +430,40 @@ export async function removeLocation(paths: string[]): Promise<string[]> {
   if (!isTauri) throw new Error('Removing location is available in the Windows app.')
   return invoke<string[]>('remove_location', { paths })
 }
+
+// ---------------------------------------------------------------------------
+// Text recognition with the Windows OCR engine (see src-tauri/src/ocr.rs)
+
+export interface OcrResult {
+  lines: { text: string; words: { text: string; x: number; y: number; w: number; h: number }[] }[]
+  language: string
+}
+
+export const ocrAvailable = isTauri && isWindows
+
+/** Largest image side the OCR engine accepts. */
+export async function ocrMaxDimension(): Promise<number> {
+  return ocrAvailable ? invoke<number>('ocr_max_dimension') : 0
+}
+
+/** Recognizes text in RGBA pixels. */
+export async function ocrImage(rgba: Uint8ClampedArray, width: number, height: number): Promise<OcrResult> {
+  if (!ocrAvailable) throw new Error('Text recognition uses the Windows OCR engine, available in the Windows app.')
+  const bgra = new Uint8Array(rgba.length)
+  for (let i = 0; i < rgba.length; i += 4) {
+    bgra[i] = rgba[i + 2]
+    bgra[i + 1] = rgba[i + 1]
+    bgra[i + 2] = rgba[i]
+    bgra[i + 3] = 255
+  }
+  return invoke<OcrResult>('ocr_image', bgra, { headers: { 'x-width': String(width), 'x-height': String(height) } })
+}
+
+export async function copyText(text: string): Promise<void> {
+  if (isTauri) {
+    const { writeText } = await import('@tauri-apps/plugin-clipboard-manager')
+    await writeText(text)
+  } else {
+    await navigator.clipboard.writeText(text)
+  }
+}

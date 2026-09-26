@@ -3,6 +3,7 @@ mod decode;
 mod encode;
 mod fonts;
 mod metadata;
+mod ocr;
 mod protocol;
 mod shell;
 mod signatures;
@@ -82,6 +83,8 @@ pub fn run() {
             shell::open_with,
             metadata::image_metadata,
             metadata::remove_location,
+            ocr::ocr_image,
+            ocr::ocr_max_dimension,
             shell::set_wallpaper,
         ])
         .run(tauri::generate_context!())

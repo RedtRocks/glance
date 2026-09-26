@@ -19,7 +19,7 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'notice', Record<string, E
   },
   pdf: {
     File: ['file.open', 'file.openWith', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.export', 'file.split', '-', 'file.print', '-', 'file.close', '-', 'file.settings'],
-    Edit: ['edit.undo', 'edit.redo', '-', 'edit.delete', 'edit.selectAll', 'edit.find', '-', 'edit.addBookmark'],
+    Edit: ['edit.undo', 'edit.redo', '-', 'edit.delete', 'edit.selectAll', 'edit.find', '-', 'edit.addBookmark', '-', 'tools.ocr'],
     View: [
       '#Sidebar', 'view.hideSidebar', 'view.thumbnails', 'view.toc', 'view.notes', 'view.bookmarks', '-',
       '#Page layout', 'view.continuous', 'view.single', 'view.two', 'view.contactSheet', '-',
@@ -39,7 +39,7 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'notice', Record<string, E
   },
   image: {
     File: ['file.open', 'file.openWith', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.export', '-', 'image.setWallpaper', 'image.setLockScreen', '-', 'file.batch', '-', 'file.print', '-', 'file.close', '-', 'file.settings'],
-    Edit: ['edit.undo', 'edit.redo', '-', 'edit.delete', 'edit.invertSelection'],
+    Edit: ['edit.undo', 'edit.redo', '-', 'edit.delete', 'edit.invertSelection', '-', 'tools.copyImageText'],
     // Multi-page images (TIFF, comic archives) also get the sidebar and Go menu.
     View: ['view.hideSidebar', 'view.thumbnails', '-', ...ZOOM, '-', 'view.fullscreen', 'view.slideshow', '-', 'view.inspector', 'view.customizeToolbar'],
     Go: ['go.previous', 'go.next', 'go.first', 'go.last', 'go.page', '-', 'go.nextTab', 'go.previousTab'],

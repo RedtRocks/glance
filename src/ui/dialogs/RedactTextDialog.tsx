@@ -110,7 +110,7 @@ export function RedactTextDialog({ doc }: { doc: PdfDoc }) {
           {!pages ? (
             <p class="muted">Reading the document’s text…</p>
           ) : !found.length ? (
-            <p class="muted">{term || kinds.length ? 'No matches. Scanned pages without a text layer need OCR first.' : 'Type text or choose what to find.'}</p>
+            <p class="muted">{term || kinds.length ? 'No matches. For scanned pages, run Edit → Recognize Text (OCR) first.' : 'Type text or choose what to find.'}</p>
           ) : (
             found.slice(0, 500).map((f) => (
               <label key={f.key} class="check-row match" role="listitem">

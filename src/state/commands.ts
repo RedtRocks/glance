@@ -6,6 +6,7 @@ import { normalizeCombo } from '../core/shortcuts'
 import * as platform from '../platform'
 import * as actions from './actions'
 import * as shell from './shellActions'
+import * as ocr from './ocrActions'
 import { batchOpen } from './batch'
 import { activeDoc, activeId, docs, type Doc, type ViewMode } from './documents'
 import { settings, updateSettings } from './settings'
@@ -226,6 +227,8 @@ export const COMMANDS: Command[] = [
   { id: 'tools.text', label: 'Add Text Box', keys: ['Ctrl+Shift+T'], run: () => toggleTool('text'), enabled: () => isPdf() || isImage() },
   { id: 'tools.note', label: 'Add Note', keys: ['Ctrl+Shift+O'], run: () => toggleTool('note'), enabled: isPdf },
   { id: 'tools.signature', label: 'Signature…', keys: ['Ctrl+Shift+J'], run: () => void (signatureDialog.value = true), enabled: () => isPdf() || isImage() },
+  { id: 'tools.ocr', label: 'Recognize Text (OCR)…', run: () => ocr.recognizePdfText(), enabled: isPdf },
+  { id: 'tools.copyImageText', label: 'Copy Text from Image', run: () => ocr.copyImageText() },
   { id: 'tools.redactText', label: 'Remove Sensitive Text…', run: () => void (redactTextOpen.value = true), enabled: isPdf },
   { id: 'tools.redact', label: 'Redact', keys: ['Ctrl+Shift+R'], run: () => toggleTool('redact'), enabled: () => isPdf() || isImage(), checked: () => tool.value === 'redact' },
   { id: 'tools.applyRedactions', label: 'Apply Redactions…', run: () => void applyRedactions(), enabled: () => !!pdf()?.redactions.value.length },
@@ -262,11 +265,11 @@ const VISIBILITY: [(() => boolean), string[]][] = [
   [ifPdf, [
     'file.exportPages', 'file.split', 'edit.selectAll', 'edit.find', 'edit.insertBlank', 'edit.insertFile', 'edit.duplicatePages',
     'edit.deletePages', 'edit.addBookmark', 'view.toc', 'view.notes', 'view.bookmarks', 'view.continuous', 'view.single', 'view.two',
-    'view.contactSheet', 'view.darkPdf', 'tools.highlight', 'tools.note', 'tools.redactText', 'tools.applyRedactions'
+    'view.contactSheet', 'view.darkPdf', 'tools.highlight', 'tools.note', 'tools.redactText', 'tools.applyRedactions', 'tools.ocr'
   ]],
   [ifPaged, ['view.hideSidebar', 'view.thumbnails', 'go.previous', 'go.next', 'go.first', 'go.last', 'go.page']],
   [ifMarkup, ['tools.markup', 'tools.text', 'tools.signature', 'tools.redact']],
-  [anyImage, ['image.setWallpaper', 'image.setLockScreen']],
+  [anyImage, ['image.setWallpaper', 'image.setLockScreen', 'tools.copyImageText']],
   [isImage, [
     'edit.invertSelection', 'tools.crop', 'tools.instantAlpha', 'tools.removeBackground', 'tools.copySubject', 'tools.adjustColor',
     'tools.adjustSize', 'tools.flipHorizontal', 'tools.flipVertical'
