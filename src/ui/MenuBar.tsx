@@ -14,7 +14,7 @@ const ZOOM: Entry[] = ['view.zoomIn', 'view.zoomOut', 'view.actualSize', 'view.z
 /** Each kind of file gets its own menu bar, like separate apps would. */
 export const MENUS: Record<'none' | 'pdf' | 'image' | 'notice', Record<string, Entry[]>> = {
   none: {
-    File: ['file.open', 'file.newWindow', '-', 'file.settings'],
+    File: ['file.open', 'file.newWindow', '-', 'file.batch', '-', 'file.settings'],
     Help: HELP
   },
   pdf: {
@@ -38,7 +38,7 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'notice', Record<string, E
     Help: HELP
   },
   image: {
-    File: ['file.open', 'file.openWith', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.export', '-', 'image.setWallpaper', 'image.setLockScreen', '-', 'file.print', '-', 'file.close', '-', 'file.settings'],
+    File: ['file.open', 'file.openWith', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.export', '-', 'image.setWallpaper', 'image.setLockScreen', '-', 'file.batch', '-', 'file.print', '-', 'file.close', '-', 'file.settings'],
     Edit: ['edit.undo', 'edit.redo', '-', 'edit.delete', 'edit.invertSelection'],
     // Multi-page images (TIFF, comic archives) also get the sidebar and Go menu.
     View: ['view.hideSidebar', 'view.thumbnails', '-', ...ZOOM, '-', 'view.fullscreen', 'view.slideshow', '-', 'view.inspector', 'view.customizeToolbar'],

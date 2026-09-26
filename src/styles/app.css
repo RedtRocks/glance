@@ -2008,3 +2008,36 @@ input[type='range'] {
   margin: 0 0 8px;
   font-size: 12px;
 }
+
+/* Batch edit */
+.batch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.batch-files-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.batch-files .match-list {
+  height: 330px;
+  margin: 0;
+  list-style: none;
+}
+.batch-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.batch-progress {
+  width: 100%;
+  margin-top: 12px;
+  accent-color: var(--accent);
+}
+.icon-button.small {
+  width: 24px;
+  height: 24px;
+  font-size: 11px;
+}

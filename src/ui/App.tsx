@@ -18,6 +18,8 @@ import { SettingsDialog } from './dialogs/SettingsDialog'
 import { CustomizeToolbar } from './dialogs/CustomizeToolbar'
 import { Toasts } from './Toasts'
 import { ContextMenu } from './ContextMenu'
+import { BatchDialog } from './dialogs/BatchDialog'
+import { batchOpen } from '../state/batch'
 import { useShortcuts } from './useShortcuts'
 import { useFileDrop } from './useFileDrop'
 import { fileDragOver } from './dragState'
@@ -118,6 +120,7 @@ export function App() {
       <DialogHost />
       <Toasts />
       <ContextMenu />
+      {batchOpen.value && <BatchDialog />}
     </div>
   )
 }

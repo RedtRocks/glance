@@ -6,6 +6,7 @@ import { normalizeCombo } from '../core/shortcuts'
 import * as platform from '../platform'
 import * as actions from './actions'
 import * as shell from './shellActions'
+import { batchOpen } from './batch'
 import { activeDoc, activeId, docs, type Doc, type ViewMode } from './documents'
 import { settings, updateSettings } from './settings'
 import { customizeOpen, findOpen, inspectorOpen, promptText, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from './ui'
@@ -121,6 +122,7 @@ export const COMMANDS: Command[] = [
     enabled: () => isPdf() || isImage()
   },
   { id: 'file.exportPages', label: 'Export Selected Pages…', run: () => actions.exportSelectedPages(), enabled: isPdf },
+  { id: 'file.batch', label: 'Batch Edit Images…', run: () => void (batchOpen.value = true) },
   { id: 'file.openWith', label: 'Open With Another App…', run: () => shell.openWithOtherApp(), enabled: () => shell.canOpenWith() },
   { id: 'image.setWallpaper', label: 'Set as Desktop Background', run: () => shell.setAsWallpaper('desktop'), enabled: anyImage },
   { id: 'image.setLockScreen', label: 'Set as Lock Screen', run: () => shell.setAsWallpaper('lock'), enabled: anyImage },
