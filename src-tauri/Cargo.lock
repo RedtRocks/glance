@@ -1524,7 +1524,6 @@ dependencies = [
  "image",
  "jxl-oxide",
  "percent-encoding",
- "psd",
  "serde",
  "serde_json",
  "tauri",
@@ -3259,15 +3258,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9"
 dependencies = [
  "unicode-ident",
-]
-
-[[package]]
-name = "psd"
-version = "0.3.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a25f9b8cfffd65d911baf31a033239f7a0facb755faa2481575b70db5dc9195"
-dependencies = [
- "thiserror 1.0.69",
 ]
 
 [[package]]

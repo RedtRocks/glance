@@ -32,7 +32,8 @@ async function buildLinks(page: PDFPageProxy, scale: number, host: HTMLElement, 
   const annots = await page.getAnnotations({ intent: 'display' })
   for (const a of annots) {
     if (a.subtype !== 'Link' || (!a.url && !a.dest)) continue
-    const [x1, y1, x2, y2] = viewport.convertToViewportRectangle(a.rect)
+    const [x1, y1] = viewport.convertToViewportPoint(a.rect[0], a.rect[1])
+    const [x2, y2] = viewport.convertToViewportPoint(a.rect[2], a.rect[3])
     const el = document.createElement('a')
     el.className = 'pdf-link'
     Object.assign(el.style, {

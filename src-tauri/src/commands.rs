@@ -131,3 +131,9 @@ fn strip_verbatim(p: &Path) -> String {
     let s = p.to_string_lossy();
     s.strip_prefix(r"\\?\").map(str::to_string).unwrap_or_else(|| s.into_owned())
 }
+
+/// Frontend errors end up on stderr, which makes bug reports from `glance.exe > log.txt` useful.
+#[tauri::command]
+pub fn log_frontend(level: String, message: String) {
+    eprintln!("[webview {level}] {message}");
+}

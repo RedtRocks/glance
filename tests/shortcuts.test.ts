@@ -28,3 +28,12 @@ describe('shortcuts', () => {
     expect(findConflicts({ a: ['Ctrl+S'], b: ['Ctrl+S', 'F2'], c: ['F3'] })).toEqual([['Ctrl+S', ['a', 'b']]])
   })
 })
+
+describe('display', () => {
+  it('spells out plus and minus like Windows menus', async () => {
+    const { displayCombo } = await import('../src/core/shortcuts')
+    expect(displayCombo('Ctrl+=')).toBe('Ctrl+Plus')
+    expect(displayCombo('Ctrl+-')).toBe('Ctrl+Minus')
+    expect(displayCombo('Ctrl+Up')).toBe('Ctrl+↑')
+  })
+})

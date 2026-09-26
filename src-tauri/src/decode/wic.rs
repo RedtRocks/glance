@@ -124,3 +124,47 @@ fn decode_inner(path: &Path, page: u32, max: Option<u32>) -> windows::core::Resu
     unsafe { conv.CopyPixels(std::ptr::null(), stride, &mut rgba)? };
     Ok(Decoded { width: w, height: h, rgba })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn temp(name: &str, bytes: &[u8]) -> std::path::PathBuf {
+        let dir = std::env::temp_dir().join(format!("glance-wic-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let p = dir.join(name);
+        std::fs::write(&p, bytes).unwrap();
+        p
+    }
+
+    fn png(w: u32, h: u32) -> Vec<u8> {
+        let img = image::RgbaImage::from_fn(w, h, |x, y| image::Rgba([x as u8, y as u8, 7, 200]));
+        let mut out = std::io::Cursor::new(Vec::new());
+        img.write_to(&mut out, image::ImageFormat::Png).unwrap();
+        out.into_inner()
+    }
+
+    #[test]
+    fn decodes_png_through_windows_imaging_component() {
+        let p = temp("wic.png", &png(40, 20));
+        assert_eq!(frame_count(&p).unwrap(), 1);
+        let d = decode(&p, 0, None).unwrap();
+        assert_eq!((d.width, d.height), (40, 20));
+        // Pixel (3, 5): R = x, G = y, straight (non-premultiplied) alpha.
+        let i = (5 * 40 + 3) * 4;
+        assert_eq!(&d.rgba[i..i + 4], &[3, 5, 7, 200]);
+    }
+
+    #[test]
+    fn scales_while_decoding() {
+        let p = temp("wic-big.png", &png(400, 100));
+        let d = decode(&p, 0, Some(100)).unwrap();
+        assert_eq!((d.width, d.height), (100, 25));
+    }
+
+    #[test]
+    fn unknown_data_is_an_error_not_a_crash() {
+        let p = temp("junk.bin", b"definitely not an image");
+        assert!(decode(&p, 0, None).is_err());
+    }
+}

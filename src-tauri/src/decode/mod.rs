@@ -4,6 +4,7 @@ pub mod archive;
 pub mod bmp;
 pub mod eps;
 pub mod formats;
+pub mod psd;
 pub mod raw_preview;
 #[cfg(windows)]
 pub mod wic;
@@ -57,7 +58,15 @@ pub fn page_count(path: &Path) -> u32 {
 }
 
 /// Decodes one page of an image file, optionally downscaled so neither side exceeds `max`.
+///
+/// Decoders parse untrusted files; a bug in any of them must produce an error for that
+/// file, never take the whole app down.
 pub fn decode(path: &Path, page: u32, max: Option<u32>) -> Result<Decoded, String> {
+    std::panic::catch_unwind(|| decode_unguarded(path, page, max))
+        .unwrap_or_else(|_| Err("The decoder failed on this file. It may be damaged.".into()))
+}
+
+fn decode_unguarded(path: &Path, page: u32, max: Option<u32>) -> Result<Decoded, String> {
     let ext = formats::extension(path);
 
     if ext == "cbz" {
@@ -77,7 +86,7 @@ pub fn decode(path: &Path, page: u32, max: Option<u32>) -> Result<Decoded, Strin
     let decoded = match ext.as_str() {
         "jp2" | "j2k" | "jpf" | "jpx" | "j2c" => decode_jpeg2000(&data)?,
         "jxl" => decode_jxl(&data)?,
-        "psd" => decode_psd(&data)?,
+        "psd" | "psb" => psd::decode(&data)?,
         "icns" => decode_icns(&data)?,
         "eps" | "epsf" | "epsi" => {
             let tiff = eps::embedded_tiff_preview(&data).ok_or("This EPS file has no embedded preview")?;
@@ -160,12 +169,6 @@ fn decode_jxl(data: &[u8]) -> Result<Decoded, String> {
     Ok(Decoded::from_rgba(to_display_rgba(img)))
 }
 
-fn decode_psd(data: &[u8]) -> Result<Decoded, String> {
-    let psd = psd::Psd::from_bytes(data).map_err(|e| e.to_string())?;
-    let (w, h) = (psd.width(), psd.height());
-    // The merged composite image is what Photoshop saves for "maximize compatibility".
-    Ok(Decoded { width: w, height: h, rgba: psd.rgba() })
-}
 
 fn decode_icns(data: &[u8]) -> Result<Decoded, String> {
     let family = icns::IconFamily::read(Cursor::new(data)).map_err(|e| e.to_string())?;

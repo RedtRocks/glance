@@ -189,7 +189,7 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     )
   },
   { id: 'insertPage', label: 'Insert Blank Page', applies: isPdf, render: () => <Btn icon="addPage" label="Insert Blank Page" command="edit.insertBlank" /> },
-  { id: 'deletePages', label: 'Delete Pages', applies: (c) => isPdf(c) && c.pageCount > 1, render: () => <Btn icon="delete" label="Delete Selected Pages" command="edit.deletePages" /> },
+  { id: 'deletePages', label: 'Delete Pages', applies: (c) => isPdf(c) && c.pageCount > 1, render: () => <Btn icon="trash" label="Delete Selected Pages" command="edit.deletePages" /> },
   {
     id: 'darkPdf',
     label: 'Dark PDF',

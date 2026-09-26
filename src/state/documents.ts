@@ -70,7 +70,7 @@ export class PdfDoc extends BaseDoc {
     this.selection.value = this.selection.peek().filter((i) => i < proxy.numPages)
     this.revision.value++
     readOutline(proxy).then((o) => (this.outline.value = o)).catch(() => (this.outline.value = []))
-    if (old) void old.destroy()
+    if (old) void old.loadingTask.destroy()
   }
 
   /** Applies a byte-level operation as one undoable step. */
@@ -161,7 +161,7 @@ export function removeDoc(id: string): void {
   const idx = list.findIndex((d) => d.id === id)
   if (idx < 0) return
   const doc = list[idx]
-  if (doc.kind === 'pdf') void doc.proxy.peek()?.destroy()
+  if (doc.kind === 'pdf') void doc.proxy.peek()?.loadingTask.destroy()
   const next = list.filter((d) => d.id !== id)
   docs.value = next
   if (activeId.value === id) activeId.value = next[Math.min(idx, next.length - 1)]?.id ?? null

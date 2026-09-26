@@ -7,7 +7,8 @@ import * as platform from '../platform'
 import * as actions from './actions'
 import { activeDoc, activeId, docs, type Doc, type ViewMode } from './documents'
 import { settings, updateSettings } from './settings'
-import { customizeOpen, findOpen, settingsOpen, sidebarVisible, slideshow } from './ui'
+import { customizeOpen, findOpen, promptText, settingsOpen, sidebarVisible, slideshow } from './ui'
+import { parsePageInput } from '../core/pageControls'
 import { printDoc } from './print'
 
 export interface Command {
@@ -168,8 +169,6 @@ export function keysFor(id: string): string[] {
 }
 
 async function goToPagePrompt(): Promise<void> {
-  const { promptText } = await import('./ui')
-  const { parsePageInput } = await import('../core/pageControls')
   const d = activeDoc.value
   if (!d || d.kind === 'notice') return
   const text = await promptText('Go to Page', `Page number (1–${d.pageCount.value})`, { ok: 'Go' })

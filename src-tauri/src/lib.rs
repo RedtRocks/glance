@@ -64,6 +64,7 @@ pub fn run() {
             commands::ghostscript_available,
             commands::convert_postscript,
             commands::initial_files,
+            commands::log_frontend,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Glance");

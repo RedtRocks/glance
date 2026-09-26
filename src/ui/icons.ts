@@ -21,7 +21,7 @@ import toc from '@fluentui/svg-icons/icons/text_bullet_list_tree_20_regular.svg?
 import bookmark from '@fluentui/svg-icons/icons/bookmark_20_regular.svg?raw'
 import moon from '@fluentui/svg-icons/icons/weather_moon_20_regular.svg?raw'
 import save from '@fluentui/svg-icons/icons/save_20_regular.svg?raw'
-import delete from '@fluentui/svg-icons/icons/delete_20_regular.svg?raw'
+import trash from '@fluentui/svg-icons/icons/delete_20_regular.svg?raw'
 import add from '@fluentui/svg-icons/icons/add_20_regular.svg?raw'
 import addPage from '@fluentui/svg-icons/icons/document_add_20_regular.svg?raw'
 import fullscreen from '@fluentui/svg-icons/icons/full_screen_maximize_20_regular.svg?raw'
@@ -41,5 +41,5 @@ import document from '@fluentui/svg-icons/icons/document_20_regular.svg?raw'
 import pen from '@fluentui/svg-icons/icons/pen_20_regular.svg?raw'
 import markup from '@fluentui/svg-icons/icons/edit_20_regular.svg?raw'
 
-export const ICONS = { sidebar, zoomIn, zoomOut, rotateRight, rotateLeft, highlight, search, print, share, more, up, down, left, right, open, close, settings, grid, toc, bookmark, moon, save, delete, add, addPage, fullscreen, slideshow, fitPage, zoomFit, undo, redo, edit, check, copy, image, cube, info, newWindow, document, pen, markup }
+export const ICONS = { sidebar, zoomIn, zoomOut, rotateRight, rotateLeft, highlight, search, print, share, more, up, down, left, right, open, close, settings, grid, toc, bookmark, moon, save, trash, add, addPage, fullscreen, slideshow, fitPage, zoomFit, undo, redo, edit, check, copy, image, cube, info, newWindow, document, pen, markup }
 export type IconName = keyof typeof ICONS

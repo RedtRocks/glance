@@ -16,7 +16,7 @@ function pdfjsAssets(): Plugin {
           cpSync(`node_modules/pdfjs-dist/${dir}`, dest, {
             recursive: true,
             // The QuickJS sandbox runs embedded PDF JavaScript; Glance never executes it.
-            filter: (src) => !/quickjs/.test(src)
+            filter: (src: string) => !/quickjs/.test(src)
           })
         }
       }
@@ -46,7 +46,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          pdfjs: ['pdfjs-dist'],
+          pdfjs: ['pdfjs-dist/legacy/build/pdf.mjs'],
           pdflib: ['@cantoo/pdf-lib']
         }
       }

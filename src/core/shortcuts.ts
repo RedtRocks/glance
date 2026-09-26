@@ -63,7 +63,10 @@ export function comboFromEvent(e: Pick<KeyboardEvent, 'key' | 'code' | 'ctrlKey'
 
 /** Human-readable form for menus and tooltips. */
 export function displayCombo(combo: Combo): string {
-  return combo.replace('Up', '↑').replace('Down', '↓').replace('=', '+')
+  return combo
+    .split('+')
+    .map((k) => ({ '=': 'Plus', '-': 'Minus', Up: '↑', Down: '↓' })[k] ?? k)
+    .join('+')
 }
 
 /** Finds commands whose bindings collide, for the rebinding screen. */

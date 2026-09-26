@@ -23,7 +23,7 @@ pub const BROWSER_IMAGES: &[&str] = &[
 /// Formats that need the backend decoder (WIC first, then Rust fallbacks).
 pub const BACKEND_IMAGES: &[&str] = &[
     "tif", "tiff", "heic", "heif", "hif", "jp2", "j2k", "jpf", "jpx", "j2c", "jxl", "jxr", "wdp", "hdp",
-    "exr", "hdr", "tga", "dds", "qoi", "ppm", "pgm", "pbm", "pam", "pnm", "icns", "psd",
+    "exr", "hdr", "tga", "dds", "qoi", "ppm", "pgm", "pbm", "pam", "pnm", "icns", "psd", "psb",
 ];
 
 pub const RAW_IMAGES: &[&str] = &[

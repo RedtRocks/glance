@@ -1,7 +1,11 @@
 /** User-level operations shared by menus, toolbar, shortcuts and drag-and-drop. */
 import * as platform from '../platform'
 import type { Probe } from '../platform'
-import * as ops from '../core/pageOps'
+import type * as PageOps from '../core/pageOps'
+
+/** pdf-lib is ~250 KB gzipped; load it only when a page is first edited (ADR 0002). */
+let opsModule: Promise<typeof PageOps> | null = null
+const pageOps = (): Promise<typeof PageOps> => (opsModule ??= import('../core/pageOps'))
 import { PasswordRequired } from '../pdf/engine'
 import {
   activeDoc,
@@ -26,7 +30,7 @@ export const OPEN_FILTERS: platform.FileFilter[] = [
       'pdf', 'ai', 'ps', 'eps', 'epsf', 'xps', 'oxps', 'cbz',
       'jpg', 'jpeg', 'jfif', 'png', 'apng', 'gif', 'webp', 'bmp', 'dib', 'ico', 'svg', 'avif',
       'tif', 'tiff', 'heic', 'heif', 'hif', 'jp2', 'j2k', 'jpf', 'jpx', 'jxl', 'jxr', 'wdp', 'hdp',
-      'exr', 'hdr', 'tga', 'dds', 'qoi', 'ppm', 'pgm', 'pbm', 'pam', 'pnm', 'icns', 'psd',
+      'exr', 'hdr', 'tga', 'dds', 'qoi', 'ppm', 'pgm', 'pbm', 'pam', 'pnm', 'icns', 'psd', 'psb',
       'cr2', 'cr3', 'crw', 'nef', 'nrw', 'arw', 'srf', 'sr2', 'raf', 'orf', 'rw2', 'raw', 'dng', 'pef',
       'srw', 'x3f', 'erf', 'mef', 'mos', 'mrw', 'kdc', 'dcr', '3fr', 'fff', 'iiq', 'rwl', 'gpr',
       'glb', 'gltf', 'obj', 'stl', 'ply', 'fbx', 'usdz', 'usda', 'usdc', 'dae', '3mf', '3ds'
@@ -204,13 +208,13 @@ export async function rotatePages(delta: 90 | -90, doc = activeDoc.value): Promi
   }
   if (doc?.kind !== 'pdf') return
   const pages = selectedOrCurrent(doc)
-  await run(doc, delta > 0 ? 'Rotate Right' : 'Rotate Left', (b) => ops.rotatePages(b, pages, delta))
+  await run(doc, delta > 0 ? 'Rotate Right' : 'Rotate Left', async (b) => (await pageOps()).rotatePages(b, pages, delta))
 }
 
 export async function deletePages(doc = activeDoc.value): Promise<void> {
   if (doc?.kind !== 'pdf') return
   const pages = selectedOrCurrent(doc)
-  if (await run(doc, pages.length > 1 ? 'Delete Pages' : 'Delete Page', (b) => ops.deletePages(b, pages))) {
+  if (await run(doc, pages.length > 1 ? 'Delete Pages' : 'Delete Page', async (b) => (await pageOps()).deletePages(b, pages))) {
     doc.selection.value = []
   }
 }
@@ -218,23 +222,23 @@ export async function deletePages(doc = activeDoc.value): Promise<void> {
 export async function insertBlankPage(doc = activeDoc.value): Promise<void> {
   if (doc?.kind !== 'pdf') return
   const at = Math.max(...selectedOrCurrent(doc)) + 1
-  if (await run(doc, 'Insert Blank Page', (b) => ops.insertBlankPage(b, at))) {
+  if (await run(doc, 'Insert Blank Page', async (b) => (await pageOps()).insertBlankPage(b, at))) {
     doc.selection.value = [at]
     doc.goTo(at)
   }
 }
 
 export async function movePages(doc: PdfDoc, pages: number[], to: number): Promise<void> {
-  const order = ops.computeMoveOrder(doc.pageCount.value, pages, to)
+  const order = (await pageOps()).computeMoveOrder(doc.pageCount.value, pages, to)
   if (order.every((v, i) => v === i)) return
-  if (await run(doc, 'Move Pages', (b) => ops.reorderPages(b, order))) {
+  if (await run(doc, 'Move Pages', async (b) => (await pageOps()).reorderPages(b, order))) {
     const moved = new Set(pages)
     doc.selection.value = order.flatMap((src, i) => (moved.has(src) ? [i] : []))
   }
 }
 
 /** Converts any image Glance can display into PNG/JPEG bytes pdf-lib can embed. */
-async function imageForPdf(probe: Probe): Promise<ops.ImageInput> {
+async function imageForPdf(probe: Probe): Promise<PageOps.ImageInput> {
   if (/\.(jpe?g|jfif)$/i.test(probe.path)) return { bytes: await platform.readFile(probe.path), type: 'jpg' }
   if (/\.png$/i.test(probe.path)) return { bytes: await platform.readFile(probe.path), type: 'png' }
   const res = await fetch(platform.imageUrl(probe))
@@ -255,11 +259,11 @@ export async function insertFiles(doc: PdfDoc, paths: string[], at: number): Pro
       const probe = await platform.probe(path)
       if (probe.kind === 'pdf') {
         const src = await platform.readFile(path)
-        const n = await ops.pageCount(src)
-        out = await ops.insertPdfPages(out, src, pos)
+        const n = await (await pageOps()).pageCount(src)
+        out = await (await pageOps()).insertPdfPages(out, src, pos)
         pos += n
       } else if (probe.kind === 'image') {
-        out = await ops.insertImagePages(out, [await imageForPdf(probe)], pos)
+        out = await (await pageOps()).insertImagePages(out, [await imageForPdf(probe)], pos)
         pos += 1
       } else {
         throw new Error(`${probe.name} can’t be inserted into a PDF.`)
@@ -279,13 +283,13 @@ export async function insertFromFileDialog(doc = activeDoc.value): Promise<void>
 export async function transferPages(src: PdfDoc, pages: number[], dst: PdfDoc, at: number, move: boolean): Promise<void> {
   const sorted = [...pages].sort((a, b) => a - b)
   const bytes = src.bytes
-  const ok = await run(dst, move ? 'Move Pages' : 'Copy Pages', (b) => ops.insertPdfPages(b, bytes, at, sorted))
+  const ok = await run(dst, move ? 'Move Pages' : 'Copy Pages', async (b) => (await pageOps()).insertPdfPages(b, bytes, at, sorted))
   if (ok && move && src !== dst) {
     if (sorted.length >= src.pageCount.value) {
       toast('Pages copied. The source keeps its last page because a PDF needs at least one.')
       return
     }
-    await run(src, 'Move Pages', (b) => ops.deletePages(b, sorted))
+    await run(src, 'Move Pages', async (b) => (await pageOps()).deletePages(b, sorted))
     src.selection.value = []
   }
 }
@@ -297,7 +301,7 @@ function pagesLabel(pages: number[]): string {
 
 /** Drag Out: writes the pages to a temporary PDF and hands it to the OS drag loop. */
 export async function dragOutPages(doc: PdfDoc, pages: number[], icon: HTMLCanvasElement | null): Promise<void> {
-  const bytes = await ops.extractPages(doc.bytes, [...pages].sort((a, b) => a - b))
+  const bytes = await (await pageOps()).extractPages(doc.bytes, [...pages].sort((a, b) => a - b))
   const base = doc.name.value.replace(/\.[^.]+$/, '')
   const file = await platform.writeTemp(`${base} (${pagesLabel(pages)}).pdf`, bytes)
   let iconPath = file
@@ -314,7 +318,7 @@ export async function exportSelectedPages(doc = activeDoc.value): Promise<void> 
   const base = doc.name.value.replace(/\.[^.]+$/, '')
   const target = await platform.saveDialog(`${base} (${pagesLabel(pages)}).pdf`, [{ name: 'PDF document', extensions: ['pdf'] }])
   if (!target) return
-  const bytes = await withBusy('Exporting…', () => ops.extractPages(doc.bytes, pages))
+  const bytes = await withBusy('Exporting…', async () => (await pageOps()).extractPages(doc.bytes, pages))
   await platform.writeFile(target, bytes)
   toast(`Exported ${pagesLabel(pages)}`)
 }

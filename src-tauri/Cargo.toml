@@ -26,7 +26,6 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 percent-encoding = "2"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "bmp", "ico", "tiff", "webp", "tga", "exr", "hdr", "dds", "pnm", "qoi"] }
-psd = "0.3"
 icns = "0.5"
 jxl-oxide = { version = "0.12", features = ["image"] }
 hayro-jpeg2000 = "0.4"
@@ -47,7 +46,6 @@ windows = { version = "0.62", features = [
 codegen-units = 1
 lto = true
 opt-level = 3
-panic = "abort"
 strip = true
 
 [profile.dev.package."*"]
