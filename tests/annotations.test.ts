@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { PDFDict, PDFDocument, PDFName, PDFStream } from '@cantoo/pdf-lib'
+import { PDFDict, PDFDocument, PDFName, PDFRawStream, PDFStream, decodePDFRawStream } from '@cantoo/pdf-lib'
 import { extractMarkup, writeMarkup } from '../src/core/annotations'
 import { DEFAULT_STYLE, type Markup } from '../src/core/markup'
 import { RED_PNG, labeledPdf, latin1 } from './fixtures'
@@ -23,7 +23,8 @@ const all: Markup[] = [
   { id: 'm', page: 2, style, created: 1, type: 'underline', quads: [[5, 15, 90, 15, 5, 5, 90, 5]] },
   { id: 'n', page: 2, style, created: 1, type: 'strike', quads: [[5, 45, 90, 45, 5, 35, 90, 35]] },
   { id: 'o', page: 0, style, created: 1, type: 'signature', rect: [60, 10, 95, 30], png: RED_PNG },
-  { id: 'p', page: 2, style, created: 1, type: 'squiggly', quads: [[5, 60, 90, 60, 5, 50, 90, 50]] }
+  { id: 'p', page: 2, style, created: 1, type: 'squiggly', quads: [[5, 60, 90, 60, 5, 50, 90, 50]] },
+  { id: 'q', page: 1, style, created: 1, type: 'loupe', rect: [20, 20, 80, 80], zoom: 2 }
 ]
 
 describe('markup ↔ annotations', () => {
@@ -84,6 +85,22 @@ describe('markup ↔ annotations', () => {
     const { markup, bytes } = await extractMarkup(await doc.save())
     expect(markup).toHaveLength(0)
     expect((await PDFDocument.load(bytes)).getPage(0).node.Annots()?.size()).toBe(1)
+  })
+})
+
+describe('loupe', () => {
+  it('draws the page itself, magnified and clipped, as the appearance', async () => {
+    const doc = await PDFDocument.load(await writeMarkup(await labeledPdf(1), [{ id: 'l', page: 0, style, created: 1, type: 'loupe', rect: [20, 20, 80, 80], zoom: 2.5 }]))
+    const annot = doc.context.lookup(doc.getPage(0).node.Annots()!.get(0)) as PDFDict
+    const ap = doc.context.lookup((doc.context.lookup(annot.get(PDFName.of('AP'))) as PDFDict).get(PDFName.of('N'))) as PDFStream
+    const res = doc.context.lookup(ap.dict.get(PDFName.of('Resources'))) as PDFDict
+    const xobj = doc.context.lookup(res.get(PDFName.of('XObject'))) as PDFDict
+    const pg = doc.context.lookup(xobj.get(PDFName.of('Pg'))) as PDFStream
+    expect(pg.dict.get(PDFName.of('Subtype'))!.toString()).toBe('/Form')
+    const ops = latin1(ap instanceof PDFRawStream ? decodePDFRawStream(ap).decode() : ap.getContents())
+    expect(ops).toMatch(/W\s+n/) // clipped to the circle
+    expect(ops).toMatch(/2\.5 0 0 2\.5/) // magnified
+    expect(ops).toContain('/Pg Do')
   })
 })
 

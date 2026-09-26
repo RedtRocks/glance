@@ -6,6 +6,7 @@ import { findQuery } from '../../state/ui'
 import { createLinkService } from '../../pdf/linkService'
 import { setViewport } from '../../pdf/viewports'
 import { MarkupLayer } from '../markup/MarkupLayer'
+import { PdfLoupes } from './PdfLoupes'
 
 /** Largest backing store we allocate for one page canvas (~64 MB of RGBA). */
 const MAX_PIXELS = 16_000_000
@@ -158,6 +159,7 @@ export function PdfPage({ doc, index, scale, width, height, root, dark, drop }: 
       <canvas ref={canvasRef} class={dark ? 'dark-pdf' : ''} />
       <div ref={textRef} class="textLayer" />
       <div ref={annotRef} class="annotationLayer" />
+      {vp && <PdfLoupes doc={doc} index={index} vp={vp} />}
       {vp && <MarkupLayer doc={doc} index={index} vp={vp} />}
       {!rendered && <div class="page-placeholder" aria-hidden="true" />}
     </div>

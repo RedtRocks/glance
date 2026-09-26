@@ -9,6 +9,11 @@
 import {
   LineCapStyle,
   LineJoinStyle,
+  appendBezierCurve,
+  clip,
+  closePath,
+  endPath,
+  moveTo,
   PDFBool,
   PDFDict,
   PDFDocument,
@@ -47,6 +52,8 @@ export type FontSource = (family: string) => Promise<Uint8Array | null>
 
 interface Ctx {
   doc: PDFDocument
+  /** Pages embedded as form XObjects (for loupes), by page index. */
+  embedded: Map<number, { ref: PDFRef; left: number; bottom: number }>
   font: PDFFont | null
   fonts: Map<string, PDFFont | null>
   loadFont?: FontSource
@@ -180,6 +187,45 @@ async function appearance(ctx: Ctx, m: Markup, bbox: Rect): Promise<{ ops: PDFOp
       ops.push(endText())
       break
     }
+    case 'loupe': {
+      // Preview's magnifier: the page's own content, scaled about the center and
+      // clipped to the circle, so every viewer shows the same magnified detail.
+      let pg = ctx.embedded.get(m.page)
+      if (!pg) {
+        const page = doc.getPage(m.page)
+        const box = page.getMediaBox()
+        const e = await doc.embedPage(page)
+        pg = { ref: e.ref, left: box.x, bottom: box.y }
+        ctx.embedded.set(m.page, pg)
+      }
+      resources.XObject = { Pg: pg.ref }
+      const [x1, y1, x2, y2] = m.rect
+      const cx = (x1 + x2) / 2
+      const cy = (y1 + y2) / 2
+      const rx = (x2 - x1) / 2
+      const ry = (y2 - y1) / 2
+      const k = 0.5523
+      const z = m.zoom
+      ops.push(
+        pushGraphicsState(),
+        moveTo(cx + rx, cy),
+        appendBezierCurve(cx + rx, cy + ry * k, cx + rx * k, cy + ry, cx, cy + ry),
+        appendBezierCurve(cx - rx * k, cy + ry, cx - rx, cy + ry * k, cx - rx, cy),
+        appendBezierCurve(cx - rx, cy - ry * k, cx - rx * k, cy - ry, cx, cy - ry),
+        appendBezierCurve(cx + rx * k, cy - ry, cx + rx, cy - ry * k, cx + rx, cy),
+        closePath(),
+        clip(),
+        endPath(),
+        // White behind, so the magnified page hides what's underneath.
+        ...path(outlinePath(m), { fill: [1, 1, 1] }),
+        concatTransformationMatrix(z, 0, 0, z, cx - z * cx, cy - z * cy),
+        concatTransformationMatrix(1, 0, 0, 1, pg.left, pg.bottom),
+        drawObject('Pg'),
+        popGraphicsState()
+      )
+      ops.push(...path(outlinePath(m), { stroke: s.stroke ?? [0.2, 0.2, 0.2], width: s.width }))
+      break
+    }
     case 'signature': {
       const img = await doc.embedPng(m.png)
       resources.XObject = { Sig: img.ref }
@@ -212,7 +258,7 @@ const SUBTYPE: Record<Markup['type'], string> = {
   strike: 'StrikeOut',
   squiggly: 'Squiggly',
   signature: 'Stamp',
-  loupe: 'Circle' // images only; never written to PDFs
+  loupe: 'Circle'
 }
 
 function pdfDate(ms: number): string {
@@ -272,7 +318,7 @@ export async function writeMarkup(
   options: { objectStreams?: boolean; loadFont?: FontSource } = {}
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.load(bytes, { ignoreEncryption: true, updateMetadata: false })
-  const ctx: Ctx = { doc, font: null, fonts: new Map(), loadFont: options.loadFont }
+  const ctx: Ctx = { doc, embedded: new Map(), font: null, fonts: new Map(), loadFont: options.loadFont }
   const pages = doc.getPages()
   for (const m of markup) {
     const page = pages[m.page]

@@ -246,7 +246,7 @@ export function MarkupToolbar() {
       <Popover icon={shapeTool?.[1] ?? 'shapes'} label="Shapes" pressed={!!shapeTool}>
         {(close) => (
           <div class="shape-grid">
-            {[...SHAPES, ...(image ? ([['loupe', 'zoomIn', 'Loupe (magnifier)']] as [Tool, IconName, string][]) : [])].map(([t, icon, label]) => (
+            {[...SHAPES, ['loupe', 'zoomIn', 'Loupe (magnifier)'] as [Tool, IconName, string]].map(([t, icon, label]) => (
               <button
                 key={t}
                 class={`tb-button ${tool.value === t ? 'pressed' : ''}`}
