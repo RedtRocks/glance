@@ -8,7 +8,7 @@ Glance brings Preview's everyday superpowers to Windows: rearranging and merging
 
 > **Status: early development.** Viewing, PDF page management, markup, signatures, forms, redaction, OCR, image editing, batch editing and metadata tools work today. Everything else is on the roadmap below and in [`docs/adr`](docs/adr).
 >
-> **[Download the latest release](https://github.com/RedtRocks/viewer/releases/latest)** (Windows 10/11, x64 and ARM64).
+> **[Download the latest release](https://github.com/RedtRocks/glance/releases/latest)** (Windows 10/11, x64 and ARM64).
 
 ## Why it's light
 

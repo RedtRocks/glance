@@ -259,7 +259,7 @@ export const COMMANDS: Command[] = [
     }
   },
   { id: 'help.about', label: 'About Glance', run: actions.showAbout },
-  { id: 'help.github', label: 'Glance on GitHub', run: () => platform.openUrl('https://github.com/RedtRocks/viewer') }
+  { id: 'help.github', label: 'Glance on GitHub', run: () => platform.openUrl('https://github.com/RedtRocks/glance') }
 ]
 
 // Which commands make sense for which kind of file. A PNG gets no page, outline or

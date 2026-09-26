@@ -8,7 +8,7 @@ import { isNewer } from '../core/version'
 import * as platform from '../platform'
 import { settings } from './settings'
 
-const RELEASES = 'https://api.github.com/repos/RedtRocks/viewer/releases/latest'
+const RELEASES = 'https://api.github.com/repos/RedtRocks/glance/releases/latest'
 const LAST_CHECK = 'glance.updates.lastCheck'
 const DAY = 24 * 60 * 60 * 1000
 
