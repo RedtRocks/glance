@@ -1,8 +1,9 @@
 import { useEffect } from 'preact/hooks'
-import { activeDoc, docs } from '../state/documents'
+import { activeDoc, activeId, docs, findByPath } from '../state/documents'
 import { isDark, settings } from '../state/settings'
 import { customizeOpen, inspectorOpen, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
 import { confirmCloseWindow, openFiles } from '../state/actions'
+import { startAutosave } from '../state/autosave'
 import * as platform from '../platform'
 import { MenuBar } from './MenuBar'
 import { TabStrip } from './TabStrip'
@@ -19,6 +20,8 @@ import { CustomizeToolbar } from './dialogs/CustomizeToolbar'
 import { Toasts } from './Toasts'
 import { ContextMenu } from './ContextMenu'
 import { BatchDialog } from './dialogs/BatchDialog'
+import { VersionsDialog } from './dialogs/VersionsDialog'
+import { versionsOpen } from '../state/versions'
 import { batchOpen } from '../state/batch'
 import { useShortcuts } from './useShortcuts'
 import { useFileDrop } from './useFileDrop'
@@ -28,6 +31,7 @@ import { SignatureDialog } from './markup/SignatureDialog'
 import { RedactionBar } from './RedactionBar'
 import { ExternalAppBar } from './ExternalAppBar'
 import { InspectorPane } from './InspectorPane'
+import { ConflictBar } from './ConflictBar'
 import { signatureDialog } from '../state/markupState'
 import { adjustColorOpen, adjustSizeOpen, exportOpen, imageSelection } from '../state/imageState'
 import { ImageDoc, PdfDoc } from '../state/documents'
@@ -46,6 +50,7 @@ function Viewer() {
       <main class="viewer" aria-label={doc.name.value}>
         {doc.kind === 'pdf' && <RedactionBar doc={doc} />}
         <ExternalAppBar key={doc.id} doc={doc} />
+        <ConflictBar doc={doc} />
         <div class="viewer-stage">
           {doc.kind === 'pdf' && <PdfView key={doc.id} doc={doc} />}
           {doc.kind === 'image' && <ImageView key={doc.id} doc={doc} />}
@@ -77,6 +82,15 @@ export function App() {
     let dispose: (() => void) | undefined
     void platform.onOpenFiles((paths) => void openFiles(paths)).then((d) => (dispose = d))
     void platform.showWindow()
+    const stopAutosave = startAutosave()
+    // Another window asked us to show a file this window already has open.
+    let unactivate: (() => void) | undefined
+    void platform
+      .onActivateFile((path) => {
+        const d = findByPath(path)
+        if (d) activeId.value = d.id
+      })
+      .then((u) => (unactivate = u))
     let unguard: (() => void) | undefined
     void platform
       .onCloseRequested(confirmCloseWindow, () => docs.peek().some((d) => d.dirty.peek()))
@@ -84,6 +98,8 @@ export function App() {
     return () => {
       dispose?.()
       unguard?.()
+      stopAutosave()
+      unactivate?.()
     }
   }, [])
 
@@ -121,6 +137,7 @@ export function App() {
       <Toasts />
       <ContextMenu />
       {batchOpen.value && <BatchDialog />}
+      {versionsOpen.value && activeDoc.value && <VersionsDialog key={activeDoc.value.id} doc={activeDoc.value} />}
     </div>
   )
 }

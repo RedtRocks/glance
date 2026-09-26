@@ -2,7 +2,7 @@ import { computed, signal, type Signal } from '@preact/signals'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 import { History } from './history'
 import { openPdf, readOutline, PasswordRequired, type OutlineNode } from '../pdf/engine'
-import type { Probe } from '../platform'
+import { releaseFile, type Probe } from '../platform'
 import { remapPages, type Markup, type PageMap, type Redaction } from '../core/markup'
 import type { Raster } from '../core/image/raster'
 
@@ -334,6 +334,8 @@ export function removeDoc(id: string): void {
   if (idx < 0) return
   const doc = list[idx]
   if (doc.kind === 'pdf') void doc.proxy.peek()?.loadingTask.destroy()
+  const path = doc.path.peek() ?? (doc.kind === 'pdf' ? doc.convertedFrom : null)
+  if (path) void releaseFile(path)
   const next = list.filter((d) => d.id !== id)
   docs.value = next
   if (activeId.value === id) activeId.value = next[Math.min(idx, next.length - 1)]?.id ?? null

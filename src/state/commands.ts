@@ -8,6 +8,7 @@ import * as actions from './actions'
 import * as shell from './shellActions'
 import * as ocr from './ocrActions'
 import { batchOpen } from './batch'
+import { versionsOpen } from './versions'
 import { activeDoc, activeId, docs, type Doc, type ViewMode } from './documents'
 import { settings, updateSettings } from './settings'
 import { customizeOpen, findOpen, inspectorOpen, promptText, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from './ui'
@@ -123,6 +124,7 @@ export const COMMANDS: Command[] = [
     enabled: () => isPdf() || isImage()
   },
   { id: 'file.exportPages', label: 'Export Selected Pages…', run: () => actions.exportSelectedPages(), enabled: isPdf },
+  { id: 'file.versions', label: 'Browse Versions…', run: () => void (versionsOpen.value = true), enabled: () => !!activeDoc.value?.path.value },
   { id: 'file.batch', label: 'Batch Edit Images…', run: () => void (batchOpen.value = true) },
   { id: 'file.openWith', label: 'Open With Another App…', run: () => shell.openWithOtherApp(), enabled: () => shell.canOpenWith() },
   { id: 'image.setWallpaper', label: 'Set as Desktop Background', run: () => shell.setAsWallpaper('desktop'), enabled: anyImage },
@@ -257,6 +259,7 @@ const ifPaged = () => ifPdf() || multiPage()
 const VISIBILITY: [(() => boolean), string[]][] = [
   [hasDoc, ['file.close', 'file.openWith', 'view.customizeToolbar']],
   [ifViewable, ['view.inspector']],
+  [() => ifPdf() || anyImage(), ['file.versions']],
   [ifViewable, [
     'file.print', 'view.zoomIn', 'view.zoomOut', 'view.actualSize', 'view.zoomToFit', 'view.slideshow', 'view.fullscreen',
     'tools.rotateLeft', 'tools.rotateRight'

@@ -33,6 +33,8 @@ zip = { version = "2", default-features = false, features = ["deflate"] }
 which = "7"
 base64 = "0.22"
 kamadak-exif = "0.6"
+fastcdc = "3"
+blake3 = { version = "1", default-features = false, features = ["std", "pure"] }
 little_exif = "0.6"
 ttf-parser = { version = "0.25", default-features = false, features = ["std", "opentype-layout"] }
 tract-onnx = "0.23"

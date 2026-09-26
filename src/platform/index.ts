@@ -472,3 +472,106 @@ export async function copyText(text: string): Promise<void> {
     await navigator.clipboard.writeText(text)
   }
 }
+
+// ---------------------------------------------------------------------------
+// Version history (see src-tauri/src/history.rs)
+
+export interface VersionInfo {
+  id: string
+  /** ms since epoch */
+  time: number
+  size: number
+  label: string
+}
+
+/** Browser build: an in-memory history, so the UI can be exercised without the backend. */
+const memHistory = new Map<string, { info: VersionInfo; bytes: Uint8Array }[]>()
+
+export const historyAvailable = true
+
+export async function historyRecord(path: string, bytes: Uint8Array, label: string): Promise<VersionInfo | null> {
+  if (!isTauri) {
+    const list = memHistory.get(path) ?? []
+    const last = list.at(-1)
+    if (last && last.bytes.length === bytes.length && last.bytes.every((b, i) => b === bytes[i])) return null
+    const time = Math.max(Date.now(), (last?.info.time ?? 0) + 1)
+    const info = { id: time.toString(16), time, size: bytes.length, label }
+    memHistory.set(path, [...list, { info, bytes: bytes.slice() }])
+    return info
+  }
+  return invoke<VersionInfo | null>('history_record', bytes, { headers: { 'x-path': encodeURIComponent(path), 'x-label': encodeURIComponent(label) } })
+}
+
+/** Records the file as it is on disk right now. */
+export async function historyRecordFile(path: string, label: string): Promise<VersionInfo | null> {
+  if (!isTauri) return historyRecord(path, await readFile(path), label)
+  return invoke<VersionInfo | null>('history_record_file', { path, label })
+}
+
+export async function historyList(path: string): Promise<VersionInfo[]> {
+  if (!isTauri) return (memHistory.get(path) ?? []).map((v) => v.info).reverse()
+  return invoke<VersionInfo[]>('history_list', { path })
+}
+
+export async function historyRead(path: string, id: string): Promise<Uint8Array> {
+  if (!isTauri) {
+    const v = memHistory.get(path)?.find((x) => x.info.id === id)
+    if (!v) throw new Error('That version no longer exists.')
+    return v.bytes.slice()
+  }
+  return new Uint8Array(await invoke<ArrayBuffer>('history_read', { path, id }))
+}
+
+/** Deletes some versions, or all of them. Returns how many were removed. */
+export async function historyDelete(path: string, ids?: string[]): Promise<number> {
+  if (!isTauri) {
+    const list = memHistory.get(path) ?? []
+    const left = ids ? list.filter((v) => !ids.includes(v.info.id)) : []
+    memHistory.set(path, left)
+    return list.length - left.length
+  }
+  return invoke<number>('history_delete', { path, ids: ids ?? null })
+}
+
+export async function historyRename(from: string, to: string): Promise<void> {
+  if (!isTauri) {
+    memHistory.set(to, [...(memHistory.get(to) ?? []), ...(memHistory.get(from) ?? [])])
+    memHistory.delete(from)
+    return
+  }
+  await invoke('history_rename', { from, to })
+}
+
+// ---------------------------------------------------------------------------
+// One window per file, and noticing changes by other apps (see src-tauri/src/files.rs)
+
+/** Claims the file for this window; returns the label of the window that already has it. */
+export async function claimFile(path: string): Promise<string | null> {
+  if (!isTauri) return null
+  return invoke<string | null>('claim_file', { path })
+}
+
+export async function releaseFile(path: string): Promise<void> {
+  if (isTauri) await invoke('release_file', { path }).catch(() => undefined)
+}
+
+/** Brings the owning window forward and shows the file there. */
+export async function focusFile(label: string, path: string): Promise<void> {
+  if (isTauri) await invoke('focus_file', { label, path })
+}
+
+export async function onActivateFile(cb: (path: string) => void): Promise<() => void> {
+  if (!isTauri) return () => {}
+  const { getCurrentWebviewWindow } = await import('@tauri-apps/api/webviewWindow')
+  return getCurrentWebviewWindow().listen<string>('activate-file', (e) => cb(e.payload))
+}
+
+export interface FileStamp {
+  modified: number
+  size: number
+}
+
+export async function fileStamp(path: string): Promise<FileStamp | null> {
+  if (!isTauri) return null
+  return invoke<FileStamp>('file_stamp', { path }).catch(() => null)
+}
