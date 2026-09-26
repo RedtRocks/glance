@@ -4,17 +4,19 @@ import { DEFAULT_STAMPS, hasStamps, parsePageRange, type Slot, type StampEnv, ty
 import { openPdf } from '../../pdf/engine'
 import * as platform from '../../platform'
 import { stampOpen, toast, withBusy } from '../../state/ui'
+import { msg, t } from '../../i18n'
 import { Modal } from './Dialog'
 
 const KEY = 'glance.stamps.v1'
 const PREVIEW_WIDTH = 300
 const TOKENS: [string, string][] = [
-  ['{page}', 'Page number'],
-  ['{pages}', 'Page count'],
-  ['{date}', 'Date'],
-  ['{file}', 'File name']
+  ['{page}', msg('Page number')],
+  ['{pages}', msg('Page count')],
+  ['{date}', msg('Date')],
+  ['{file}', msg('File name')]
 ]
-const TEXT_WATERMARK: TextWatermark = { kind: 'text', text: 'CONFIDENTIAL', size: 0, angle: 45, color: '#808080' }
+const textWatermark = (): TextWatermark => ({ kind: 'text', text: t('CONFIDENTIAL'), size: 0, angle: 45, color: '#808080' })
+const SLOTS: Record<Slot, string> = { left: msg('Left'), center: msg('Center'), right: msg('Right') }
 
 /** Last used options (without an image watermark, which isn't worth storing). */
 function loadOptions(): StampOptions {
@@ -43,7 +45,7 @@ export function StampDialog({ doc }: { doc: PdfDoc }) {
   const [o, setO] = useState<StampOptions>(loadOptions)
   const [tab, setTab] = useState<'text' | 'watermark' | 'pages'>('text')
   const [focused, setFocused] = useState<[ 'header' | 'footer', Slot]>(['footer', 'center'])
-  const [lastText, setLastText] = useState<TextWatermark>(o.watermark?.kind === 'text' ? o.watermark : TEXT_WATERMARK)
+  const [lastText, setLastText] = useState<TextWatermark>(o.watermark?.kind === 'text' ? o.watermark : textWatermark())
   const [previewPage, setPreviewPage] = useState(0)
   const [previewError, setPreviewError] = useState<string | null>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
@@ -108,11 +110,11 @@ export function StampDialog({ doc }: { doc: PdfDoc }) {
   }
 
   const pickImage = async (): Promise<void> => {
-    const [path] = await platform.openDialog({ multiple: false, filters: [{ name: 'PNG or JPEG images', extensions: ['png', 'jpg', 'jpeg'] }] })
+    const [path] = await platform.openDialog({ multiple: false, filters: [{ name: t('PNG or JPEG images'), extensions: ['png', 'jpg', 'jpeg'] }] })
     if (!path) return
     const bytes = await platform.readFile(path)
     const type = bytes[0] === 0x89 && bytes[1] === 0x50 ? 'png' : bytes[0] === 0xff && bytes[1] === 0xd8 ? 'jpg' : null
-    if (!type) return toast('Choose a PNG or JPEG image.', 'error')
+    if (!type) return toast(t('Choose a PNG or JPEG image.'), 'error')
     set({ watermark: { kind: 'image', bytes, type, scale: 0.5 } })
   }
 
@@ -120,10 +122,10 @@ export function StampDialog({ doc }: { doc: PdfDoc }) {
     close()
     saveOptions(o)
     try {
-      await withBusy('Adding header, footer and watermark…', () =>
+      await withBusy(t('Adding header, footer and watermark…'), () =>
         doc.apply('Header, Footer & Watermark', async (bytes) => (await import('../../core/stamps')).stampPdf(bytes, o, env(doc)))
       )
-      toast('Added to the pages. Save to keep the result, or undo to remove it.')
+      toast(t('Added to the pages. Save to keep the result, or undo to remove it.'))
     } catch (e) {
       toast((e as Error).message ?? String(e), 'error')
     }
@@ -137,8 +139,8 @@ export function StampDialog({ doc }: { doc: PdfDoc }) {
           <input
             key={slot}
             type="text"
-            aria-label={`${label} ${slot}`}
-            placeholder={slot[0].toUpperCase() + slot.slice(1)}
+            aria-label={`${label}: ${t(SLOTS[slot])}`}
+            placeholder={t(SLOTS[slot])}
             value={o[name][slot]}
             ref={(el) => void (el ? inputs.current.set(`${name}.${slot}`, el) : inputs.current.delete(`${name}.${slot}`))}
             onFocus={() => setFocused([name, slot])}
@@ -153,86 +155,86 @@ export function StampDialog({ doc }: { doc: PdfDoc }) {
   const index = selected?.indexOf(shown) ?? -1
   return (
     <Modal
-      title="Header, footer & watermark"
+      title={t('Header, footer & watermark')}
       wide
       class="stamp-modal"
       onClose={close}
       footer={
         <>
           <button class="btn" onClick={close}>
-            Cancel
+            {t('Cancel')}
           </button>
           <button class="btn primary" disabled={!selected?.length || !hasStamps(o)} onClick={() => void apply()}>
-            Add
+            {t('Add')}
           </button>
         </>
       }
     >
       <div class="stamp">
         <div class="stamp-preview">
-          <canvas ref={canvas} aria-label="Preview" />
+          <canvas ref={canvas} aria-label={t('Preview')} />
           {previewError && <p class="field-error small">{previewError}</p>}
           {selected && selected.length > 1 && (
             <div class="stamp-pager">
               <button class="btn" disabled={index <= 0} onClick={() => setPreviewPage(selected[index - 1])}>
-                Previous
+                {t('Previous')}
               </button>
-              <span class="muted">Page {shown + 1}</span>
+              <span class="muted">{t('Page {page}', { page: shown + 1 })}</span>
               <button class="btn" disabled={index >= selected.length - 1} onClick={() => setPreviewPage(selected[index + 1])}>
-                Next
+                {t('Next')}
               </button>
             </div>
           )}
         </div>
         <div class="batch-options">
           <div class="segmented" role="tablist">
-            <button role="tab" aria-selected={tab === 'text'} onClick={() => setTab('text')}>Header & footer</button>
-            <button role="tab" aria-selected={tab === 'watermark'} onClick={() => setTab('watermark')}>Watermark</button>
-            <button role="tab" aria-selected={tab === 'pages'} onClick={() => setTab('pages')}>Pages</button>
+            <button role="tab" aria-selected={tab === 'text'} onClick={() => setTab('text')}>{t('Header & footer')}</button>
+            <button role="tab" aria-selected={tab === 'watermark'} onClick={() => setTab('watermark')}>{t('Watermark')}</button>
+            <button role="tab" aria-selected={tab === 'pages'} onClick={() => setTab('pages')}>{t('Pages')}</button>
           </div>
           {tab === 'text' && (
             <>
-              {row('header', 'Header')}
-              {row('footer', 'Footer')}
-              <div class="stamp-tokens" aria-label="Insert into the selected box">
+              {row('header', t('Header'))}
+              {row('footer', t('Footer'))}
+              <div class="stamp-tokens" aria-label={t('Insert into the selected box')}>
                 {TOKENS.map(([token, label]) => (
-                  <button key={token} class="btn" title={`Insert ${token}`} onPointerDown={(e) => e.preventDefault()} onClick={() => insertToken(token)}>
-                    {label}
+                  <button key={token} class="btn" title={t('Insert {token}', { token })} onPointerDown={(e) => e.preventDefault()} onClick={() => insertToken(token)}>
+                    {t(label)}
                   </button>
                 ))}
               </div>
               <div class="stamp-row">
                 <label class="field">
-                  <span>Font</span>
+                  <span>{t('Font')}</span>
                   <select value={o.font} onChange={(e) => set({ font: (e.target as HTMLSelectElement).value as StampFont })}>
-                    <option value="Helvetica">Sans serif</option>
-                    <option value="Times">Serif</option>
-                    <option value="Courier">Monospace</option>
+                    <option value="Helvetica">{t('Sans serif')}</option>
+                    <option value="Times">{t('Serif')}</option>
+                    <option value="Courier">{t('Monospace')}</option>
                   </select>
                 </label>
                 <label class="field">
-                  <span>Size</span>
+                  <span>{t('Size')}</span>
                   <select value={o.size} onChange={(e) => set({ size: Number((e.target as HTMLSelectElement).value) })}>
                     {[8, 9, 10, 11, 12, 14, 16, 18, 24].map((n) => (
                       <option key={n} value={n}>
-                        {n} pt
+                        {t('{size} pt', { size: n })}
                       </option>
                     ))}
                   </select>
                 </label>
                 <label class="field">
-                  <span>Color</span>
+                  <span>{t('Color')}</span>
                   <input type="color" value={o.color} onInput={(e) => set({ color: (e.target as HTMLInputElement).value })} />
                 </label>
               </div>
               <label class="field">
-                <span>Distance from edge</span>
+                <span>{t('Distance from edge')}</span>
                 <select value={o.margin} onChange={(e) => set({ margin: Number((e.target as HTMLSelectElement).value) })}>
                   {[
-                    [14, 'Small (5 mm)'],
-                    [28, 'Medium (10 mm)'],
-                    [43, 'Large (15 mm)'],
-                    [72, 'Extra large (25 mm)']
+                    [14, t('Small (5 mm)')],
+                    [28, t('Medium (10 mm)')],
+                    [43, t('Large (15 mm)')],
+                    [72, t('Extra large (25 mm)')]
                   ].map(([v, l]) => (
                     <option key={v} value={v}>
                       {l}
@@ -245,7 +247,7 @@ export function StampDialog({ doc }: { doc: PdfDoc }) {
           {tab === 'watermark' && (
             <>
               <label class="field">
-                <span>Watermark</span>
+                <span>{t('Watermark')}</span>
                 <select
                   value={wm?.kind ?? 'none'}
                   onChange={(e) => {
@@ -255,15 +257,15 @@ export function StampDialog({ doc }: { doc: PdfDoc }) {
                     else void pickImage()
                   }}
                 >
-                  <option value="none">None</option>
-                  <option value="text">Text</option>
-                  <option value="image">Image…</option>
+                  <option value="none">{t('None')}</option>
+                  <option value="text">{t('Text')}</option>
+                  <option value="image">{t('Image…')}</option>
                 </select>
               </label>
               {wm?.kind === 'text' && (
                 <>
                   <label class="field">
-                    <span>Text</span>
+                    <span>{t('Text')}</span>
                     <input
                       type="text"
                       value={wm.text}
@@ -276,26 +278,26 @@ export function StampDialog({ doc }: { doc: PdfDoc }) {
                   </label>
                   <div class="stamp-row">
                     <label class="field">
-                      <span>Angle</span>
+                      <span>{t('Angle')}</span>
                       <select value={wm.angle} onChange={(e) => set({ watermark: { ...wm, angle: Number((e.target as HTMLSelectElement).value) } })}>
-                        <option value={45}>Diagonal</option>
-                        <option value={0}>Horizontal</option>
-                        <option value={90}>Vertical</option>
+                        <option value={45}>{t('Diagonal')}</option>
+                        <option value={0}>{t('Horizontal')}</option>
+                        <option value={90}>{t('Vertical')}</option>
                       </select>
                     </label>
                     <label class="field">
-                      <span>Size</span>
+                      <span>{t('Size')}</span>
                       <select value={wm.size} onChange={(e) => set({ watermark: { ...wm, size: Number((e.target as HTMLSelectElement).value) } })}>
-                        <option value={0}>Fit page</option>
+                        <option value={0}>{t('Fit page')}</option>
                         {[24, 36, 48, 72, 96].map((n) => (
                           <option key={n} value={n}>
-                            {n} pt
+                            {t('{size} pt', { size: n })}
                           </option>
                         ))}
                       </select>
                     </label>
                     <label class="field">
-                      <span>Color</span>
+                      <span>{t('Color')}</span>
                       <input type="color" value={wm.color} onInput={(e) => set({ watermark: { ...wm, color: (e.target as HTMLInputElement).value } })} />
                     </label>
                   </div>
@@ -304,23 +306,23 @@ export function StampDialog({ doc }: { doc: PdfDoc }) {
               {wm?.kind === 'image' && (
                 <div class="stamp-row">
                   <label class="field">
-                    <span>Width</span>
+                    <span>{t('Width')}</span>
                     <select value={wm.scale} onChange={(e) => set({ watermark: { ...wm, scale: Number((e.target as HTMLSelectElement).value) } })}>
                       {[0.25, 0.5, 0.75, 1].map((n) => (
                         <option key={n} value={n}>
-                          {n * 100}% of page
+                          {t('{percent}% of page', { percent: n * 100 })}
                         </option>
                       ))}
                     </select>
                   </label>
                   <button class="btn stamp-change" onClick={() => void pickImage()}>
-                    Change image…
+                    {t('Change image…')}
                   </button>
                 </div>
               )}
               {wm && (
                 <label class="field">
-                  <span>Opacity: {Math.round(o.opacity * 100)}%</span>
+                  <span>{t('Opacity: {percent}%', { percent: Math.round(o.opacity * 100) })}</span>
                   <input type="range" min={5} max={100} step={5} value={Math.round(o.opacity * 100)} onInput={(e) => set({ opacity: Number((e.target as HTMLInputElement).value) / 100 })} />
                 </label>
               )}
@@ -329,17 +331,17 @@ export function StampDialog({ doc }: { doc: PdfDoc }) {
           {tab === 'pages' && (
             <>
               <label class="field">
-                <span>Pages</span>
-                <input type="text" placeholder={`All ${pageCount} pages`} value={o.pages} onInput={(e) => set({ pages: (e.target as HTMLInputElement).value })} />
-                {selected ? <small>For example 2-10 to skip a cover page, or 1, 3, 5-.</small> : <small class="field-error">Use page numbers and ranges, like 2-10 or 1, 3, 5-.</small>}
+                <span>{t('Pages')}</span>
+                <input type="text" placeholder={t('{count, plural, one {All # page} other {All # pages}}', { count: pageCount })} value={o.pages} onInput={(e) => set({ pages: (e.target as HTMLInputElement).value })} />
+                {selected ? <small>{t('For example 2-10 to skip a cover page, or 1, 3, 5-.')}</small> : <small class="field-error">{t('Use page numbers and ranges, like 2-10 or 1, 3, 5-.')}</small>}
               </label>
               <label class="field">
-                <span>Number the first page</span>
+                <span>{t('Number the first page')}</span>
                 <input type="number" min={0} value={o.startNumber} onInput={(e) => set({ startNumber: Math.max(0, Math.floor(Number((e.target as HTMLInputElement).value) || 0)) })} />
               </label>
             </>
           )}
-          <p class="muted small">The text becomes part of the pages, so it prints and shows in every PDF app. You can undo this until you save.</p>
+          <p class="muted small">{t('The text becomes part of the pages, so it prints and shows in every PDF app. You can undo this until you save.')}</p>
         </div>
       </div>
     </Modal>

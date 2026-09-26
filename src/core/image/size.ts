@@ -1,16 +1,18 @@
 /** Adjust Size (Preview's Tools → Adjust Size): units, resolution and presets. */
+import { msg, t } from '../../i18n'
 
 export type Unit = 'px' | 'percent' | 'in' | 'cm' | 'mm' | 'pt'
 
+/** Labels double as ids; the worded ones are marked with msg(), so show them with t(). */
 export const FIT_PRESETS: [string, number, number][] = [
   ['320 × 240', 320, 240],
   ['640 × 480', 640, 480],
   ['800 × 600', 800, 600],
   ['1024 × 768', 1024, 768],
   ['1280 × 1024', 1280, 1024],
-  ['1920 × 1080 (Full HD)', 1920, 1080],
+  [msg('1920 × 1080 (Full HD)'), 1920, 1080],
   ['2560 × 1440', 2560, 1440],
-  ['3840 × 2160 (4K)', 3840, 2160]
+  [msg('3840 × 2160 (4K)'), 3840, 2160]
 ]
 
 /** Pixels for a length in `unit` at `dpi`; `basePx` is the original size for percent. */
@@ -62,5 +64,5 @@ export function proportional(changed: number, fromChanged: number, fromOther: nu
 /** Approximate uncompressed size, the "Resulting size" line in Preview. */
 export function describeBytes(w: number, h: number): string {
   const bytes = w * h * 4
-  return bytes > 1e6 ? `${(bytes / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1e3))} KB`
+  return bytes > 1e6 ? t('{size} MB', { size: Math.round(bytes / 1e5) / 10 }) : t('{size} KB', { size: Math.max(1, Math.round(bytes / 1e3)) })
 }

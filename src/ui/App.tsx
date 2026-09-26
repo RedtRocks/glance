@@ -127,6 +127,7 @@ export function App() {
   }, [doc?.id])
   useEffect(() => {
     const name = doc?.name.value
+    // i18n-ignore: Windows' "file - App" title format and the product name aren't translated
     void platform.setWindowTitle(name ? `${doc?.dirty.value ? '• ' : ''}${name} - Glance` : 'Glance')
   }, [doc, doc?.name.value, doc?.dirty.value])
 

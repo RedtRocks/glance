@@ -7,18 +7,22 @@ import { toast } from '../../state/ui'
 import { openPdf } from '../../pdf/engine'
 import * as platform from '../../platform'
 import { Modal } from './Dialog'
+import { intlLocale, msg, t } from '../../i18n'
 
 function bytes(n: number): string {
-  return n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`
+  return n < 1024 * 1024
+    ? t('{size} KB', { size: Math.max(1, Math.round(n / 1024)) })
+    : t('{size} MB', { size: (n / 1024 / 1024).toLocaleString(intlLocale.value, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) })
 }
 
-function day(t: number): string {
-  const d = new Date(t)
+/** The day heading ("Today", a full date); `inSentence` gives the form used mid-sentence ("today"). */
+function day(time: number, inSentence = false): string {
+  const d = new Date(time)
   const today = new Date()
   const yesterday = new Date(Date.now() - 86_400_000)
-  if (d.toDateString() === today.toDateString()) return 'Today'
-  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
-  return d.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  if (d.toDateString() === today.toDateString()) return inSentence ? t('today') : t('Today')
+  if (d.toDateString() === yesterday.toDateString()) return inSentence ? t('yesterday') : t('Yesterday')
+  return d.toLocaleDateString(intlLocale.value, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 }
 
 /** First page (PDF) or the image itself, from a version's bytes. */
@@ -54,7 +58,7 @@ function Preview({ data, isPdf }: { data: Uint8Array | null; isPdf: boolean }) {
       if (made?.startsWith('blob:')) URL.revokeObjectURL(made)
     }
   }, [data])
-  return <div class="version-preview">{url ? <img src={url} alt="Preview of the selected version" /> : <span class="muted">{data ? 'Loading preview…' : 'Select a version'}</span>}</div>
+  return <div class="version-preview">{url ? <img src={url} alt={t('Preview of the selected version')} /> : <span class="muted">{data ? t('Loading preview…') : t('Select a version')}</span>}</div>
 }
 
 /** File → Browse Versions: every saved version of this file, like Preview's Browse All Versions. */
@@ -81,7 +85,7 @@ export function VersionsDialog({ doc }: { doc: Doc }) {
 
   if (!path) return null
   const current = list?.find((v) => v.id === sel)
-  const stamp = (v: platform.VersionInfo) => new Date(v.time).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+  const stamp = (v: platform.VersionInfo) => new Date(v.time).toLocaleTimeString(intlLocale.value, { hour: '2-digit', minute: '2-digit' })
 
   const openCopy = async (): Promise<void> => {
     if (!data || !current) return
@@ -94,51 +98,56 @@ export function VersionsDialog({ doc }: { doc: Doc }) {
   }
   const restore = async (): Promise<void> => {
     if (!data || !current) return
+    const question = t('Replace “{file}” with the version from {day} at {time}? The current file is kept as a version, so you can switch back.', {
+      file: doc.name.peek(),
+      day: day(current.time, true),
+      time: stamp(current)
+    })
     const ok = await platform.confirmDialog(
-      `Replace “${doc.name.peek()}” with the version from ${day(current.time).toLowerCase()} at ${stamp(current)}? The current file is kept as a version, so you can switch back.${doc.dirty.peek() ? ' Your unsaved changes will be discarded.' : ''}`,
-      'Restore version',
-      'Restore'
+      doc.dirty.peek() ? `${question} ${t('Your unsaved changes will be discarded.')}` : question,
+      t('Restore version'),
+      t('Restore')
     )
     if (!ok) return
-    await afterWrite(path, 'Before restoring')
+    await afterWrite(path, msg('Before restoring'))
     await platform.writeFile(path, data)
-    await afterWrite(path, 'Restored', data)
+    await afterWrite(path, msg('Restored'), data)
     close()
     removeDoc(doc.id)
     await openFiles([path])
-    toast('Version restored')
+    toast(t('Version restored'))
   }
   const remove = async (ids?: string[]): Promise<void> => {
     const n = await platform.historyDelete(path, ids)
-    toast(`Deleted ${n} ${n === 1 ? 'version' : 'versions'}`)
-    setTick((t) => t + 1)
+    toast(t('{count, plural, one {Deleted # version} other {Deleted # versions}}', { count: n }))
+    setTick((k) => k + 1)
   }
 
   let lastDay = ''
   return (
     <Modal
-      title={`Versions of “${doc.name.value}”`}
+      title={t('Versions of “{file}”', { file: doc.name.value })}
       wide
       onClose={close}
       footer={
         <>
           <button class="btn" disabled={!list?.length} onClick={() => void remove()}>
-            Delete all versions
+            {t('Delete all versions')}
           </button>
           <span class="tb-spacer" />
           <button class="btn" disabled={!data} onClick={() => void openCopy()}>
-            Open as copy
+            {t('Open as copy')}
           </button>
           <button class="btn primary" disabled={!data} onClick={() => void restore()}>
-            Restore
+            {t('Restore')}
           </button>
         </>
       }
     >
       <div class="versions">
-        <ul class="version-list" role="listbox" aria-label="Versions">
-          {list === null && <li class="muted">Loading…</li>}
-          {list?.length === 0 && <li class="muted">No versions yet. Every save of this file keeps one.</li>}
+        <ul class="version-list" role="listbox" aria-label={t('Versions')}>
+          {list === null && <li class="muted">{t('Loading…')}</li>}
+          {list?.length === 0 && <li class="muted">{t('No versions yet. Every save of this file keeps one.')}</li>}
           {list?.map((v) => {
             const d = day(v.time)
             const heading = d !== lastDay ? d : null
@@ -148,7 +157,7 @@ export function VersionsDialog({ doc }: { doc: Doc }) {
                 {heading && <div class="version-day">{heading}</div>}
                 <button role="option" aria-selected={v.id === sel} class={`version-item ${v.id === sel ? 'selected' : ''}`} onClick={() => setSel(v.id)}>
                   <span class="version-time">{stamp(v)}</span>
-                  <span class="version-label">{v.label || 'Saved'}</span>
+                  <span class="version-label">{v.label ? t(v.label) : t('Saved')}</span>
                   <span class="muted">{bytes(v.size)}</span>
                 </button>
               </li>
@@ -159,12 +168,16 @@ export function VersionsDialog({ doc }: { doc: Doc }) {
           <Preview data={data} isPdf={isPdf} />
           {current && (
             <button class="btn" onClick={() => void remove([current.id])}>
-              Delete this version
+              {t('Delete this version')}
             </button>
           )}
         </div>
       </div>
-      <p class="muted small">Versions are kept in Glance’s app data on this PC: every version from the last day, then one a day for a month, then one a week. The oldest go first when space is needed.</p>
+      <p class="muted small">
+        {t(
+          'Versions are kept in Glance’s app data on this PC: every version from the last day, then one a day for a month, then one a week. The oldest go first when space is needed.'
+        )}
+      </p>
     </Modal>
   )
 }

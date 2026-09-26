@@ -10,6 +10,7 @@ import { NotesList } from './NotesList'
 import { BookmarksList } from './BookmarksList'
 import { Icon } from '../Icon'
 import type { IconName } from '../icons'
+import { t } from '../../i18n'
 
 const THUMB_WIDTH = 120
 
@@ -20,7 +21,7 @@ function ThumbList({ doc }: { doc: PdfDoc }) {
   const drag = pageDrag.value
   const indicator = drag && drag.targetDocId === doc.id ? drag.insertAt : null
   return (
-    <div class="thumb-list" data-page-list={doc.id} role="listbox" aria-label="Pages" aria-multiselectable="true">
+    <div class="thumb-list" data-page-list={doc.id} role="listbox" aria-label={t('Pages')} aria-multiselectable="true">
       {Array.from({ length: count }, (_, i) => {
         const selected = selection.includes(i)
         return (
@@ -31,7 +32,7 @@ function ThumbList({ doc }: { doc: PdfDoc }) {
               data-page-index={i}
               role="option"
               aria-selected={selected}
-              aria-label={`Page ${i + 1}`}
+              aria-label={t('Page {page}', { page: i + 1 })}
               onPointerDown={(e) => {
                 const pages = selected ? [...selection].sort((a, b) => a - b) : [i]
                 const icon = () => (e.currentTarget as HTMLElement | null)?.querySelector('canvas') ?? null
@@ -57,7 +58,7 @@ function ThumbList({ doc }: { doc: PdfDoc }) {
 function ImageThumbList({ doc }: { doc: ImageDoc }) {
   const current = doc.current.value
   return (
-    <div class="thumb-list" role="listbox" aria-label="Pages">
+    <div class="thumb-list" role="listbox" aria-label={t('Pages')}>
       {Array.from({ length: doc.pageCount.value }, (_, i) => (
         <div
           key={i}
@@ -66,7 +67,7 @@ function ImageThumbList({ doc }: { doc: ImageDoc }) {
           aria-selected={i === current}
           onClick={() => (doc.current.value = i)}
         >
-          <img class="thumb-img" loading="lazy" src={imageUrl(doc.probe, i, 256)} width={THUMB_WIDTH} alt={`Page ${i + 1}`} />
+          <img class="thumb-img" loading="lazy" src={imageUrl(doc.probe, i, 256)} width={THUMB_WIDTH} alt={t('Page {page}', { page: i + 1 })} />
           <span class="thumb-label">{i + 1}</span>
         </div>
       ))}
@@ -92,7 +93,7 @@ function OutlineTree({ nodes, doc }: { nodes: OutlineNode[]; doc: PdfDoc }): JSX
 
 function Toc({ doc }: { doc: PdfDoc }) {
   const outline = doc.outline.value
-  if (!outline.length) return <p class="sidebar-empty">This document has no table of contents.</p>
+  if (!outline.length) return <p class="sidebar-empty">{t('This document has no table of contents.')}</p>
   return <OutlineTree nodes={outline} doc={doc} />
 }
 
@@ -135,10 +136,10 @@ export function Sidebar({ doc }: { doc: Doc }) {
         <div class="sidebar-tabs" role="tablist">
           {(
             [
-              ['thumbnails', 'grid', 'Thumbnails'],
-              ['toc', 'toc', 'Table of contents'],
-              ['notes', 'notes', 'Highlights and notes'],
-              ['bookmarks', 'bookmarks', 'Bookmarks']
+              ['thumbnails', 'grid', t('Thumbnails')],
+              ['toc', 'toc', t('Table of contents')],
+              ['notes', 'notes', t('Highlights and notes')],
+              ['bookmarks', 'bookmarks', t('Bookmarks')]
             ] as [typeof doc.sidebar.value, IconName, string][]
           ).map(([mode, icon, label]) => {
             const selected = doc.sidebar.value === mode || (mode === 'thumbnails' && doc.sidebar.value === 'none')

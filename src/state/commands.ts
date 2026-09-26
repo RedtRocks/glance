@@ -3,6 +3,7 @@
  * the shortcut editor all read from here.
  */
 import { cycleTool, displayCombo, normalizeCombo, stepWidth } from '../core/shortcuts'
+import { msg, t } from '../i18n'
 import * as platform from '../platform'
 import * as actions from './actions'
 import * as shell from './shellActions'
@@ -18,7 +19,7 @@ import { printDoc } from './print'
 import { applyRedactions } from './actions'
 import { markupBar, restyle, selectedId, setTool, SHAPE_TOOLS, signatureDialog, style, tool, WIDTHS, type Tool } from './markupState'
 import { bookmarksFor, setBookmarks } from './bookmarks'
-import { adjustColorOpen, adjustSizeOpen, exportOpen, imageSelection } from './imageState'
+import { adjustColorOpen, adjustSizeOpen, exportOpen, imageSelection, straighten } from './imageState'
 import * as img from './imageActions'
 
 export interface Command {
@@ -116,46 +117,46 @@ function cycleTab(dir: 1 | -1): void {
 
 export const COMMANDS: Command[] = [
   // File
-  { id: 'file.open', label: 'Open…', keys: ['Ctrl+O'], run: actions.openWithDialog },
-  { id: 'file.newFromClipboard', label: 'New from Clipboard', keys: ['Ctrl+N'], run: () => img.newFromClipboard(), enabled: () => platform.isTauri },
-  { id: 'file.scan', label: 'Import from Scanner…', run: () => void (scanOpen.value = true), enabled: () => platform.scanAvailable },
-  { id: 'file.newWindow', label: 'New Window', keys: ['Ctrl+Shift+N'], run: () => platform.openNewWindow([]) },
-  { id: 'file.save', label: 'Save', keys: ['Ctrl+S'], run: () => actions.save(), enabled: () => isPdf() || isImage() },
-  { id: 'file.saveAs', label: 'Save As…', keys: ['Ctrl+Shift+S'], run: () => actions.saveAs(), enabled: () => isPdf() || isImage() },
+  { id: 'file.open', label: msg('Open…'), keys: ['Ctrl+O'], run: actions.openWithDialog },
+  { id: 'file.newFromClipboard', label: msg('New from Clipboard'), keys: ['Ctrl+N'], run: () => img.newFromClipboard(), enabled: () => platform.isTauri },
+  { id: 'file.scan', label: msg('Import from Scanner…'), run: () => void (scanOpen.value = true), enabled: () => platform.scanAvailable },
+  { id: 'file.newWindow', label: msg('New Window'), keys: ['Ctrl+Shift+N'], run: () => platform.openNewWindow([]) },
+  { id: 'file.save', label: msg('Save'), keys: ['Ctrl+S'], run: () => actions.save(), enabled: () => isPdf() || isImage() },
+  { id: 'file.saveAs', label: msg('Save As…'), keys: ['Ctrl+Shift+S'], run: () => actions.saveAs(), enabled: () => isPdf() || isImage() },
   {
     id: 'file.export',
-    label: 'Export…',
+    label: msg('Export…'),
     keys: ['Ctrl+E'],
     // Models export a snapshot of the current view.
     run: () => void (model() ? (model()!.viewRequest.value = { kind: 'snapshot' }) : (exportOpen.value = true)),
     enabled: () => isPdf() || isImage() || !!model()
   },
-  { id: 'file.exportPages', label: 'Export Selected Pages…', run: () => actions.exportSelectedPages(), enabled: isPdf },
-  { id: 'file.versions', label: 'Browse Versions…', run: () => void (versionsOpen.value = true), enabled: () => !!activeDoc.value?.path.value },
-  { id: 'file.reduce', label: 'Reduce File Size…', run: () => void (reduceOpen.value = true), enabled: isPdf },
-  { id: 'file.cleanup', label: 'Clean Up PDF…', run: () => void (cleanupOpen.value = true), enabled: isPdf },
-  { id: 'file.collage', label: 'Create Collage…', run: () => void (collageOpen.value = true) },
-  { id: 'file.batch', label: 'Batch Edit Images…', run: () => void (batchOpen.value = true) },
-  { id: 'file.share', label: 'Share…', run: () => shell.shareDoc(), enabled: () => platform.isTauri },
-  { id: 'file.openWith', label: 'Open With Another App…', run: () => shell.openWithOtherApp(), enabled: () => shell.canOpenWith() },
-  { id: 'image.setWallpaper', label: 'Set as Desktop Background', run: () => shell.setAsWallpaper('desktop'), enabled: anyImage },
-  { id: 'image.setLockScreen', label: 'Set as Lock Screen', run: () => shell.setAsWallpaper('lock'), enabled: anyImage },
-  { id: 'file.print', label: 'Print…', keys: ['Ctrl+P'], run: () => printDoc(activeDoc.value), enabled: hasDoc },
-  { id: 'file.close', label: 'Close Tab', keys: ['Ctrl+W', 'Ctrl+F4'], run: () => actions.closeDoc(), enabled: hasDoc },
-  { id: 'file.settings', label: 'Settings', keys: ['Ctrl+,'], run: () => void (settingsOpen.value = true) },
+  { id: 'file.exportPages', label: msg('Export Selected Pages…'), run: () => actions.exportSelectedPages(), enabled: isPdf },
+  { id: 'file.versions', label: msg('Browse Versions…'), run: () => void (versionsOpen.value = true), enabled: () => !!activeDoc.value?.path.value },
+  { id: 'file.reduce', label: msg('Reduce File Size…'), run: () => void (reduceOpen.value = true), enabled: isPdf },
+  { id: 'file.cleanup', label: msg('Clean Up PDF…'), run: () => void (cleanupOpen.value = true), enabled: isPdf },
+  { id: 'file.collage', label: msg('Create Collage…'), run: () => void (collageOpen.value = true) },
+  { id: 'file.batch', label: msg('Batch Edit Images…'), run: () => void (batchOpen.value = true) },
+  { id: 'file.share', label: msg('Share…'), run: () => shell.shareDoc(), enabled: () => platform.isTauri },
+  { id: 'file.openWith', label: msg('Open With Another App…'), run: () => shell.openWithOtherApp(), enabled: () => shell.canOpenWith() },
+  { id: 'image.setWallpaper', label: msg('Set as Desktop Background'), run: () => shell.setAsWallpaper('desktop'), enabled: anyImage },
+  { id: 'image.setLockScreen', label: msg('Set as Lock Screen'), run: () => shell.setAsWallpaper('lock'), enabled: anyImage },
+  { id: 'file.print', label: msg('Print…'), keys: ['Ctrl+P'], run: () => printDoc(activeDoc.value), enabled: hasDoc },
+  { id: 'file.close', label: msg('Close Tab'), keys: ['Ctrl+W', 'Ctrl+F4'], run: () => actions.closeDoc(), enabled: hasDoc },
+  { id: 'file.settings', label: msg('Settings'), keys: ['Ctrl+,'], run: () => void (settingsOpen.value = true) },
   // Edit
-  { id: 'edit.undo', label: 'Undo', keys: ['Ctrl+Z'], run: () => actions.undo(), enabled: () => !!(pdf() ?? image())?.history.canUndo },
-  { id: 'edit.redo', label: 'Redo', keys: ['Ctrl+Y', 'Ctrl+Shift+Z'], run: () => actions.redo(), enabled: () => !!(pdf() ?? image())?.history.canRedo },
-  { id: 'edit.selectAll', label: 'Select All Pages', keys: ['Ctrl+A'], run: () => actions.selectAllPages(), enabled: isPdf },
-  { id: 'edit.find', label: 'Find…', keys: ['Ctrl+F'], run: () => void (findOpen.value = true), enabled: isPdf },
-  { id: 'edit.insertBlank', label: 'Insert Blank Page', run: () => actions.insertBlankPage(), enabled: isPdf },
-  { id: 'edit.insertFile', label: 'Insert Page from File…', run: () => actions.insertFromFileDialog(), enabled: isPdf },
-  { id: 'edit.stamps', label: 'Header, Footer & Watermark…', run: () => void (stampOpen.value = true), enabled: isPdf },
-  { id: 'edit.duplicatePages', label: 'Duplicate Pages', run: () => actions.duplicatePages(), enabled: isPdf },
-  { id: 'file.split', label: 'Split PDF…', run: () => actions.splitDocument(), enabled: () => isPdf() && (pdf()?.pageCount.peek() ?? 0) > 1 },
+  { id: 'edit.undo', label: msg('Undo'), keys: ['Ctrl+Z'], run: () => actions.undo(), enabled: () => !!(pdf() ?? image())?.history.canUndo },
+  { id: 'edit.redo', label: msg('Redo'), keys: ['Ctrl+Y', 'Ctrl+Shift+Z'], run: () => actions.redo(), enabled: () => !!(pdf() ?? image())?.history.canRedo },
+  { id: 'edit.selectAll', label: msg('Select All Pages'), keys: ['Ctrl+A'], run: () => actions.selectAllPages(), enabled: isPdf },
+  { id: 'edit.find', label: msg('Find…'), keys: ['Ctrl+F'], run: () => void (findOpen.value = true), enabled: isPdf },
+  { id: 'edit.insertBlank', label: msg('Insert Blank Page'), run: () => actions.insertBlankPage(), enabled: isPdf },
+  { id: 'edit.insertFile', label: msg('Insert Page from File…'), run: () => actions.insertFromFileDialog(), enabled: isPdf },
+  { id: 'edit.stamps', label: msg('Header, Footer & Watermark…'), run: () => void (stampOpen.value = true), enabled: isPdf },
+  { id: 'edit.duplicatePages', label: msg('Duplicate Pages'), run: () => actions.duplicatePages(), enabled: isPdf },
+  { id: 'file.split', label: msg('Split PDF…'), run: () => actions.splitDocument(), enabled: () => isPdf() && (pdf()?.pageCount.peek() ?? 0) > 1 },
   {
     id: 'edit.delete',
-    label: 'Delete',
+    label: msg('Delete'),
     keys: ['Delete', 'Backspace'],
     // Selected markup first; otherwise the selected pages.
     run: () => {
@@ -173,22 +174,22 @@ export const COMMANDS: Command[] = [
     },
     enabled: () => isPdf() || isImage()
   },
-  { id: 'edit.invertSelection', label: 'Invert Selection', keys: ['Ctrl+Shift+I'], run: () => void img.invertSelection(image()!), enabled: () => isImage() && !!imageSelection.value },
-  { id: 'edit.deletePages', label: 'Delete Selected Pages', run: () => actions.deletePages(), enabled: isPdf },
-  { id: 'edit.addBookmark', label: 'Add Bookmark', keys: ['Ctrl+D'], run: () => addBookmark(), enabled: isPdf },
+  { id: 'edit.invertSelection', label: msg('Invert Selection'), keys: ['Ctrl+Shift+I'], run: () => void img.invertSelection(image()!), enabled: () => isImage() && !!imageSelection.value },
+  { id: 'edit.deletePages', label: msg('Delete Selected Pages'), run: () => actions.deletePages(), enabled: isPdf },
+  { id: 'edit.addBookmark', label: msg('Add Bookmark'), keys: ['Ctrl+D'], run: () => addBookmark(), enabled: isPdf },
   // View
-  { id: 'view.hideSidebar', label: 'No Sidebar', keys: ['Ctrl+Shift+1'], run: () => showSidebar('none'), enabled: hasDoc, radio: 'sidebar', checked: () => !sidebarShown() },
-  { id: 'view.thumbnails', label: 'Thumbnails', keys: ['Ctrl+Shift+2'], run: () => showSidebar('thumbnails'), enabled: multiPage, radio: 'sidebar', checked: () => sidebarShown() === 'thumbnails' },
-  { id: 'view.toc', label: 'Table of Contents', keys: ['Ctrl+Shift+3'], run: () => showSidebar('toc'), enabled: isPdf, radio: 'sidebar', checked: () => sidebarShown() === 'toc' },
-  { id: 'view.notes', label: 'Highlights and Notes', keys: ['Ctrl+Shift+4'], run: () => showSidebar('notes'), enabled: isPdf, radio: 'sidebar', checked: () => sidebarShown() === 'notes' },
-  { id: 'view.bookmarks', label: 'Bookmarks', keys: ['Ctrl+Shift+5'], run: () => showSidebar('bookmarks'), enabled: isPdf, radio: 'sidebar', checked: () => sidebarShown() === 'bookmarks' },
+  { id: 'view.hideSidebar', label: msg('No Sidebar'), keys: ['Ctrl+Shift+1'], run: () => showSidebar('none'), enabled: hasDoc, radio: 'sidebar', checked: () => !sidebarShown() },
+  { id: 'view.thumbnails', label: msg('Thumbnails'), keys: ['Ctrl+Shift+2'], run: () => showSidebar('thumbnails'), enabled: multiPage, radio: 'sidebar', checked: () => sidebarShown() === 'thumbnails' },
+  { id: 'view.toc', label: msg('Table of Contents'), keys: ['Ctrl+Shift+3'], run: () => showSidebar('toc'), enabled: isPdf, radio: 'sidebar', checked: () => sidebarShown() === 'toc' },
+  { id: 'view.notes', label: msg('Highlights and Notes'), keys: ['Ctrl+Shift+4'], run: () => showSidebar('notes'), enabled: isPdf, radio: 'sidebar', checked: () => sidebarShown() === 'notes' },
+  { id: 'view.bookmarks', label: msg('Bookmarks'), keys: ['Ctrl+Shift+5'], run: () => showSidebar('bookmarks'), enabled: isPdf, radio: 'sidebar', checked: () => sidebarShown() === 'bookmarks' },
   // Page layout: the three scroll modes and the contact sheet are one choice.
-  { id: 'view.continuous', label: 'Continuous Scroll', keys: ['Ctrl+1'], run: () => setView('continuous'), enabled: isPdf, radio: 'layout', checked: () => layout() === 'continuous' },
-  { id: 'view.single', label: 'Single Page', keys: ['Ctrl+2'], run: () => setView('single'), enabled: isPdf, radio: 'layout', checked: () => layout() === 'single' },
-  { id: 'view.two', label: 'Two Pages', keys: ['Ctrl+3'], run: () => setView('two'), enabled: isPdf, radio: 'layout', checked: () => layout() === 'two' },
+  { id: 'view.continuous', label: msg('Continuous Scroll'), keys: ['Ctrl+1'], run: () => setView('continuous'), enabled: isPdf, radio: 'layout', checked: () => layout() === 'continuous' },
+  { id: 'view.single', label: msg('Single Page'), keys: ['Ctrl+2'], run: () => setView('single'), enabled: isPdf, radio: 'layout', checked: () => layout() === 'single' },
+  { id: 'view.two', label: msg('Two Pages'), keys: ['Ctrl+3'], run: () => setView('two'), enabled: isPdf, radio: 'layout', checked: () => layout() === 'two' },
   {
     id: 'view.contactSheet',
-    label: 'Contact Sheet',
+    label: msg('Contact Sheet'),
     keys: ['Ctrl+Shift+6'],
     // The toolbar button toggles; from the menu it is one of the layouts.
     run: () => {
@@ -199,35 +200,35 @@ export const COMMANDS: Command[] = [
     radio: 'layout',
     checked: () => layout() === 'contact'
   },
-  { id: 'view.zoomIn', label: 'Zoom In', keys: ['Ctrl+=', 'Ctrl+Shift+=', '=', 'Shift+='], run: () => zoom(1), enabled: hasDoc },
-  { id: 'view.zoomOut', label: 'Zoom Out', keys: ['Ctrl+-', '-'], run: () => zoom(-1), enabled: hasDoc },
-  { id: 'view.actualSize', label: 'Actual Size', keys: ['Ctrl+0', 'Shift+0'], run: () => setZoom('actual'), enabled: hasDoc },
-  { id: 'view.zoomToFit', label: 'Zoom to Fit', keys: ['Ctrl+9', 'Shift+1'], run: () => setZoom('fit'), enabled: hasDoc },
+  { id: 'view.zoomIn', label: msg('Zoom In'), keys: ['Ctrl+=', 'Ctrl+Shift+=', '=', 'Shift+='], run: () => zoom(1), enabled: hasDoc },
+  { id: 'view.zoomOut', label: msg('Zoom Out'), keys: ['Ctrl+-', '-'], run: () => zoom(-1), enabled: hasDoc },
+  { id: 'view.actualSize', label: msg('Actual Size'), keys: ['Ctrl+0', 'Shift+0'], run: () => setZoom('actual'), enabled: hasDoc },
+  { id: 'view.zoomToFit', label: msg('Zoom to Fit'), keys: ['Ctrl+9', 'Shift+1'], run: () => setZoom('fit'), enabled: hasDoc },
   {
     id: 'view.darkPdf',
-    label: 'Dark Appearance for PDFs',
+    label: msg('Dark Appearance for PDFs'),
     run: () => updateSettings({ darkPdf: !settings.value.darkPdf }),
     checked: () => settings.value.darkPdf
   },
-  { id: 'view.fullscreen', label: 'Full Screen', keys: ['F11'], run: () => platform.toggleFullscreen() },
-  { id: 'view.slideshow', label: 'Slideshow', keys: ['Ctrl+Shift+F'], run: () => void (slideshow.value = true), enabled: hasDoc },
-  { id: 'model.resetView', label: 'Reset View', run: () => void (model() && (model()!.viewRequest.value = { kind: 'reset' })) },
-  { id: 'model.wireframe', label: 'Wireframe', keys: ['W'], run: () => void (model() && (model()!.wireframe.value = !model()!.wireframe.value)), checked: () => !!model()?.wireframe.value },
-  { id: 'model.autoRotate', label: 'Turntable', keys: ['T'], run: () => void (model() && (model()!.autoRotate.value = !model()!.autoRotate.value)), checked: () => !!model()?.autoRotate.value },
-  { id: 'view.inspector', label: 'Inspector', keys: ['Ctrl+I'], run: () => void (inspectorOpen.value = !inspectorOpen.value), checked: () => inspectorOpen.value },
-  { id: 'view.customizeToolbar', label: 'Customize Toolbar…', run: () => void (customizeOpen.value = true) },
+  { id: 'view.fullscreen', label: msg('Full Screen'), keys: ['F11'], run: () => platform.toggleFullscreen() },
+  { id: 'view.slideshow', label: msg('Slideshow'), keys: ['Ctrl+Shift+F'], run: () => void (slideshow.value = true), enabled: hasDoc },
+  { id: 'model.resetView', label: msg('Reset View'), run: () => void (model() && (model()!.viewRequest.value = { kind: 'reset' })) },
+  { id: 'model.wireframe', label: msg('Wireframe'), keys: ['W'], run: () => void (model() && (model()!.wireframe.value = !model()!.wireframe.value)), checked: () => !!model()?.wireframe.value },
+  { id: 'model.autoRotate', label: msg('Turntable'), keys: ['T'], run: () => void (model() && (model()!.autoRotate.value = !model()!.autoRotate.value)), checked: () => !!model()?.autoRotate.value },
+  { id: 'view.inspector', label: msg('Inspector'), keys: ['Ctrl+I'], run: () => void (inspectorOpen.value = !inspectorOpen.value), checked: () => inspectorOpen.value },
+  { id: 'view.customizeToolbar', label: msg('Customize Toolbar…'), run: () => void (customizeOpen.value = true) },
   // Go
-  { id: 'go.previous', label: 'Previous Page', keys: ['Ctrl+Up', 'PageUp'], run: () => goPage(-1), enabled: multiPage },
-  { id: 'go.next', label: 'Next Page', keys: ['Ctrl+Down', 'PageDown'], run: () => goPage(1), enabled: multiPage },
-  { id: 'go.first', label: 'First Page', keys: ['Home'], run: () => goPage('first'), enabled: multiPage },
-  { id: 'go.last', label: 'Last Page', keys: ['End'], run: () => goPage('last'), enabled: multiPage },
-  { id: 'go.page', label: 'Go to Page…', keys: ['Ctrl+Shift+G'], run: () => goToPagePrompt(), enabled: multiPage },
-  { id: 'go.nextTab', label: 'Next Tab', keys: ['Ctrl+Tab'], run: () => cycleTab(1) },
-  { id: 'go.previousTab', label: 'Previous Tab', keys: ['Ctrl+Shift+Tab'], run: () => cycleTab(-1) },
+  { id: 'go.previous', label: msg('Previous Page'), keys: ['Ctrl+Up', 'PageUp'], run: () => goPage(-1), enabled: multiPage },
+  { id: 'go.next', label: msg('Next Page'), keys: ['Ctrl+Down', 'PageDown'], run: () => goPage(1), enabled: multiPage },
+  { id: 'go.first', label: msg('First Page'), keys: ['Home'], run: () => goPage('first'), enabled: multiPage },
+  { id: 'go.last', label: msg('Last Page'), keys: ['End'], run: () => goPage('last'), enabled: multiPage },
+  { id: 'go.page', label: msg('Go to Page…'), keys: ['Ctrl+Shift+G'], run: () => goToPagePrompt(), enabled: multiPage },
+  { id: 'go.nextTab', label: msg('Next Tab'), keys: ['Ctrl+Tab'], run: () => cycleTab(1) },
+  { id: 'go.previousTab', label: msg('Previous Tab'), keys: ['Ctrl+Shift+Tab'], run: () => cycleTab(-1) },
   // Tools
   {
     id: 'tools.markup',
-    label: 'Show Markup Toolbar',
+    label: msg('Show Markup Toolbar'),
     keys: ['Ctrl+Shift+A'],
     run: () => {
       if (markupBar.value) {
@@ -242,49 +243,62 @@ export const COMMANDS: Command[] = [
   },
   // Single-key tools, as in Photoshop, Illustrator and Figma. Pressing a key again
   // steps through its group (M: rectangle then ellipse selection; U: the shapes).
-  { id: 'tools.select', label: 'Select and Move', keys: ['V'], run: () => pickTool(['select']), enabled: () => isPdf() || anyImage(), checked: () => tool.value === 'select' },
-  { id: 'tools.hand', label: 'Hand', keys: ['H'], run: () => pickTool(['hand']), enabled: () => isPdf() || anyImage(), checked: () => tool.value === 'hand' },
-  { id: 'tools.zoom', label: 'Zoom Tool', keys: ['Z'], run: () => pickTool(['zoom']), enabled: () => isPdf() || anyImage(), checked: () => tool.value === 'zoom' },
-  { id: 'tools.marquee', label: 'Rectangular / Elliptical Selection', keys: ['M'], run: () => pickTool(['selectRect', 'selectEllipse']), enabled: isImage, checked: () => tool.value === 'selectRect' || tool.value === 'selectEllipse' },
-  { id: 'tools.lasso', label: 'Lasso / Smart Lasso', keys: ['L'], run: () => pickTool(['lasso', 'smartLasso']), enabled: isImage, checked: () => tool.value === 'lasso' || tool.value === 'smartLasso' },
-  { id: 'tools.brush', label: 'Draw / Sketch', keys: ['B'], run: () => pickTool(['draw', 'sketch']), enabled: () => isPdf() || isImage(), checked: () => tool.value === 'draw' || tool.value === 'sketch' },
-  { id: 'tools.shapes', label: 'Shapes', keys: ['U'], run: () => pickTool(SHAPE_TOOLS), enabled: () => isPdf() || isImage(), checked: () => SHAPE_TOOLS.includes(tool.value) },
-  { id: 'tools.rectangle', label: 'Rectangle', keys: ['R'], run: () => pickTool(['rect']), enabled: () => isPdf() || isImage(), checked: () => tool.value === 'rect' },
-  { id: 'tools.oval', label: 'Oval', keys: ['O'], run: () => pickTool(['oval']), enabled: () => isPdf() || isImage(), checked: () => tool.value === 'oval' },
-  { id: 'tools.thinner', label: 'Thinner Line', keys: ['['], run: () => stepLine(-1), enabled: () => isPdf() || isImage() },
-  { id: 'tools.thicker', label: 'Thicker Line', keys: [']'], run: () => stepLine(1), enabled: () => isPdf() || isImage() },
-  { id: 'tools.highlight', label: 'Highlight', keys: ['Ctrl+Shift+H'], run: () => toggleTool('highlight'), enabled: isPdf, checked: () => tool.value === 'highlight' },
-  { id: 'tools.text', label: 'Add Text Box', keys: ['T', 'Ctrl+Shift+T'], run: () => toggleTool('text'), enabled: () => isPdf() || isImage() },
-  { id: 'tools.note', label: 'Add Note', keys: ['S', 'Ctrl+Shift+O'], run: () => toggleTool('note'), enabled: isPdf },
-  { id: 'tools.signature', label: 'Signature…', keys: ['Ctrl+Shift+J'], run: () => void (signatureDialog.value = true), enabled: () => isPdf() || isImage() },
-  { id: 'tools.ocr', label: 'Recognize Text (OCR)…', run: () => ocr.recognizePdfText(), enabled: isPdf },
-  { id: 'tools.copyImageText', label: 'Copy Text from Image', run: () => ocr.copyImageText() },
-  { id: 'tools.redactText', label: 'Remove Sensitive Text…', run: () => void (redactTextOpen.value = true), enabled: isPdf },
-  { id: 'tools.redact', label: 'Redact', keys: ['Ctrl+Shift+R'], run: () => toggleTool('redact'), enabled: () => isPdf() || isImage(), checked: () => tool.value === 'redact' },
-  { id: 'tools.applyRedactions', label: 'Apply Redactions…', run: () => void applyRedactions(), enabled: () => !!pdf()?.redactions.value.length },
-  { id: 'tools.crop', label: 'Crop to Selection', keys: ['C', 'Ctrl+K'], run: () => void img.cropToSelection(image()!), enabled: isImage },
-  { id: 'tools.instantAlpha', label: 'Instant Alpha', keys: ['W'], run: () => toggleTool('instantAlpha'), enabled: isImage, checked: () => tool.value === 'instantAlpha' },
-  { id: 'tools.removeBackground', label: 'Remove Background', keys: ['Ctrl+Shift+K'], run: () => void img.removeBackground(image()!), enabled: isImage },
-  { id: 'tools.copySubject', label: 'Copy Subject', run: () => void img.copySubject(image()!), enabled: isImage },
-  { id: 'tools.adjustColor', label: 'Adjust Color…', keys: ['Ctrl+Shift+C'], run: () => void (adjustColorOpen.value = true), enabled: isImage },
-  { id: 'tools.adjustSize', label: 'Adjust Size…', keys: ['Ctrl+Shift+U'], run: () => void (adjustSizeOpen.value = true), enabled: isImage },
-  { id: 'tools.flipHorizontal', label: 'Flip Horizontal', run: () => void img.flipImage(image()!, 'horizontal'), enabled: isImage },
-  { id: 'tools.flipVertical', label: 'Flip Vertical', run: () => void img.flipImage(image()!, 'vertical'), enabled: isImage },
-  { id: 'tools.rotateLeft', label: 'Rotate Left', keys: ['Ctrl+L'], run: () => actions.rotatePages(-90), enabled: hasDoc },
-  { id: 'tools.rotateRight', label: 'Rotate Right', keys: ['Ctrl+R'], run: () => actions.rotatePages(90), enabled: hasDoc },
+  { id: 'tools.select', label: msg('Select and Move'), keys: ['V'], run: () => pickTool(['select']), enabled: () => isPdf() || anyImage(), checked: () => tool.value === 'select' },
+  { id: 'tools.hand', label: msg('Hand'), keys: ['H'], run: () => pickTool(['hand']), enabled: () => isPdf() || anyImage(), checked: () => tool.value === 'hand' },
+  { id: 'tools.zoom', label: msg('Zoom Tool'), keys: ['Z'], run: () => pickTool(['zoom']), enabled: () => isPdf() || anyImage(), checked: () => tool.value === 'zoom' },
+  { id: 'tools.marquee', label: msg('Rectangular / Elliptical Selection'), keys: ['M'], run: () => pickTool(['selectRect', 'selectEllipse']), enabled: isImage, checked: () => tool.value === 'selectRect' || tool.value === 'selectEllipse' },
+  { id: 'tools.lasso', label: msg('Lasso / Smart Lasso'), keys: ['L'], run: () => pickTool(['lasso', 'smartLasso']), enabled: isImage, checked: () => tool.value === 'lasso' || tool.value === 'smartLasso' },
+  { id: 'tools.brush', label: msg('Draw / Sketch'), keys: ['B'], run: () => pickTool(['draw', 'sketch']), enabled: () => isPdf() || isImage(), checked: () => tool.value === 'draw' || tool.value === 'sketch' },
+  { id: 'tools.shapes', label: msg('Shapes'), keys: ['U'], run: () => pickTool(SHAPE_TOOLS), enabled: () => isPdf() || isImage(), checked: () => SHAPE_TOOLS.includes(tool.value) },
+  { id: 'tools.rectangle', label: msg('Rectangle'), keys: ['R'], run: () => pickTool(['rect']), enabled: () => isPdf() || isImage(), checked: () => tool.value === 'rect' },
+  { id: 'tools.oval', label: msg('Oval'), keys: ['O'], run: () => pickTool(['oval']), enabled: () => isPdf() || isImage(), checked: () => tool.value === 'oval' },
+  { id: 'tools.thinner', label: msg('Thinner Line'), keys: ['['], run: () => stepLine(-1), enabled: () => isPdf() || isImage() },
+  { id: 'tools.thicker', label: msg('Thicker Line'), keys: [']'], run: () => stepLine(1), enabled: () => isPdf() || isImage() },
+  { id: 'tools.highlight', label: msg('Highlight'), keys: ['Ctrl+Shift+H'], run: () => toggleTool('highlight'), enabled: isPdf, checked: () => tool.value === 'highlight' },
+  { id: 'tools.text', label: msg('Add Text Box'), keys: ['T', 'Ctrl+Shift+T'], run: () => toggleTool('text'), enabled: () => isPdf() || isImage() },
+  { id: 'tools.note', label: msg('Add Note'), keys: ['S', 'Ctrl+Shift+O'], run: () => toggleTool('note'), enabled: isPdf },
+  { id: 'tools.signature', label: msg('Signature…'), keys: ['Ctrl+Shift+J'], run: () => void (signatureDialog.value = true), enabled: () => isPdf() || isImage() },
+  { id: 'tools.ocr', label: msg('Recognize Text (OCR)…'), run: () => ocr.recognizePdfText(), enabled: isPdf },
+  { id: 'tools.copyImageText', label: msg('Copy Text from Image'), run: () => ocr.copyImageText() },
+  { id: 'tools.redactText', label: msg('Remove Sensitive Text…'), run: () => void (redactTextOpen.value = true), enabled: isPdf },
+  { id: 'tools.redact', label: msg('Redact'), keys: ['Ctrl+Shift+R'], run: () => toggleTool('redact'), enabled: () => isPdf() || isImage(), checked: () => tool.value === 'redact' },
+  { id: 'tools.applyRedactions', label: msg('Apply Redactions…'), run: () => void applyRedactions(), enabled: () => !!pdf()?.redactions.value.length },
+  { id: 'tools.crop', label: msg('Crop to Selection'), keys: ['C', 'Ctrl+K'], run: () => void img.cropToSelection(image()!), enabled: isImage },
+  { id: 'tools.instantAlpha', label: msg('Instant Alpha'), keys: ['W'], run: () => toggleTool('instantAlpha'), enabled: isImage, checked: () => tool.value === 'instantAlpha' },
+  { id: 'tools.removeBackground', label: msg('Remove Background'), keys: ['Ctrl+Shift+K'], run: () => void img.removeBackground(image()!), enabled: isImage },
+  { id: 'tools.copySubject', label: msg('Copy Subject'), run: () => void img.copySubject(image()!), enabled: isImage },
+  { id: 'tools.adjustColor', label: msg('Adjust Color…'), keys: ['Ctrl+Shift+C'], run: () => void (adjustColorOpen.value = true), enabled: isImage },
+  { id: 'tools.adjustSize', label: msg('Adjust Size…'), keys: ['Ctrl+Shift+U'], run: () => void (adjustSizeOpen.value = true), enabled: isImage },
+  {
+    id: 'tools.straighten',
+    label: msg('Straighten…'),
+    keys: ['Ctrl+Shift+L'],
+    run: () => {
+      if (tool.peek() !== 'select') setTool('select')
+      imageSelection.value = null
+      adjustColorOpen.value = false
+      straighten.value = { angle: 0, crop: true }
+    },
+    enabled: isImage,
+    checked: () => !!straighten.value
+  },
+  { id: 'tools.flipHorizontal', label: msg('Flip Horizontal'), run: () => void img.flipImage(image()!, 'horizontal'), enabled: isImage },
+  { id: 'tools.flipVertical', label: msg('Flip Vertical'), run: () => void img.flipImage(image()!, 'vertical'), enabled: isImage },
+  { id: 'tools.rotateLeft', label: msg('Rotate Left'), keys: ['Ctrl+L'], run: () => actions.rotatePages(-90), enabled: hasDoc },
+  { id: 'tools.rotateRight', label: msg('Rotate Right'), keys: ['Ctrl+R'], run: () => actions.rotatePages(90), enabled: hasDoc },
   // Help
   {
     id: 'help.updates',
-    label: 'Check for Updates…',
+    label: msg('Check for Updates…'),
     run: async () => {
       const r = await checkForUpdates({ force: true })
-      if (r === 'current') toast('Glance is up to date')
-      else if (r === 'error') toast('Couldn’t reach GitHub to check for updates', 'error')
-      else if (r === 'off') toast('Update checks are available in the Windows app')
+      if (r === 'current') toast(t('Glance is up to date'))
+      else if (r === 'error') toast(t('Couldn’t reach GitHub to check for updates'), 'error')
+      else if (r === 'off') toast(t('Update checks are available in the Windows app'))
     }
   },
-  { id: 'help.about', label: 'About Glance', run: actions.showAbout },
-  { id: 'help.github', label: 'Glance on GitHub', run: () => platform.openUrl('https://github.com/RedtRocks/glance') }
+  { id: 'help.about', label: msg('About Glance'), run: actions.showAbout },
+  { id: 'help.github', label: msg('Glance on GitHub'), run: () => platform.openUrl('https://github.com/RedtRocks/glance') }
 ]
 
 // Which commands make sense for which kind of file. A PNG gets no page, outline or
@@ -315,7 +329,7 @@ const VISIBILITY: [(() => boolean), string[]][] = [
   [anyImage, ['image.setWallpaper', 'image.setLockScreen', 'tools.copyImageText']],
   [isImage, [
     'edit.invertSelection', 'tools.crop', 'tools.instantAlpha', 'tools.marquee', 'tools.lasso', 'tools.removeBackground', 'tools.copySubject', 'tools.adjustColor',
-    'tools.adjustSize', 'tools.flipHorizontal', 'tools.flipVertical'
+    'tools.adjustSize', 'tools.straighten', 'tools.flipHorizontal', 'tools.flipVertical'
   ]],
   [() => docs.value.length > 1, ['go.nextTab', 'go.previousTab']]
 ]
@@ -366,10 +380,10 @@ export function keyScope(id: string): string {
   return id.startsWith('tools.') ? 'page' : ''
 }
 
-/** A tooltip with the command's first shortcut, e.g. "Text box (T)". */
+/** A tooltip with the command’s first shortcut, e.g. "Text box (T)". Pass `label` already translated. */
 export function tip(label: string, id?: string): string {
   const k = id ? keysFor(id)[0] : undefined
-  return k ? `${label} (${displayCombo(k)})` : label
+  return k ? t('{label} ({shortcut})', { label, shortcut: displayCombo(k) }) : label
 }
 
 /** Effective bindings (defaults with user overrides), canonicalized. */
@@ -384,8 +398,8 @@ export function keysFor(id: string): string[] {
   return bindings()[id] ?? []
 }
 
-function toggleTool(t: Parameters<typeof setTool>[0]): void {
-  setTool(tool.peek() === t ? 'select' : t)
+function toggleTool(next: Parameters<typeof setTool>[0]): void {
+  setTool(tool.peek() === next ? 'select' : next)
 }
 
 function pickTool(group: readonly Tool[]): void {
@@ -404,15 +418,16 @@ async function addBookmark(): Promise<void> {
   const path = d.path.peek()
   if (!path) return
   const page = d.current.peek()
-  const label = await promptText('Add Bookmark', 'Name', { initial: `Page ${page + 1}`, ok: 'Add' })
+  const fallback = t('Page {page}', { page: page + 1 })
+  const label = await promptText(t('Add Bookmark'), t('Name'), { initial: fallback, ok: t('Add') })
   if (label === null) return
-  setBookmarks(path, [...bookmarksFor(path).filter((b) => b.page !== page), { page, label: label || `Page ${page + 1}`, created: Date.now() }])
+  setBookmarks(path, [...bookmarksFor(path).filter((b) => b.page !== page), { page, label: label || fallback, created: Date.now() }])
 }
 
 async function goToPagePrompt(): Promise<void> {
   const d = activeDoc.value
   if (!d || d.kind === 'notice') return
-  const text = await promptText('Go to Page', `Page number (1–${d.pageCount.value})`, { ok: 'Go' })
+  const text = await promptText(t('Go to Page'), t('Page number (1–{count})', { count: d.pageCount.value }), { ok: t('Go') })
   if (text == null) return
   const idx = parsePageInput(text, d.pageCount.value)
   if (idx === null) return

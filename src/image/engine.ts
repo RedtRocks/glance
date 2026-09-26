@@ -8,6 +8,7 @@ import { NOTE_SIZE, fontStack, outlinePath, type Markup, type Redaction } from '
 import type { ImageDoc } from '../state/documents'
 import * as platform from '../platform'
 import type { WorkerRequest, WorkerResponse } from './worker'
+import { t } from '../i18n'
 
 // ---------------------------------------------------------------------------
 // Worker
@@ -44,6 +45,7 @@ export const flood = async (r: Raster, x: number, y: number, tolerance: number):
 export const selectionToMask = async (r: Raster, selection: Selection): Promise<Uint8Array> => (await call({ op: 'selectionMask', raster: r, selection })).mask!
 export const maskOut = async (r: Raster, mask: Uint8Array, mode: 'erase' | 'keep', opts: { feather?: number; invert?: boolean } = {}): Promise<Raster> =>
   (await call({ op: 'applyMask', raster: r, mask, mode, feather: opts.feather ?? 0, invert: !!opts.invert })).raster!
+export const rotate = async (r: Raster, degrees: number, crop: boolean): Promise<Raster> => (await call({ op: 'rotate', raster: r, degrees, crop })).raster!
 export const resize = async (r: Raster, width: number, height: number): Promise<Raster> => (await call({ op: 'resize', raster: r, width, height })).raster!
 
 // ---------------------------------------------------------------------------
@@ -128,7 +130,7 @@ export async function removeBackground(r: Raster): Promise<Raster> {
 export async function subjectPng(r: Raster): Promise<Uint8Array> {
   const cut = await removeBackground(r)
   const b = maskBounds(alphaMask(cut), cut.width, cut.height, 24)
-  if (!b) throw new Error('No subject found in this image.')
+  if (!b) throw new Error(t('No subject found in this image.'))
   return encodePng(crop(cut, b))
 }
 

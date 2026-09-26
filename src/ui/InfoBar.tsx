@@ -1,5 +1,6 @@
 import type { ComponentChildren } from 'preact'
 import { Icon } from './Icon'
+import { t } from '../i18n'
 
 /** WinUI InfoBar: docked, severity-colored, with optional actions. */
 export function InfoBar({ severity = 'informational', title, children, actions, onClose }: {
@@ -20,7 +21,7 @@ export function InfoBar({ severity = 'informational', title, children, actions, 
       </div>
       {actions && <div class="infobar-actions">{actions}</div>}
       {onClose && (
-        <button class="icon-button infobar-close" aria-label="Close" onClick={onClose}>
+        <button class="icon-button infobar-close" aria-label={t('Close')} onClick={onClose}>
           <Icon name="close" size={16} />
         </button>
       )}

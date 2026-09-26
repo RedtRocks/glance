@@ -41,6 +41,7 @@ Glance brings Preview's everyday superpowers to Windows: rearranging and merging
 | Instant Alpha; rectangular, elliptical, lasso and smart-lasso selection; crop, delete, invert selection | ✅ |
 | Adjust Color (exposure, contrast, highlights, shadows, saturation, temperature, tint, sepia, definition, sharpness, gamma, levels with histogram, Auto Levels) with live preview | ✅ |
 | Adjust Size (fit-into presets, units, resolution), rotate and flip | ✅ |
+| Straighten: rotate by any angle with a slider or by dragging, grid overlay, crop to fill | ✅ |
 | Markup on images, flattened on save; export as PNG, JPEG, WebP, TIFF, BMP or PDF, optionally converted to Display P3, Adobe RGB or Gray | ✅ |
 | Inspector (Ctrl+I): EXIF, color profile, PDF properties; Remove Location | ✅ |
 | Batch Edit Images: rotate, flip, resize, convert, remove location | ✅ |
@@ -84,6 +85,7 @@ src/                 Preact UI
   pdf/               PDF.js integration: rendering, thumbnails, search
   state/             Documents, commands registry, actions, settings
   ui/                Components (toolbar, sidebar, views, dialogs)
+  i18n/              Translations: t(), language choice, locales/*.json
   platform/          Bridge to the Rust backend (with a browser fallback for UI testing)
 src-tauri/           Rust backend
   src/decode/        Image decoding: WIC, JPEG 2000, JPEG XL, PSD, ICNS, RAW previews, EPS, CBZ
@@ -95,6 +97,8 @@ CONTEXT.md           Domain glossary
 ## Contributing
 
 Issues and pull requests are welcome. Please read [`CONTEXT.md`](CONTEXT.md) for the project's vocabulary and [`docs/adr`](docs/adr) for the decisions behind the design.
+
+**Translations.** Write every piece of UI text through `t()` from `src/i18n` (see the comment at the top of `src/i18n/index.ts`), in English, with placeholders instead of string concatenation: `t('Exported {file}', { file })`, `t('{count, plural, one {# page} other {# pages}}', { count })`. Text defined outside components, such as command labels, is marked with `msg()` and passed through `t()` where it's shown. `npm test` fails on UI text that skips `t()`, and `npm run i18n` lists it. To add or update a language, run `npm run i18n -- <code>` (for example `de` or `pt-BR`) and fill in `src/i18n/locales/<code>.json`. To check layout with longer text, pick the pseudo-locale in Settings → Language (shown in dev builds).
 
 ## License
 

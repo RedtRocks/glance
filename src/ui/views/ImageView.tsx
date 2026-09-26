@@ -7,6 +7,9 @@ import { MarkupLayer } from '../markup/MarkupLayer'
 import { imageViewport } from '../../image/viewport'
 import { SelectionOverlay } from '../image/SelectionOverlay'
 import { InfoBar } from '../InfoBar'
+import { t } from '../../i18n'
+import { straighten } from '../../state/imageState'
+import { StraightenBar, StraightenOverlay, straightenPreview } from '../image/Straighten'
 import { dragPan, usePanZoom } from '../usePanZoom'
 
 /** Draws the magnified content of loupe markup (the ring itself is SVG in the markup layer). */
@@ -100,11 +103,13 @@ export function ImageView({ doc }: { doc: ImageDoc }) {
   const h = natural ? natural.height * scale : 0
   const boxW = turned ? h : w
   const boxH = turned ? w : h
+  const st = doc.editable ? straighten.value : null
+  const turn = st && w ? straightenPreview(w, h, st.angle, st.crop) : null
   const vp = useMemo(() => (natural ? imageViewport(natural.width, natural.height, scale) : null), [natural?.width, natural?.height, scale])
 
   return (
     <div class="image-view-wrap">
-      {doc.notice && <InfoBar title="Preview only">{doc.notice}</InfoBar>}
+      {doc.notice && <InfoBar title={t('Preview only')}>{doc.notice}</InfoBar>}
       <div
         class={`image-view ${panZoom}`}
         ref={box}
@@ -117,12 +122,12 @@ export function ImageView({ doc }: { doc: ImageDoc }) {
       >
         {error ? (
           <div class="notice">
-            <h2>Glance couldn’t display this image</h2>
+            <h2>{t('Glance couldn’t display this image')}</h2>
             <p>{error}</p>
           </div>
         ) : (
-          <div class="image-stage" style={{ width: Math.max(boxW + 48, view.w), height: Math.max(boxH + 48, view.h) }}>
-            <div class="image-page checkerboard" style={{ width: w || undefined, height: h || undefined, transform: `rotate(${rotation}deg)` }}>
+          <div class={`image-stage${turn ? ' straightening' : ''}`} style={{ width: Math.max(boxW + 48, view.w), height: Math.max(boxH + 48, view.h) }}>
+            <div class="image-page checkerboard" style={{ width: w || undefined, height: h || undefined, transform: turn ? turn.transform : `rotate(${rotation}deg)` }}>
               {raster ? (
                 <canvas ref={canvas} class="image-pixels" style={{ width: w, height: h, imageRendering: scale >= 3 ? 'pixelated' : 'auto' }} />
               ) : (
@@ -139,17 +144,19 @@ export function ImageView({ doc }: { doc: ImageDoc }) {
                   }}
                   onError={async () => {
                     const res = await fetch(src).catch(() => null)
-                    setError(res && !res.ok ? await res.text() : 'The file may be damaged or use an unsupported variant of its format.')
+                    setError(res && !res.ok ? await res.text() : t('The file may be damaged or use an unsupported variant of its format.'))
                   }}
                 />
               )}
               {vp && <LoupeLayer doc={doc} source={raster ? canvas.current : img.current} scale={scale} />}
               {vp && doc.editable && <MarkupLayer doc={doc} index={0} vp={vp} />}
-              {doc.editable && <SelectionOverlay doc={doc} scale={scale} />}
+              {doc.editable && !st && <SelectionOverlay doc={doc} scale={scale} />}
             </div>
+            {turn && <StraightenOverlay width={turn.frame.width} height={turn.frame.height} />}
           </div>
         )}
       </div>
+      {doc.editable && straighten.value && <StraightenBar doc={doc} />}
     </div>
   )
 }

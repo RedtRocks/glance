@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks'
 import type { Doc } from '../state/documents'
 import { canOpenWith, externalHint, openWithOtherApp } from '../state/shellActions'
 import { InfoBar } from './InfoBar'
+import { t } from '../i18n'
 
 /** For another app's working files (PSD, AI, RAW…): say what Glance shows and offer Open With. */
 export function ExternalAppBar({ doc }: { doc: Doc }) {
@@ -14,7 +15,7 @@ export function ExternalAppBar({ doc }: { doc: Doc }) {
       actions={
         canOpenWith(doc) && (
           <button class="btn" onClick={() => void openWithOtherApp(doc)}>
-            Open with…
+            {t('Open with…')}
           </button>
         )
       }

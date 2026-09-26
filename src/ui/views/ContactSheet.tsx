@@ -3,6 +3,7 @@ import type { PdfDoc } from '../../state/documents'
 import { pageDrag } from '../dragState'
 import { beginPageDrag, pageContextMenu, selectPage } from '../sidebar/pageDrag'
 import { PageThumb } from '../sidebar/PageThumb'
+import { t } from '../../i18n'
 
 /** Full-window grid of large thumbnails for overview and reordering (Preview's contact sheet). */
 export function ContactSheet({ doc }: { doc: PdfDoc }) {
@@ -13,9 +14,9 @@ export function ContactSheet({ doc }: { doc: PdfDoc }) {
   return (
     <div class="contact-sheet">
       <div class="contact-header">
-        <span>{doc.pageCount.value} pages · drag to reorder, drag out to extract</span>
+        <span>{t('{count, plural, one {# page} other {# pages}} · drag to reorder, drag out to extract', { count: doc.pageCount.value })}</span>
         <label class="contact-size">
-          Size
+          {t('Size')}
           <input type="range" min={100} max={360} value={size} onInput={(e) => setSize(Number((e.target as HTMLInputElement).value))} />
         </label>
       </div>
