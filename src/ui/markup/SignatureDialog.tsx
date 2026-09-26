@@ -203,7 +203,7 @@ export function SignatureDialog() {
           ? 'Sign on white paper and hold it up to the camera so the signature sits on the line, then choose Capture.'
           : 'Sign with your mouse, touchpad or pen, use your camera, or import a photo of your signature on white paper.'}
       </p>
-      <canvas ref={canvas} class="signature-pad" hidden={!!stream} style={{ width: '100%', aspectRatio: `${W} / ${H}` }} onPointerDown={draw} />
+      <canvas ref={canvas} class="signature-pad" style={{ width: '100%', aspectRatio: `${W} / ${H}`, display: stream ? 'none' : undefined }} onPointerDown={draw} />
       {stream && (
         <div class="camera-frame">
           <video ref={video} autoPlay playsInline muted />

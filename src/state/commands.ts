@@ -28,6 +28,8 @@ export interface Command {
   checked?: () => boolean
   /** Commands sharing a group are mutually exclusive choices (shown with a radio dot). */
   radio?: string
+  /** Whether the command belongs to the open file at all; menus hide it otherwise. */
+  visible?: () => boolean
 }
 
 const ZOOM_STEPS = [0.1, 0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5, 6.4, 8]
@@ -239,7 +241,49 @@ export const COMMANDS: Command[] = [
   { id: 'help.github', label: 'Glance on GitHub', run: () => platform.openUrl('https://github.com/RedtRocks/viewer') }
 ]
 
+// Which commands make sense for which kind of file. A PNG gets no page, outline or
+// PDF-markup commands; a PDF gets no pixel-editing tools. (Disabled means "not right
+// now"; hidden means "not for this file".)
+const ifPdf = () => activeDoc.value?.kind === 'pdf'
+const ifViewable = () => !!activeDoc.value && activeDoc.value.kind !== 'notice'
+const ifMarkup = () => ifPdf() || isImage()
+const ifPaged = () => ifPdf() || multiPage()
+const VISIBILITY: [(() => boolean), string[]][] = [
+  [hasDoc, ['file.close', 'file.openWith', 'view.customizeToolbar']],
+  [ifViewable, [
+    'file.print', 'view.zoomIn', 'view.zoomOut', 'view.actualSize', 'view.zoomToFit', 'view.slideshow', 'view.fullscreen',
+    'tools.rotateLeft', 'tools.rotateRight'
+  ]],
+  [() => ifPdf() || isImage(), ['file.save', 'file.saveAs', 'file.export', 'edit.undo', 'edit.redo', 'edit.delete']],
+  [ifPdf, [
+    'file.exportPages', 'file.split', 'edit.selectAll', 'edit.find', 'edit.insertBlank', 'edit.insertFile', 'edit.duplicatePages',
+    'edit.deletePages', 'edit.addBookmark', 'view.toc', 'view.notes', 'view.bookmarks', 'view.continuous', 'view.single', 'view.two',
+    'view.contactSheet', 'view.darkPdf', 'tools.highlight', 'tools.note', 'tools.redactText', 'tools.applyRedactions'
+  ]],
+  [ifPaged, ['view.hideSidebar', 'view.thumbnails', 'go.previous', 'go.next', 'go.first', 'go.last', 'go.page']],
+  [ifMarkup, ['tools.markup', 'tools.text', 'tools.signature', 'tools.redact']],
+  [anyImage, ['image.setWallpaper', 'image.setLockScreen']],
+  [isImage, [
+    'edit.invertSelection', 'tools.crop', 'tools.instantAlpha', 'tools.removeBackground', 'tools.copySubject', 'tools.adjustColor',
+    'tools.adjustSize', 'tools.flipHorizontal', 'tools.flipVertical'
+  ]],
+  [() => docs.value.length > 1, ['go.nextTab', 'go.previousTab']]
+]
+for (const [rule, ids] of VISIBILITY) {
+  for (const id of ids) {
+    const cmd = COMMANDS.find((c) => c.id === id)
+    if (!cmd) throw new Error(`visibility rule for unknown command ${id}`)
+    cmd.visible = rule
+  }
+}
+
 export const commandById = new Map(COMMANDS.map((c) => [c.id, c]))
+
+/** Whether a command is shown in menus for the open file. */
+export function isVisible(id: string): boolean {
+  const cmd = commandById.get(id)
+  return !!cmd && (cmd.visible?.() ?? true)
+}
 
 export async function runCommand(id: string): Promise<void> {
   const cmd = commandById.get(id)
