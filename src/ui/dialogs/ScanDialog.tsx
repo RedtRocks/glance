@@ -3,6 +3,7 @@ import * as platform from '../../platform'
 import { importFromScanner, type ScanSource } from '../../state/scanActions'
 import { scanOpen, toast, withBusy } from '../../state/ui'
 import { Modal } from './Dialog'
+import { t } from '../../i18n'
 
 const RESOLUTIONS = [150, 200, 300, 600]
 
@@ -25,7 +26,7 @@ export function ScanDialog() {
       })
       .catch((e) => {
         setScanners([])
-        toast(`Couldn’t look for scanners: ${(e as Error).message ?? e}`, 'error')
+        toast(t('Couldn’t look for scanners: {error}', { error: String((e as Error).message ?? e) }), 'error')
       })
   }
   useEffect(refresh, [])
@@ -38,42 +39,41 @@ export function ScanDialog() {
   const run = async (): Promise<void> => {
     close()
     try {
-      await withBusy('Scanning…', () => importFromScanner(id, source, dpi, asPdf))
+      await withBusy(t('Scanning…'), () => importFromScanner(id, source, dpi, asPdf))
     } catch (e) {
-      toast(`Scanning failed: ${(e as Error).message ?? e}`, 'error')
+      toast(t('Scanning failed: {error}', { error: String((e as Error).message ?? e) }), 'error')
     }
   }
 
   return (
     <Modal
-      title="Import from scanner"
+      title={t('Import from scanner')}
       onClose={close}
       footer={
         <>
           <button class="btn" onClick={refresh}>
-            Refresh
+            {t('Refresh')}
           </button>
           <button class="btn" onClick={close}>
-            Cancel
+            {t('Cancel')}
           </button>
           <button class="btn primary" disabled={!scanner} onClick={() => void run()}>
-            Scan
+            {t('Scan')}
           </button>
         </>
       }
     >
       <div class="batch-options scan-options">
-        {scanners === null && <p class="muted">Looking for scanners…</p>}
+        {scanners === null && <p class="muted">{t('Looking for scanners…')}</p>}
         {scanners?.length === 0 && (
           <p class="muted">
-            No scanners found. Make sure the scanner is on and connected, and that it appears in Settings → Bluetooth &amp; devices → Printers &amp;
-            scanners.
+            {t('No scanners found. Make sure the scanner is on and connected, and that it appears in Settings → Bluetooth & devices → Printers & scanners.')}
           </p>
         )}
         {scanners && scanners.length > 0 && (
           <>
             <label class="field">
-              <span>Scanner</span>
+              <span>{t('Scanner')}</span>
               <select value={id} onChange={(e) => setId((e.target as HTMLSelectElement).value)}>
                 {scanners.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -83,26 +83,26 @@ export function ScanDialog() {
               </select>
             </label>
             <label class="field">
-              <span>Source</span>
+              <span>{t('Source')}</span>
               <select value={source} onChange={(e) => setSource((e.target as HTMLSelectElement).value as ScanSource)}>
-                <option value="auto">Automatic</option>
-                {scanner?.sources.includes('flatbed') && <option value="flatbed">Flatbed (glass)</option>}
-                {scanner?.sources.includes('feeder') && <option value="feeder">Document feeder (all pages)</option>}
+                <option value="auto">{t('Automatic')}</option>
+                {scanner?.sources.includes('flatbed') && <option value="flatbed">{t('Flatbed (glass)')}</option>}
+                {scanner?.sources.includes('feeder') && <option value="feeder">{t('Document feeder (all pages)')}</option>}
               </select>
             </label>
             <label class="field">
-              <span>Resolution</span>
+              <span>{t('Resolution')}</span>
               <select value={dpi} onChange={(e) => setDpi(Number((e.target as HTMLSelectElement).value))}>
                 {RESOLUTIONS.map((r) => (
                   <option key={r} value={r}>
-                    {r} dpi{r === 300 ? ' (documents)' : r === 600 ? ' (photos)' : ''}
+                    {r === 300 ? t('{dpi} dpi (documents)', { dpi: r }) : r === 600 ? t('{dpi} dpi (photos)', { dpi: r }) : t('{dpi} dpi', { dpi: r })}
                   </option>
                 ))}
               </select>
             </label>
             <label class="check-row">
               <input type="checkbox" checked={asPdf} onChange={(e) => setAsPdf((e.target as HTMLInputElement).checked)} />
-              <span>Combine pages into one PDF</span>
+              <span>{t('Combine pages into one PDF')}</span>
             </label>
           </>
         )}

@@ -5,6 +5,7 @@ import { openPdf, readOutline, PasswordRequired, type OutlineNode } from '../pdf
 import { releaseFile, type Probe } from '../platform'
 import { remapPages, type Markup, type PageMap, type Redaction } from '../core/markup'
 import type { Raster } from '../core/image/raster'
+import { t } from '../i18n'
 
 let seq = 0
 const nextId = (): string => `doc${++seq}`
@@ -132,7 +133,7 @@ export class PdfDoc extends BaseDoc implements MarkupHost {
     op: (bytes: Uint8Array) => Promise<Uint8Array | { bytes: Uint8Array; markup?: Markup[]; pages?: PageMap }>,
     pages?: PageMap
   ): Promise<void> {
-    if (this.encrypted) throw new Error('Remove the password protection before editing pages of this PDF.')
+    if (this.encrypted) throw new Error(t('Remove the password protection before editing pages of this PDF.'))
     const before = this.snapshot()
     const result = await op(await this.currentBytes())
     const next = result instanceof Uint8Array ? { bytes: result } : result

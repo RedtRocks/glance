@@ -5,6 +5,7 @@ import { isDark } from '../../state/settings'
 import { toast } from '../../state/ui'
 import * as platform from '../../platform'
 import { Icon } from '../Icon'
+import { intlLocale, t } from '../../i18n'
 
 /** A file next to the model, referenced by name (textures, .bin buffers, .mtl materials). */
 function sibling(modelPath: string, relative: string): string {
@@ -15,7 +16,7 @@ function sibling(modelPath: string, relative: string): string {
 }
 
 function fmt(n: number): string {
-  return n >= 1e6 ? `${(n / 1e6).toFixed(1)} M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)} K` : String(n)
+  return new Intl.NumberFormat(intlLocale.value, { notation: 'compact', maximumFractionDigits: 1 }).format(n)
 }
 
 /** Orbit (drag), pan (right-drag or Shift+drag), zoom (wheel); floating controls like Preview's 3D view. */
@@ -77,40 +78,46 @@ export function ModelView({ doc }: { doc: ModelDoc }) {
     const v = viewer.current
     if (!v) return
     const base = doc.name.peek().replace(/\.[^.]+$/, '')
-    const target = await platform.saveDialog(`${base}.png`, [{ name: 'PNG image', extensions: ['png'] }])
+    const target = await platform.saveDialog(`${base}.png`, [{ name: t('PNG image'), extensions: ['png'] }])
     if (!target) return
     await platform.writeFile(target, new Uint8Array(await (await v.snapshot()).arrayBuffer()))
-    toast('Snapshot saved')
+    toast(t('Snapshot saved'))
   }
 
   return (
     <div class="model-view">
-      <canvas ref={canvas} class="model-canvas" aria-label={`3D view of ${doc.name.value}`} />
+      <canvas ref={canvas} class="model-canvas" aria-label={t('3D view of {name}', { name: doc.name.value })} />
       {error ? (
         <div class="notice model-error">
-          <h2>Glance can’t show this model</h2>
+          <h2>{t('Glance can’t show this model')}</h2>
           <p>{error}</p>
         </div>
       ) : (
-        !stats && <div class="model-loading muted">Loading model…</div>
+        !stats && <div class="model-loading muted">{t('Loading model…')}</div>
       )}
       {stats && (
-        <div class="model-controls" role="toolbar" aria-label="3D view">
-          <button class="tb-button" title="Reset view (Ctrl+9)" aria-label="Reset view" onClick={() => viewer.current?.resetView()}>
+        <div class="model-controls" role="toolbar" aria-label={t('3D view')}>
+          <button class="tb-button" title={t('Reset view (Ctrl+9)')} aria-label={t('Reset view')} onClick={() => viewer.current?.resetView()}>
             <Icon name="zoomFit" />
           </button>
-          <button class={`tb-button ${doc.wireframe.value ? 'pressed' : ''}`} title="Wireframe (W)" aria-label="Wireframe" aria-pressed={doc.wireframe.value} onClick={() => (doc.wireframe.value = !doc.wireframe.value)}>
+          <button class={`tb-button ${doc.wireframe.value ? 'pressed' : ''}`} title={t('Wireframe (W)')} aria-label={t('Wireframe')} aria-pressed={doc.wireframe.value} onClick={() => (doc.wireframe.value = !doc.wireframe.value)}>
             <Icon name="grid" />
           </button>
-          <button class={`tb-button ${doc.autoRotate.value ? 'pressed' : ''}`} title="Turntable (T)" aria-label="Turntable" aria-pressed={doc.autoRotate.value} onClick={() => (doc.autoRotate.value = !doc.autoRotate.value)}>
+          <button class={`tb-button ${doc.autoRotate.value ? 'pressed' : ''}`} title={t('Turntable (T)')} aria-label={t('Turntable')} aria-pressed={doc.autoRotate.value} onClick={() => (doc.autoRotate.value = !doc.autoRotate.value)}>
             <Icon name="rotateRight" />
           </button>
-          <button class="tb-button" title="Save snapshot (Ctrl+E)" aria-label="Save snapshot" onClick={() => void snapshot()}>
+          <button class="tb-button" title={t('Save snapshot (Ctrl+E)')} aria-label={t('Save snapshot')} onClick={() => void snapshot()}>
             <Icon name="exportIcon" />
           </button>
           <span class="model-stats muted">
-            {fmt(stats.triangles)} {stats.triangles === 1 ? 'triangle' : 'triangles'} · {stats.meshes} {stats.meshes === 1 ? 'mesh' : 'meshes'}
-            {stats.animations ? ` · ${stats.animations} animation${stats.animations === 1 ? '' : 's'}` : ''}
+            {stats.animations
+              ? t('{count, plural, one {{triangles} triangle} other {{triangles} triangles}} · {meshes, plural, one {# mesh} other {# meshes}} · {animations, plural, one {# animation} other {# animations}}', {
+                  count: stats.triangles,
+                  triangles: fmt(stats.triangles),
+                  meshes: stats.meshes,
+                  animations: stats.animations
+                })
+              : t('{count, plural, one {{triangles} triangle} other {{triangles} triangles}} · {meshes, plural, one {# mesh} other {# meshes}}', { count: stats.triangles, triangles: fmt(stats.triangles), meshes: stats.meshes })}
           </span>
         </div>
       )}

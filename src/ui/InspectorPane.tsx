@@ -3,27 +3,31 @@ import type { Doc } from '../state/documents'
 import { inspectorOpen, toast } from '../state/ui'
 import * as platform from '../platform'
 import { Icon } from './Icon'
+import { intlLocale, locale, t } from '../i18n'
 
 type Rows = [string, string][]
 
 function bytes(n: number): string {
-  if (n < 1024) return `${n} bytes`
-  const units = ['KB', 'MB', 'GB']
+  if (n < 1024) return t('{count, plural, one {# byte} other {# bytes}}', { count: n })
   let v = n / 1024
   let i = 0
-  while (v >= 1024 && i < units.length - 1) {
+  while (v >= 1024 && i < 2) {
     v /= 1024
     i++
   }
-  return `${v.toFixed(v < 10 ? 1 : 0)} ${units[i]}`
+  const digits = v < 10 ? 1 : 0
+  const size = v.toLocaleString(intlLocale.value, { minimumFractionDigits: digits, maximumFractionDigits: digits })
+  return i === 0 ? t('{size} KB', { size }) : i === 1 ? t('{size} MB', { size }) : t('{size} GB', { size })
 }
+
+const fixed = (v: number, digits: number): string => v.toLocaleString(intlLocale.value, { minimumFractionDigits: digits, maximumFractionDigits: digits, useGrouping: false })
 
 /** PDF dates look like D:20240131120000+01'00'. */
 function pdfDate(s: unknown): string {
   const m = typeof s === 'string' ? /D:(\d{4})(\d{2})?(\d{2})?(\d{2})?(\d{2})?/.exec(s) : null
   if (!m) return typeof s === 'string' ? s : ''
   const d = new Date(Number(m[1]), Number(m[2] ?? 1) - 1, Number(m[3] ?? 1), Number(m[4] ?? 0), Number(m[5] ?? 0))
-  return d.toLocaleString()
+  return d.toLocaleString(intlLocale.value)
 }
 
 function Section({ title, rows }: { title: string; rows: Rows }) {
@@ -55,16 +59,20 @@ export function InspectorPane({ doc }: { doc: Doc }) {
 
   useEffect(() => {
     let alive = true
-    const rows: Rows = [['Name', doc.name.value], ['Where', path && !path.startsWith('browser:') ? platform.dirName(path) : '']]
+    const rows: Rows = [
+      [t('Name'), doc.name.value],
+      [t('Where'), path && !path.startsWith('browser:') ? platform.dirName(path) : '']
+    ]
     if (doc.kind === 'image') {
       const nat = doc.natural.value
-      rows.push(['Kind', `${/\.([^.]+)$/.exec(doc.name.value)?.[1]?.toUpperCase() ?? 'Image'} image`])
-      rows.push(['Size', bytes(doc.probe.size)])
-      if (nat) rows.push(['Dimensions', `${nat.width} × ${nat.height} pixels`])
-      if (doc.pageCount.value > 1) rows.push(['Pages', String(doc.pageCount.value)])
+      const ext = /\.([^.]+)$/.exec(doc.name.value)?.[1]?.toUpperCase()
+      rows.push([t('Kind'), ext ? t('{format} image', { format: ext }) : t('Image')])
+      rows.push([t('Size'), bytes(doc.probe.size)])
+      if (nat) rows.push([t('Dimensions'), t('{width} × {height} pixels', { width: nat.width, height: nat.height })])
+      if (doc.pageCount.value > 1) rows.push([t('Pages'), doc.pageCount.value.toLocaleString(intlLocale.value)])
       if (path) void platform.imageMetadata(path).then((m) => alive && setMeta(m)).catch(() => alive && setMeta(null))
     } else if (doc.kind === 'pdf') {
-      rows.push(['Kind', 'PDF document'], ['Size', bytes(doc.bytes.length)], ['Pages', String(doc.pageCount.value)])
+      rows.push([t('Kind'), t('PDF document')], [t('Size'), bytes(doc.bytes.length)], [t('Pages'), doc.pageCount.value.toLocaleString(intlLocale.value)])
       const proxy = doc.proxy.value
       void proxy
         ?.getMetadata()
@@ -72,20 +80,28 @@ export function InspectorPane({ doc }: { doc: Doc }) {
           const i = info as Record<string, unknown>
           const page = await proxy.getPage(doc.current.value + 1)
           const [x1, y1, x2, y2] = page.view
-          const inch = (v: number) => (v / 72).toFixed(2)
+          const inch = (v: number) => fixed(v / 72, 2)
           if (!alive) return
           setPdfRows([
-            ['Title', String(i.Title ?? '')],
-            ['Author', String(i.Author ?? '')],
-            ['Subject', String(i.Subject ?? '')],
-            ['Keywords', String(i.Keywords ?? '')],
-            ['Created', pdfDate(i.CreationDate)],
-            ['Modified', pdfDate(i.ModDate)],
-            ['Application', String(i.Creator ?? '')],
-            ['PDF producer', String(i.Producer ?? '')],
-            ['PDF version', String(i.PDFFormatVersion ?? '')],
-            ['Encrypted', i.IsEncrypted ? 'Yes' : ''],
-            ['Page size', `${inch(x2 - x1)} × ${inch(y2 - y1)} in (${Math.round(x2 - x1)} × ${Math.round(y2 - y1)} pt)`]
+            [t('Title'), String(i.Title ?? '')],
+            [t('Author'), String(i.Author ?? '')],
+            [t('Subject'), String(i.Subject ?? '')],
+            [t('Keywords'), String(i.Keywords ?? '')],
+            [t('Created'), pdfDate(i.CreationDate)],
+            [t('Modified'), pdfDate(i.ModDate)],
+            [t('Application'), String(i.Creator ?? '')],
+            [t('PDF producer'), String(i.Producer ?? '')],
+            [t('PDF version'), String(i.PDFFormatVersion ?? '')],
+            [t('Encrypted'), i.IsEncrypted ? t('Yes') : ''],
+            [
+              t('Page size'),
+              t('{width} × {height} in ({widthPt} × {heightPt} pt)', {
+                width: inch(x2 - x1),
+                height: inch(y2 - y1),
+                widthPt: Math.round(x2 - x1),
+                heightPt: Math.round(y2 - y1)
+              })
+            ]
           ])
         })
         .catch(() => undefined)
@@ -94,21 +110,21 @@ export function InspectorPane({ doc }: { doc: Doc }) {
     return () => {
       alive = false
     }
-  }, [doc, path, version, doc.kind === 'image' ? doc.natural.value : null])
+  }, [doc, path, version, doc.kind === 'image' ? doc.natural.value : null, locale.value])
 
   const removeLocation = async (): Promise<void> => {
     if (!path) return
-    if (doc.dirty.peek()) return toast('Save your changes first; removing location rewrites the file.')
+    if (doc.dirty.peek()) return toast(t('Save your changes first; removing location rewrites the file.'))
     const ok = await platform.confirmDialog(
-      'Remove the location where this photo was taken from the file? Other details, like the camera and date, are kept. This can’t be undone.',
-      'Remove location',
-      'Remove'
+      t('Remove the location where this photo was taken from the file? Other details, like the camera and date, are kept. This can’t be undone.'),
+      t('Remove location'),
+      t('Remove')
     )
     if (!ok) return
     try {
       const failed = await platform.removeLocation([path])
       if (failed.length) toast(failed[0], 'error')
-      else toast('Location removed')
+      else toast(t('Location removed'))
       setVersion((v) => v + 1)
     } catch (e) {
       toast(String(e), 'error')
@@ -117,42 +133,49 @@ export function InspectorPane({ doc }: { doc: Doc }) {
 
   const loc = meta?.location
   return (
-    <aside class="side-pane inspector" aria-label="Inspector">
+    <aside class="side-pane inspector" aria-label={t('Inspector')}>
       <header class="side-pane-header">
-        <h2>Inspector</h2>
-        <button class="icon-button" aria-label="Close" onClick={close}>
+        <h2>{t('Inspector')}</h2>
+        <button class="icon-button" aria-label={t('Close')} onClick={close}>
           <Icon name="close" size={16} />
         </button>
       </header>
       <div class="side-pane-body">
-        <Section title="General" rows={general} />
-        {doc.kind === 'pdf' && <Section title="Document" rows={pdfRows} />}
-        {meta && <Section title="Color" rows={[['Color profile', meta.color_profile ?? 'None (sRGB assumed)']]} />}
+        <Section title={t('General')} rows={general} />
+        {doc.kind === 'pdf' && <Section title={t('Document')} rows={pdfRows} />}
+        {meta && <Section title={t('Color')} rows={[[t('Color profile'), meta.color_profile ?? t('None (sRGB assumed)')]]} />}
         {meta?.has_location && (
           <section class="inspector-section location">
-            <h3>Location</h3>
-            {loc && <p class="coords">{`${Math.abs(loc[0]).toFixed(5)}° ${loc[0] >= 0 ? 'N' : 'S'}, ${Math.abs(loc[1]).toFixed(5)}° ${loc[1] >= 0 ? 'E' : 'W'}`}</p>}
+            <h3>{t('Location')}</h3>
+            {loc && (
+              <p class="coords">
+                {t('{latitude}, {longitude}', {
+                  latitude: loc[0] >= 0 ? t('{degrees}° N', { degrees: fixed(loc[0], 5) }) : t('{degrees}° S', { degrees: fixed(-loc[0], 5) }),
+                  longitude: loc[1] >= 0 ? t('{degrees}° E', { degrees: fixed(loc[1], 5) }) : t('{degrees}° W', { degrees: fixed(-loc[1], 5) })
+                })}
+              </p>
+            )}
             <div class="inline-actions">
               {loc && (
                 <button class="btn" onClick={() => void platform.openUrl(`https://www.bing.com/maps?cp=${loc[0]}~${loc[1]}&lvl=15&sp=point.${loc[0]}_${loc[1]}`)}>
-                  Show in Maps
+                  {t('Show in Maps')}
                 </button>
               )}
               {meta.can_remove_location && (
                 <button class="btn" onClick={() => void removeLocation()}>
-                  Remove Location
+                  {t('Remove Location')}
                 </button>
               )}
             </div>
           </section>
         )}
         {meta?.groups
-          .filter((g) => g.title !== 'Location')
+          .filter((g) => g.title !== 'Location') // i18n-ignore: the native side's group id, not shown
           .map((g) => (
             <Section key={g.title} title={g.title} rows={g.fields.map((f) => [f.label, f.value])} />
           ))}
-        {doc.kind === 'image' && meta && !meta.groups.length && <p class="muted">No camera or EXIF details in this file.</p>}
-        {doc.kind === 'image' && !platform.isTauri && <p class="muted">EXIF details are shown in the Windows app.</p>}
+        {doc.kind === 'image' && meta && !meta.groups.length && <p class="muted">{t('No camera or EXIF details in this file.')}</p>}
+        {doc.kind === 'image' && !platform.isTauri && <p class="muted">{t('EXIF details are shown in the Windows app.')}</p>}
       </div>
     </aside>
   )

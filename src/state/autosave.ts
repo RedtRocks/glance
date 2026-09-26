@@ -12,6 +12,7 @@ import { editingId } from './markupState'
 import { save } from './actions'
 import { conflicts } from './versions'
 import { isTauri } from '../platform'
+import { t } from '../i18n'
 
 const DELAY = 4000
 
@@ -32,7 +33,7 @@ export function startAutosave(): () => void {
       failed.delete(d.id)
     } catch (e) {
       // Tell once per document; manual Save still reports every error.
-      if (!failed.has(d.id)) toast(`Couldn’t save “${d.name.peek()}” automatically: ${(e as Error).message ?? e}`, 'error')
+      if (!failed.has(d.id)) toast(t('Couldn’t save “{file}” automatically: {error}', { file: d.name.peek(), error: String((e as Error).message ?? e) }), 'error')
       failed.add(d.id)
     }
   }
@@ -49,6 +50,6 @@ export function startAutosave(): () => void {
   })
   return () => {
     dispose()
-    timers.forEach((t) => clearTimeout(t))
+    timers.forEach((timer) => clearTimeout(timer))
   }
 }

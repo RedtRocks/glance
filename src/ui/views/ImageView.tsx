@@ -7,6 +7,7 @@ import { MarkupLayer } from '../markup/MarkupLayer'
 import { imageViewport } from '../../image/viewport'
 import { SelectionOverlay } from '../image/SelectionOverlay'
 import { InfoBar } from '../InfoBar'
+import { t } from '../../i18n'
 
 /** Draws the magnified content of loupe markup (the ring itself is SVG in the markup layer). */
 function LoupeLayer({ doc, source, scale }: { doc: ImageDoc; source: HTMLCanvasElement | HTMLImageElement | null; scale: number }) {
@@ -116,7 +117,7 @@ export function ImageView({ doc }: { doc: ImageDoc }) {
 
   return (
     <div class="image-view-wrap">
-      {doc.notice && <InfoBar title="Preview only">{doc.notice}</InfoBar>}
+      {doc.notice && <InfoBar title={t('Preview only')}>{doc.notice}</InfoBar>}
       <div
         class="image-view"
         ref={box}
@@ -129,7 +130,7 @@ export function ImageView({ doc }: { doc: ImageDoc }) {
       >
         {error ? (
           <div class="notice">
-            <h2>Glance couldn’t display this image</h2>
+            <h2>{t('Glance couldn’t display this image')}</h2>
             <p>{error}</p>
           </div>
         ) : (
@@ -151,7 +152,7 @@ export function ImageView({ doc }: { doc: ImageDoc }) {
                   }}
                   onError={async () => {
                     const res = await fetch(src).catch(() => null)
-                    setError(res && !res.ok ? await res.text() : 'The file may be damaged or use an unsupported variant of its format.')
+                    setError(res && !res.ok ? await res.text() : t('The file may be damaged or use an unsupported variant of its format.'))
                   }}
                 />
               )}

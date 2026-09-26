@@ -4,6 +4,7 @@
  * without the owner password.
  */
 import { PDFDocument } from '@cantoo/pdf-lib'
+import { t } from '../i18n'
 
 export interface ProtectOptions {
   /** Needed to open the file. */
@@ -16,7 +17,7 @@ export interface ProtectOptions {
 }
 
 export async function protectPdf(bytes: Uint8Array, o: ProtectOptions): Promise<Uint8Array> {
-  if (!o.password) throw new Error('A password is required.')
+  if (!o.password) throw new Error(t('A password is required.'))
   const doc = await PDFDocument.load(bytes, { updateMetadata: false })
   doc.encrypt({
     userPassword: o.password,

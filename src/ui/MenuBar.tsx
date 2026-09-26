@@ -4,9 +4,16 @@ import { displayCombo } from '../core/shortcuts'
 import { menuOpen } from '../state/ui'
 import { activeDoc } from '../state/documents'
 import { Icon } from './Icon'
+import { msg, t } from '../i18n'
 
 /** A command id, '-' for a separator, or '#Heading' for a group heading. */
 type Entry = string
+
+/** Menu names and group headings, marked for translation (they're shown with t()). */
+export const MENU_TEXT = [
+  msg('File'), msg('Edit'), msg('View'), msg('Go'), msg('Pages'), msg('Markup'), msg('Image'), msg('Help'),
+  msg('Sidebar'), msg('Page layout')
+]
 
 const HELP: Entry[] = ['help.github', 'help.updates', 'help.about']
 const ZOOM: Entry[] = ['view.zoomIn', 'view.zoomOut', 'view.actualSize', 'view.zoomToFit']
@@ -89,7 +96,10 @@ export function MenuItems({ items, onDone }: { items: Entry[]; onDone: () => voi
     <div class="menu" role="menu">
       {visibleEntries(items).map((id, i) => {
         if (id === '-') return <div key={i} class="menu-sep" role="separator" />
-        if (id.startsWith('#')) return <div key={i} class="menu-heading" role="presentation">{id.slice(1)}</div>
+        if (id.startsWith('#')) {
+          const heading = id.slice(1) // marked in MENU_TEXT
+          return <div key={i} class="menu-heading" role="presentation">{t(heading)}</div>
+        }
         const cmd = commandById.get(id)
         if (!cmd) return null
         const enabled = cmd.enabled ? cmd.enabled() : true
@@ -109,7 +119,7 @@ export function MenuItems({ items, onDone }: { items: Entry[]; onDone: () => voi
             }}
           >
             <span class="menu-check">{checked ? radio ? <span class="radio-dot" aria-hidden="true" /> : <Icon name="check" size={16} /> : null}</span>
-            <span class="menu-label">{cmd.label}</span>
+            <span class="menu-label">{t(cmd.label)}</span>
             <span class="menu-keys">{keys[0] ? displayCombo(keys[0]) : ''}</span>
           </button>
         )
@@ -153,7 +163,7 @@ export function MenuBar() {
               if (open && open !== name) menuOpen.value = name
             }}
           >
-            {name}
+            {t(name)}
           </button>
           {open === name && <MenuItems items={items} onDone={() => (menuOpen.value = null)} />}
         </div>

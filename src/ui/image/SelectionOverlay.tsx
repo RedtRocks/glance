@@ -7,6 +7,7 @@ import { maskBounds } from '../../core/image/alpha'
 import type { Pt } from '../../core/image/select'
 import type { Raster } from '../../core/image/raster'
 import { toast } from '../../state/ui'
+import { t } from '../../i18n'
 
 let hinted = false
 
@@ -15,8 +16,8 @@ export function SelectionOverlay({ doc, scale }: { doc: ImageDoc; scale: number 
   const host = useRef<HTMLDivElement>(null)
   const maskCanvas = useRef<HTMLCanvasElement>(null)
   const sel = imageSelection.value
-  const t = tool.value
-  const active = IMAGE_SELECT_TOOLS.includes(t)
+  const cur = tool.value
+  const active = IMAGE_SELECT_TOOLS.includes(cur)
   const nat = doc.natural.value
   const [draft, setDraft] = useState<Pt[] | null>(null)
   const preview = useRef<{ raster: Raster; scale: number } | null>(null)
@@ -60,7 +61,7 @@ export function SelectionOverlay({ doc, scale }: { doc: ImageDoc; scale: number 
     const start = toImage(e)
     imageSelection.value = null
 
-    if (t === 'instantAlpha') {
+    if (cur === 'instantAlpha') {
       const full = await engine.ensureRaster(doc)
       preview.current ??= await engine.previewCopy(full, 1200)
       const pv = preview.current
@@ -88,7 +89,7 @@ export function SelectionOverlay({ doc, scale }: { doc: ImageDoc; scale: number 
         imageSelection.value = { kind: 'mask', mask, width: full.width, height: full.height, bounds }
         if (!hinted) {
           hinted = true
-          toast('Press Delete to remove the selected area, or Crop to keep it.')
+          toast(t('Press Delete to remove the selected area, or Crop to keep it.'))
         }
       }
       el.addEventListener('pointermove', move)
@@ -99,7 +100,7 @@ export function SelectionOverlay({ doc, scale }: { doc: ImageDoc; scale: number 
     const points: Pt[] = [start]
     const move = (ev: PointerEvent): void => {
       const p = toImage(ev)
-      if (t === 'lasso' || t === 'smartLasso') points.push(p)
+      if (cur === 'lasso' || cur === 'smartLasso') points.push(p)
       else points[1] = p
       setDraft([...points])
     }
@@ -108,16 +109,16 @@ export function SelectionOverlay({ doc, scale }: { doc: ImageDoc; scale: number 
       el.removeEventListener('pointerup', up)
       setDraft(null)
       if (points.length < 2) return
-      if (t === 'selectRect' || t === 'selectEllipse') {
+      if (cur === 'selectRect' || cur === 'selectEllipse') {
         const [a, b] = points
         const x = Math.max(0, Math.min(a[0], b[0]))
         const y = Math.max(0, Math.min(a[1], b[1]))
         const w = Math.abs(b[0] - a[0])
         const h = Math.abs(b[1] - a[1])
         if (w < 2 || h < 2) return
-        imageSelection.value = { kind: t === 'selectRect' ? 'rect' : 'ellipse', x, y, width: w, height: h }
+        imageSelection.value = { kind: cur === 'selectRect' ? 'rect' : 'ellipse', x, y, width: w, height: h }
       } else if (points.length > 3) {
-        imageSelection.value = t === 'smartLasso' ? { kind: 'smart', points, band: Math.max(4, 14 / scale) } : { kind: 'lasso', points }
+        imageSelection.value = cur === 'smartLasso' ? { kind: 'smart', points, band: Math.max(4, 14 / scale) } : { kind: 'lasso', points }
       }
     }
     el.addEventListener('pointermove', move)
@@ -133,15 +134,15 @@ export function SelectionOverlay({ doc, scale }: { doc: ImageDoc; scale: number 
   const outline = (): preact.JSX.Element | null => {
     const s = sel
     const pts = shape
-    if (pts && (t === 'selectRect' || t === 'selectEllipse') && pts[1]) {
+    if (pts && (cur === 'selectRect' || cur === 'selectEllipse') && pts[1]) {
       const [a, b] = pts
       const x = Math.min(a[0], b[0]) * scale
       const y = Math.min(a[1], b[1]) * scale
       const w = Math.abs(b[0] - a[0]) * scale
       const h = Math.abs(b[1] - a[1]) * scale
-      return t === 'selectRect' ? <rect x={x} y={y} width={w} height={h} /> : <ellipse cx={x + w / 2} cy={y + h / 2} rx={w / 2} ry={h / 2} />
+      return cur === 'selectRect' ? <rect x={x} y={y} width={w} height={h} /> : <ellipse cx={x + w / 2} cy={y + h / 2} rx={w / 2} ry={h / 2} />
     }
-    if (pts && (t === 'lasso' || t === 'smartLasso')) return <polyline points={pts.map((p) => `${p[0] * scale},${p[1] * scale}`).join(' ')} />
+    if (pts && (cur === 'lasso' || cur === 'smartLasso')) return <polyline points={pts.map((p) => `${p[0] * scale},${p[1] * scale}`).join(' ')} />
     if (!s || s.kind === 'mask') return null
     if (s.kind === 'rect') return <rect x={s.x * scale} y={s.y * scale} width={s.width * scale} height={s.height * scale} />
     if (s.kind === 'ellipse') return <ellipse cx={(s.x + s.width / 2) * scale} cy={(s.y + s.height / 2) * scale} rx={(s.width / 2) * scale} ry={(s.height / 2) * scale} />

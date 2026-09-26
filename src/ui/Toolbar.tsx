@@ -10,6 +10,7 @@ import { MenuItems } from './MenuBar'
 import { markupBar, tool } from '../state/markupState'
 import { Icon } from './Icon'
 import type { IconName } from './icons'
+import { msg, t } from '../i18n'
 
 export interface ToolbarContext {
   doc: Doc | null
@@ -18,6 +19,7 @@ export interface ToolbarContext {
 
 export interface ToolbarItem {
   id: string
+  /** Marked with msg(); shown with t(). */
   label: string
   /** Hidden automatically when it doesn't apply to the current document. */
   applies: (ctx: ToolbarContext) => boolean
@@ -26,7 +28,7 @@ export interface ToolbarItem {
 
 function tip(label: string, command?: string): string {
   const k = command ? keysFor(command)[0] : undefined
-  return k ? `${label} (${displayCombo(k)})` : label
+  return k ? t('{label} ({shortcut})', { label, shortcut: displayCombo(k) }) : label
 }
 
 function Btn({ icon, label, command, onClick, pressed }: { icon: IconName; label: string; command?: string; onClick?: () => void; pressed?: boolean }) {
@@ -58,13 +60,13 @@ function PageControls({ doc }: { doc: Doc }) {
   }
   return (
     <div class="tb-group page-controls">
-      <Btn icon="up" label="Previous Page" command="go.previous" />
-      <Btn icon="down" label="Next Page" command="go.next" />
+      <Btn icon="up" label={t('Previous Page')} command="go.previous" />
+      <Btn icon="down" label={t('Next Page')} command="go.next" />
       {showPageNumberField(ctx) && (
-        <label class="page-field" title={tip('Go to Page', 'go.page')}>
+        <label class="page-field" title={tip(t('Go to Page'), 'go.page')}>
           <input
             value={text}
-            aria-label="Page number"
+            aria-label={t('Page number')}
             inputMode="numeric"
             onInput={(e) => setText((e.target as HTMLInputElement).value)}
             onKeyDown={(e) => {
@@ -74,7 +76,7 @@ function PageControls({ doc }: { doc: Doc }) {
             onBlur={commit}
             onFocus={(e) => (e.target as HTMLInputElement).select()}
           />
-          <span class="page-total">of {ctx.pageCount}</span>
+          <span class="page-total">{t('of {count}', { count: ctx.pageCount })}</span>
         </label>
       )}
     </div>
@@ -95,8 +97,8 @@ function SearchField({ doc }: { doc: Doc }) {
       <input
         ref={input}
         type="search"
-        placeholder="Search"
-        aria-label="Search document"
+        placeholder={t('Search')}
+        aria-label={t('Search document')}
         value={findQuery.value}
         onFocus={() => (findOpen.value = true)}
         onBlur={() => !findQuery.value && (findOpen.value = false)}
@@ -116,7 +118,7 @@ function SearchField({ doc }: { doc: Doc }) {
       />
       {findQuery.value && (
         <span class="search-count" aria-live="polite">
-          {searching.value ? '…' : count ? `${hitIndex.value + 1} of ${count}` : 'No results'}
+          {searching.value ? '…' : count ? t('{current} of {total}', { current: hitIndex.value + 1, total: count }) : t('No results')}
         </span>
       )}
     </div>
@@ -136,7 +138,7 @@ function Overflow() {
   }, [open])
   return (
     <div class="overflow" ref={ref}>
-      <Btn icon="more" label="More options" onClick={() => (menuOpen.value = open ? null : '__overflow')} pressed={open} />
+      <Btn icon="more" label={t('More options')} onClick={() => (menuOpen.value = open ? null : '__overflow')} pressed={open} />
       {open && (
         <div class="overflow-menu">
           <MenuItems
@@ -149,6 +151,11 @@ function Overflow() {
   )
 }
 
+function rotateTip(): string {
+  const k = keysFor('tools.rotateLeft')[0]
+  return k ? t('Rotate Left ({shortcut}). Alt+click rotates right.', { shortcut: displayCombo(k) }) : t('Rotate Left. Alt+click rotates right.')
+}
+
 const isPdf = (c: ToolbarContext) => c.doc?.kind === 'pdf'
 const isViewable = (c: ToolbarContext) => c.doc?.kind === 'pdf' || c.doc?.kind === 'image'
 const isShown = (c: ToolbarContext) => !!c.doc && c.doc.kind !== 'notice'
@@ -156,26 +163,26 @@ const isShown = (c: ToolbarContext) => !!c.doc && c.doc.kind !== 'notice'
 export const TOOLBAR_ITEMS: ToolbarItem[] = [
   {
     id: 'sidebar',
-    label: 'Sidebar',
+    label: msg('Sidebar'),
     applies: (c) => isPdf(c) || (isViewable(c) && c.pageCount > 1),
     render: () => (
-      <Btn icon="sidebar" label="Show/Hide Sidebar" pressed={sidebarVisible.value} onClick={() => (sidebarVisible.value = !sidebarVisible.value)} />
+      <Btn icon="sidebar" label={t('Show/Hide Sidebar')} pressed={sidebarVisible.value} onClick={() => (sidebarVisible.value = !sidebarVisible.value)} />
     )
   },
-  { id: 'pageControls', label: 'Page Controls', applies: (c) => isViewable(c) && c.pageCount > 1, render: (c) => <PageControls doc={c.doc!} /> },
-  { id: 'spacer', label: 'Flexible Space', applies: () => true, render: () => <div class="tb-spacer" /> },
-  { id: 'zoomOut', label: 'Zoom Out', applies: isShown, render: () => <Btn icon="zoomOut" label="Zoom Out" command="view.zoomOut" /> },
-  { id: 'zoomIn', label: 'Zoom In', applies: isShown, render: () => <Btn icon="zoomIn" label="Zoom In" command="view.zoomIn" /> },
-  { id: 'zoomFit', label: 'Zoom to Fit', applies: isShown, render: () => <Btn icon="zoomFit" label="Zoom to Fit" command="view.zoomToFit" /> },
+  { id: 'pageControls', label: msg('Page Controls'), applies: (c) => isViewable(c) && c.pageCount > 1, render: (c) => <PageControls doc={c.doc!} /> },
+  { id: 'spacer', label: msg('Flexible Space'), applies: () => true, render: () => <div class="tb-spacer" /> },
+  { id: 'zoomOut', label: msg('Zoom Out'), applies: isShown, render: () => <Btn icon="zoomOut" label={t('Zoom Out')} command="view.zoomOut" /> },
+  { id: 'zoomIn', label: msg('Zoom In'), applies: isShown, render: () => <Btn icon="zoomIn" label={t('Zoom In')} command="view.zoomIn" /> },
+  { id: 'zoomFit', label: msg('Zoom to Fit'), applies: isShown, render: () => <Btn icon="zoomFit" label={t('Zoom to Fit')} command="view.zoomToFit" /> },
   {
     id: 'rotate',
-    label: 'Rotate',
+    label: msg('Rotate'),
     applies: isViewable,
     render: () => (
       <button
         class="tb-button"
-        title="Rotate Left (Ctrl+L). Alt+click rotates right."
-        aria-label="Rotate"
+        title={rotateTip()}
+        aria-label={t('Rotate')}
         onClick={(e) => void runCommand(e.altKey ? 'tools.rotateRight' : 'tools.rotateLeft')}
       >
         <Icon name="rotateLeft" />
@@ -184,36 +191,36 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
   },
   {
     id: 'markup',
-    label: 'Markup',
+    label: msg('Markup'),
     applies: (c) => isPdf(c) || (c.doc?.kind === 'image' && c.doc.editable),
-    render: () => <Btn icon="markup" label="Show Markup Toolbar" command="tools.markup" pressed={markupBar.value} />
+    render: () => <Btn icon="markup" label={t('Show Markup Toolbar')} command="tools.markup" pressed={markupBar.value} />
   },
   {
     id: 'highlight',
-    label: 'Highlight',
+    label: msg('Highlight'),
     applies: isPdf,
-    render: () => <Btn icon="highlight" label="Highlight" command="tools.highlight" pressed={tool.value === 'highlight'} />
+    render: () => <Btn icon="highlight" label={t('Highlight')} command="tools.highlight" pressed={tool.value === 'highlight'} />
   },
   {
     id: 'contactSheet',
-    label: 'Contact Sheet',
+    label: msg('Contact Sheet'),
     applies: (c) => isPdf(c) && c.pageCount > 1,
     render: (c) => (
-      <Btn icon="grid" label="Contact Sheet" command="view.contactSheet" pressed={c.doc?.kind === 'pdf' && c.doc.contactSheet.value} />
+      <Btn icon="grid" label={t('Contact Sheet')} command="view.contactSheet" pressed={c.doc?.kind === 'pdf' && c.doc.contactSheet.value} />
     )
   },
-  { id: 'insertPage', label: 'Insert Blank Page', applies: isPdf, render: () => <Btn icon="addPage" label="Insert Blank Page" command="edit.insertBlank" /> },
-  { id: 'deletePages', label: 'Delete Pages', applies: (c) => isPdf(c) && c.pageCount > 1, render: () => <Btn icon="trash" label="Delete Selected Pages" command="edit.deletePages" /> },
+  { id: 'insertPage', label: msg('Insert Blank Page'), applies: isPdf, render: () => <Btn icon="addPage" label={t('Insert Blank Page')} command="edit.insertBlank" /> },
+  { id: 'deletePages', label: msg('Delete Pages'), applies: (c) => isPdf(c) && c.pageCount > 1, render: () => <Btn icon="trash" label={t('Delete Selected Pages')} command="edit.deletePages" /> },
   {
     id: 'darkPdf',
-    label: 'Dark PDF',
+    label: msg('Dark PDF'),
     applies: isPdf,
-    render: () => <Btn icon="moon" label="Dark Appearance for PDFs" command="view.darkPdf" pressed={settings.value.darkPdf} />
+    render: () => <Btn icon="moon" label={t('Dark Appearance for PDFs')} command="view.darkPdf" pressed={settings.value.darkPdf} />
   },
-  { id: 'slideshow', label: 'Slideshow', applies: isViewable, render: () => <Btn icon="slideshow" label="Slideshow" command="view.slideshow" /> },
-  { id: 'print', label: 'Print', applies: isViewable, render: () => <Btn icon="print" label="Print" command="file.print" /> },
-  { id: 'search', label: 'Search', applies: isPdf, render: (c) => <SearchField doc={c.doc!} /> },
-  { id: 'overflow', label: 'More', applies: () => true, render: () => <Overflow /> }
+  { id: 'slideshow', label: msg('Slideshow'), applies: isViewable, render: () => <Btn icon="slideshow" label={t('Slideshow')} command="view.slideshow" /> },
+  { id: 'print', label: msg('Print'), applies: isViewable, render: () => <Btn icon="print" label={t('Print')} command="file.print" /> },
+  { id: 'search', label: msg('Search'), applies: isPdf, render: (c) => <SearchField doc={c.doc!} /> },
+  { id: 'overflow', label: msg('More'), applies: () => true, render: () => <Overflow /> }
 ]
 
 const byId = new Map(TOOLBAR_ITEMS.map((i) => [i.id, i]))
@@ -222,7 +229,7 @@ export function Toolbar() {
   const doc = activeDoc.value
   const ctx: ToolbarContext = { doc, pageCount: doc && doc.kind !== 'notice' ? doc.pageCount.value : 0 }
   return (
-    <div class="toolbar" role="toolbar" aria-label="Document tools">
+    <div class="toolbar" role="toolbar" aria-label={t('Document tools')}>
       {settings.value.toolbar.map((id, i) => {
         const item = byId.get(id)
         if (!item || !item.applies(ctx)) return null

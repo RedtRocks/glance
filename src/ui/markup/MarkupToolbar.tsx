@@ -22,31 +22,32 @@ import { markSelection, type TextMarkupKind } from './textSelection'
 import { Icon } from '../Icon'
 import type { IconName } from '../icons'
 import { Popover } from './Popover'
+import { msg, t } from '../../i18n'
 
 const SHAPES: [Tool, IconName, string][] = [
-  ['rect', 'square', 'Rectangle'],
-  ['roundRect', 'roundRect', 'Rounded rectangle'],
-  ['oval', 'oval', 'Oval'],
-  ['line', 'line', 'Line'],
-  ['arrow', 'arrow', 'Arrow'],
-  ['star', 'star', 'Star'],
-  ['polygon', 'polygon', 'Polygon (click points, double-click to finish)'],
-  ['bubble', 'bubble', 'Speech bubble']
+  ['rect', 'square', msg('Rectangle')],
+  ['roundRect', 'roundRect', msg('Rounded rectangle')],
+  ['oval', 'oval', msg('Oval')],
+  ['line', 'line', msg('Line')],
+  ['arrow', 'arrow', msg('Arrow')],
+  ['star', 'star', msg('Star')],
+  ['polygon', 'polygon', msg('Polygon (click points, double-click to finish)')],
+  ['bubble', 'bubble', msg('Speech bubble')]
 ]
 
 const IMAGE_SELECT: [Tool, IconName, string][] = [
-  ['selectRect', 'selectRect', 'Rectangular selection'],
-  ['selectEllipse', 'selectEllipse', 'Elliptical selection'],
-  ['lasso', 'lasso', 'Lasso selection'],
-  ['smartLasso', 'smartLasso', 'Smart lasso (snaps to edges)']
+  ['selectRect', 'selectRect', msg('Rectangular selection')],
+  ['selectEllipse', 'selectEllipse', msg('Elliptical selection')],
+  ['lasso', 'lasso', msg('Lasso selection')],
+  ['smartLasso', 'smartLasso', msg('Smart lasso (snaps to edges)')]
 ]
 
 const PALETTE: Color[] = [COLORS.red, COLORS.orange, COLORS.yellow, COLORS.green, COLORS.blue, COLORS.purple, COLORS.black, COLORS.white]
 const WIDTHS = [0.5, 1, 2, 3, 5, 8, 12]
 
-function ToolButton({ t, icon, label }: { t: Tool; icon: IconName; label: string }) {
+function ToolButton({ t: id, icon, label }: { t: Tool; icon: IconName; label: string }) {
   return (
-    <button class={`tb-button ${tool.value === t ? 'pressed' : ''}`} title={label} aria-label={label} aria-pressed={tool.value === t} onClick={() => setTool(tool.value === t ? 'select' : t)}>
+    <button class={`tb-button ${tool.value === id ? 'pressed' : ''}`} title={label} aria-label={label} aria-pressed={tool.value === id} onClick={() => setTool(tool.value === id ? 'select' : id)}>
       <Icon name={icon} />
     </button>
   )
@@ -63,20 +64,20 @@ function Swatches({ value, onPick, allowNone, colors = PALETTE }: { value: Color
   return (
     <div class="swatches" role="listbox">
       {allowNone && (
-        <button class={`swatch none ${value === null ? 'selected' : ''}`} aria-label="No color" onClick={() => onPick(null)} />
+        <button class={`swatch none ${value === null ? 'selected' : ''}`} aria-label={t('No color')} onClick={() => onPick(null)} />
       )}
       {colors.map((c) => (
         <button
           key={c.join()}
           class={`swatch ${value && value.join() === c.join() ? 'selected' : ''}`}
           style={{ background: css(c) }}
-          aria-label={`Color ${c.map((v) => Math.round(v * 255)).join(', ')}`}
+          aria-label={t('Color {rgb}', { rgb: c.map((v) => Math.round(v * 255)).join(', ') })}
           onClick={() => onPick(c)}
         />
       ))}
       {/* Any other color, through the system color picker. */}
-      <label class={`swatch custom ${custom ? 'selected' : ''}`} title="More colors" style={custom ? { background: css(value) } : undefined}>
-        <input type="color" aria-label="More colors" value={value ? hex(value) : '#000000'} onChange={(e) => onPick(fromHex((e.target as HTMLInputElement).value))} />
+      <label class={`swatch custom ${custom ? 'selected' : ''}`} title={t('More colors')} style={custom ? { background: css(value) } : undefined}>
+        <input type="color" aria-label={t('More colors')} value={value ? hex(value) : '#000000'} onChange={(e) => onPick(fromHex((e.target as HTMLInputElement).value))} />
       </label>
     </div>
   )
@@ -91,7 +92,7 @@ function FontPicker({ value, onPick }: { value?: string; onPick: (font: string |
   const list = value && !fonts.includes(value) ? [value, ...fonts] : fonts
   return (
     <label class="field">
-      <span>Font</span>
+      <span>{t('Font')}</span>
       <select
         class="font-select"
         value={value ?? ''}
@@ -99,6 +100,7 @@ function FontPicker({ value, onPick }: { value?: string; onPick: (font: string |
         onChange={(e) => onPick((e.target as HTMLSelectElement).value || undefined)}
       >
         <option value="" style={{ fontFamily: fontStack() }}>
+          {/* i18n-ignore: font family name */}
           Helvetica
         </option>
         {list.map((f) => (
@@ -153,7 +155,7 @@ function Signatures({ close }: { close: () => void }) {
   }, [signatureDialog.value])
   return (
     <div class="sig-menu">
-      {sigs === null && <p class="muted">Loading…</p>}
+      {sigs === null && <p class="muted">{t('Loading…')}</p>}
       {sigs?.map((s) => (
         <div class="sig-item" key={s.id}>
           <button
@@ -169,7 +171,7 @@ function Signatures({ close }: { close: () => void }) {
           </button>
           <button
             class="icon-button"
-            aria-label={`Delete signature ${s.name}`}
+            aria-label={t('Delete signature {name}', { name: s.name })}
             onClick={async () => {
               await deleteSignature(s.id)
               if (activeSignature.peek()?.id === s.id) activeSignature.value = null
@@ -180,7 +182,7 @@ function Signatures({ close }: { close: () => void }) {
           </button>
         </div>
       ))}
-      {sigs?.length === 0 && <p class="muted">No saved signatures yet.</p>}
+      {sigs?.length === 0 && <p class="muted">{t('No saved signatures yet.')}</p>}
       <button
         class="btn"
         onClick={() => {
@@ -188,9 +190,9 @@ function Signatures({ close }: { close: () => void }) {
           signatureDialog.value = true
         }}
       >
-        Create signature…
+        {t('Create signature…')}
       </button>
-      <p class="muted small">Signatures are encrypted with your Windows account and never leave this PC.</p>
+      <p class="muted small">{t('Signatures are encrypted with your Windows account and never leave this PC.')}</p>
     </div>
   )
 }
@@ -208,52 +210,52 @@ export function MarkupToolbar() {
   const image = active instanceof ImageDoc && active.editable ? active : null
   const doc = active?.kind === 'pdf' ? active : image
   if (!markupBar.value || !doc) return null
-  const selectTool = IMAGE_SELECT.find(([t]) => t === tool.value)
+  const selectTool = IMAGE_SELECT.find(([id]) => id === tool.value)
   const sel = selectedMarkup(doc)
   const st = sel?.style ?? style.value
   const ts: TextStyle = sel?.type === 'text' ? { fontSize: sel.fontSize, color: sel.color, font: sel.font } : textStyle.value
-  const shapeTool = SHAPES.find(([t]) => t === tool.value)
+  const shapeTool = SHAPES.find(([id]) => id === tool.value)
   const markColor = sel && TEXT_MARKS.includes(sel.type) && sel.style.stroke ? sel.style.stroke : highlightColor.value
   return (
-    <div class="markup-toolbar" role="toolbar" aria-label="Markup">
-      <ToolButton t="select" icon="cursor" label="Select and move markup" />
+    <div class="markup-toolbar" role="toolbar" aria-label={t('Markup')}>
+      <ToolButton t="select" icon="cursor" label={t('Select and move markup')} />
       {image && (
         <>
-          <Popover icon={selectTool?.[1] ?? 'selectRect'} label="Selection tools" pressed={!!selectTool}>
+          <Popover icon={selectTool?.[1] ?? 'selectRect'} label={t('Selection tools')} pressed={!!selectTool}>
             {(close) => (
               <div class="flyout-col">
-                {IMAGE_SELECT.map(([t, icon, label]) => (
+                {IMAGE_SELECT.map(([id, icon, label]) => (
                   <button
-                    key={t}
+                    key={id}
                     class="menu-item"
                     onClick={() => {
-                      setTool(t)
+                      setTool(id)
                       close()
                     }}
                   >
-                    <Icon name={icon} size={16} /> <span>{label}</span>
+                    <Icon name={icon} size={16} /> <span>{t(label)}</span>
                   </button>
                 ))}
               </div>
             )}
           </Popover>
-          <ToolButton t="instantAlpha" icon="instantAlpha" label="Instant Alpha: drag over a color to select it" />
+          <ToolButton t="instantAlpha" icon="instantAlpha" label={t('Instant Alpha: drag over a color to select it')} />
         </>
       )}
       <span class="tb-sep" />
-      <ToolButton t="sketch" icon="sketch" label="Sketch (shapes are recognized)" />
-      <ToolButton t="draw" icon="draw" label="Draw" />
-      <Popover icon={shapeTool?.[1] ?? 'shapes'} label="Shapes" pressed={!!shapeTool}>
+      <ToolButton t="sketch" icon="sketch" label={t('Sketch (shapes are recognized)')} />
+      <ToolButton t="draw" icon="draw" label={t('Draw')} />
+      <Popover icon={shapeTool?.[1] ?? 'shapes'} label={t('Shapes')} pressed={!!shapeTool}>
         {(close) => (
           <div class="shape-grid">
-            {[...SHAPES, ['loupe', 'zoomIn', 'Loupe (magnifier)'] as [Tool, IconName, string]].map(([t, icon, label]) => (
+            {[...SHAPES, ['loupe', 'zoomIn', msg('Loupe (magnifier)')] as [Tool, IconName, string]].map(([id, icon, label]) => (
               <button
-                key={t}
-                class={`tb-button ${tool.value === t ? 'pressed' : ''}`}
-                title={label}
-                aria-label={label}
+                key={id}
+                class={`tb-button ${tool.value === id ? 'pressed' : ''}`}
+                title={t(label)}
+                aria-label={t(label)}
                 onClick={() => {
-                  setTool(t)
+                  setTool(id)
                   close()
                 }}
               >
@@ -263,75 +265,75 @@ export function MarkupToolbar() {
           </div>
         )}
       </Popover>
-      <ToolButton t="text" icon="textBox" label="Text box" />
-      {!image && <ToolButton t="note" icon="note" label="Note" />}
+      <ToolButton t="text" icon="textBox" label={t('Text box')} />
+      {!image && <ToolButton t="note" icon="note" label={t('Note')} />}
       <span class="tb-sep" />
-      {!image && <button class={`tb-button ${tool.value === 'highlight' ? 'pressed' : ''}`} title="Highlight selected text" aria-label="Highlight" onClick={() => textMarkup(doc, 'highlight')}>
+      {!image && <button class={`tb-button ${tool.value === 'highlight' ? 'pressed' : ''}`} title={t('Highlight selected text')} aria-label={t('Highlight')} onClick={() => textMarkup(doc, 'highlight')}>
         <Icon name="highlight" />
         <span class="swatch-bar" style={{ background: css(markColor) }} />
       </button>}
       {!image && (
-        <Popover icon="underline" label="Highlight color, underline, strikethrough and squiggly underline">
+        <Popover icon="underline" label={t('Highlight color, underline, strikethrough and squiggly underline')}>
           {(close) => (
             <div class="flyout-col">
-              <span class="flyout-label">Highlight color</span>
+              <span class="flyout-label">{t('Highlight color')}</span>
               <Swatches colors={HIGHLIGHT_COLORS} value={markColor} onPick={(c) => c && pickMarkColor(doc, c)} />
               <span class="menu-sep" />
               {(
                 [
-                  ['underline', 'underline', 'Underline'],
-                  ['strike', 'strike', 'Strikethrough'],
-                  ['squiggly', 'squiggly', 'Squiggly underline']
+                  ['underline', 'underline', msg('Underline')],
+                  ['strike', 'strike', msg('Strikethrough')],
+                  ['squiggly', 'squiggly', msg('Squiggly underline')]
                 ] as [TextMarkupKind, IconName, string][]
               ).map(([k, icon, label]) => (
                 <button key={k} class={`menu-item ${tool.value === k ? 'checked' : ''}`} onClick={() => (textMarkup(doc, k), close())}>
-                  <Icon name={icon} size={16} /> <span>{label}</span>
+                  <Icon name={icon} size={16} /> <span>{t(label)}</span>
                 </button>
               ))}
             </div>
           )}
         </Popover>
       )}
-      <Popover icon="signature" label="Sign" pressed={tool.value === 'signature'}>
+      <Popover icon="signature" label={t('Sign')} pressed={tool.value === 'signature'}>
         {(close) => <Signatures close={close} />}
       </Popover>
       <button
         class={`tb-button ${tool.value === 'redact' ? 'pressed' : ''}`}
-        title="Redact: drag over an area, or select text"
-        aria-label="Redact"
+        title={t('Redact: drag over an area, or select text')}
+        aria-label={t('Redact')}
         onClick={() => textMarkup(doc, 'redact')}
       >
         <Icon name="redact" />
       </button>
       <span class="tb-sep" />
-      <Popover icon="lineWidth" label="Line width">
+      <Popover icon="lineWidth" label={t('Line width')}>
         {() => (
           <div class="width-list">
             {WIDTHS.map((w) => (
               <button key={w} class={`width-item ${st.width === w ? 'selected' : ''}`} onClick={() => restyle(doc, { width: w })}>
                 <span style={{ height: Math.max(1, w), background: 'currentColor' }} />
-                <small>{w} pt</small>
+                <small>{t('{size} pt', { size: w })}</small>
               </button>
             ))}
           </div>
         )}
       </Popover>
-      <Popover icon="strokeColor" label="Border color" swatch={css(st.stroke)}>
+      <Popover icon="strokeColor" label={t('Border color')} swatch={css(st.stroke)}>
         {() => <Swatches value={st.stroke} allowNone onPick={(c) => restyle(doc, { stroke: c })} />}
       </Popover>
-      <Popover icon="fillColor" label="Fill color" swatch={st.fill ? css(st.fill) : 'transparent'}>
+      <Popover icon="fillColor" label={t('Fill color')} swatch={st.fill ? css(st.fill) : 'transparent'}>
         {() => <Swatches value={st.fill} allowNone onPick={(c) => restyle(doc, { fill: c })} />}
       </Popover>
-      <Popover icon="textStyle" label="Text style">
+      <Popover icon="textStyle" label={t('Text style')}>
         {() => (
           <div class="flyout-col">
             <FontPicker value={ts.font} onPick={(font) => restyle(doc, {}, { font })} />
             <label class="field">
-              <span>Size</span>
+              <span>{t('Size')}</span>
               <select value={ts.fontSize} onChange={(e) => restyle(doc, {}, { fontSize: Number((e.target as HTMLSelectElement).value) })}>
                 {[8, 9, 10, 11, 12, 14, 16, 18, 24, 32, 48, 72].map((n) => (
                   <option key={n} value={n}>
-                    {n} pt
+                    {t('{size} pt', { size: n })}
                   </option>
                 ))}
               </select>
@@ -343,15 +345,15 @@ export function MarkupToolbar() {
       {image && (
         <>
           <span class="tb-sep" />
-          <ActionButton icon="crop" label="Crop to selection (Ctrl+K)" onClick={() => void cropToSelection(image)} />
-          <ActionButton icon="adjustColor" label="Adjust color (Ctrl+Shift+C)" onClick={() => (adjustColorOpen.value = true)} />
-          <ActionButton icon="adjustSize" label="Adjust size (Ctrl+Shift+U)" onClick={() => (adjustSizeOpen.value = true)} />
-          <ActionButton icon="removeBg" label="Remove background (Ctrl+Shift+K)" onClick={() => void removeBackground(image)} />
-          <ActionButton icon="copySubject" label="Copy subject" onClick={() => void copySubject(image)} />
+          <ActionButton icon="crop" label={t('Crop to selection (Ctrl+K)')} onClick={() => void cropToSelection(image)} />
+          <ActionButton icon="adjustColor" label={t('Adjust color (Ctrl+Shift+C)')} onClick={() => (adjustColorOpen.value = true)} />
+          <ActionButton icon="adjustSize" label={t('Adjust size (Ctrl+Shift+U)')} onClick={() => (adjustSizeOpen.value = true)} />
+          <ActionButton icon="removeBg" label={t('Remove background (Ctrl+Shift+K)')} onClick={() => void removeBackground(image)} />
+          <ActionButton icon="copySubject" label={t('Copy subject')} onClick={() => void copySubject(image)} />
         </>
       )}
       <div class="tb-spacer" />
-      <button class="tb-button" title="Hide markup toolbar (Ctrl+Shift+A)" aria-label="Hide markup toolbar" onClick={() => {
+      <button class="tb-button" title={t('Hide markup toolbar (Ctrl+Shift+A)')} aria-label={t('Hide markup toolbar')} onClick={() => {
           setTool('select')
           markupBar.value = false
         }}>

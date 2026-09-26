@@ -133,3 +133,17 @@ export function resolveLocale(preferred: readonly string[], available: readonly 
   }
   return 'en'
 }
+
+/** The placeholder names a message uses, sorted; a translation must use the same ones. */
+export function placeholders(message: string): string[] {
+  const names = new Set<string>()
+  const walk = (nodes: Node[]): void => {
+    for (const n of nodes) {
+      if (typeof n === 'string') continue
+      names.add(n.name)
+      if ('branches' in n) Object.values(n.branches).forEach(walk)
+    }
+  }
+  walk(parse(message))
+  return [...names].sort()
+}

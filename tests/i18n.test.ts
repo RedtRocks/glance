@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { format, pseudoMessage, resolveLocale } from '../src/i18n/format'
+import { format, placeholders, pseudoMessage, resolveLocale } from '../src/i18n/format'
 
 describe('format', () => {
   it('fills placeholders and leaves unknown ones visible', () => {
@@ -48,5 +48,11 @@ describe('resolveLocale', () => {
     expect(resolveLocale(['ja', 'de-CH'], available)).toBe('de')
     expect(resolveLocale(['ja'], available)).toBe('en')
     expect(resolveLocale([], available)).toBe('en')
+  })
+})
+
+describe('placeholders', () => {
+  it('lists variables, including those inside plural branches, but not branch text', () => {
+    expect(placeholders('{n, plural, one {{file}} other {pages}} in {folder}')).toEqual(['file', 'folder', 'n'])
   })
 })
