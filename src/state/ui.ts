@@ -90,6 +90,9 @@ export const redactTextOpen = signal(false)
 /** Tools → Show Inspector (Ctrl+I). */
 export const inspectorOpen = signal(false)
 
+/** View → Signatures: the certificate signatures in a PDF. */
+export const signaturesOpen = signal(false)
+
 /** File → Clean Up PDF. */
 export const cleanupOpen = signal(false)
 

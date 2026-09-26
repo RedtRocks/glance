@@ -23,6 +23,7 @@ import { alertDialog, promptText, showDialog, toast, withBusy } from './ui'
 import { editableImage, rotateImage, saveImage, saveImageAs } from './imageActions'
 import * as versions from './versions'
 import { msg, t } from '../i18n'
+import { mayHaveSignatures } from '../core/signatureStatus'
 
 const GS_INSTALL = 'winget install ArtifexSoftware.GhostScript'
 
@@ -65,7 +66,8 @@ async function loadPdfDoc(doc: PdfDoc, bytes: Uint8Array): Promise<boolean> {
 /** Makes markup Glance saved earlier editable again (only loads pdf-lib when present). */
 async function importMarkup(doc: PdfDoc): Promise<void> {
   const proxy = doc.proxy.peek()
-  if (!proxy || doc.encrypted) return
+  // Pulling markup out rewrites the file, which would break its signatures.
+  if (!proxy || doc.encrypted || mayHaveSignatures(doc.bytes)) return
   const meta = await proxy.getMetadata().catch(() => null)
   // PDF.js returns custom Info entries as a Map (older versions: a plain object).
   const custom = (meta?.info as { Custom?: Map<string, unknown> | Record<string, unknown> } | undefined)?.Custom
@@ -85,8 +87,10 @@ export async function serialize(doc: PdfDoc): Promise<Uint8Array> {
     // writeMarkup rewrites the whole file anyway; otherwise compact once appended
     // updates (other apps, form filling) pass a quarter of the file (ADR 0007).
     if (markup.length) return (await annotations()).writeMarkup(bytes, markup, { loadFont: platform.fontBytes })
+    // Compacting drops the revisions certificate signatures cover, which breaks them.
+    if (doc.password || mayHaveSignatures(bytes)) return bytes
     const c = await cleanup()
-    return !doc.password && c.appendedShare(bytes) > c.COMPACT_THRESHOLD ? c.compact(bytes) : bytes
+    return c.appendedShare(bytes) > c.COMPACT_THRESHOLD ? c.compact(bytes) : bytes
   })
 }
 

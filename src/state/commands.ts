@@ -13,7 +13,7 @@ import { checkForUpdates } from './updates'
 import { versionsOpen } from './versions'
 import { activeDoc, activeId, docs, type Doc, type ViewMode } from './documents'
 import { settings, updateSettings } from './settings'
-import { cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, findOpen, inspectorOpen, promptText, redactTextOpen, toast, settingsOpen, sidebarVisible, slideshow } from './ui'
+import { cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, findOpen, inspectorOpen, signaturesOpen, promptText, redactTextOpen, toast, settingsOpen, sidebarVisible, slideshow } from './ui'
 import { parsePageInput } from '../core/pageControls'
 import { printDoc } from './print'
 import { applyRedactions } from './actions'
@@ -232,6 +232,7 @@ export const COMMANDS: Command[] = [
     run: () => void (model() && (model()!.viewRequest.value = { kind: 'view', view }))
   })),
   { id: 'view.inspector', label: msg('Inspector'), keys: ['Ctrl+I'], run: () => void (inspectorOpen.value = !inspectorOpen.value), checked: () => inspectorOpen.value },
+  { id: 'view.signatures', label: msg('Signatures'), run: () => void (signaturesOpen.value = !signaturesOpen.value), checked: () => signaturesOpen.value },
   { id: 'view.customizeToolbar', label: msg('Customize Toolbar…'), run: () => void (customizeOpen.value = true) },
   // Go
   { id: 'go.previous', label: msg('Previous Page'), keys: ['Ctrl+Up', 'PageUp'], run: () => goPage(-1), enabled: multiPage },
@@ -273,6 +274,7 @@ export const COMMANDS: Command[] = [
   { id: 'tools.highlight', label: msg('Highlight'), keys: ['Ctrl+Shift+H'], run: () => toggleTool('highlight'), enabled: isPdf, checked: () => tool.value === 'highlight' },
   { id: 'tools.text', label: msg('Add Text Box'), keys: ['T', 'Ctrl+Shift+T'], run: () => toggleTool('text'), enabled: () => isPdf() || isImage() },
   { id: 'tools.note', label: msg('Add Note'), keys: ['S', 'Ctrl+Shift+O'], run: () => toggleTool('note'), enabled: isPdf },
+  { id: 'tools.certSign', label: msg('Sign with Certificate…'), run: () => void import('./certSign').then((m) => m.signWithCertificate()), enabled: () => platform.signatureCheckAvailable },
   { id: 'tools.signature', label: msg('Signature…'), keys: ['Ctrl+Shift+J'], run: () => void (signatureDialog.value = true), enabled: () => isPdf() || isImage() },
   { id: 'tools.ocr', label: msg('Recognize Text (OCR)…'), run: () => ocr.recognizePdfText(), enabled: isPdf },
   { id: 'tools.copyImageText', label: msg('Copy Text from Image'), run: () => ocr.copyImageText() },
@@ -337,7 +339,7 @@ const VISIBILITY: [(() => boolean), string[]][] = [
   [() => ifPdf() || isImage() || !!model(), ['file.export']],
   [ifPdf, [
     'file.exportPages', 'file.split', 'edit.selectAll', 'edit.find', 'edit.insertBlank', 'edit.insertFile', 'edit.duplicatePages', 'edit.stamps',
-    'edit.deletePages', 'edit.addBookmark', 'file.cleanup', 'file.reduce', 'view.toc', 'view.notes', 'view.bookmarks', 'view.continuous', 'view.single', 'view.two',
+    'edit.deletePages', 'edit.addBookmark', 'view.signatures', 'tools.certSign', 'file.cleanup', 'file.reduce', 'view.toc', 'view.notes', 'view.bookmarks', 'view.continuous', 'view.single', 'view.two',
     'view.contactSheet', 'view.darkPdf', 'tools.highlight', 'tools.note', 'tools.redactText', 'tools.applyRedactions', 'tools.ocr'
   ]],
   [ifPaged, ['view.hideSidebar', 'view.thumbnails', 'go.previous', 'go.next', 'go.first', 'go.last', 'go.page']],

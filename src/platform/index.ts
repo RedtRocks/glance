@@ -642,3 +642,54 @@ export async function shareFiles(paths: string[], title: string): Promise<void> 
   if (!isTauri) throw new Error(t('Sharing uses the Windows share sheet, available in the Windows app.'))
   await invoke('share_files', { paths, title })
 }
+
+// ---------------------------------------------------------------------------
+// Certificate-based PDF signatures (src-tauri/src/certsig.rs)
+
+export interface SignatureCheck {
+  integrity: 'intact' | 'modified' | 'invalid'
+  trust: 'trusted' | 'untrusted' | 'revoked' | 'expired' | 'unknown'
+  detail: string
+  signer: string
+  email: string
+  issuer: string
+  signingTime: number | null
+  timestamp: number | null
+  timestampAuthority: string
+  revocationChecked: boolean
+  certificate: string
+}
+
+/** Checking uses the Windows certificate store, so only the Windows app can do it. */
+export const signatureCheckAvailable = isTauri && isWindows
+
+/** Checks a CMS signature blob against the data it signs (or, for `sha1`, that data's SHA-1). */
+export async function verifyPdfSignature(kind: 'detached' | 'sha1' | 'timestamp', cms: Uint8Array, data: Uint8Array, claimedTime: number | null): Promise<SignatureCheck> {
+  const body = new Uint8Array(4 + cms.length + data.length)
+  new DataView(body.buffer).setUint32(0, cms.length, true)
+  body.set(cms, 4)
+  body.set(data, 4 + cms.length)
+  const headers: Record<string, string> = { 'x-kind': kind }
+  if (claimedTime !== null) headers['x-claimed-time'] = String(claimedTime)
+  return invoke<SignatureCheck>('verify_pdf_signature', body, { headers })
+}
+
+/** Opens the Windows certificate dialog for a base64 DER certificate. */
+export async function showCertificate(der: string): Promise<void> {
+  await invoke('show_certificate', { der })
+}
+
+export interface SigningCertificate {
+  thumbprint: string
+  name: string
+}
+
+/** The Windows certificate picker (Personal store); null when cancelled. */
+export async function pickSigningCertificate(): Promise<SigningCertificate | null> {
+  return invoke<SigningCertificate | null>('pick_signing_certificate')
+}
+
+/** A detached CMS signature over `data` with the chosen certificate. */
+export async function signWithCertificate(thumbprint: string, data: Uint8Array): Promise<Uint8Array> {
+  return new Uint8Array(await invoke<ArrayBuffer>('sign_with_certificate', data, { headers: { 'x-thumbprint': thumbprint } }))
+}

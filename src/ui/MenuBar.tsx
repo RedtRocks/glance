@@ -32,7 +32,7 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'notice', Record
       '#Sidebar', 'view.hideSidebar', 'view.thumbnails', 'view.toc', 'view.notes', 'view.bookmarks', '-',
       '#Page layout', 'view.continuous', 'view.single', 'view.two', 'view.contactSheet', '-',
       ...ZOOM, '-',
-      'view.darkPdf', 'view.fullscreen', 'view.slideshow', '-', 'view.inspector', 'view.customizeToolbar'
+      'view.darkPdf', 'view.fullscreen', 'view.slideshow', '-', 'view.inspector', 'view.signatures', 'view.customizeToolbar'
     ],
     Go: ['go.previous', 'go.next', 'go.first', 'go.last', 'go.page', '-', 'go.nextTab', 'go.previousTab'],
     Pages: [
@@ -40,7 +40,7 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'notice', Record
       'tools.rotateLeft', 'tools.rotateRight', '-', 'edit.stamps', '-', 'file.exportPages', 'file.split'
     ],
     Markup: [
-      'tools.markup', 'tools.highlight', 'tools.text', 'tools.note', 'tools.signature', '-',
+      'tools.markup', 'tools.highlight', 'tools.text', 'tools.note', 'tools.signature', 'tools.certSign', '-',
       'tools.redact', 'tools.redactText', 'tools.applyRedactions'
     ],
     Help: HELP

@@ -1,7 +1,7 @@
 import { useEffect } from 'preact/hooks'
 import { activeDoc, activeId, docs, findByPath } from '../state/documents'
 import { isDark, settings } from '../state/settings'
-import { cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, inspectorOpen, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
+import { cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, inspectorOpen, signaturesOpen, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
 import { confirmCloseWindow, openFiles } from '../state/actions'
 import { startAutosave } from '../state/autosave'
 import { restoreSession } from '../state/session'
@@ -38,6 +38,8 @@ import { RedactionBar } from './RedactionBar'
 import { ExternalAppBar } from './ExternalAppBar'
 import { InspectorPane } from './InspectorPane'
 import { ConflictBar } from './ConflictBar'
+import { SignatureBar } from './SignatureBar'
+import { SignaturesPane } from './SignaturesPane'
 import { signatureDialog } from '../state/markupState'
 import { adjustColorOpen, adjustSizeOpen, exportOpen, imageSelection } from '../state/imageState'
 import { ImageDoc, PdfDoc } from '../state/documents'
@@ -61,6 +63,7 @@ function Viewer() {
         {doc.kind === 'pdf' && <RedactionBar doc={doc} />}
         <ExternalAppBar key={doc.id} doc={doc} />
         <ConflictBar doc={doc} />
+        {doc.kind === 'pdf' && <SignatureBar key={doc.id} doc={doc} />}
         <div class="viewer-stage">
           {doc.kind === 'pdf' && <PdfView key={doc.id} doc={doc} />}
           {doc.kind === 'image' && <ImageView key={doc.id} doc={doc} />}
@@ -70,6 +73,7 @@ function Viewer() {
       </main>
       {doc instanceof ImageDoc && doc.editable && adjustColorOpen.value && <AdjustColorPanel key={doc.id} doc={doc} />}
       {inspectorOpen.value && doc.kind !== 'notice' && <InspectorPane key={doc.id} doc={doc} />}
+      {signaturesOpen.value && doc.kind === 'pdf' && <SignaturesPane key={doc.id} doc={doc} />}
     </div>
   )
 }
