@@ -53,7 +53,7 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'notice', Record
   },
   model: {
     File: ['file.open', 'file.openWith', 'file.newFromClipboard', 'file.scan', 'file.newWindow', '-', 'file.export', '-', 'file.share', '-', 'file.close', '-', 'file.settings'],
-    View: [...ZOOM, 'model.resetView', '-', 'model.wireframe', 'model.autoRotate', '-', 'view.fullscreen', '-', 'view.inspector', 'view.customizeToolbar'],
+    View: [...ZOOM, 'model.resetView', '-', 'model.view.front', 'model.view.back', 'model.view.left', 'model.view.right', 'model.view.top', 'model.view.bottom', '-', 'model.wireframe', 'model.autoRotate', 'model.shadow', 'model.grid', '-', 'view.fullscreen', '-', 'view.inspector', 'view.customizeToolbar'],
     Go: ['go.nextTab', 'go.previousTab'],
     Help: HELP
   },

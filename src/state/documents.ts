@@ -5,6 +5,7 @@ import { openPdf, readOutline, PasswordRequired, type OutlineNode } from '../pdf
 import { releaseFile, type Probe } from '../platform'
 import { remapPages, type Markup, type PageMap, type Redaction } from '../core/markup'
 import type { Raster } from '../core/image/raster'
+import type { Backdrop, CameraView, Lighting, Look } from '../model/viewer'
 
 let seq = 0
 const nextId = (): string => `doc${++seq}`
@@ -325,8 +326,13 @@ export class ModelDoc extends BaseDoc {
   readonly current = signal(0)
   readonly wireframe = signal(false)
   readonly autoRotate = signal(false)
+  readonly lighting = signal<Lighting>('studio')
+  readonly backdrop = signal<Backdrop>('theme')
+  readonly look = signal<Look>('original')
+  readonly shadow = signal(false)
+  readonly grid = signal(false)
   /** View requests from commands (zoom in/out, reset); the view consumes them. */
-  readonly viewRequest = signal<{ kind: 'zoom'; dir: 1 | -1 } | { kind: 'reset' } | { kind: 'snapshot' } | null>(null)
+  readonly viewRequest = signal<{ kind: 'zoom'; dir: 1 | -1 } | { kind: 'reset' } | { kind: 'view'; view: CameraView } | { kind: 'snapshot' } | null>(null)
   constructor(probe: Probe) {
     super(probe.name, probe.path)
     this.probe = probe

@@ -213,6 +213,13 @@ export const COMMANDS: Command[] = [
   { id: 'model.resetView', label: 'Reset View', run: () => void (model() && (model()!.viewRequest.value = { kind: 'reset' })) },
   { id: 'model.wireframe', label: 'Wireframe', keys: ['W'], run: () => void (model() && (model()!.wireframe.value = !model()!.wireframe.value)), checked: () => !!model()?.wireframe.value },
   { id: 'model.autoRotate', label: 'Turntable', keys: ['T'], run: () => void (model() && (model()!.autoRotate.value = !model()!.autoRotate.value)), checked: () => !!model()?.autoRotate.value },
+  { id: 'model.shadow', label: 'Ground Shadow', run: () => void (model() && (model()!.shadow.value = !model()!.shadow.value)), checked: () => !!model()?.shadow.value },
+  { id: 'model.grid', label: 'Floor Grid', run: () => void (model() && (model()!.grid.value = !model()!.grid.value)), checked: () => !!model()?.grid.value },
+  ...(['front', 'back', 'left', 'right', 'top', 'bottom'] as const).map((view) => ({
+    id: `model.view.${view}`,
+    label: `${view[0].toUpperCase()}${view.slice(1)} View`,
+    run: () => void (model() && (model()!.viewRequest.value = { kind: 'view', view }))
+  })),
   { id: 'view.inspector', label: 'Inspector', keys: ['Ctrl+I'], run: () => void (inspectorOpen.value = !inspectorOpen.value), checked: () => inspectorOpen.value },
   { id: 'view.customizeToolbar', label: 'Customize Toolbar…', run: () => void (customizeOpen.value = true) },
   // Go
@@ -287,7 +294,7 @@ const VISIBILITY: [(() => boolean), string[]][] = [
   [() => ifPdf() || anyImage(), ['file.versions']],
   [ifViewable, ['view.zoomIn', 'view.zoomOut', 'view.zoomToFit', 'view.fullscreen']],
   [() => ifPdf() || anyImage(), ['file.print', 'view.actualSize', 'view.slideshow', 'tools.rotateLeft', 'tools.rotateRight']],
-  [() => activeDoc.value?.kind === 'model', ['model.wireframe', 'model.autoRotate', 'model.resetView']],
+  [() => activeDoc.value?.kind === 'model', ['model.wireframe', 'model.autoRotate', 'model.resetView', 'model.shadow', 'model.grid', 'model.view.front', 'model.view.back', 'model.view.left', 'model.view.right', 'model.view.top', 'model.view.bottom']],
   [() => ifPdf() || isImage(), ['file.save', 'file.saveAs', 'edit.undo', 'edit.redo', 'edit.delete']],
   [() => ifPdf() || isImage() || !!model(), ['file.export']],
   [ifPdf, [
