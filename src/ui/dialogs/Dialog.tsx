@@ -3,7 +3,7 @@ import type { ComponentChildren } from 'preact'
 import { dialog } from '../../state/ui'
 
 /** Fluent ContentDialog shell used by every modal in Glance. */
-export function Modal({ title, children, footer, onClose, wide }: { title: string; children: ComponentChildren; footer?: ComponentChildren; onClose: () => void; wide?: boolean }) {
+export function Modal({ title, children, footer, onClose, wide, class: extra }: { title: string; children: ComponentChildren; footer?: ComponentChildren; onClose: () => void; wide?: boolean; class?: string }) {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null
@@ -23,7 +23,7 @@ export function Modal({ title, children, footer, onClose, wide }: { title: strin
   }, [])
   return (
     <div class="modal-backdrop" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div class={`modal ${wide ? 'wide' : ''}`} role="dialog" aria-modal="true" aria-label={title} ref={ref}>
+      <div class={`modal ${wide ? 'wide' : ''} ${extra ?? ''}`} role="dialog" aria-modal="true" aria-label={title} ref={ref}>
         <h2 class="modal-title">{title}</h2>
         <div class="modal-body">{children}</div>
         {footer && <div class="modal-footer">{footer}</div>}
