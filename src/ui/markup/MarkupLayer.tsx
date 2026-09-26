@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import type { PageViewport } from 'pdfjs-dist'
 import {
   bounds,
+  fontStack,
   hitTest,
   newId,
   normRect,
@@ -198,7 +199,7 @@ export function MarkupLayer({ doc, index, vp, interactive = true }: Props) {
     }
     if (t === 'text') {
       const fs = textStyle.peek()
-      const m: Markup = { ...base(index), style: { ...style.peek(), stroke: null, fill: null }, type: 'text', rect: [start[0], start[1] - fs.fontSize * 3, start[0] + 220, start[1]], text: '', fontSize: fs.fontSize, color: fs.color }
+      const m: Markup = { ...base(index), style: { ...style.peek(), stroke: null, fill: null }, type: 'text', rect: [start[0], start[1] - fs.fontSize * 3, start[0] + 220, start[1]], text: '', fontSize: fs.fontSize, color: fs.color, ...(fs.font ? { font: fs.font } : {}) }
       addMarkup(m, 'Add Text Box')
       setTool('select') // clears editing state, so start editing after
       editingId.value = m.id
@@ -313,7 +314,20 @@ export function MarkupLayer({ doc, index, vp, interactive = true }: Props) {
   const w = Math.round(vp.width)
   const h = Math.round(vp.height)
 
+  const marks = items.filter((m) => m.type === 'highlight')
   return (
+    <>
+    {/* Highlights sit outside the overlay's stacking context so they multiply
+        with the page itself and the text underneath stays readable. */}
+    {marks.length > 0 && (
+      <svg width={w} height={h} class="highlight-layer" aria-hidden="true">
+        <g transform={`matrix(${vp.transform.join(' ')})`}>
+          {marks.map((m) => (
+            <Shape key={m.id} m={shown(m)} />
+          ))}
+        </g>
+      </svg>
+    )}
     <div
       ref={host}
       class={`markup-layer ${drawing ? 'drawing' : ''} tool-${current}`}
@@ -329,9 +343,7 @@ export function MarkupLayer({ doc, index, vp, interactive = true }: Props) {
           </pattern>
         </defs>
         <g transform={`matrix(${vp.transform.join(' ')})`}>
-          {items.map((m) => (
-            <Shape key={m.id} m={shown(m)} />
-          ))}
+          {items.map((m) => (m.type === 'highlight' ? null : <Shape key={m.id} m={shown(m)} />))}
           {reds.map((r) => (
             <RedactionMark key={r.id} r={r} pattern={pattern} />
           ))}
@@ -350,11 +362,12 @@ export function MarkupLayer({ doc, index, vp, interactive = true }: Props) {
           .filter((m): m is Extract<Markup, { type: 'note' }> => m.type === 'note' && editingId.value === m.id)
           .map((m) => <NoteEditor key={m.id} doc={doc} m={m} vp={vp} />)}
     </div>
+    </>
   )
 }
 
 function resizable(m: Markup): boolean {
-  return !['note', 'highlight', 'underline', 'strike'].includes(m.type)
+  return !['note', 'highlight', 'underline', 'strike', 'squiggly'].includes(m.type)
 }
 
 function applyDrag(m: Markup, d: Drag): Markup {
@@ -404,7 +417,7 @@ function TextBox({ doc, m, vp, editing }: { doc: MarkupHost; m: Extract<Markup, 
     width: (m.rect[2] - m.rect[0]) * s,
     height: (m.rect[3] - m.rect[1]) * s,
     transform: `rotate(${vp.rotation}deg)`,
-    font: `${m.fontSize * s}px/1.2 Helvetica, Arial, sans-serif`,
+    font: `${m.fontSize * s}px/1.2 ${fontStack(m.font)}`,
     padding: 4 * s,
     color: css(m.color)
   }

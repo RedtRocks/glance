@@ -21,7 +21,7 @@ export function PageThumb({ doc, index, width }: { doc: PdfDoc; index: number; w
     return () => {
       cancelled = true
     }
-  }, [visible, hasMarkup, revision, index, width])
+  }, [doc, visible, hasMarkup, revision, index, width])
 
   useEffect(() => {
     const el = holder.current
@@ -51,7 +51,7 @@ export function PageThumb({ doc, index, width }: { doc: PdfDoc; index: number; w
     return () => {
       cancelled = true
     }
-  }, [visible, revision, index, width])
+  }, [doc, visible, revision, index, width])
 
   const dark = settings.value.darkPdf && isDark()
   return (

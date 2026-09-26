@@ -4,7 +4,7 @@ import { alphaMask, floodMask, maskBounds, refineMatte, resizeMask } from '../co
 import { crop } from '../core/image/transform'
 import type { AdjustParams } from '../core/image/adjust'
 import type { Selection } from '../core/image/select'
-import { NOTE_SIZE, outlinePath, type Markup, type Redaction } from '../core/markup'
+import { NOTE_SIZE, fontStack, outlinePath, type Markup, type Redaction } from '../core/markup'
 import type { ImageDoc } from '../state/documents'
 import * as platform from '../platform'
 import type { WorkerRequest, WorkerResponse } from './worker'
@@ -205,7 +205,7 @@ export async function drawMarkup(g: OffscreenCanvasRenderingContext2D, markup: M
         if (s.stroke) g.strokeRect(x1, H - y2, x2 - x1, y2 - y1)
       }
       g.fillStyle = rgbCss(m.color)
-      g.font = `${m.fontSize}px Helvetica, Arial, sans-serif`
+      g.font = `${m.fontSize}px ${fontStack(m.font)}`
       g.textBaseline = 'top'
       wrapLines(g, m.text, x2 - x1 - 8).forEach((line, i) => g.fillText(line, x1 + 4, H - y2 + 4 + i * m.fontSize * 1.2))
       g.restore()

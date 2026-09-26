@@ -18,6 +18,8 @@ interface Props {
   height: number
   root: HTMLElement | null
   dark: boolean
+  /** Pages dragged from another document would land before/after this page. */
+  drop?: 'before' | 'after'
 }
 
 function markHits(layer: HTMLElement | null, query: string): void {
@@ -28,7 +30,7 @@ function markHits(layer: HTMLElement | null, query: string): void {
   }
 }
 
-export function PdfPage({ doc, index, scale, width, height, root, dark }: Props) {
+export function PdfPage({ doc, index, scale, width, height, root, dark, drop }: Props) {
   const box = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const textRef = useRef<HTMLDivElement>(null)
@@ -149,7 +151,7 @@ export function PdfPage({ doc, index, scale, width, height, root, dark }: Props)
   return (
     <div
       ref={box}
-      class="pdf-page"
+      class={`pdf-page ${drop ? `drop-${drop}` : ''}`}
       data-page={index}
       style={{ width, height, '--scale-factor': scale, '--total-scale-factor': scale } as never}
     >

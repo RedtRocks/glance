@@ -349,3 +349,63 @@ export async function copyPngToClipboard(png: Uint8Array): Promise<void> {
   const { writeImage } = await import('@tauri-apps/plugin-clipboard-manager')
   await writeImage(png)
 }
+
+// ---------------------------------------------------------------------------
+// Installed fonts for text boxes (see src-tauri/src/fonts.rs)
+
+/** Common Windows families, for the browser build where fonts can't be enumerated. */
+const BROWSER_FONTS = ['Arial', 'Calibri', 'Cambria', 'Comic Sans MS', 'Consolas', 'Courier New', 'Georgia', 'Segoe UI', 'Times New Roman', 'Trebuchet MS', 'Verdana']
+let fontList: Promise<string[]> | null = null
+
+export function listFonts(): Promise<string[]> {
+  fontList ??= isTauri
+    ? invoke<{ family: string }[]>('fonts_list').then((l) => l.map((f) => f.family)).catch(() => [])
+    : Promise.resolve(BROWSER_FONTS)
+  return fontList
+}
+
+/** The regular face of an installed family, ready to embed in a PDF; null if unavailable. */
+export async function fontBytes(family: string): Promise<Uint8Array | null> {
+  if (!isTauri) return null
+  try {
+    const buf = await invoke<ArrayBuffer>('font_bytes', { family })
+    return new Uint8Array(buf)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Runs `canClose` when the user closes the window (title bar, Alt+F4, taskbar);
+ * the window stays open if it resolves false.
+ */
+export async function onCloseRequested(canClose: () => Promise<boolean>, hasUnsaved: () => boolean): Promise<() => void> {
+  if (!isTauri) {
+    // Browsers can't await a dialog on unload; they show their own "leave site?" prompt.
+    const guard = (e: BeforeUnloadEvent) => {
+      if (hasUnsaved()) e.preventDefault()
+    }
+    window.addEventListener('beforeunload', guard)
+    return () => window.removeEventListener('beforeunload', guard)
+  }
+  const { getCurrentWindow } = await import('@tauri-apps/api/window')
+  // Tauri awaits the handler and destroys the window unless it was prevented.
+  return getCurrentWindow().onCloseRequested(async (event) => {
+    if (!(await canClose())) event.preventDefault()
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Windows shell hand-offs (see src-tauri/src/shell.rs)
+
+/** Shows the Windows "Open with" picker for the file. */
+export async function openWith(path: string): Promise<void> {
+  if (!isTauri) throw new Error('Open With is available in the Windows app.')
+  await invoke('open_with', { path })
+}
+
+/** Uses the image bytes (JPEG/PNG/BMP) as the desktop background or the lock screen. */
+export async function setWallpaper(bytes: Uint8Array, ext: string, target: 'desktop' | 'lock'): Promise<void> {
+  if (!isTauri) throw new Error('Setting the background is available in the Windows app.')
+  await invoke('set_wallpaper', bytes, { headers: { 'x-target': target, 'x-ext': ext } })
+}

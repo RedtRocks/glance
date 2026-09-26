@@ -152,6 +152,20 @@ export async function extractPages(bytes: Uint8Array, indices: number[]): Promis
   return save(out)
 }
 
+/** Splits a PDF into consecutive parts of `size` pages (the last may be shorter), or at page starts. */
+export function splitGroups(n: number, opts: { every: number } | { starts: number[] }): number[][] {
+  const starts = 'every' in opts
+    ? Array.from({ length: Math.ceil(n / Math.max(1, opts.every)) }, (_, k) => k * Math.max(1, opts.every))
+    : [...new Set([0, ...opts.starts.filter((s) => s > 0 && s < n)])].sort((a, b) => a - b)
+  return starts.map((s, k) => Array.from({ length: (starts[k + 1] ?? n) - s }, (_, i) => s + i))
+}
+
+export async function splitPdf(bytes: Uint8Array, groups: number[][]): Promise<Uint8Array[]> {
+  const out: Uint8Array[] = []
+  for (const g of groups) out.push(await extractPages(bytes, g))
+  return out
+}
+
 export async function pageCount(bytes: Uint8Array): Promise<number> {
   return (await load(bytes)).getPageCount()
 }

@@ -2,7 +2,7 @@ import { useEffect } from 'preact/hooks'
 import { activeDoc, docs } from '../state/documents'
 import { isDark, settings } from '../state/settings'
 import { customizeOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
-import { openFiles } from '../state/actions'
+import { confirmCloseWindow, openFiles } from '../state/actions'
 import * as platform from '../platform'
 import { MenuBar } from './MenuBar'
 import { TabStrip } from './TabStrip'
@@ -17,12 +17,14 @@ import { DialogHost } from './dialogs/Dialog'
 import { SettingsDialog } from './dialogs/SettingsDialog'
 import { CustomizeToolbar } from './dialogs/CustomizeToolbar'
 import { Toasts } from './Toasts'
+import { ContextMenu } from './ContextMenu'
 import { useShortcuts } from './useShortcuts'
 import { useFileDrop } from './useFileDrop'
 import { fileDragOver } from './dragState'
 import { MarkupToolbar } from './markup/MarkupToolbar'
 import { SignatureDialog } from './markup/SignatureDialog'
 import { RedactionBar } from './RedactionBar'
+import { ExternalAppBar } from './ExternalAppBar'
 import { signatureDialog } from '../state/markupState'
 import { adjustColorOpen, adjustSizeOpen, exportOpen, imageSelection } from '../state/imageState'
 import { ImageDoc } from '../state/documents'
@@ -35,9 +37,10 @@ function Viewer() {
   if (!doc) return <Welcome />
   return (
     <div class="workspace">
-      {sidebarVisible.value && <Sidebar doc={doc} />}
+      {sidebarVisible.value && <Sidebar key={doc.id} doc={doc} />}
       <main class="viewer" aria-label={doc.name.value}>
         {doc.kind === 'pdf' && <RedactionBar doc={doc} />}
+        <ExternalAppBar key={doc.id} doc={doc} />
         <div class="viewer-stage">
           {doc.kind === 'pdf' && <PdfView key={doc.id} doc={doc} />}
           {doc.kind === 'image' && <ImageView key={doc.id} doc={doc} />}
@@ -68,7 +71,14 @@ export function App() {
     let dispose: (() => void) | undefined
     void platform.onOpenFiles((paths) => void openFiles(paths)).then((d) => (dispose = d))
     void platform.showWindow()
-    return () => dispose?.()
+    let unguard: (() => void) | undefined
+    void platform
+      .onCloseRequested(confirmCloseWindow, () => docs.peek().some((d) => d.dirty.peek()))
+      .then((u) => (unguard = u))
+    return () => {
+      dispose?.()
+      unguard?.()
+    }
   }, [])
 
   // Window title follows the active document (Windows shows it in the taskbar).
@@ -101,6 +111,7 @@ export function App() {
       {activeDoc.value instanceof ImageDoc && exportOpen.value && <ExportDialog doc={activeDoc.value} />}
       <DialogHost />
       <Toasts />
+      <ContextMenu />
     </div>
   )
 }

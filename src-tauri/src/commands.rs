@@ -43,14 +43,14 @@ pub async fn probe(path: String) -> Result<Probe, String> {
     .map_err(|e| e.to_string())?
 }
 
-fn raw_body(request: &Request<'_>) -> Result<Vec<u8>, String> {
+pub(crate) fn raw_body(request: &Request<'_>) -> Result<Vec<u8>, String> {
     match request.body() {
         InvokeBody::Raw(bytes) => Ok(bytes.clone()),
         InvokeBody::Json(_) => Err("expected a binary body".into()),
     }
 }
 
-fn header(request: &Request<'_>, name: &str) -> Result<String, String> {
+pub(crate) fn header(request: &Request<'_>, name: &str) -> Result<String, String> {
     let v = request.headers().get(name).ok_or_else(|| format!("missing header {name}"))?;
     let s = v.to_str().map_err(|e| e.to_string())?;
     Ok(percent_encoding::percent_decode_str(s).decode_utf8_lossy().into_owned())

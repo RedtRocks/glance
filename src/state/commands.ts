@@ -5,6 +5,7 @@
 import { normalizeCombo } from '../core/shortcuts'
 import * as platform from '../platform'
 import * as actions from './actions'
+import * as shell from './shellActions'
 import { activeDoc, activeId, docs, type Doc, type ViewMode } from './documents'
 import { settings, updateSettings } from './settings'
 import { customizeOpen, findOpen, promptText, settingsOpen, sidebarVisible, slideshow } from './ui'
@@ -37,6 +38,7 @@ export function stepZoom(current: number, dir: 1 | -1): number {
 const pdf = () => (activeDoc.value?.kind === 'pdf' ? activeDoc.value : null)
 const image = () => img.editableImage(activeDoc.value)
 const isImage = () => image() !== null
+const anyImage = () => activeDoc.value?.kind === 'image'
 const markupHost = () => pdf() ?? image()
 const hasDoc = () => activeDoc.value !== null
 const isPdf = () => pdf() !== null
@@ -105,6 +107,9 @@ export const COMMANDS: Command[] = [
     enabled: () => isPdf() || isImage()
   },
   { id: 'file.exportPages', label: 'Export Selected Pages…', run: () => actions.exportSelectedPages(), enabled: isPdf },
+  { id: 'file.openWith', label: 'Open With Another App…', run: () => shell.openWithOtherApp(), enabled: () => shell.canOpenWith() },
+  { id: 'image.setWallpaper', label: 'Set as Desktop Background', run: () => shell.setAsWallpaper('desktop'), enabled: anyImage },
+  { id: 'image.setLockScreen', label: 'Set as Lock Screen', run: () => shell.setAsWallpaper('lock'), enabled: anyImage },
   { id: 'file.print', label: 'Print…', keys: ['Ctrl+P'], run: () => printDoc(activeDoc.value), enabled: hasDoc },
   { id: 'file.close', label: 'Close Tab', keys: ['Ctrl+W', 'Ctrl+F4'], run: () => actions.closeDoc(), enabled: hasDoc },
   { id: 'file.settings', label: 'Settings', keys: ['Ctrl+,'], run: () => void (settingsOpen.value = true) },
@@ -115,6 +120,8 @@ export const COMMANDS: Command[] = [
   { id: 'edit.find', label: 'Find…', keys: ['Ctrl+F'], run: () => void (findOpen.value = true), enabled: isPdf },
   { id: 'edit.insertBlank', label: 'Insert Blank Page', run: () => actions.insertBlankPage(), enabled: isPdf },
   { id: 'edit.insertFile', label: 'Insert Page from File…', run: () => actions.insertFromFileDialog(), enabled: isPdf },
+  { id: 'edit.duplicatePages', label: 'Duplicate Pages', run: () => actions.duplicatePages(), enabled: isPdf },
+  { id: 'file.split', label: 'Split PDF…', run: () => actions.splitDocument(), enabled: () => isPdf() && (pdf()?.pageCount.peek() ?? 0) > 1 },
   {
     id: 'edit.delete',
     label: 'Delete',

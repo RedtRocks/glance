@@ -1,21 +1,37 @@
 /**
  * Pointer-driven page dragging shared by the sidebar and the contact sheet:
  * - within a list: reorder
- * - onto another tab: copy there (Shift = move)
- * - out of the window: Drag Out creates a PDF wherever it is dropped
+ * - onto another tab: copy there (Shift = move). Hovering a tab briefly switches to it
+ *   (spring-loaded, like Explorer), so pages can be dropped at an exact spot in its
+ *   sidebar or page view.
+ * - well outside the window: Drag Out creates a PDF wherever it is dropped
  */
 import { activeId, docs, PdfDoc } from '../../state/documents'
-import { dragOutPages, movePages, transferPages } from '../../state/actions'
-import { toast } from '../../state/ui'
+import { deletePages, dragOutPages, duplicatePages, exportSelectedPages, movePages, rotatePages, sendPagesTo, splitDocument, transferPages } from '../../state/actions'
+import { contextMenu, toast } from '../../state/ui'
 import { dropTabId, pageDrag } from '../dragState'
 
 const THRESHOLD = 5
+/** How far past the window edge the pointer must go before the drag leaves Glance. */
+const OUT_MARGIN = 32
+/** Hover time on a tab before it opens under the drag. */
+const SPRING_MS = 600
 
 /** Finds the insertion index from pointer position over a `[data-page-list]` element. */
-function insertionAt(x: number, y: number): { docId: string; at: number } | null {
+function insertionAt(x: number, y: number, sourceId: string): { docId: string; at: number } | null {
   const el = document.elementFromPoint(x, y)
   const list = el?.closest<HTMLElement>('[data-page-list]')
-  if (!list) return null
+  if (!list) {
+    // Over the page view: before or after the page under the pointer.
+    // (Only for other documents; reordering stays in the sidebar, where it is visible.)
+    const view = el?.closest<HTMLElement>('[data-page-drop]')
+    if (!view || view.dataset.pageDrop === sourceId) return null
+    const page = el?.closest<HTMLElement>('[data-page]')
+    const docId = view.dataset.pageDrop!
+    if (!page) return { docId, at: Number(view.dataset.pageCount ?? 0) }
+    const r = page.getBoundingClientRect()
+    return { docId, at: Number(page.dataset.page) + (y > r.top + r.height / 2 ? 1 : 0) }
+  }
   const docId = list.dataset.pageList!
   const items = [...list.querySelectorAll<HTMLElement>('[data-page-index]')]
   if (!items.length) return { docId, at: 0 }
@@ -36,6 +52,8 @@ export function beginPageDrag(e: PointerEvent, doc: PdfDoc, pages: number[], ico
   let dragging = false
   let draggedOut = false
   let ghost: HTMLElement | null = null
+  let spring: { tabId: string; timer: number } | null = null
+  const what = pages.length > 1 ? `${pages.length} pages` : `Page ${pages[0] + 1}`
 
   const move = (ev: PointerEvent): void => {
     if (!dragging) {
@@ -44,14 +62,15 @@ export function beginPageDrag(e: PointerEvent, doc: PdfDoc, pages: number[], ico
       target.setPointerCapture(e.pointerId)
       ghost = document.createElement('div')
       ghost.className = 'drag-ghost'
-      ghost.textContent = pages.length > 1 ? `${pages.length} pages` : `Page ${pages[0] + 1}`
+      ghost.textContent = what
       document.body.appendChild(ghost)
       pageDrag.value = { docId: doc.id, pages, targetDocId: null, insertAt: null }
     }
     ghost!.style.transform = `translate(${ev.clientX + 12}px, ${ev.clientY + 12}px)`
 
     // Leaving the window hands the drag to the OS (Drag Out).
-    const outside = ev.clientX < 0 || ev.clientY < 0 || ev.clientX > window.innerWidth || ev.clientY > window.innerHeight
+    const m = OUT_MARGIN
+    const outside = ev.clientX < -m || ev.clientY < -m || ev.clientX > window.innerWidth + m || ev.clientY > window.innerHeight + m
     if (outside && !draggedOut) {
       draggedOut = true
       cleanup()
@@ -62,8 +81,32 @@ export function beginPageDrag(e: PointerEvent, doc: PdfDoc, pages: number[], ico
     const tab = document.elementFromPoint(ev.clientX, ev.clientY)?.closest<HTMLElement>('[data-tab-id]')
     const tabId = tab?.dataset.tabId ?? null
     dropTabId.value = tabId && tabId !== doc.id ? tabId : null
-    const ins = insertionAt(ev.clientX, ev.clientY)
+    springTab(tabId)
+    const ins = insertionAt(ev.clientX, ev.clientY, doc.id)
     pageDrag.value = { docId: doc.id, pages, targetDocId: ins?.docId ?? null, insertAt: ins?.at ?? null }
+    ghost!.textContent = hint(ins?.docId ?? dropTabId.peek(), ev.shiftKey)
+  }
+
+  /** Tells the user what releasing here will do. */
+  function hint(targetId: string | null, shift: boolean): string {
+    if (!targetId || targetId === doc.id) return what
+    const dst = docs.peek().find((d) => d.id === targetId)
+    if (!(dst instanceof PdfDoc)) return `${what} — can’t drop here`
+    return `${shift ? 'Move' : 'Copy'} ${what.toLowerCase()} to “${dst.name.peek()}”${shift ? '' : ' (Shift to move)'}`
+  }
+
+  function springTab(tabId: string | null): void {
+    if (spring?.tabId === tabId) return
+    if (spring) clearTimeout(spring.timer)
+    spring = null
+    if (!tabId || tabId === activeId.peek()) return
+    spring = {
+      tabId,
+      timer: window.setTimeout(() => {
+        activeId.value = tabId
+        dropTabId.value = null
+      }, SPRING_MS)
+    }
   }
 
   const up = (ev: PointerEvent): void => {
@@ -90,6 +133,8 @@ export function beginPageDrag(e: PointerEvent, doc: PdfDoc, pages: number[], ico
   }
 
   function cleanup(): void {
+    if (spring) clearTimeout(spring.timer)
+    spring = null
     window.removeEventListener('pointermove', move)
     window.removeEventListener('pointerup', up)
     window.removeEventListener('pointercancel', cleanup)
@@ -115,5 +160,32 @@ export function selectPage(doc: { selection: { value: number[] }; current: { val
     doc.selection.value = [...new Set([...sel, ...Array.from({ length: b - a + 1 }, (_, k) => a + k)])]
   } else {
     doc.selection.value = [index]
+  }
+}
+
+/** Right-click on a page thumbnail: page commands, including copying to other open PDFs. */
+export function pageContextMenu(e: MouseEvent, doc: PdfDoc, index: number): void {
+  e.preventDefault()
+  if (!doc.selection.peek().includes(index)) doc.selection.value = [index]
+  const n = doc.selection.peek().length
+  const others = docs.peek().filter((d): d is PdfDoc => d instanceof PdfDoc && d !== doc)
+  const target = (move: boolean) => others.map((d) => ({ label: d.name.peek(), run: () => sendPagesTo(d, move, doc) }))
+  const noun = n > 1 ? `${n} Pages` : 'Page'
+  contextMenu.value = {
+    x: e.clientX,
+    y: e.clientY,
+    items: [
+      { label: `Copy ${noun} To`, items: target(false), disabled: !others.length },
+      { label: `Move ${noun} To`, items: target(true), disabled: !others.length },
+      '-',
+      { label: `Duplicate ${noun}`, run: () => duplicatePages(doc) },
+      { label: 'Rotate Left', run: () => rotatePages(-90, doc) },
+      { label: 'Rotate Right', run: () => rotatePages(90, doc) },
+      '-',
+      { label: `Export ${noun}…`, run: () => exportSelectedPages(doc) },
+      { label: 'Split PDF…', run: () => splitDocument(doc), disabled: doc.pageCount.peek() < 2 },
+      '-',
+      { label: `Delete ${noun}`, run: () => deletePages(doc) }
+    ]
   }
 }

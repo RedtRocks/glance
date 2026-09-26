@@ -7,8 +7,8 @@ import { Icon } from './Icon'
 type Entry = string | '-'
 
 export const MENUS: Record<string, Entry[]> = {
-  File: ['file.open', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.export', 'file.exportPages', '-', 'file.print', '-', 'file.close', '-', 'file.settings'],
-  Edit: ['edit.undo', 'edit.redo', '-', 'edit.delete', 'edit.selectAll', 'edit.invertSelection', 'edit.find', '-', 'edit.insertBlank', 'edit.insertFile', 'edit.deletePages', '-', 'edit.addBookmark'],
+  File: ['file.open', 'file.openWith', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.export', 'file.exportPages', 'file.split', '-', 'image.setWallpaper', 'image.setLockScreen', '-', 'file.print', '-', 'file.close', '-', 'file.settings'],
+  Edit: ['edit.undo', 'edit.redo', '-', 'edit.delete', 'edit.selectAll', 'edit.invertSelection', 'edit.find', '-', 'edit.insertBlank', 'edit.insertFile', 'edit.duplicatePages', 'edit.deletePages', '-', 'edit.addBookmark'],
   View: [
     'view.hideSidebar', 'view.thumbnails', 'view.toc', 'view.notes', 'view.bookmarks', 'view.contactSheet', '-',
     'view.continuous', 'view.single', 'view.two', '-',

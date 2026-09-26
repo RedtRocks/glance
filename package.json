@@ -14,6 +14,7 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@cantoo/fontkit": "2.0.12",
     "@cantoo/pdf-lib": "2.11.1",
     "@crabnebula/tauri-plugin-drag": "2.1.0",
     "@fluentui/svg-icons": "1.1.343",

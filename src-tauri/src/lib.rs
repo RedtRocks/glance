@@ -1,7 +1,9 @@
 mod commands;
 mod decode;
 mod encode;
+mod fonts;
 mod protocol;
+mod shell;
 mod signatures;
 mod subject;
 
@@ -74,6 +76,10 @@ pub fn run() {
             signatures::signature_delete,
             subject::subject_mask,
             encode::save_image,
+            fonts::fonts_list,
+            fonts::font_bytes,
+            shell::open_with,
+            shell::set_wallpaper,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Glance");

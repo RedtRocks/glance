@@ -34,10 +34,10 @@ export type Markup =
   | (Base & { type: 'line' | 'arrow'; from: Pt; to: Pt })
   | (Base & { type: 'polygon'; points: Pt[]; closed: boolean })
   | (Base & { type: 'ink'; strokes: Pt[][] })
-  | (Base & { type: 'text'; rect: Rect; text: string; fontSize: number; color: Color })
+  | (Base & { type: 'text'; rect: Rect; text: string; fontSize: number; color: Color; /** System font family; Helvetica when absent. */ font?: string })
   | (Base & { type: 'note'; at: Pt; text: string })
   /** Quads: [x1,y1 (top-left), x2,y2 (top-right), x3,y3 (bottom-left), x4,y4 (bottom-right)]. */
-  | (Base & { type: 'highlight' | 'underline' | 'strike'; quads: number[][]; text?: string })
+  | (Base & { type: 'highlight' | 'underline' | 'strike' | 'squiggly'; quads: number[][]; text?: string })
   | (Base & { type: 'signature'; rect: Rect; png: Uint8Array })
   /** Magnifying circle over an image (images only; flattened on save). */
   | (Base & { type: 'loupe'; rect: Rect; zoom: number })
@@ -68,6 +68,11 @@ export const COLORS = {
   purple: [0.58, 0.29, 0.8] as Color,
   black: [0, 0, 0] as Color,
   white: [1, 1, 1] as Color
+}
+
+/** CSS font stack for a text box's family (Helvetica is the PDF standard font). */
+export function fontStack(font?: string): string {
+  return font ? `"${font.replace(/"/g, '')}", Helvetica, Arial, sans-serif` : 'Helvetica, Arial, sans-serif'
 }
 
 export const DEFAULT_STYLE: Style = { stroke: COLORS.red, fill: null, width: 2, opacity: 1 }
@@ -113,6 +118,7 @@ export function bounds(m: Markup): Rect {
       return [m.at[0], m.at[1] - NOTE_SIZE, m.at[0] + NOTE_SIZE, m.at[1]]
     case 'highlight':
     case 'underline':
+    case 'squiggly':
     case 'strike':
       return rectUnion(m.quads.map(quadRect))
     default:
@@ -262,6 +268,8 @@ export function outlinePath(m: Markup): string {
       return m.strokes.map(strokePath).join('')
     case 'underline':
       return m.quads.map((q) => polyPath([[q[4], q[5] + 0.5], [q[6], q[7] + 0.5]], false)).join('')
+    case 'squiggly':
+      return m.quads.map((q) => squigglePath([q[4], q[5]], [q[6], q[7]], Math.hypot(q[0] - q[4], q[1] - q[5]))).join('')
     case 'strike':
       return m.quads
         .map((q) => polyPath([[q[4], (q[5] + q[1]) / 2], [q[6], (q[7] + q[3]) / 2]], false))
@@ -271,6 +279,23 @@ export function outlinePath(m: Markup): string {
     default:
       return ''
   }
+}
+
+/** Zig-zag just under a text baseline, sized from the line height (PDF /Squiggly). */
+function squigglePath(a: Pt, b: Pt, height: number): string {
+  const len = Math.hypot(b[0] - a[0], b[1] - a[1])
+  if (!len) return ''
+  const ux = (b[0] - a[0]) / len
+  const uy = (b[1] - a[1]) / len
+  const amp = Math.max(0.8, height * 0.07)
+  const step = Math.max(1.5, height * 0.18)
+  const pts: Pt[] = []
+  for (let t = 0, i = 0; t <= len + 1e-6; t = Math.min(len, t + step), i++) {
+    const off = (i % 2 ? -amp : amp) - amp // stay below the baseline
+    pts.push([a[0] + ux * t - uy * off, a[1] + uy * t + ux * off])
+    if (t === len) break
+  }
+  return polyPath(pts, false)
 }
 
 /** Filled arrowhead (arrows only). */
@@ -296,6 +321,7 @@ export function translate(m: Markup, dx: number, dy: number): Markup {
       return { ...m, at: p(m.at) }
     case 'highlight':
     case 'underline':
+    case 'squiggly':
     case 'strike':
       return { ...m, quads: m.quads.map((q) => q.map((v, i) => v + (i % 2 ? dy : dx))) }
     default:
@@ -319,6 +345,7 @@ export function resize(m: Markup, from: Rect, to: Rect): Markup {
     case 'note':
     case 'highlight':
     case 'underline':
+    case 'squiggly':
     case 'strike':
       return m // fixed-size / text-bound markup doesn't resize
     default: {

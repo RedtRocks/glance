@@ -42,9 +42,34 @@ import { MARKER_KEY, NOTE_SIZE, headPath, outlinePath, paintBounds, type Color, 
 const FLIP: [number, number, number, number, number, number] = [1, 0, 0, -1, 0, 0]
 const rgbOf = (c: Color) => rgb(c[0], c[1], c[2])
 
+/** Supplies a system font's bytes by family name, or null when it isn't available. */
+export type FontSource = (family: string) => Promise<Uint8Array | null>
+
 interface Ctx {
   doc: PDFDocument
   font: PDFFont | null
+  fonts: Map<string, PDFFont | null>
+  loadFont?: FontSource
+}
+
+/** The chosen system font embedded as a subset, or null to fall back to Helvetica. */
+async function systemFont(ctx: Ctx, family: string | undefined): Promise<PDFFont | null> {
+  if (!family || !ctx.loadFont) return null
+  const key = family.toLowerCase()
+  if (ctx.fonts.has(key)) return ctx.fonts.get(key)!
+  let font: PDFFont | null = null
+  try {
+    const bytes = await ctx.loadFont(family)
+    if (bytes) {
+      const fontkit = (await import('@cantoo/fontkit')).default
+      ctx.doc.registerFontkit(fontkit as never)
+      font = await ctx.doc.embedFont(bytes, { subset: true })
+    }
+  } catch (e) {
+    console.warn(`Could not embed ${family}; using Helvetica`, e)
+  }
+  ctx.fonts.set(key, font)
+  return font
 }
 
 /** Paths from core/markup are in PDF space; drawSvgPath assumes SVG's y-down, so pre-flip. */
@@ -114,6 +139,7 @@ async function appearance(ctx: Ctx, m: Markup, bbox: Rect): Promise<{ ops: PDFOp
       ops.push(...path(outlinePath(m), { fill: s.stroke ?? [1, 0.85, 0.2] }))
       break
     case 'underline':
+    case 'squiggly':
     case 'strike':
     case 'line':
     case 'ink':
@@ -136,13 +162,16 @@ async function appearance(ctx: Ctx, m: Markup, bbox: Rect): Promise<{ ops: PDFOp
     }
     case 'text': {
       if (s.fill || s.stroke) ops.push(...path(outlinePath({ ...m, type: 'rect' }), { fill: s.fill, stroke: s.stroke, width: s.width }))
-      ctx.font ??= await doc.embedFont(StandardFonts.Helvetica)
-      const font = ctx.font
-      resources.Font = { Helv: font.ref }
+      const custom = await systemFont(ctx, m.font)
+      ctx.font ??= custom ? null : await doc.embedFont(StandardFonts.Helvetica)
+      const font = custom ?? ctx.font!
+      const name = custom ? 'F1' : 'Helv'
+      resources.Font = { [name]: font.ref }
       const pad = 4
-      const lines = wrap(font, encodable(font, m.text), m.fontSize, m.rect[2] - m.rect[0] - pad * 2)
+      // Embedded fonts cover Unicode; the standard Helvetica only WinAnsi.
+      const lines = wrap(font, custom ? m.text : encodable(font, m.text), m.fontSize, m.rect[2] - m.rect[0] - pad * 2)
       const lineH = m.fontSize * 1.2
-      ops.push(beginText(), setFontAndSize('Helv', m.fontSize), setFillingRgbColor(...m.color))
+      ops.push(beginText(), setFontAndSize(name, m.fontSize), setFillingRgbColor(...m.color))
       ops.push(moveText(m.rect[0] + pad, m.rect[3] - pad - m.fontSize))
       lines.forEach((line, i) => {
         if (i) ops.push(moveText(0, -lineH))
@@ -181,6 +210,7 @@ const SUBTYPE: Record<Markup['type'], string> = {
   highlight: 'Highlight',
   underline: 'Underline',
   strike: 'StrikeOut',
+  squiggly: 'Squiggly',
   signature: 'Stamp',
   loupe: 'Circle' // images only; never written to PDFs
 }
@@ -212,6 +242,7 @@ function standardFields(m: Markup, ctx: Ctx): Record<string, unknown> {
       break
     case 'highlight':
     case 'underline':
+    case 'squiggly':
     case 'strike':
       fields.QuadPoints = c.obj(m.quads.flat())
       break
@@ -235,9 +266,13 @@ function contentsOf(m: Markup): string | undefined {
 }
 
 /** Adds markup to the PDF as annotations and returns the saved bytes. */
-export async function writeMarkup(bytes: Uint8Array, markup: Markup[], options: { objectStreams?: boolean } = {}): Promise<Uint8Array> {
+export async function writeMarkup(
+  bytes: Uint8Array,
+  markup: Markup[],
+  options: { objectStreams?: boolean; loadFont?: FontSource } = {}
+): Promise<Uint8Array> {
   const doc = await PDFDocument.load(bytes, { ignoreEncryption: true, updateMetadata: false })
-  const ctx: Ctx = { doc, font: null }
+  const ctx: Ctx = { doc, font: null, fonts: new Map(), loadFont: options.loadFont }
   const pages = doc.getPages()
   for (const m of markup) {
     const page = pages[m.page]
