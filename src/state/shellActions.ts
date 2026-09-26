@@ -6,6 +6,7 @@ import * as engine from '../image/engine'
 import * as platform from '../platform'
 import { activeDoc, ImageDoc, PdfDoc, type Doc } from './documents'
 import { alertDialog, toast, withBusy } from './ui'
+import { canRemoveLocation, type ShellRequest } from '../core/explorer'
 
 /** Formats that are really another app's working files; Glance shows a flattened preview. */
 const EXTERNAL: Record<string, { kind: string; detail: string }> = {
@@ -100,5 +101,35 @@ export async function shareDoc(doc: Doc | null = activeDoc.value): Promise<void>
     if (path) await platform.shareFiles([path], doc.name.peek())
   } catch (e) {
     toast(String((e as Error).message ?? e), 'error')
+  }
+}
+
+/** Explorer's right-click verbs, gathered into one request per selection. */
+export async function handleShellRequest(r: ShellRequest): Promise<void> {
+  try {
+    if (r.action === 'combine') {
+      const { combineIntoPdf } = await import('./actions')
+      await combineIntoPdf(r.files)
+    } else if (r.action === 'remove-location') {
+      await removeLocationFrom(r.files)
+    }
+  } catch (e) {
+    await alertDialog(r.action === 'combine' ? 'Couldn’t combine into PDF' : 'Couldn’t remove location info', String((e as Error).message ?? e))
+  }
+}
+
+async function removeLocationFrom(paths: string[]): Promise<void> {
+  const supported = paths.filter(canRemoveLocation)
+  const unsupported = paths.filter((p) => !canRemoveLocation(p)).map(platform.baseName)
+  const failed = supported.length ? await withBusy('Removing location info…', () => platform.removeLocation(supported)) : []
+  const done = supported.length - failed.length
+  const problems = [...failed, ...unsupported.map((n) => `${n}: this format has no location info Glance can remove`)]
+  if (problems.length) {
+    await alertDialog(
+      done ? `Removed location info from ${done} of ${paths.length} files` : 'Couldn’t remove location info',
+      problems.join('\n')
+    )
+  } else {
+    toast(done === 1 ? `Removed location info from ${platform.baseName(supported[0])}` : `Removed location info from ${done} files`)
   }
 }

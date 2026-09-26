@@ -4,6 +4,7 @@ import { isDark, settings } from '../state/settings'
 import { cleanupOpen, collageOpen, reduceOpen, scanOpen, customizeOpen, inspectorOpen, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
 import { confirmCloseWindow, openFiles } from '../state/actions'
 import { startAutosave } from '../state/autosave'
+import { handleShellRequest } from '../state/shellActions'
 import { checkForUpdates } from '../state/updates'
 import { UpdateBar } from './UpdateBar'
 import * as platform from '../platform'
@@ -89,6 +90,8 @@ export function App() {
     void platform.initialFiles().then((files) => openFiles([...hashFiles, ...files]))
     let dispose: (() => void) | undefined
     void platform.onOpenFiles((paths) => void openFiles(paths)).then((d) => (dispose = d))
+    let unshell: (() => void) | undefined
+    void platform.onShellRequest((r) => void handleShellRequest(r)).then((d) => (unshell = d))
     void platform.showWindow()
     const stopAutosave = startAutosave()
     // A few seconds after start, so it never competes with opening files.
@@ -107,6 +110,7 @@ export function App() {
       .then((u) => (unguard = u))
     return () => {
       dispose?.()
+      unshell?.()
       unguard?.()
       stopAutosave()
       unactivate?.()

@@ -116,10 +116,15 @@ pub async fn convert_postscript(path: String) -> Result<String, String> {
     .map_err(|e| e.to_string())?
 }
 
-/// Files passed on the command line (Open with, Send to, drop onto the .exe).
+/// Files passed on the command line (Open with, Send to, drop onto the .exe). Files
+/// launched with an Explorer verb go to that verb instead (see explorer.rs).
 #[tauri::command]
 pub fn initial_files() -> Vec<String> {
-    files_from_args(std::env::args().skip(1))
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    if crate::explorer::action_from_args(&args).is_some() {
+        return Vec::new();
+    }
+    files_from_args(args.into_iter())
 }
 
 pub fn files_from_args(args: impl Iterator<Item = String>) -> Vec<String> {

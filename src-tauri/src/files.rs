@@ -14,6 +14,11 @@ fn norm(path: &str) -> String {
     path.replace('/', "\\").to_lowercase()
 }
 
+/// Whether two paths name the same file, compared the way Windows does.
+pub fn same_path(a: &str, b: &str) -> bool {
+    norm(a) == norm(b)
+}
+
 /// Claims `path` for this window. Returns the label of another window that already
 /// has it open (the caller should hand over to that window), or None when claimed.
 #[tauri::command]

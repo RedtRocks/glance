@@ -425,6 +425,48 @@ export async function insertFiles(doc: PdfDoc, paths: string[], at: number): Pro
   })
 }
 
+/**
+ * Explorer → Combine into PDF: the files' pages and images, in name order, as a new PDF
+ * next to the first file, which then opens. Returns the new file's path.
+ */
+export async function combineIntoPdf(paths: string[]): Promise<string | null> {
+  const { combineOrder, combinedName } = await import('../core/explorer')
+  const ordered = combineOrder(paths)
+  if (!ordered.length) return null
+  const ops = await pageOps()
+  const skipped: string[] = []
+  const bytes = await withBusy('Combining into PDF…', async () => {
+    let out: Uint8Array | null = null
+    for (const path of ordered) {
+      try {
+        const probe = await platform.probe(path)
+        if (probe.kind === 'pdf') {
+          const src = await platform.readFile(path)
+          out = out ? await ops.insertPdfPages(out, src, await ops.pageCount(out)) : src
+        } else if (probe.kind === 'image') {
+          const image = await imageForPdf(probe)
+          out = out ? await ops.insertImagePages(out, [image], await ops.pageCount(out)) : await ops.pdfFromImages([image])
+        } else {
+          skipped.push(platform.baseName(path))
+        }
+      } catch (e) {
+        console.error(e)
+        skipped.push(platform.baseName(path))
+      }
+    }
+    return out
+  })
+  if (!bytes) {
+    await alertDialog('Couldn’t combine into PDF', `None of these files can be added to a PDF: ${skipped.join(', ')}`)
+    return null
+  }
+  const target = await platform.uniquePath(platform.dirName(ordered[0]), combinedName(ordered[0]))
+  await platform.writeFile(target, bytes)
+  await openFiles([target])
+  toast(skipped.length ? `Created ${platform.baseName(target)}. Skipped ${skipped.join(', ')}.` : `Created ${platform.baseName(target)}`)
+  return target
+}
+
 export async function insertFromFileDialog(doc = activeDoc.value): Promise<void> {
   if (doc?.kind !== 'pdf') return
   const paths = await platform.openDialog({ multiple: true, filters: OPEN_FILTERS })

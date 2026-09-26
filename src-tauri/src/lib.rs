@@ -2,6 +2,7 @@ mod color;
 mod commands;
 mod decode;
 mod encode;
+mod explorer;
 mod files;
 mod fonts;
 mod history;
@@ -42,6 +43,7 @@ pub fn run() {
     tauri::Builder::default()
         // Must be first: a second launch forwards its files here and exits.
         .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
+            let action = explorer::action_from_args(&argv);
             let files = commands::files_from_args(argv.into_iter().skip(1).map(|a| {
                 let p = std::path::Path::new(&a);
                 if p.is_relative() { std::path::Path::new(&cwd).join(p).to_string_lossy().into_owned() } else { a }
@@ -50,7 +52,9 @@ pub fn run() {
                 let _ = win.unminimize();
                 let _ = win.set_focus();
             }
-            if !files.is_empty() {
+            if let Some(action) = action {
+                explorer::enqueue(app, action, files);
+            } else if !files.is_empty() {
                 // Only the main window opens them (every window listens for the event).
                 let _ = app.emit_to("main", "open-files", files);
             }
@@ -63,6 +67,7 @@ pub fn run() {
             tauri::async_runtime::spawn_blocking(move || responder.respond(protocol::handle(request)));
         })
         .manage(files::OpenFiles::default())
+        .manage(explorer::Queue::default())
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {
                 files::release_window(window.app_handle(), window.label());
@@ -71,6 +76,10 @@ pub fn run() {
         .setup(|app| {
             if let Some(win) = app.get_webview_window("main") {
                 apply_backdrop(&win);
+            }
+            let args: Vec<String> = std::env::args().skip(1).collect();
+            if let Some(action) = explorer::action_from_args(&args) {
+                explorer::enqueue(app.handle(), action, commands::files_from_args(args.into_iter()));
             }
             subject::warm_up();
             Ok(())
@@ -83,6 +92,8 @@ pub fn run() {
             commands::ghostscript_available,
             commands::convert_postscript,
             commands::initial_files,
+            explorer::take_shell_requests,
+            explorer::unique_path,
             commands::log_frontend,
             signatures::signatures_list,
             signatures::signature_save,

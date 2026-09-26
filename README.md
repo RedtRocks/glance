@@ -50,7 +50,8 @@ Glance brings Preview's everyday superpowers to Windows: rearranging and merging
 | 3D models: GLB/glTF, OBJ, STL, PLY, 3MF, DAE, FBX, USDZ, 3DS (orbit, wireframe, turntable, animations, snapshot) | ✅ |
 | Create Collage (justified rows or grid) | ✅ |
 | Password-protected PDF export (AES-256, permissions), Reduce File Size, New from Clipboard, Import from Scanner | ✅ |
-| Windows 11 context menu (needs a signed build) | Milestone 6 |
+| Explorer right-click menu: Open in Glance, Combine into PDF, Remove Location Info (on Windows 11 under "Show more options") | ✅ |
+| Windows 11 top-level context menu (needs a signed build) | Milestone 6 |
 
 Signing on an iPhone or iPad (Preview's Continuity feature) isn't possible on Windows; use the camera or a photo of your signature instead.
 
