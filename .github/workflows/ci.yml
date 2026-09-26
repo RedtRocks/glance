@@ -52,6 +52,25 @@ jobs:
           path: src-tauri/target/release/bundle/nsis/*.exe
           if-no-files-found: error
 
+  windows-arm64:
+    name: Windows ARM64 (build check)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-pc-windows-msvc
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          key: arm64
+      - name: Frontend placeholder
+        shell: bash
+        run: mkdir -p dist && echo '<!doctype html>' > dist/index.html
+      - name: Check (runs build scripts, e.g. tract's ARM64 kernels via clang)
+        working-directory: src-tauri
+        run: cargo check --locked --target aarch64-pc-windows-msvc
+
   linux-rust:
     name: Rust tests (Linux)
     runs-on: ubuntu-latest

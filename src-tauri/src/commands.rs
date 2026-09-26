@@ -43,14 +43,14 @@ pub async fn probe(path: String) -> Result<Probe, String> {
     .map_err(|e| e.to_string())?
 }
 
-fn raw_body(request: &Request<'_>) -> Result<Vec<u8>, String> {
+pub(crate) fn raw_body(request: &Request<'_>) -> Result<Vec<u8>, String> {
     match request.body() {
         InvokeBody::Raw(bytes) => Ok(bytes.clone()),
         InvokeBody::Json(_) => Err("expected a binary body".into()),
     }
 }
 
-fn header(request: &Request<'_>, name: &str) -> Result<String, String> {
+pub(crate) fn header(request: &Request<'_>, name: &str) -> Result<String, String> {
     let v = request.headers().get(name).ok_or_else(|| format!("missing header {name}"))?;
     let s = v.to_str().map_err(|e| e.to_string())?;
     Ok(percent_encoding::percent_decode_str(s).decode_utf8_lossy().into_owned())
@@ -60,13 +60,16 @@ fn header(request: &Request<'_>, name: &str) -> Result<String, String> {
 #[tauri::command]
 pub fn write_file(request: Request<'_>) -> Result<(), String> {
     let path = PathBuf::from(header(&request, "x-path")?);
-    let data = raw_body(&request)?;
+    write_atomic(&path, &raw_body(&request)?)
+}
+
+pub(crate) fn write_atomic(path: &std::path::Path, data: &[u8]) -> Result<(), String> {
     let tmp = path.with_extension(format!(
         "{}.glance-tmp",
         path.extension().and_then(|e| e.to_str()).unwrap_or("")
     ));
-    std::fs::write(&tmp, &data).map_err(|e| e.to_string())?;
-    std::fs::rename(&tmp, &path).map_err(|e| {
+    std::fs::write(&tmp, data).map_err(|e| e.to_string())?;
+    std::fs::rename(&tmp, path).map_err(|e| {
         let _ = std::fs::remove_file(&tmp);
         e.to_string()
     })

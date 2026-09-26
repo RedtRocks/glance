@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'preact/hooks'
-import { COLORS, type Color, type Markup } from '../../core/markup'
-import { activeDoc, type PdfDoc } from '../../state/documents'
+import { COLORS, fontStack, type Color, type Markup } from '../../core/markup'
+import { activeDoc, ImageDoc, PdfDoc, type MarkupHost } from '../../state/documents'
+import { adjustColorOpen, adjustSizeOpen } from '../../state/imageState'
+import { copySubject, cropToSelection, removeBackground } from '../../state/imageActions'
 import {
   activeSignature,
   css,
@@ -12,9 +14,10 @@ import {
   style,
   textStyle,
   tool,
+  type TextStyle,
   type Tool
 } from '../../state/markupState'
-import { deleteSignature, listSignatures, type SavedSignature } from '../../platform'
+import { deleteSignature, listFonts, listSignatures, type SavedSignature } from '../../platform'
 import { markSelection, type TextMarkupKind } from './textSelection'
 import { Icon } from '../Icon'
 import type { IconName } from '../icons'
@@ -31,6 +34,13 @@ const SHAPES: [Tool, IconName, string][] = [
   ['bubble', 'bubble', 'Speech bubble']
 ]
 
+const IMAGE_SELECT: [Tool, IconName, string][] = [
+  ['selectRect', 'selectRect', 'Rectangular selection'],
+  ['selectEllipse', 'selectEllipse', 'Elliptical selection'],
+  ['lasso', 'lasso', 'Lasso selection'],
+  ['smartLasso', 'smartLasso', 'Smart lasso (snaps to edges)']
+]
+
 const PALETTE: Color[] = [COLORS.red, COLORS.orange, COLORS.yellow, COLORS.green, COLORS.blue, COLORS.purple, COLORS.black, COLORS.white]
 const WIDTHS = [0.5, 1, 2, 3, 5, 8, 12]
 
@@ -42,13 +52,20 @@ function ToolButton({ t, icon, label }: { t: Tool; icon: IconName; label: string
   )
 }
 
-function Swatches({ value, onPick, allowNone }: { value: Color | null; onPick: (c: Color | null) => void; allowNone?: boolean }) {
+const HIGHLIGHT_COLORS: Color[] = [COLORS.yellow, [0.47, 0.87, 0.36], [0.4, 0.73, 1], [1, 0.5, 0.75], [0.75, 0.55, 1], COLORS.orange]
+const TEXT_MARKS = ['highlight', 'underline', 'strike', 'squiggly']
+
+const hex = (c: Color) => '#' + c.map((v) => Math.round(v * 255).toString(16).padStart(2, '0')).join('')
+const fromHex = (h: string): Color => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255) as Color
+
+function Swatches({ value, onPick, allowNone, colors = PALETTE }: { value: Color | null; onPick: (c: Color | null) => void; allowNone?: boolean; colors?: Color[] }) {
+  const custom = value && !colors.some((c) => c.join() === value.join())
   return (
     <div class="swatches" role="listbox">
       {allowNone && (
         <button class={`swatch none ${value === null ? 'selected' : ''}`} aria-label="No color" onClick={() => onPick(null)} />
       )}
-      {PALETTE.map((c) => (
+      {colors.map((c) => (
         <button
           key={c.join()}
           class={`swatch ${value && value.join() === c.join() ? 'selected' : ''}`}
@@ -57,12 +74,45 @@ function Swatches({ value, onPick, allowNone }: { value: Color | null; onPick: (
           onClick={() => onPick(c)}
         />
       ))}
+      {/* Any other color, through the system color picker. */}
+      <label class={`swatch custom ${custom ? 'selected' : ''}`} title="More colors" style={custom ? { background: css(value) } : undefined}>
+        <input type="color" aria-label="More colors" value={value ? hex(value) : '#000000'} onChange={(e) => onPick(fromHex((e.target as HTMLInputElement).value))} />
+      </label>
     </div>
   )
 }
 
+/** Installed font families; the first entry is Helvetica, the PDF standard font. */
+function FontPicker({ value, onPick }: { value?: string; onPick: (font: string | undefined) => void }) {
+  const [fonts, setFonts] = useState<string[]>([])
+  useEffect(() => {
+    void listFonts().then(setFonts)
+  }, [])
+  const list = value && !fonts.includes(value) ? [value, ...fonts] : fonts
+  return (
+    <label class="field">
+      <span>Font</span>
+      <select
+        class="font-select"
+        value={value ?? ''}
+        style={{ fontFamily: fontStack(value) }}
+        onChange={(e) => onPick((e.target as HTMLSelectElement).value || undefined)}
+      >
+        <option value="" style={{ fontFamily: fontStack() }}>
+          Helvetica
+        </option>
+        {list.map((f) => (
+          <option key={f} value={f} style={{ fontFamily: fontStack(f) }}>
+            {f}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
 /** Updates the default style and, if something is selected, that markup too. */
-function restyle(doc: PdfDoc | null, patch: Partial<Markup['style']>, textPatch?: Partial<{ fontSize: number; color: Color }>): void {
+function restyle(doc: MarkupHost | null, patch: Partial<Markup['style']>, textPatch?: Partial<TextStyle>): void {
   style.value = { ...style.value, ...patch }
   if (textPatch) textStyle.value = { ...textStyle.value, ...textPatch }
   const id = selectedId.peek()
@@ -77,13 +127,22 @@ function restyle(doc: PdfDoc | null, patch: Partial<Markup['style']>, textPatch?
   doc.edit('Change Style', { markup: next })
 }
 
-function selectedMarkup(doc: PdfDoc | null): Markup | undefined {
+/** Picks the highlight color; a selected highlight/underline is recolored too. */
+function pickMarkColor(doc: MarkupHost | null, c: Color): void {
+  const sel = selectedMarkup(doc)
+  if (!sel || sel.type === 'highlight') highlightColor.value = c
+  if (doc && sel && TEXT_MARKS.includes(sel.type)) {
+    doc.edit('Change Color', { markup: doc.markup.peek().map((m) => (m.id === sel.id ? { ...m, style: { ...m.style, stroke: c } } : m)) })
+  }
+}
+
+function selectedMarkup(doc: MarkupHost | null): Markup | undefined {
   return doc?.markup.value.find((m) => m.id === selectedId.value)
 }
 
-function textMarkup(doc: PdfDoc | null, kind: TextMarkupKind): void {
+function textMarkup(doc: MarkupHost | null, kind: TextMarkupKind): void {
   const root = document.querySelector<HTMLElement>('.pdf-scroller')
-  if (doc && root && markSelection(doc, root, kind)) return
+  if (doc instanceof PdfDoc && root && markSelection(doc, root, kind)) return
   setTool(tool.value === kind ? 'select' : kind)
 }
 
@@ -136,23 +195,58 @@ function Signatures({ close }: { close: () => void }) {
   )
 }
 
+function ActionButton({ icon, label, onClick }: { icon: IconName; label: string; onClick: () => void }) {
+  return (
+    <button class="tb-button" title={label} aria-label={label} onClick={onClick}>
+      <Icon name={icon} />
+    </button>
+  )
+}
+
 export function MarkupToolbar() {
-  const doc = activeDoc.value
-  if (!markupBar.value || doc?.kind !== 'pdf') return null
+  const active = activeDoc.value
+  const image = active instanceof ImageDoc && active.editable ? active : null
+  const doc = active?.kind === 'pdf' ? active : image
+  if (!markupBar.value || !doc) return null
+  const selectTool = IMAGE_SELECT.find(([t]) => t === tool.value)
   const sel = selectedMarkup(doc)
   const st = sel?.style ?? style.value
-  const ts = sel?.type === 'text' ? { fontSize: sel.fontSize, color: sel.color } : textStyle.value
+  const ts: TextStyle = sel?.type === 'text' ? { fontSize: sel.fontSize, color: sel.color, font: sel.font } : textStyle.value
   const shapeTool = SHAPES.find(([t]) => t === tool.value)
+  const markColor = sel && TEXT_MARKS.includes(sel.type) && sel.style.stroke ? sel.style.stroke : highlightColor.value
   return (
     <div class="markup-toolbar" role="toolbar" aria-label="Markup">
       <ToolButton t="select" icon="cursor" label="Select and move markup" />
+      {image && (
+        <>
+          <Popover icon={selectTool?.[1] ?? 'selectRect'} label="Selection tools" pressed={!!selectTool}>
+            {(close) => (
+              <div class="flyout-col">
+                {IMAGE_SELECT.map(([t, icon, label]) => (
+                  <button
+                    key={t}
+                    class="menu-item"
+                    onClick={() => {
+                      setTool(t)
+                      close()
+                    }}
+                  >
+                    <Icon name={icon} size={16} /> <span>{label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </Popover>
+          <ToolButton t="instantAlpha" icon="instantAlpha" label="Instant Alpha: drag over a color to select it" />
+        </>
+      )}
       <span class="tb-sep" />
       <ToolButton t="sketch" icon="sketch" label="Sketch (shapes are recognized)" />
       <ToolButton t="draw" icon="draw" label="Draw" />
       <Popover icon={shapeTool?.[1] ?? 'shapes'} label="Shapes" pressed={!!shapeTool}>
         {(close) => (
           <div class="shape-grid">
-            {SHAPES.map(([t, icon, label]) => (
+            {[...SHAPES, ['loupe', 'zoomIn', 'Loupe (magnifier)'] as [Tool, IconName, string]].map(([t, icon, label]) => (
               <button
                 key={t}
                 class={`tb-button ${tool.value === t ? 'pressed' : ''}`}
@@ -170,25 +264,34 @@ export function MarkupToolbar() {
         )}
       </Popover>
       <ToolButton t="text" icon="textBox" label="Text box" />
-      <ToolButton t="note" icon="note" label="Note" />
+      {!image && <ToolButton t="note" icon="note" label="Note" />}
       <span class="tb-sep" />
-      <button class={`tb-button ${tool.value === 'highlight' ? 'pressed' : ''}`} title="Highlight selected text" aria-label="Highlight" onClick={() => textMarkup(doc, 'highlight')}>
+      {!image && <button class={`tb-button ${tool.value === 'highlight' ? 'pressed' : ''}`} title="Highlight selected text" aria-label="Highlight" onClick={() => textMarkup(doc, 'highlight')}>
         <Icon name="highlight" />
-        <span class="swatch-bar" style={{ background: css(highlightColor.value) }} />
-      </button>
-      <Popover icon="underline" label="Highlight color, underline and strikethrough">
-        {(close) => (
-          <div class="flyout-col">
-            <Swatches value={highlightColor.value} onPick={(c) => c && (highlightColor.value = c)} />
-            <button class="menu-item" onClick={() => (textMarkup(doc, 'underline'), close())}>
-              <Icon name="underline" size={16} /> <span>Underline</span>
-            </button>
-            <button class="menu-item" onClick={() => (textMarkup(doc, 'strike'), close())}>
-              <Icon name="strike" size={16} /> <span>Strikethrough</span>
-            </button>
-          </div>
-        )}
-      </Popover>
+        <span class="swatch-bar" style={{ background: css(markColor) }} />
+      </button>}
+      {!image && (
+        <Popover icon="underline" label="Highlight color, underline, strikethrough and squiggly underline">
+          {(close) => (
+            <div class="flyout-col">
+              <span class="flyout-label">Highlight color</span>
+              <Swatches colors={HIGHLIGHT_COLORS} value={markColor} onPick={(c) => c && pickMarkColor(doc, c)} />
+              <span class="menu-sep" />
+              {(
+                [
+                  ['underline', 'underline', 'Underline'],
+                  ['strike', 'strike', 'Strikethrough'],
+                  ['squiggly', 'squiggly', 'Squiggly underline']
+                ] as [TextMarkupKind, IconName, string][]
+              ).map(([k, icon, label]) => (
+                <button key={k} class={`menu-item ${tool.value === k ? 'checked' : ''}`} onClick={() => (textMarkup(doc, k), close())}>
+                  <Icon name={icon} size={16} /> <span>{label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </Popover>
+      )}
       <Popover icon="signature" label="Sign" pressed={tool.value === 'signature'}>
         {(close) => <Signatures close={close} />}
       </Popover>
@@ -222,6 +325,7 @@ export function MarkupToolbar() {
       <Popover icon="textStyle" label="Text style">
         {() => (
           <div class="flyout-col">
+            <FontPicker value={ts.font} onPick={(font) => restyle(doc, {}, { font })} />
             <label class="field">
               <span>Size</span>
               <select value={ts.fontSize} onChange={(e) => restyle(doc, {}, { fontSize: Number((e.target as HTMLSelectElement).value) })}>
@@ -236,6 +340,16 @@ export function MarkupToolbar() {
           </div>
         )}
       </Popover>
+      {image && (
+        <>
+          <span class="tb-sep" />
+          <ActionButton icon="crop" label="Crop to selection (Ctrl+K)" onClick={() => void cropToSelection(image)} />
+          <ActionButton icon="adjustColor" label="Adjust color (Ctrl+Shift+C)" onClick={() => (adjustColorOpen.value = true)} />
+          <ActionButton icon="adjustSize" label="Adjust size (Ctrl+Shift+U)" onClick={() => (adjustSizeOpen.value = true)} />
+          <ActionButton icon="removeBg" label="Remove background (Ctrl+Shift+K)" onClick={() => void removeBackground(image)} />
+          <ActionButton icon="copySubject" label="Copy subject" onClick={() => void copySubject(image)} />
+        </>
+      )}
       <div class="tb-spacer" />
       <button class="tb-button" title="Hide markup toolbar (Ctrl+Shift+A)" aria-label="Hide markup toolbar" onClick={() => {
           setTool('select')

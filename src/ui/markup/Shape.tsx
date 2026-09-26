@@ -39,7 +39,7 @@ export function Shape({ m }: { m: Markup }) {
       )
     }
     case 'highlight':
-      return <path d={outlinePath(m)} fill={css(s.stroke ?? [1, 0.85, 0.2])} opacity={s.opacity} style={{ mixBlendMode: 'multiply' }} />
+      return <path d={outlinePath(m)} fill={css(s.stroke ?? [1, 0.85, 0.2])} opacity={s.opacity} />
     default: {
       const closed = ['rect', 'roundRect', 'oval', 'star', 'bubble'].includes(m.type) || (m.type === 'polygon' && m.closed)
       return (

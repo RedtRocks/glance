@@ -7,7 +7,7 @@ import type { PdfDoc } from '../../state/documents'
 import { getViewport } from '../../pdf/viewports'
 import { highlightColor, style } from '../../state/markupState'
 
-export type TextMarkupKind = 'highlight' | 'underline' | 'strike' | 'redact'
+export type TextMarkupKind = 'highlight' | 'underline' | 'strike' | 'squiggly' | 'redact'
 
 interface PageQuads {
   page: number
@@ -70,12 +70,12 @@ export function markSelection(doc: PdfDoc, root: HTMLElement, kind: TextMarkupKi
     id: newId(),
     page,
     created: Date.now(),
-    style: { stroke: color, fill: null, width: 1, opacity: kind === 'highlight' ? 1 : 1 },
+    style: { stroke: color, fill: null, width: 1, opacity: 1 },
     type: kind,
     quads,
     text: found.text
   }))
-  const label = { highlight: 'Highlight', underline: 'Underline', strike: 'Strikethrough' }[kind]
+  const label = { highlight: 'Highlight', underline: 'Underline', strike: 'Strikethrough', squiggly: 'Squiggly Underline' }[kind]
   doc.edit(label, { markup: [...doc.markup.peek(), ...added] })
   return true
 }

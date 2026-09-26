@@ -72,3 +72,19 @@ export const customizeOpen = signal(false)
 export const menuOpen = signal<string | null>(null)
 export const sidebarVisible = signal(true)
 export const slideshow = signal(false)
+
+export interface ContextMenuItem {
+  label: string
+  run?: () => unknown
+  disabled?: boolean
+  /** Nested items (one level), e.g. "Copy to ▸ document". */
+  items?: ContextMenuItem[]
+}
+/** Right-click menu; '-' entries are separators. */
+export const contextMenu = signal<{ x: number; y: number; items: (ContextMenuItem | '-')[] } | null>(null)
+
+/** Tools → Remove Sensitive Text (search-and-redact). */
+export const redactTextOpen = signal(false)
+
+/** Tools → Show Inspector (Ctrl+I). */
+export const inspectorOpen = signal(false)

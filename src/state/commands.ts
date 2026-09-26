@@ -5,14 +5,19 @@
 import { normalizeCombo } from '../core/shortcuts'
 import * as platform from '../platform'
 import * as actions from './actions'
+import * as shell from './shellActions'
+import * as ocr from './ocrActions'
+import { batchOpen } from './batch'
 import { activeDoc, activeId, docs, type Doc, type ViewMode } from './documents'
 import { settings, updateSettings } from './settings'
-import { customizeOpen, findOpen, promptText, settingsOpen, sidebarVisible, slideshow } from './ui'
+import { customizeOpen, findOpen, inspectorOpen, promptText, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from './ui'
 import { parsePageInput } from '../core/pageControls'
 import { printDoc } from './print'
 import { applyRedactions } from './actions'
 import { markupBar, selectedId, setTool, signatureDialog, tool } from './markupState'
 import { bookmarksFor, setBookmarks } from './bookmarks'
+import { adjustColorOpen, adjustSizeOpen, exportOpen, imageSelection } from './imageState'
+import * as img from './imageActions'
 
 export interface Command {
   id: string
@@ -23,6 +28,10 @@ export interface Command {
   enabled?: () => boolean
   /** Checked state for toggles shown in menus. */
   checked?: () => boolean
+  /** Commands sharing a group are mutually exclusive choices (shown with a radio dot). */
+  radio?: string
+  /** Whether the command belongs to the open file at all; menus hide it otherwise. */
+  visible?: () => boolean
 }
 
 const ZOOM_STEPS = [0.1, 0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5, 6.4, 8]
@@ -33,6 +42,20 @@ export function stepZoom(current: number, dir: 1 | -1): number {
 }
 
 const pdf = () => (activeDoc.value?.kind === 'pdf' ? activeDoc.value : null)
+/** The sidebar pane actually on screen, or null when hidden. */
+const sidebarShown = () => {
+  const pane = activeDoc.value?.sidebar.value
+  return sidebarVisible.value && pane && pane !== 'none' ? pane : null
+}
+const layout = () => {
+  const d = pdf()
+  return !d ? null : d.contactSheet.value ? 'contact' : d.viewMode.value
+}
+
+const image = () => img.editableImage(activeDoc.value)
+const isImage = () => image() !== null
+const anyImage = () => activeDoc.value?.kind === 'image'
+const markupHost = () => pdf() ?? image()
 const hasDoc = () => activeDoc.value !== null
 const isPdf = () => pdf() !== null
 const multiPage = () => {
@@ -90,58 +113,78 @@ export const COMMANDS: Command[] = [
   // File
   { id: 'file.open', label: 'Open…', keys: ['Ctrl+O'], run: actions.openWithDialog },
   { id: 'file.newWindow', label: 'New Window', keys: ['Ctrl+Shift+N'], run: () => platform.openNewWindow([]) },
-  { id: 'file.save', label: 'Save', keys: ['Ctrl+S'], run: () => actions.save(), enabled: isPdf },
-  { id: 'file.saveAs', label: 'Save As…', keys: ['Ctrl+Shift+S'], run: () => actions.saveAs(), enabled: isPdf },
-  { id: 'file.exportPages', label: 'Export Selected Pages…', keys: ['Ctrl+E'], run: () => actions.exportSelectedPages(), enabled: isPdf },
+  { id: 'file.save', label: 'Save', keys: ['Ctrl+S'], run: () => actions.save(), enabled: () => isPdf() || isImage() },
+  { id: 'file.saveAs', label: 'Save As…', keys: ['Ctrl+Shift+S'], run: () => actions.saveAs(), enabled: () => isPdf() || isImage() },
+  {
+    id: 'file.export',
+    label: 'Export…',
+    keys: ['Ctrl+E'],
+    run: () => void (exportOpen.value = true),
+    enabled: () => isPdf() || isImage()
+  },
+  { id: 'file.exportPages', label: 'Export Selected Pages…', run: () => actions.exportSelectedPages(), enabled: isPdf },
+  { id: 'file.batch', label: 'Batch Edit Images…', run: () => void (batchOpen.value = true) },
+  { id: 'file.openWith', label: 'Open With Another App…', run: () => shell.openWithOtherApp(), enabled: () => shell.canOpenWith() },
+  { id: 'image.setWallpaper', label: 'Set as Desktop Background', run: () => shell.setAsWallpaper('desktop'), enabled: anyImage },
+  { id: 'image.setLockScreen', label: 'Set as Lock Screen', run: () => shell.setAsWallpaper('lock'), enabled: anyImage },
   { id: 'file.print', label: 'Print…', keys: ['Ctrl+P'], run: () => printDoc(activeDoc.value), enabled: hasDoc },
   { id: 'file.close', label: 'Close Tab', keys: ['Ctrl+W', 'Ctrl+F4'], run: () => actions.closeDoc(), enabled: hasDoc },
   { id: 'file.settings', label: 'Settings', keys: ['Ctrl+,'], run: () => void (settingsOpen.value = true) },
   // Edit
-  { id: 'edit.undo', label: 'Undo', keys: ['Ctrl+Z'], run: () => actions.undo(), enabled: () => !!pdf()?.history.canUndo },
-  { id: 'edit.redo', label: 'Redo', keys: ['Ctrl+Y', 'Ctrl+Shift+Z'], run: () => actions.redo(), enabled: () => !!pdf()?.history.canRedo },
+  { id: 'edit.undo', label: 'Undo', keys: ['Ctrl+Z'], run: () => actions.undo(), enabled: () => !!(pdf() ?? image())?.history.canUndo },
+  { id: 'edit.redo', label: 'Redo', keys: ['Ctrl+Y', 'Ctrl+Shift+Z'], run: () => actions.redo(), enabled: () => !!(pdf() ?? image())?.history.canRedo },
   { id: 'edit.selectAll', label: 'Select All Pages', keys: ['Ctrl+A'], run: () => actions.selectAllPages(), enabled: isPdf },
   { id: 'edit.find', label: 'Find…', keys: ['Ctrl+F'], run: () => void (findOpen.value = true), enabled: isPdf },
   { id: 'edit.insertBlank', label: 'Insert Blank Page', run: () => actions.insertBlankPage(), enabled: isPdf },
   { id: 'edit.insertFile', label: 'Insert Page from File…', run: () => actions.insertFromFileDialog(), enabled: isPdf },
+  { id: 'edit.duplicatePages', label: 'Duplicate Pages', run: () => actions.duplicatePages(), enabled: isPdf },
+  { id: 'file.split', label: 'Split PDF…', run: () => actions.splitDocument(), enabled: () => isPdf() && (pdf()?.pageCount.peek() ?? 0) > 1 },
   {
     id: 'edit.delete',
     label: 'Delete',
     keys: ['Delete', 'Backspace'],
     // Selected markup first; otherwise the selected pages.
     run: () => {
-      const d = pdf()
+      const host = markupHost()
       const id = selectedId.peek()
-      if (d && id && d.markup.peek().some((m) => m.id === id)) {
-        d.edit('Delete Markup', { markup: d.markup.peek().filter((m) => m.id !== id) })
+      if (host && id && host.markup.peek().some((m) => m.id === id)) {
+        host.edit('Delete Markup', { markup: host.markup.peek().filter((m) => m.id !== id) })
         selectedId.value = null
         return
       }
+      const im = image()
+      if (im && imageSelection.peek()) return void img.deleteSelection(im)
+      const d = pdf()
       if (d && d.selection.peek().length) return actions.deletePages()
     },
-    enabled: isPdf
+    enabled: () => isPdf() || isImage()
   },
+  { id: 'edit.invertSelection', label: 'Invert Selection', keys: ['Ctrl+Shift+I'], run: () => void img.invertSelection(image()!), enabled: () => isImage() && !!imageSelection.value },
   { id: 'edit.deletePages', label: 'Delete Selected Pages', run: () => actions.deletePages(), enabled: isPdf },
   { id: 'edit.addBookmark', label: 'Add Bookmark', keys: ['Ctrl+D'], run: () => addBookmark(), enabled: isPdf },
   // View
-  { id: 'view.hideSidebar', label: 'Hide Sidebar', keys: ['Ctrl+Shift+1'], run: () => showSidebar('none'), enabled: hasDoc },
-  { id: 'view.thumbnails', label: 'Thumbnails', keys: ['Ctrl+Shift+2'], run: () => showSidebar('thumbnails'), enabled: multiPage, checked: () => sidebarVisible.value && activeDoc.value?.sidebar.value === 'thumbnails' },
-  { id: 'view.toc', label: 'Table of Contents', keys: ['Ctrl+Shift+3'], run: () => showSidebar('toc'), enabled: isPdf, checked: () => sidebarVisible.value && activeDoc.value?.sidebar.value === 'toc' },
-  { id: 'view.notes', label: 'Highlights and Notes', keys: ['Ctrl+Shift+4'], run: () => showSidebar('notes'), enabled: isPdf, checked: () => sidebarVisible.value && activeDoc.value?.sidebar.value === 'notes' },
-  { id: 'view.bookmarks', label: 'Bookmarks', keys: ['Ctrl+Shift+5'], run: () => showSidebar('bookmarks'), enabled: isPdf, checked: () => sidebarVisible.value && activeDoc.value?.sidebar.value === 'bookmarks' },
+  { id: 'view.hideSidebar', label: 'No Sidebar', keys: ['Ctrl+Shift+1'], run: () => showSidebar('none'), enabled: hasDoc, radio: 'sidebar', checked: () => !sidebarShown() },
+  { id: 'view.thumbnails', label: 'Thumbnails', keys: ['Ctrl+Shift+2'], run: () => showSidebar('thumbnails'), enabled: multiPage, radio: 'sidebar', checked: () => sidebarShown() === 'thumbnails' },
+  { id: 'view.toc', label: 'Table of Contents', keys: ['Ctrl+Shift+3'], run: () => showSidebar('toc'), enabled: isPdf, radio: 'sidebar', checked: () => sidebarShown() === 'toc' },
+  { id: 'view.notes', label: 'Highlights and Notes', keys: ['Ctrl+Shift+4'], run: () => showSidebar('notes'), enabled: isPdf, radio: 'sidebar', checked: () => sidebarShown() === 'notes' },
+  { id: 'view.bookmarks', label: 'Bookmarks', keys: ['Ctrl+Shift+5'], run: () => showSidebar('bookmarks'), enabled: isPdf, radio: 'sidebar', checked: () => sidebarShown() === 'bookmarks' },
+  // Page layout: the three scroll modes and the contact sheet are one choice.
+  { id: 'view.continuous', label: 'Continuous Scroll', keys: ['Ctrl+1'], run: () => setView('continuous'), enabled: isPdf, radio: 'layout', checked: () => layout() === 'continuous' },
+  { id: 'view.single', label: 'Single Page', keys: ['Ctrl+2'], run: () => setView('single'), enabled: isPdf, radio: 'layout', checked: () => layout() === 'single' },
+  { id: 'view.two', label: 'Two Pages', keys: ['Ctrl+3'], run: () => setView('two'), enabled: isPdf, radio: 'layout', checked: () => layout() === 'two' },
   {
     id: 'view.contactSheet',
     label: 'Contact Sheet',
     keys: ['Ctrl+Shift+6'],
+    // The toolbar button toggles; from the menu it is one of the layouts.
     run: () => {
       const d = pdf()
       if (d) d.contactSheet.value = !d.contactSheet.value
     },
     enabled: isPdf,
-    checked: () => !!pdf()?.contactSheet.value
+    radio: 'layout',
+    checked: () => layout() === 'contact'
   },
-  { id: 'view.continuous', label: 'Continuous Scroll', keys: ['Ctrl+1'], run: () => setView('continuous'), enabled: isPdf, checked: () => pdf()?.viewMode.value === 'continuous' },
-  { id: 'view.single', label: 'Single Page', keys: ['Ctrl+2'], run: () => setView('single'), enabled: isPdf, checked: () => pdf()?.viewMode.value === 'single' },
-  { id: 'view.two', label: 'Two Pages', keys: ['Ctrl+3'], run: () => setView('two'), enabled: isPdf, checked: () => pdf()?.viewMode.value === 'two' },
   { id: 'view.zoomIn', label: 'Zoom In', keys: ['Ctrl+=', 'Ctrl+Shift+='], run: () => zoom(1), enabled: hasDoc },
   { id: 'view.zoomOut', label: 'Zoom Out', keys: ['Ctrl+-'], run: () => zoom(-1), enabled: hasDoc },
   { id: 'view.actualSize', label: 'Actual Size', keys: ['Ctrl+0'], run: () => setZoom('actual'), enabled: hasDoc },
@@ -154,6 +197,7 @@ export const COMMANDS: Command[] = [
   },
   { id: 'view.fullscreen', label: 'Full Screen', keys: ['F11'], run: () => platform.toggleFullscreen() },
   { id: 'view.slideshow', label: 'Slideshow', keys: ['Ctrl+Shift+F'], run: () => void (slideshow.value = true), enabled: hasDoc },
+  { id: 'view.inspector', label: 'Inspector', keys: ['Ctrl+I'], run: () => void (inspectorOpen.value = !inspectorOpen.value), checked: () => inspectorOpen.value },
   { id: 'view.customizeToolbar', label: 'Customize Toolbar…', run: () => void (customizeOpen.value = true) },
   // Go
   { id: 'go.previous', label: 'Previous Page', keys: ['Ctrl+Up', 'PageUp'], run: () => goPage(-1), enabled: multiPage },
@@ -176,15 +220,26 @@ export const COMMANDS: Command[] = [
         markupBar.value = true
       }
     },
-    enabled: isPdf,
+    enabled: () => isPdf() || isImage(),
     checked: () => markupBar.value
   },
   { id: 'tools.highlight', label: 'Highlight', keys: ['Ctrl+Shift+H'], run: () => toggleTool('highlight'), enabled: isPdf, checked: () => tool.value === 'highlight' },
-  { id: 'tools.text', label: 'Add Text Box', keys: ['Ctrl+Shift+T'], run: () => toggleTool('text'), enabled: isPdf },
+  { id: 'tools.text', label: 'Add Text Box', keys: ['Ctrl+Shift+T'], run: () => toggleTool('text'), enabled: () => isPdf() || isImage() },
   { id: 'tools.note', label: 'Add Note', keys: ['Ctrl+Shift+O'], run: () => toggleTool('note'), enabled: isPdf },
-  { id: 'tools.signature', label: 'Signature…', keys: ['Ctrl+Shift+J'], run: () => void (signatureDialog.value = true), enabled: isPdf },
-  { id: 'tools.redact', label: 'Redact', keys: ['Ctrl+Shift+R'], run: () => toggleTool('redact'), enabled: isPdf, checked: () => tool.value === 'redact' },
+  { id: 'tools.signature', label: 'Signature…', keys: ['Ctrl+Shift+J'], run: () => void (signatureDialog.value = true), enabled: () => isPdf() || isImage() },
+  { id: 'tools.ocr', label: 'Recognize Text (OCR)…', run: () => ocr.recognizePdfText(), enabled: isPdf },
+  { id: 'tools.copyImageText', label: 'Copy Text from Image', run: () => ocr.copyImageText() },
+  { id: 'tools.redactText', label: 'Remove Sensitive Text…', run: () => void (redactTextOpen.value = true), enabled: isPdf },
+  { id: 'tools.redact', label: 'Redact', keys: ['Ctrl+Shift+R'], run: () => toggleTool('redact'), enabled: () => isPdf() || isImage(), checked: () => tool.value === 'redact' },
   { id: 'tools.applyRedactions', label: 'Apply Redactions…', run: () => void applyRedactions(), enabled: () => !!pdf()?.redactions.value.length },
+  { id: 'tools.crop', label: 'Crop to Selection', keys: ['Ctrl+K'], run: () => void img.cropToSelection(image()!), enabled: isImage },
+  { id: 'tools.instantAlpha', label: 'Instant Alpha', run: () => toggleTool('instantAlpha'), enabled: isImage, checked: () => tool.value === 'instantAlpha' },
+  { id: 'tools.removeBackground', label: 'Remove Background', keys: ['Ctrl+Shift+K'], run: () => void img.removeBackground(image()!), enabled: isImage },
+  { id: 'tools.copySubject', label: 'Copy Subject', run: () => void img.copySubject(image()!), enabled: isImage },
+  { id: 'tools.adjustColor', label: 'Adjust Color…', keys: ['Ctrl+Shift+C'], run: () => void (adjustColorOpen.value = true), enabled: isImage },
+  { id: 'tools.adjustSize', label: 'Adjust Size…', keys: ['Ctrl+Shift+U'], run: () => void (adjustSizeOpen.value = true), enabled: isImage },
+  { id: 'tools.flipHorizontal', label: 'Flip Horizontal', run: () => void img.flipImage(image()!, 'horizontal'), enabled: isImage },
+  { id: 'tools.flipVertical', label: 'Flip Vertical', run: () => void img.flipImage(image()!, 'vertical'), enabled: isImage },
   { id: 'tools.rotateLeft', label: 'Rotate Left', keys: ['Ctrl+L'], run: () => actions.rotatePages(-90), enabled: hasDoc },
   { id: 'tools.rotateRight', label: 'Rotate Right', keys: ['Ctrl+R'], run: () => actions.rotatePages(90), enabled: hasDoc },
   // Help
@@ -192,7 +247,50 @@ export const COMMANDS: Command[] = [
   { id: 'help.github', label: 'Glance on GitHub', run: () => platform.openUrl('https://github.com/RedtRocks/viewer') }
 ]
 
+// Which commands make sense for which kind of file. A PNG gets no page, outline or
+// PDF-markup commands; a PDF gets no pixel-editing tools. (Disabled means "not right
+// now"; hidden means "not for this file".)
+const ifPdf = () => activeDoc.value?.kind === 'pdf'
+const ifViewable = () => !!activeDoc.value && activeDoc.value.kind !== 'notice'
+const ifMarkup = () => ifPdf() || isImage()
+const ifPaged = () => ifPdf() || multiPage()
+const VISIBILITY: [(() => boolean), string[]][] = [
+  [hasDoc, ['file.close', 'file.openWith', 'view.customizeToolbar']],
+  [ifViewable, ['view.inspector']],
+  [ifViewable, [
+    'file.print', 'view.zoomIn', 'view.zoomOut', 'view.actualSize', 'view.zoomToFit', 'view.slideshow', 'view.fullscreen',
+    'tools.rotateLeft', 'tools.rotateRight'
+  ]],
+  [() => ifPdf() || isImage(), ['file.save', 'file.saveAs', 'file.export', 'edit.undo', 'edit.redo', 'edit.delete']],
+  [ifPdf, [
+    'file.exportPages', 'file.split', 'edit.selectAll', 'edit.find', 'edit.insertBlank', 'edit.insertFile', 'edit.duplicatePages',
+    'edit.deletePages', 'edit.addBookmark', 'view.toc', 'view.notes', 'view.bookmarks', 'view.continuous', 'view.single', 'view.two',
+    'view.contactSheet', 'view.darkPdf', 'tools.highlight', 'tools.note', 'tools.redactText', 'tools.applyRedactions', 'tools.ocr'
+  ]],
+  [ifPaged, ['view.hideSidebar', 'view.thumbnails', 'go.previous', 'go.next', 'go.first', 'go.last', 'go.page']],
+  [ifMarkup, ['tools.markup', 'tools.text', 'tools.signature', 'tools.redact']],
+  [anyImage, ['image.setWallpaper', 'image.setLockScreen', 'tools.copyImageText']],
+  [isImage, [
+    'edit.invertSelection', 'tools.crop', 'tools.instantAlpha', 'tools.removeBackground', 'tools.copySubject', 'tools.adjustColor',
+    'tools.adjustSize', 'tools.flipHorizontal', 'tools.flipVertical'
+  ]],
+  [() => docs.value.length > 1, ['go.nextTab', 'go.previousTab']]
+]
+for (const [rule, ids] of VISIBILITY) {
+  for (const id of ids) {
+    const cmd = COMMANDS.find((c) => c.id === id)
+    if (!cmd) throw new Error(`visibility rule for unknown command ${id}`)
+    cmd.visible = rule
+  }
+}
+
 export const commandById = new Map(COMMANDS.map((c) => [c.id, c]))
+
+/** Whether a command is shown in menus for the open file. */
+export function isVisible(id: string): boolean {
+  const cmd = commandById.get(id)
+  return !!cmd && (cmd.visible?.() ?? true)
+}
 
 export async function runCommand(id: string): Promise<void> {
   const cmd = commandById.get(id)

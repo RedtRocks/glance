@@ -4,7 +4,7 @@ import { ImageDoc, PdfDoc, type Doc } from '../../state/documents'
 import type { OutlineNode } from '../../pdf/engine'
 import { imageUrl } from '../../platform'
 import { pageDrag } from '../dragState'
-import { beginPageDrag, selectPage } from './pageDrag'
+import { beginPageDrag, pageContextMenu, selectPage } from './pageDrag'
 import { PageThumb } from './PageThumb'
 import { NotesList } from './NotesList'
 import { BookmarksList } from './BookmarksList'
@@ -41,6 +41,7 @@ function ThumbList({ doc }: { doc: PdfDoc }) {
                 selectPage(doc, i, e)
                 doc.goTo(i)
               }}
+              onContextMenu={(e) => pageContextMenu(e, doc, i)}
             >
               <PageThumb doc={doc} index={i} width={THUMB_WIDTH} />
               <span class="thumb-label">{i + 1}</span>

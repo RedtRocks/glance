@@ -310,3 +310,165 @@ export async function deleteSignature(id: string): Promise<void> {
   if (isTauri) return invoke('signature_delete', { id })
   sessionStorage.setItem(BROWSER_SIGS, JSON.stringify((await listSignatures()).filter((s) => s.id !== id)))
 }
+
+// ---------------------------------------------------------------------------
+// Image editing backends
+
+/** U²-Net-p subject mask: 320×320 RGB in, 320×320 mask out (see src-tauri/src/subject.rs). */
+export async function subjectMask(rgb: Uint8Array): Promise<Uint8Array> {
+  const res = await invoke<ArrayBuffer>('subject_mask', rgb)
+  return new Uint8Array(res)
+}
+
+/** Encodes RGBA pixels natively and writes them to `path` in `format`. */
+/** Target color space for exported images; pixels are converted from sRGB and the ICC profile embedded. */
+export type ColorProfile = 'srgb' | 'p3' | 'adobergb' | 'gray'
+
+export async function saveImage(path: string, format: string, width: number, height: number, rgba: Uint8ClampedArray, quality = 92, profile?: ColorProfile): Promise<void> {
+  if (!isTauri) {
+    const c = new OffscreenCanvas(width, height)
+    c.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(rgba), width, height), 0, 0)
+    const type = format === 'jpg' || format === 'jpeg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png'
+    const blob = await c.convertToBlob({ type, quality: quality / 100 })
+    await writeFile(path, new Uint8Array(await blob.arrayBuffer()))
+    return
+  }
+  await invoke('save_image', new Uint8Array(rgba.buffer, rgba.byteOffset, rgba.byteLength), {
+    headers: {
+      'x-path': encodeURIComponent(path),
+      'x-format': format,
+      'x-width': String(width),
+      'x-height': String(height),
+      'x-quality': String(quality),
+      ...(profile ? { 'x-profile': profile } : {})
+    }
+  })
+}
+
+export async function copyPngToClipboard(png: Uint8Array): Promise<void> {
+  if (!isTauri) {
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': new Blob([png as BlobPart], { type: 'image/png' }) })])
+    return
+  }
+  const { writeImage } = await import('@tauri-apps/plugin-clipboard-manager')
+  await writeImage(png)
+}
+
+// ---------------------------------------------------------------------------
+// Installed fonts for text boxes (see src-tauri/src/fonts.rs)
+
+/** Common Windows families, for the browser build where fonts can't be enumerated. */
+const BROWSER_FONTS = ['Arial', 'Calibri', 'Cambria', 'Comic Sans MS', 'Consolas', 'Courier New', 'Georgia', 'Segoe UI', 'Times New Roman', 'Trebuchet MS', 'Verdana']
+let fontList: Promise<string[]> | null = null
+
+export function listFonts(): Promise<string[]> {
+  fontList ??= isTauri
+    ? invoke<{ family: string }[]>('fonts_list').then((l) => l.map((f) => f.family)).catch(() => [])
+    : Promise.resolve(BROWSER_FONTS)
+  return fontList
+}
+
+/** The regular face of an installed family, ready to embed in a PDF; null if unavailable. */
+export async function fontBytes(family: string): Promise<Uint8Array | null> {
+  if (!isTauri) return null
+  try {
+    const buf = await invoke<ArrayBuffer>('font_bytes', { family })
+    return new Uint8Array(buf)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Runs `canClose` when the user closes the window (title bar, Alt+F4, taskbar);
+ * the window stays open if it resolves false.
+ */
+export async function onCloseRequested(canClose: () => Promise<boolean>, hasUnsaved: () => boolean): Promise<() => void> {
+  if (!isTauri) {
+    // Browsers can't await a dialog on unload; they show their own "leave site?" prompt.
+    const guard = (e: BeforeUnloadEvent) => {
+      if (hasUnsaved()) e.preventDefault()
+    }
+    window.addEventListener('beforeunload', guard)
+    return () => window.removeEventListener('beforeunload', guard)
+  }
+  const { getCurrentWindow } = await import('@tauri-apps/api/window')
+  // Tauri awaits the handler and destroys the window unless it was prevented.
+  return getCurrentWindow().onCloseRequested(async (event) => {
+    if (!(await canClose())) event.preventDefault()
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Windows shell hand-offs (see src-tauri/src/shell.rs)
+
+/** Shows the Windows "Open with" picker for the file. */
+export async function openWith(path: string): Promise<void> {
+  if (!isTauri) throw new Error('Open With is available in the Windows app.')
+  await invoke('open_with', { path })
+}
+
+/** Uses the image bytes (JPEG/PNG/BMP) as the desktop background or the lock screen. */
+export async function setWallpaper(bytes: Uint8Array, ext: string, target: 'desktop' | 'lock'): Promise<void> {
+  if (!isTauri) throw new Error('Setting the background is available in the Windows app.')
+  await invoke('set_wallpaper', bytes, { headers: { 'x-target': target, 'x-ext': ext } })
+}
+
+// ---------------------------------------------------------------------------
+// Image metadata (see src-tauri/src/metadata.rs)
+
+export interface ImageMetadata {
+  groups: { title: string; fields: { label: string; value: string }[] }[]
+  location: [number, number] | null
+  has_location: boolean
+  can_remove_location: boolean
+  color_profile: string | null
+}
+
+export async function imageMetadata(path: string): Promise<ImageMetadata | null> {
+  if (!isTauri) return null
+  return invoke<ImageMetadata>('image_metadata', { path })
+}
+
+/** Rewrites each file without GPS data. Returns messages for files that failed. */
+export async function removeLocation(paths: string[]): Promise<string[]> {
+  if (!isTauri) throw new Error('Removing location is available in the Windows app.')
+  return invoke<string[]>('remove_location', { paths })
+}
+
+// ---------------------------------------------------------------------------
+// Text recognition with the Windows OCR engine (see src-tauri/src/ocr.rs)
+
+export interface OcrResult {
+  lines: { text: string; words: { text: string; x: number; y: number; w: number; h: number }[] }[]
+  language: string
+}
+
+export const ocrAvailable = isTauri && isWindows
+
+/** Largest image side the OCR engine accepts. */
+export async function ocrMaxDimension(): Promise<number> {
+  return ocrAvailable ? invoke<number>('ocr_max_dimension') : 0
+}
+
+/** Recognizes text in RGBA pixels. */
+export async function ocrImage(rgba: Uint8ClampedArray, width: number, height: number): Promise<OcrResult> {
+  if (!ocrAvailable) throw new Error('Text recognition uses the Windows OCR engine, available in the Windows app.')
+  const bgra = new Uint8Array(rgba.length)
+  for (let i = 0; i < rgba.length; i += 4) {
+    bgra[i] = rgba[i + 2]
+    bgra[i + 1] = rgba[i + 1]
+    bgra[i + 2] = rgba[i]
+    bgra[i + 3] = 255
+  }
+  return invoke<OcrResult>('ocr_image', bgra, { headers: { 'x-width': String(width), 'x-height': String(height) } })
+}
+
+export async function copyText(text: string): Promise<void> {
+  if (isTauri) {
+    const { writeText } = await import('@tauri-apps/plugin-clipboard-manager')
+    await writeText(text)
+  } else {
+    await navigator.clipboard.writeText(text)
+  }
+}

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import type { PageViewport } from 'pdfjs-dist'
 import {
   bounds,
+  fontStack,
   hitTest,
   newId,
   normRect,
@@ -12,7 +13,7 @@ import {
   type Pt,
   type Rect
 } from '../../core/markup'
-import type { PdfDoc } from '../../state/documents'
+import type { MarkupHost } from '../../state/documents'
 import {
   activeSignature,
   css,
@@ -30,7 +31,7 @@ import {
 import { RedactionMark, Shape, cssBox } from './Shape'
 
 interface Props {
-  doc: PdfDoc
+  doc: MarkupHost
   index: number
   vp: PageViewport
   /** Thumbnails render markup without interaction. */
@@ -42,7 +43,7 @@ type Drag =
   | { kind: 'resize'; id: string; corner: 0 | 1 | 2 | 3; from: Rect; to: Rect }
   | { kind: 'endpoint'; id: string; end: 'from' | 'to'; at: Pt }
 
-const DRAW_TOOLS = new Set<Tool>([...SHAPE_TOOLS, 'sketch', 'draw', 'text', 'note', 'signature', 'redact'])
+const DRAW_TOOLS = new Set<Tool>([...SHAPE_TOOLS, 'sketch', 'draw', 'text', 'note', 'signature', 'redact', 'loupe'])
 
 function base(page: number) {
   return { id: newId(), page, style: { ...style.peek() }, created: Date.now() }
@@ -198,7 +199,7 @@ export function MarkupLayer({ doc, index, vp, interactive = true }: Props) {
     }
     if (t === 'text') {
       const fs = textStyle.peek()
-      const m: Markup = { ...base(index), style: { ...style.peek(), stroke: null, fill: null }, type: 'text', rect: [start[0], start[1] - fs.fontSize * 3, start[0] + 220, start[1]], text: '', fontSize: fs.fontSize, color: fs.color }
+      const m: Markup = { ...base(index), style: { ...style.peek(), stroke: null, fill: null }, type: 'text', rect: [start[0], start[1] - fs.fontSize * 3, start[0] + 220, start[1]], text: '', fontSize: fs.fontSize, color: fs.color, ...(fs.font ? { font: fs.font } : {}) }
       addMarkup(m, 'Add Text Box')
       setTool('select') // clears editing state, so start editing after
       editingId.value = m.id
@@ -238,6 +239,10 @@ export function MarkupLayer({ doc, index, vp, interactive = true }: Props) {
           return { ...base(index), type: 'ink', strokes: [[...points]] }
         case 'redact':
           return null
+        case 'loupe': {
+          const r = Math.hypot(end[0] - start[0], end[1] - start[1])
+          return { ...base(index), style: { ...style.peek(), stroke: [0.2, 0.2, 0.2], width: 3 }, type: 'loupe', rect: [start[0] - r, start[1] - r, start[0] + r, start[1] + r], zoom: 2 }
+        }
         default:
           return { ...base(index), type: t as 'rect', rect: normRect(start, end) }
       }
@@ -276,7 +281,9 @@ export function MarkupLayer({ doc, index, vp, interactive = true }: Props) {
         return
       }
       // A plain click drops a default-sized shape, like Preview.
-      const m = tiny
+      const m = tiny && t === 'loupe'
+        ? { ...base(index), style: { ...style.peek(), stroke: [0.2, 0.2, 0.2] as [number, number, number], width: 3 }, type: 'loupe' as const, rect: [start[0] - 60, start[1] - 60, start[0] + 60, start[1] + 60] as Rect, zoom: 2 }
+        : tiny
         ? t === 'line' || t === 'arrow'
           ? { ...base(index), type: t, from: start, to: [start[0] + 100, start[1]] as Pt }
           : { ...base(index), type: t as 'rect', rect: [start[0] - 50, start[1] - 35, start[0] + 50, start[1] + 35] as Rect }
@@ -307,7 +314,20 @@ export function MarkupLayer({ doc, index, vp, interactive = true }: Props) {
   const w = Math.round(vp.width)
   const h = Math.round(vp.height)
 
+  const marks = items.filter((m) => m.type === 'highlight')
   return (
+    <>
+    {/* Highlights sit outside the overlay's stacking context so they multiply
+        with the page itself and the text underneath stays readable. */}
+    {marks.length > 0 && (
+      <svg width={w} height={h} class="highlight-layer" aria-hidden="true">
+        <g transform={`matrix(${vp.transform.join(' ')})`}>
+          {marks.map((m) => (
+            <Shape key={m.id} m={shown(m)} />
+          ))}
+        </g>
+      </svg>
+    )}
     <div
       ref={host}
       class={`markup-layer ${drawing ? 'drawing' : ''} tool-${current}`}
@@ -323,9 +343,7 @@ export function MarkupLayer({ doc, index, vp, interactive = true }: Props) {
           </pattern>
         </defs>
         <g transform={`matrix(${vp.transform.join(' ')})`}>
-          {items.map((m) => (
-            <Shape key={m.id} m={shown(m)} />
-          ))}
+          {items.map((m) => (m.type === 'highlight' ? null : <Shape key={m.id} m={shown(m)} />))}
           {reds.map((r) => (
             <RedactionMark key={r.id} r={r} pattern={pattern} />
           ))}
@@ -344,11 +362,12 @@ export function MarkupLayer({ doc, index, vp, interactive = true }: Props) {
           .filter((m): m is Extract<Markup, { type: 'note' }> => m.type === 'note' && editingId.value === m.id)
           .map((m) => <NoteEditor key={m.id} doc={doc} m={m} vp={vp} />)}
     </div>
+    </>
   )
 }
 
 function resizable(m: Markup): boolean {
-  return !['note', 'highlight', 'underline', 'strike'].includes(m.type)
+  return !['note', 'highlight', 'underline', 'strike', 'squiggly'].includes(m.type)
 }
 
 function applyDrag(m: Markup, d: Drag): Markup {
@@ -388,7 +407,7 @@ function Selection({ m, vp }: { m: Markup; vp: PageViewport }) {
 }
 
 /** Text boxes are HTML so they wrap like the saved appearance; editing happens in place. */
-function TextBox({ doc, m, vp, editing }: { doc: PdfDoc; m: Extract<Markup, { type: 'text' }>; vp: PageViewport; editing: boolean }) {
+function TextBox({ doc, m, vp, editing }: { doc: MarkupHost; m: Extract<Markup, { type: 'text' }>; vp: PageViewport; editing: boolean }) {
   const ref = useRef<HTMLTextAreaElement>(null)
   const [x, y] = vp.convertToViewportPoint(m.rect[0], m.rect[3])
   const s = vp.scale
@@ -398,7 +417,7 @@ function TextBox({ doc, m, vp, editing }: { doc: PdfDoc; m: Extract<Markup, { ty
     width: (m.rect[2] - m.rect[0]) * s,
     height: (m.rect[3] - m.rect[1]) * s,
     transform: `rotate(${vp.rotation}deg)`,
-    font: `${m.fontSize * s}px/1.2 Helvetica, Arial, sans-serif`,
+    font: `${m.fontSize * s}px/1.2 ${fontStack(m.font)}`,
     padding: 4 * s,
     color: css(m.color)
   }
@@ -436,7 +455,7 @@ function TextBox({ doc, m, vp, editing }: { doc: PdfDoc; m: Extract<Markup, { ty
   )
 }
 
-function NoteEditor({ doc, m, vp }: { doc: PdfDoc; m: Extract<Markup, { type: 'note' }>; vp: PageViewport }) {
+function NoteEditor({ doc, m, vp }: { doc: MarkupHost; m: Extract<Markup, { type: 'note' }>; vp: PageViewport }) {
   const ref = useRef<HTMLTextAreaElement>(null)
   const [x, y] = vp.convertToViewportPoint(m.at[0], m.at[1])
   useEffect(() => ref.current?.focus(), [])

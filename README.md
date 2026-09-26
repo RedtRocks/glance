@@ -6,7 +6,9 @@
 
 Glance brings Preview's everyday superpowers to Windows: rearranging and merging PDF pages by dragging, dragging pages out to create new files, real redaction, markup and signatures, background removal, metadata scrubbing, batch processing, and more. It's built to feel native on Windows 11 (Fluent design, Mica, Explorer integration) while staying small and fast.
 
-> **Status: early development (Milestone 2).** Viewing, PDF page management, markup, signatures, forms and redaction work today. Everything else is on the roadmap below and in [`docs/adr`](docs/adr).
+> **Status: early development.** Viewing, PDF page management, markup, signatures, forms, redaction, OCR, image editing, batch editing and metadata tools work today. Everything else is on the roadmap below and in [`docs/adr`](docs/adr).
+>
+> **[Download the latest release](https://github.com/RedtRocks/viewer/releases/latest)** (Windows 10/11, x64 and ARM64).
 
 ## Why it's light
 
@@ -18,31 +20,42 @@ Glance brings Preview's everyday superpowers to Windows: rearranging and merging
 
 | | Status |
 |---|---|
-| Tabs, drag-and-drop to open, Open with / Send to, single instance | ✅ |
+| Tabs, drag-and-drop to open, Open with / Send to, single instance; menus tailored to each file type | ✅ |
 | PDF viewing: continuous, single, two-page; zoom; HiDPI rendering; text selection; links | ✅ |
 | Thumbnails, table of contents, contact sheet | ✅ |
-| Page management: reorder, rotate, delete, insert blank/from file, undo/redo | ✅ |
-| Drag pages between documents (copy; Shift = move), onto tabs, or out of the window to create a PDF | ✅ |
+| Page management: reorder, rotate, delete, duplicate, insert blank/from file, split, merge, undo/redo | ✅ |
+| Drag pages between documents (hover a tab to open it; copy, Shift = move) or out of the window to create a PDF; right-click Copy/Move To | ✅ |
 | Search, print, slideshow, dark appearance for PDFs | ✅ |
+| Export pages as PDF, PNG, JPEG or TIFF (72-600 ppi) | ✅ |
 | Context-aware toolbar (page controls only for multi-page documents), Customize Toolbar | ✅ |
 | Rebindable keyboard shortcuts (Windows conventions, Preview's shortcuts mapped) | ✅ |
-| Formats: PDF, AI, EPS/PS (via Ghostscript), JPEG, PNG, GIF, WebP, AVIF, BMP, ICO, SVG, TIFF, HEIC, JPEG 2000, JPEG XL, JPEG XR, EXR, HDR, TGA, DDS, QOI, PNM, ICNS, PSD, CBZ, camera RAW ([full list](docs/FORMATS.md)) | ✅ (XPS and 3D coming) |
-| Markup: sketch (shape recognition), draw, rectangle, rounded rectangle, oval, line, arrow, star, polygon, speech bubble, text boxes, notes, highlight/underline/strikethrough; move, resize, restyle, undo | ✅ |
+| Formats: PDF, AI, EPS/PS (via Ghostscript), JPEG, PNG, GIF, WebP, AVIF, BMP, ICO, SVG, TIFF, HEIC, JPEG 2000, JPEG XL, JPEG XR, EXR, HDR, TGA, DDS, QOI, PNM, ICNS, PSD, CBZ, camera RAW ([full list](docs/FORMATS.md)); Open With another app for PSD, AI and RAW | ✅ (XPS and 3D coming) |
+| Markup: sketch (shape recognition), draw, rectangle, rounded rectangle, oval, line, arrow, star, polygon, speech bubble, loupe (magnifier), text boxes in any installed font, notes, highlight (any color), underline, strikethrough, squiggly underline | ✅ |
 | Markup saved as standard, editable PDF annotations (reopen in Glance to keep editing) | ✅ |
-| Signatures: draw with mouse/pen (pressure) or import a photo; stored encrypted with Windows DPAPI | ✅ |
+| Signatures: draw with mouse/pen (pressure), capture with the camera, or import a photo; stored encrypted with Windows DPAPI | ✅ |
 | Fill in PDF forms | ✅ |
-| Redaction that truly removes content (pages rasterized; form data, thumbnails, tags and orphaned objects purged) | ✅ |
+| Redaction that truly removes content (pages rasterized; form data, thumbnails, tags and orphaned objects purged); Remove Sensitive Text finds names, emails, phone, card and ID numbers | ✅ |
+| Text recognition (Windows OCR): scanned PDFs become searchable and selectable; copy text from images | ✅ |
 | Highlights & Notes sidebar, bookmarks | ✅ |
-| Instant Alpha, Remove Background / Copy Subject (bundled AI model), Adjust Color/Size, crop | Milestone 3 |
-| Inspector: metadata and GPS removal, annotation/link cleanup; autosave and version history | Milestone 4 |
-| 3D models, collage, batch processing, text recognition (Windows OCR) | Milestone 5 |
+| Remove Background and Copy Subject with a bundled AI model (U²-Net-p, runs locally in Rust) | ✅ |
+| Instant Alpha; rectangular, elliptical, lasso and smart-lasso selection; crop, delete, invert selection | ✅ |
+| Adjust Color (exposure, contrast, highlights, shadows, saturation, temperature, tint, sepia, definition, sharpness, gamma, levels with histogram, Auto Levels) with live preview | ✅ |
+| Adjust Size (fit-into presets, units, resolution), rotate and flip | ✅ |
+| Markup on images, flattened on save; export as PNG, JPEG, WebP, TIFF, BMP or PDF, optionally converted to Display P3, Adobe RGB or Gray | ✅ |
+| Inspector (Ctrl+I): EXIF, color profile, PDF properties; Remove Location | ✅ |
+| Batch Edit Images: rotate, flip, resize, convert, remove location | ✅ |
+| Set an image as the desktop background or lock screen | ✅ |
+| Autosave and version history, annotation/link cleanup | Milestone 4 |
+| 3D models, collage | Milestone 5 |
 | Windows 11 context menu, Share, installer polish, update notifications | Milestone 6 |
+
+Signing on an iPhone or iPad (Preview's Continuity feature) isn't possible on Windows; use the camera or a photo of your signature instead.
 
 Glance deliberately has no quick-look popup: pair it with [PowerToys Peek](https://learn.microsoft.com/windows/powertoys/peek) (Ctrl+Space in Explorer) and press Enter to continue in Glance ([ADR 0011](docs/adr/0011-no-quick-look-pair-with-peek.md)).
 
 ## Privacy
 
-No telemetry, no accounts, no network access except an optional update check (coming in Milestone 6).
+No telemetry, no accounts, no network access except an optional update check (coming in Milestone 6). Background removal and text recognition run on your PC.
 
 ## Building from source
 

@@ -7,6 +7,7 @@ import type { IconName } from '../icons'
 const ICON: Record<Markup['type'], IconName> = {
   highlight: 'highlight',
   underline: 'underline',
+  squiggly: 'squiggly',
   strike: 'strike',
   note: 'note',
   text: 'textBox',
@@ -19,12 +20,14 @@ const ICON: Record<Markup['type'], IconName> = {
   line: 'line',
   arrow: 'arrow',
   polygon: 'polygon',
-  ink: 'draw'
+  ink: 'draw',
+  loupe: 'zoomIn'
 }
 
 const LABEL: Record<Markup['type'], string> = {
   highlight: 'Highlight',
   underline: 'Underline',
+  squiggly: 'Squiggly underline',
   strike: 'Strikethrough',
   note: 'Note',
   text: 'Text box',
@@ -37,12 +40,13 @@ const LABEL: Record<Markup['type'], string> = {
   line: 'Line',
   arrow: 'Arrow',
   polygon: 'Polygon',
-  ink: 'Drawing'
+  ink: 'Drawing',
+  loupe: 'Loupe'
 }
 
 function excerpt(m: Markup): string {
   if (m.type === 'note' || m.type === 'text') return m.text
-  if ((m.type === 'highlight' || m.type === 'underline' || m.type === 'strike') && m.text) return m.text
+  if ((m.type === 'highlight' || m.type === 'underline' || m.type === 'squiggly' || m.type === 'strike') && m.text) return m.text
   return m.contents ?? ''
 }
 

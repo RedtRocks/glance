@@ -6,6 +6,7 @@ import { PdfPage } from './PdfPage'
 import { ContactSheet } from './ContactSheet'
 import { markSelection } from '../markup/textSelection'
 import { tool } from '../../state/markupState'
+import { pageDrag } from '../dragState'
 
 const PAD = 24
 const GAP = 16
@@ -145,13 +146,19 @@ function PdfScroller({ doc }: { doc: PdfDoc }) {
   // With a text-markup tool active, releasing a text selection marks it.
   const onPointerUp = (): void => {
     const t = tool.peek()
-    if ((t === 'highlight' || t === 'underline' || t === 'strike' || t === 'redact') && scroller.current) {
+    if ((t === 'highlight' || t === 'underline' || t === 'strike' || t === 'squiggly' || t === 'redact') && scroller.current) {
       markSelection(doc, scroller.current, t)
     }
   }
 
+  const drag = pageDrag.value
+  const drop = drag && drag.docId !== doc.id && drag.targetDocId === doc.id ? drag.insertAt : null
   return (
-    <div class={`pdf-scroller tool-${tool.value}`} ref={scroller} onScroll={onScroll} onWheel={onWheel} onPointerUp={onPointerUp} tabIndex={-1}>
+    <div
+      class={`pdf-scroller tool-${tool.value} ${drop ? 'page-drop' : ''}`}
+      data-page-drop={doc.id}
+      data-page-count={doc.pageCount.value}
+      ref={scroller} onScroll={onScroll} onWheel={onWheel} onPointerUp={onPointerUp} tabIndex={-1}>
       <div class="pdf-pages" style={{ padding: PAD, gap: GAP }}>
         {shownRows.map((row) => (
           <div class="pdf-row" key={row[0]} style={{ gap: GAP }}>
@@ -165,6 +172,7 @@ function PdfScroller({ doc }: { doc: PdfDoc }) {
                 height={Math.round(sizes[i].h * scale)}
                 root={scroller.current}
                 dark={dark}
+                drop={drop === i ? 'before' : drop === i + 1 && i === doc.pageCount.value - 1 ? 'after' : undefined}
               />
             ))}
           </div>

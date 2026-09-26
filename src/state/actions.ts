@@ -2,7 +2,7 @@
 import * as platform from '../platform'
 import type { Probe } from '../platform'
 import type * as PageOps from '../core/pageOps'
-import { MARKER_KEY, pageMaps, type Rect } from '../core/markup'
+import { MARKER_KEY, newId, pageMaps, type Markup, type Rect } from '../core/markup'
 import { annotations, pageOps, redact } from './pdfModules'
 import { openPdf } from '../pdf/engine'
 import { PasswordRequired } from '../pdf/engine'
@@ -19,6 +19,7 @@ import {
   type Doc
 } from './documents'
 import { alertDialog, promptText, showDialog, toast, withBusy } from './ui'
+import { editableImage, rotateImage, saveImage, saveImageAs } from './imageActions'
 
 const GS_INSTALL = 'winget install ArtifexSoftware.GhostScript'
 
@@ -79,7 +80,7 @@ export async function serialize(doc: PdfDoc): Promise<Uint8Array> {
     const bytes = await doc.currentBytes()
     const markup = doc.markup.peek()
     if (!markup.length) return bytes
-    return (await annotations()).writeMarkup(bytes, markup)
+    return (await annotations()).writeMarkup(bytes, markup, { loadFont: platform.fontBytes })
   })
 }
 
@@ -116,7 +117,9 @@ async function openOne(path: string): Promise<Doc | null> {
 }
 
 function notice(probe: Probe, title: string, message: string, actions: NoticeDoc['actions'] = []): Doc {
-  const doc = new NoticeDoc(probe.name, probe.path, title, message, actions)
+  // Whatever Glance can't show, another installed app probably can.
+  const all = platform.isTauri ? [...actions, { label: 'Open with another app…', run: () => void platform.openWith(probe.path).catch((e) => toast(String(e), 'error')) }] : actions
+  const doc = new NoticeDoc(probe.name, probe.path, title, message, all)
   addDoc(doc)
   return doc
 }
@@ -184,6 +187,7 @@ async function resolvePendingRedactions(doc: PdfDoc): Promise<boolean> {
 }
 
 export async function save(doc: Doc | null = activeDoc.value): Promise<void> {
+  if (doc instanceof ImageDoc) return saveImage(doc)
   if (!doc || doc.kind !== 'pdf') return
   const path = doc.path.value
   if (!path) return saveAs(doc)
@@ -194,6 +198,7 @@ export async function save(doc: Doc | null = activeDoc.value): Promise<void> {
 }
 
 export async function saveAs(doc: Doc | null = activeDoc.value): Promise<void> {
+  if (doc instanceof ImageDoc) return saveImageAs(doc)
   if (!doc || doc.kind !== 'pdf') return
   const base = doc.name.value.replace(/\.[^.]+$/, '')
   const target = await platform.saveDialog(`${base}.pdf`, [{ name: 'PDF document', extensions: ['pdf'] }])
@@ -206,25 +211,46 @@ export async function saveAs(doc: Doc | null = activeDoc.value): Promise<void> {
   toast('Saved')
 }
 
+/** Asks to save or discard unsaved changes. Returns false if the user cancelled. */
+async function confirmDiscard(doc: Doc): Promise<boolean> {
+  if (!doc.dirty.peek()) return true
+  activeId.value = doc.id
+  const pending = doc.kind === 'pdf' ? doc.redactions.peek().length : 0
+  const choice = await showDialog<'save' | 'discard' | 'cancel'>({
+    title: `Save changes to “${doc.name.value}”?`,
+    body: pending
+      ? `${pending} area${pending === 1 ? ' is' : 's are'} marked for redaction but not yet applied. If you don’t save, the redactions and your other changes will be lost.`
+      : 'Your changes will be lost if you don’t save them.',
+    buttons: [
+      { label: 'Cancel', value: 'cancel' },
+      { label: 'Don’t save', value: 'discard' },
+      { label: 'Save', value: 'save', primary: true }
+    ]
+  })
+  if (choice === null || choice === 'cancel') return false
+  if (choice === 'save') {
+    try {
+      await save(doc)
+    } catch (e) {
+      await alertDialog('Couldn’t save', String(e))
+      return false
+    }
+    return !doc.dirty.peek()
+  }
+  return true
+}
+
 export async function closeDoc(doc: Doc | null = activeDoc.value): Promise<void> {
   if (!doc) return
-  if (doc.dirty.value) {
-    const choice = await showDialog<'save' | 'discard' | 'cancel'>({
-      title: `Save changes to “${doc.name.value}”?`,
-      body: 'Your changes will be lost if you don’t save them.',
-      buttons: [
-        { label: 'Cancel', value: 'cancel' },
-        { label: 'Don’t save', value: 'discard' },
-        { label: 'Save', value: 'save', primary: true }
-      ]
-    })
-    if (choice === null || choice === 'cancel') return
-    if (choice === 'save') {
-      await save(doc)
-      if (doc.dirty.value) return
-    }
+  if (await confirmDiscard(doc)) removeDoc(doc.id)
+}
+
+/** Before the window closes: every edited document is saved or discarded first. */
+export async function confirmCloseWindow(): Promise<boolean> {
+  for (const doc of docs.peek().filter((d) => d.dirty.peek())) {
+    if (!(await confirmDiscard(doc))) return false
   }
-  removeDoc(doc.id)
+  return true
 }
 
 // ---------------------------------------------------------------------------
@@ -246,6 +272,8 @@ async function run(doc: PdfDoc, label: string, op: Parameters<PdfDoc['apply']>[1
 }
 
 export async function rotatePages(delta: 90 | -90, doc = activeDoc.value): Promise<void> {
+  const img = editableImage(doc)
+  if (img) return rotateImage(img, delta > 0)
   if (doc?.kind === 'image') {
     doc.rotation.value = (doc.rotation.value + delta + 360) % 360
     return
@@ -315,7 +343,7 @@ export async function insertFiles(doc: PdfDoc, paths: string[], at: number): Pro
     }
     // Inserted PDFs may carry Glance markup; keep it editable.
     const extracted = await (await annotations()).extractMarkup(out)
-    return { bytes: extracted.bytes, markup: extracted.markup, pages: pageMaps.insert(at, pos - at) }
+    return { bytes: extracted.bytes, markup: freshIds(extracted.markup), pages: pageMaps.insert(at, pos - at) }
   })
 }
 
@@ -323,6 +351,11 @@ export async function insertFromFileDialog(doc = activeDoc.value): Promise<void>
   if (doc?.kind !== 'pdf') return
   const paths = await platform.openDialog({ multiple: true, filters: OPEN_FILTERS })
   if (paths.length) await insertFiles(doc, paths, Math.max(...selectedOrCurrent(doc)) + 1)
+}
+
+/** Copied pages bring copies of their markup; new ids keep them distinct from the originals. */
+function freshIds(markup: Markup[]): Markup[] {
+  return markup.map((m) => ({ ...m, id: newId() }))
 }
 
 /** Copies (or moves, with Shift) pages from one PDF into another. */
@@ -333,7 +366,7 @@ export async function transferPages(src: PdfDoc, pages: number[], dst: PdfDoc, a
   const ok = await run(dst, move ? 'Move Pages' : 'Copy Pages', async (b) => {
     const merged = await (await pageOps()).insertPdfPages(b, bytes, at, sorted)
     const extracted = await (await annotations()).extractMarkup(merged)
-    return { bytes: extracted.bytes, markup: extracted.markup, pages: pageMaps.insert(at, sorted.length) }
+    return { bytes: extracted.bytes, markup: freshIds(extracted.markup), pages: pageMaps.insert(at, sorted.length) }
   })
   if (ok && move && src !== dst) {
     if (sorted.length >= src.pageCount.value) {
@@ -374,15 +407,122 @@ export async function exportSelectedPages(doc = activeDoc.value): Promise<void> 
   toast(`Exported ${pagesLabel(pages)}`)
 }
 
+export type PageImageFormat = 'png' | 'jpg' | 'tiff'
+
+/**
+ * Exports pages as images (PDF → PNG/JPEG/TIFF), markup and form values included.
+ * One page is written to the chosen name; more pages get " (page N)" names beside it.
+ */
+export async function exportPagesAsImages(
+  doc: PdfDoc,
+  opts: { format: PageImageFormat; dpi: number; quality: number; which: 'all' | 'selected' | 'current' }
+): Promise<void> {
+  const pages = opts.which === 'all' ? [...Array(doc.pageCount.value).keys()] : opts.which === 'current' ? [doc.current.value] : selectedOrCurrent(doc)
+  const ext = opts.format
+  let base = doc.name.value.replace(/\.[^.]+$/, '')
+  const name = (p: number) => (pages.length === 1 ? `${base}.${ext}` : `${base} (page ${p + 1}).${ext}`)
+  const first = await platform.saveDialog(name(pages[0]), [{ name: ext.toUpperCase(), extensions: [ext] }])
+  if (!first) return
+  // The chosen name sets the pattern for the other pages.
+  base = platform.baseName(first).replace(/\.[^.]+$/, '').replace(/ \(page \d+\)$/, '')
+  const dir = platform.dirName(first)
+  const sep = dir.includes('\\') ? '\\' : '/'
+  await withBusy('Exporting…', async () => {
+    const proxy = await openPdf(await serialize(doc))
+    try {
+      for (const [k, p] of pages.entries()) {
+        const page = await proxy.getPage(p + 1)
+        const base1 = page.getViewport({ scale: 1 })
+        let scale = opts.dpi / 72
+        if (base1.width * base1.height * scale * scale > MAX_RASTER_PIXELS) scale = Math.sqrt(MAX_RASTER_PIXELS / (base1.width * base1.height))
+        const vp = page.getViewport({ scale })
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.ceil(vp.width)
+        canvas.height = Math.ceil(vp.height)
+        await page.render({ canvas, viewport: vp, annotationMode: 1 /* ENABLE: annotations and form values */, background: 'white' }).promise
+        const img = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height)
+        const target = k === 0 ? first : dir ? `${dir}${sep}${name(p)}` : name(p)
+        await platform.saveImage(target, opts.format, canvas.width, canvas.height, img.data, opts.quality)
+        canvas.width = canvas.height = 0
+      }
+    } finally {
+      await proxy.loadingTask.destroy()
+    }
+  })
+  toast(pages.length === 1 ? 'Exported' : `Exported ${pages.length} images`)
+}
+
+/** Inserts copies of the selected pages right after the last of them. */
+export async function duplicatePages(doc = activeDoc.value): Promise<void> {
+  if (doc?.kind !== 'pdf') return
+  const pages = selectedOrCurrent(doc)
+  const at = Math.max(...pages) + 1
+  await transferPages(doc, pages, doc, at, false)
+  doc.selection.value = pages.map((_, k) => at + k)
+}
+
+/** Copies or moves the selected pages to the end of another open PDF. */
+export async function sendPagesTo(dst: PdfDoc, move: boolean, doc = activeDoc.value): Promise<void> {
+  if (doc?.kind !== 'pdf' || dst === doc) return
+  await transferPages(doc, selectedOrCurrent(doc), dst, dst.pageCount.peek(), move)
+  toast(`${move ? 'Moved' : 'Copied'} to “${dst.name.peek()}”`)
+}
+
+/** Splits the PDF into separate files: every N pages, or before each selected page. */
+export async function splitDocument(doc = activeDoc.value): Promise<void> {
+  if (doc?.kind !== 'pdf') return
+  const n = doc.pageCount.value
+  if (n < 2) return toast('A one-page PDF can’t be split.')
+  const selected = doc.selection.value.filter((p) => p > 0)
+  const choice = await showDialog<'every' | 'selected' | null>({
+    title: `Split “${doc.name.value}”`,
+    body: selected.length
+      ? `Start a new file at each selected page (${selected.length + 1} files), or split into files of a fixed length.`
+      : 'Split into files with a fixed number of pages. (To split at specific pages, select where each new file starts first.)',
+    buttons: [
+      { label: 'Cancel', value: null },
+      ...(selected.length ? [{ label: 'At selected pages', value: 'selected' as const, primary: true }] : []),
+      { label: 'Every N pages…', value: 'every' as const, primary: !selected.length }
+    ]
+  })
+  if (!choice) return
+  const ops = await pageOps()
+  let groups: number[][]
+  if (choice === 'every') {
+    const v = await promptText('Split PDF', 'Pages per file', { initial: '1', ok: 'Split' })
+    const every = Math.floor(Number(v))
+    if (!v || !(every >= 1)) return
+    groups = ops.splitGroups(n, { every })
+  } else {
+    groups = ops.splitGroups(n, { starts: selected })
+  }
+  if (groups.length < 2) return toast('That would produce a single file; nothing to split.')
+  const base = doc.name.value.replace(/\.[^.]+$/, '')
+  const first = await platform.saveDialog(`${base} (part 1).pdf`, [{ name: 'PDF document', extensions: ['pdf'] }])
+  if (!first) return
+  // The chosen name is the pattern: "Report (part 1).pdf" → "Report (part 2).pdf", …
+  const dir = platform.dirName(first)
+  const stem = platform.baseName(first).replace(/\.pdf$/i, '').replace(/\s*\(part 1\)$|[-_ ]?1$/i, '')
+  const sep = dir.includes('\\') ? '\\' : '/'
+  await withBusy('Splitting…', async () => {
+    const parts = await ops.splitPdf(await serialize(doc), groups)
+    for (let k = 0; k < parts.length; k++) {
+      const name = k === 0 ? platform.baseName(first) : `${stem} (part ${k + 1}).pdf`
+      await platform.writeFile(dir ? `${dir}${sep}${name}` : name, parts[k])
+    }
+  })
+  toast(`Split into ${groups.length} files`)
+}
+
 export function selectAllPages(doc = activeDoc.value): void {
   if (doc?.kind === 'pdf') doc.selection.value = [...Array(doc.pageCount.value).keys()]
 }
 
 export async function undo(doc = activeDoc.value): Promise<void> {
-  if (doc?.kind === 'pdf') await doc.undo()
+  if (doc?.kind === 'pdf' || doc?.kind === 'image') await doc.undo()
 }
 export async function redo(doc = activeDoc.value): Promise<void> {
-  if (doc?.kind === 'pdf') await doc.redo()
+  if (doc?.kind === 'pdf' || doc?.kind === 'image') await doc.redo()
 }
 
 export async function showAbout(): Promise<void> {

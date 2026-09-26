@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks'
 import type { PdfDoc } from '../../state/documents'
 import { pageDrag } from '../dragState'
-import { beginPageDrag, selectPage } from '../sidebar/pageDrag'
+import { beginPageDrag, pageContextMenu, selectPage } from '../sidebar/pageDrag'
 import { PageThumb } from '../sidebar/PageThumb'
 
 /** Full-window grid of large thumbnails for overview and reordering (Preview's contact sheet). */
@@ -33,6 +33,7 @@ export function ContactSheet({ doc }: { doc: PdfDoc }) {
                 beginPageDrag(e, doc, pages, icon)
               }}
               onClick={(e) => selectPage(doc, i, e)}
+              onContextMenu={(e) => pageContextMenu(e, doc, i)}
               onDblClick={() => {
                 doc.contactSheet.value = false
                 doc.goTo(i)

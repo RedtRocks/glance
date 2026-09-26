@@ -1,6 +1,6 @@
 Glance is a free, open-source, lightweight viewer and editor for PDFs, images and camera RAW on Windows, inspired by macOS Preview.
 
-> **Early preview.** Viewing, PDF page management, markup, signatures, form filling and redaction work. Image editing tools (background removal, adjust color and size), 3D models, batch processing, autosave with version history, text recognition and Windows 11 context-menu entries are in progress. See the [README](https://github.com/RedtRocks/viewer#features) for the roadmap.
+> **Early preview.** Viewing, PDF page management, markup, signatures, form filling, redaction and image editing (background removal, Instant Alpha, adjust color and size, crop) work. 3D models, batch processing, autosave with version history, text recognition and Windows 11 context-menu entries are in progress. See the [README](https://github.com/RedtRocks/viewer#features) for the roadmap.
 
 ## Download
 

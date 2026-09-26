@@ -7,6 +7,7 @@ export type Tool =
   | 'highlight'
   | 'underline'
   | 'strike'
+  | 'squiggly'
   | 'sketch'
   | 'draw'
   | 'rect'
@@ -21,9 +22,16 @@ export type Tool =
   | 'note'
   | 'signature'
   | 'redact'
+  | 'loupe'
+  // Image selection tools
+  | 'selectRect'
+  | 'selectEllipse'
+  | 'lasso'
+  | 'smartLasso'
+  | 'instantAlpha'
 
 export const SHAPE_TOOLS: Tool[] = ['rect', 'roundRect', 'oval', 'line', 'arrow', 'star', 'polygon', 'bubble']
-export const TEXT_MARKUP_TOOLS: Tool[] = ['highlight', 'underline', 'strike']
+export const TEXT_MARKUP_TOOLS: Tool[] = ['highlight', 'underline', 'strike', 'squiggly']
 
 /** The markup toolbar row (Preview's "Show Markup Toolbar"). */
 export const markupBar = signal(false)
@@ -33,7 +41,13 @@ export const selectedId = signal<string | null>(null)
 export const editingId = signal<string | null>(null)
 
 export const style = signal<Style>({ ...DEFAULT_STYLE })
-export const textStyle = signal<{ fontSize: number; color: Color }>({ fontSize: 14, color: COLORS.black })
+export interface TextStyle {
+  fontSize: number
+  color: Color
+  /** System font family; undefined = Helvetica. */
+  font?: string
+}
+export const textStyle = signal<TextStyle>({ fontSize: 14, color: COLORS.black })
 export const highlightColor = signal<Color>(COLORS.yellow)
 export const activeSignature = signal<SavedSignature | null>(null)
 export const signatureDialog = signal(false)
@@ -51,3 +65,5 @@ export function css(c: Color | null, alpha = 1): string {
   const [r, g, b] = c.map((v) => Math.round(v * 255))
   return alpha < 1 ? `rgba(${r},${g},${b},${alpha})` : `rgb(${r},${g},${b})`
 }
+
+export const IMAGE_SELECT_TOOLS: Tool[] = ['selectRect', 'selectEllipse', 'lasso', 'smartLasso', 'instantAlpha']

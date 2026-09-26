@@ -6,6 +6,7 @@ import { findQuery } from '../../state/ui'
 import { createLinkService } from '../../pdf/linkService'
 import { setViewport } from '../../pdf/viewports'
 import { MarkupLayer } from '../markup/MarkupLayer'
+import { PdfLoupes } from './PdfLoupes'
 
 /** Largest backing store we allocate for one page canvas (~64 MB of RGBA). */
 const MAX_PIXELS = 16_000_000
@@ -18,6 +19,8 @@ interface Props {
   height: number
   root: HTMLElement | null
   dark: boolean
+  /** Pages dragged from another document would land before/after this page. */
+  drop?: 'before' | 'after'
 }
 
 function markHits(layer: HTMLElement | null, query: string): void {
@@ -28,7 +31,7 @@ function markHits(layer: HTMLElement | null, query: string): void {
   }
 }
 
-export function PdfPage({ doc, index, scale, width, height, root, dark }: Props) {
+export function PdfPage({ doc, index, scale, width, height, root, dark, drop }: Props) {
   const box = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const textRef = useRef<HTMLDivElement>(null)
@@ -149,13 +152,14 @@ export function PdfPage({ doc, index, scale, width, height, root, dark }: Props)
   return (
     <div
       ref={box}
-      class="pdf-page"
+      class={`pdf-page ${drop ? `drop-${drop}` : ''}`}
       data-page={index}
       style={{ width, height, '--scale-factor': scale, '--total-scale-factor': scale } as never}
     >
       <canvas ref={canvasRef} class={dark ? 'dark-pdf' : ''} />
       <div ref={textRef} class="textLayer" />
       <div ref={annotRef} class="annotationLayer" />
+      {vp && <PdfLoupes doc={doc} index={index} vp={vp} />}
       {vp && <MarkupLayer doc={doc} index={index} vp={vp} />}
       {!rendered && <div class="page-placeholder" aria-hidden="true" />}
     </div>

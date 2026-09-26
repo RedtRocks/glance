@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { PDFDocument, PDFName } from '@cantoo/pdf-lib'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { PDFDict, PDFDocument, PDFName, PDFRawStream, PDFStream, decodePDFRawStream } from '@cantoo/pdf-lib'
 import { extractMarkup, writeMarkup } from '../src/core/annotations'
 import { DEFAULT_STYLE, type Markup } from '../src/core/markup'
 import { RED_PNG, labeledPdf, latin1 } from './fixtures'
@@ -20,7 +22,9 @@ const all: Markup[] = [
   { id: 'l', page: 2, style: { ...style, stroke: [1, 0.85, 0.2] }, created: 1, type: 'highlight', quads: [[5, 30, 90, 30, 5, 20, 90, 20]], contents: 'why?' },
   { id: 'm', page: 2, style, created: 1, type: 'underline', quads: [[5, 15, 90, 15, 5, 5, 90, 5]] },
   { id: 'n', page: 2, style, created: 1, type: 'strike', quads: [[5, 45, 90, 45, 5, 35, 90, 35]] },
-  { id: 'o', page: 0, style, created: 1, type: 'signature', rect: [60, 10, 95, 30], png: RED_PNG }
+  { id: 'o', page: 0, style, created: 1, type: 'signature', rect: [60, 10, 95, 30], png: RED_PNG },
+  { id: 'p', page: 2, style, created: 1, type: 'squiggly', quads: [[5, 60, 90, 60, 5, 50, 90, 50]] },
+  { id: 'q', page: 1, style, created: 1, type: 'loupe', rect: [20, 20, 80, 80], zoom: 2 }
 ]
 
 describe('markup ↔ annotations', () => {
@@ -55,7 +59,7 @@ describe('markup ↔ annotations', () => {
       })
     })
     expect(new Set(subtypes)).toEqual(
-      new Set(['/Square', '/Polygon', '/Circle', '/Line', '/Ink', '/FreeText', '/Text', '/Highlight', '/Underline', '/StrikeOut', '/Stamp'])
+      new Set(['/Square', '/Polygon', '/Circle', '/Line', '/Ink', '/FreeText', '/Text', '/Highlight', '/Underline', '/StrikeOut', '/Squiggly', '/Stamp'])
     )
   })
 
@@ -81,6 +85,58 @@ describe('markup ↔ annotations', () => {
     const { markup, bytes } = await extractMarkup(await doc.save())
     expect(markup).toHaveLength(0)
     expect((await PDFDocument.load(bytes)).getPage(0).node.Annots()?.size()).toBe(1)
+  })
+})
+
+describe('loupe', () => {
+  it('draws the page itself, magnified and clipped, as the appearance', async () => {
+    const doc = await PDFDocument.load(await writeMarkup(await labeledPdf(1), [{ id: 'l', page: 0, style, created: 1, type: 'loupe', rect: [20, 20, 80, 80], zoom: 2.5 }]))
+    const annot = doc.context.lookup(doc.getPage(0).node.Annots()!.get(0)) as PDFDict
+    const ap = doc.context.lookup((doc.context.lookup(annot.get(PDFName.of('AP'))) as PDFDict).get(PDFName.of('N'))) as PDFStream
+    const res = doc.context.lookup(ap.dict.get(PDFName.of('Resources'))) as PDFDict
+    const xobj = doc.context.lookup(res.get(PDFName.of('XObject'))) as PDFDict
+    const pg = doc.context.lookup(xobj.get(PDFName.of('Pg'))) as PDFStream
+    expect(pg.dict.get(PDFName.of('Subtype'))!.toString()).toBe('/Form')
+    const ops = latin1(ap instanceof PDFRawStream ? decodePDFRawStream(ap).decode() : ap.getContents())
+    expect(ops).toMatch(/W\s+n/) // clipped to the circle
+    expect(ops).toMatch(/2\.5 0 0 2\.5/) // magnified
+    expect(ops).toContain('/Pg Do')
+  })
+})
+
+describe('system fonts in text boxes', () => {
+  const liberation = readFileSync(resolve(__dirname, '../node_modules/pdfjs-dist/standard_fonts/LiberationSans-Regular.ttf'))
+  const box = (font?: string): Markup => ({
+    id: 't', page: 0, style, created: 1, type: 'text', rect: [5, 100, 195, 180], text: 'Grüße Ωμέγα', fontSize: 12, color: [0, 0, 0], ...(font ? { font } : {})
+  })
+  const fontOf = async (bytes: Uint8Array) => {
+    const doc = await PDFDocument.load(bytes)
+    const annot = doc.context.lookup(doc.getPage(0).node.Annots()!.get(0)) as PDFDict
+    const ap = doc.context.lookup((doc.context.lookup(annot.get(PDFName.of('AP'))) as PDFDict).get(PDFName.of('N'))) as PDFStream
+    const fonts = doc.context.lookup(ap.dict.get(PDFName.of('Resources'))) as PDFDict
+    const dict = doc.context.lookup(fonts.get(PDFName.of('Font'))) as PDFDict
+    const [, ref] = dict.entries()[0]
+    return doc.context.lookup(ref) as PDFDict
+  }
+
+  it('embeds the chosen font (subset) and keeps the family for editing', async () => {
+    const asked: string[] = []
+    const saved = await writeMarkup(await labeledPdf(1), [box('Liberation Sans')], {
+      loadFont: async (f) => (asked.push(f), new Uint8Array(liberation))
+    })
+    expect(asked).toEqual(['Liberation Sans'])
+    const font = await fontOf(saved)
+    expect(font.get(PDFName.of('Subtype'))!.toString()).toBe('/Type0')
+    expect(font.get(PDFName.of('BaseFont'))!.toString()).toMatch(/^\/LiberationSans/)
+    // Subset: only the glyphs used, not the whole ~400 KB font.
+    expect(saved.length).toBeLessThan(liberation.length / 4)
+    const { markup } = await extractMarkup(saved)
+    expect(markup[0]).toMatchObject({ type: 'text', font: 'Liberation Sans', text: 'Grüße Ωμέγα' })
+  })
+
+  it('falls back to Helvetica when the font is missing', async () => {
+    const saved = await writeMarkup(await labeledPdf(1), [box('No Such Font')], { loadFont: async () => null })
+    expect((await fontOf(saved)).get(PDFName.of('BaseFont'))!.toString()).toBe('/Helvetica')
   })
 })
 

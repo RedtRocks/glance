@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { PDFDocument, PDFName, PDFRef, StandardFonts } from '@cantoo/pdf-lib'
+import { labeledPdf } from './fixtures'
 import {
   computeMoveOrder,
   deletePages,
@@ -124,5 +125,22 @@ describe('nested page trees', () => {
       [555, 90],
       [100, 0]
     ])
+  })
+})
+
+describe('splitting', () => {
+  it('groups pages every N, with a shorter last part', async () => {
+    const { splitGroups } = await import('../src/core/pageOps')
+    expect(splitGroups(5, { every: 2 })).toEqual([[0, 1], [2, 3], [4]])
+    expect(splitGroups(3, { every: 1 })).toEqual([[0], [1], [2]])
+  })
+  it('starts a new part at each chosen page, ignoring the first and out-of-range pages', async () => {
+    const { splitGroups } = await import('../src/core/pageOps')
+    expect(splitGroups(6, { starts: [4, 2, 0, 9] })).toEqual([[0, 1], [2, 3], [4, 5]])
+  })
+  it('writes each part as its own PDF', async () => {
+    const { splitPdf, splitGroups, pageCount } = await import('../src/core/pageOps')
+    const parts = await splitPdf(await labeledPdf(5), splitGroups(5, { every: 2 }))
+    expect(await Promise.all(parts.map(pageCount))).toEqual([2, 2, 1])
   })
 })
