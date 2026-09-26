@@ -63,9 +63,14 @@ function meshFromGeometry(g: THREE.BufferGeometry): THREE.Object3D {
   return new THREE.Mesh(g, m)
 }
 
-/** Parses a model file into an object (and its animation clips). */
-export async function parseModel(bytes: ArrayBuffer, name: string, resolve: Resolve): Promise<{ object: THREE.Object3D; clips: THREE.AnimationClip[] }> {
+/**
+ * Parses a model file into an object (and its animation clips). Some loaders (OBJ
+ * materials, FBX, Collada, 3DS) fetch textures after returning; `onAsset` fires as
+ * each arrives so an on-demand renderer can redraw.
+ */
+export async function parseModel(bytes: ArrayBuffer, name: string, resolve: Resolve, onAsset?: () => void): Promise<{ object: THREE.Object3D; clips: THREE.AnimationClip[] }> {
   const manager = new THREE.LoadingManager()
+  if (onAsset) manager.onProgress = manager.onLoad = onAsset
   manager.setURLModifier((url) => (/^(data|blob|https?|glance):/i.test(url) ? url : resolve(decodeURIComponent(url))))
   switch (ext(name)) {
     case 'glb':
@@ -98,7 +103,15 @@ export async function parseModel(bytes: ArrayBuffer, name: string, resolve: Reso
         }
       }
       const object = loader.parse(source)
-      if (!styled) object.traverse((o) => o instanceof THREE.Mesh && (o.material = surface()))
+      // Without materials, keep per-vertex colors (OBJ "v x y z r g b") if the file has them.
+      if (!styled)
+        object.traverse((o) => {
+          if (!(o instanceof THREE.Mesh)) return
+          const colored = !!(o.geometry as THREE.BufferGeometry).getAttribute('color')
+          const m = surface(colored ? 0xffffff : undefined)
+          m.vertexColors = colored
+          o.material = m
+        })
       return { object, clips: [] }
     }
     case 'stl': {
@@ -194,11 +207,12 @@ export function statsOf(object: THREE.Object3D, clips: THREE.AnimationClip[]): M
 }
 
 export async function createViewer(canvas: HTMLCanvasElement, bytes: ArrayBuffer, name: string, opts: { resolve: Resolve; dark: boolean }): Promise<ModelViewer> {
-  const { object, clips } = await parseModel(bytes, name, opts.resolve)
+  let redraw = () => {}
+  const { object, clips } = await parseModel(bytes, name, opts.resolve, () => redraw())
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true, alpha: false })
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
   renderer.outputColorSpace = THREE.SRGBColorSpace
-  renderer.toneMapping = THREE.ACESFilmicToneMapping
+  renderer.toneMapping = THREE.NeutralToneMapping
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = THREE.PCFSoftShadowMap
   const scene = new THREE.Scene()
@@ -289,6 +303,7 @@ export async function createViewer(canvas: HTMLCanvasElement, bytes: ArrayBuffer
     }
   }
   controls.addEventListener('change', () => (dirty = true))
+  redraw = () => void (dirty = true)
 
   // Touchpad: two-finger drag orbits, Shift + two-finger drag pans, and pinch
   // (a Ctrl+wheel) zooms through OrbitControls. A mouse wheel still zooms.
