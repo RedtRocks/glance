@@ -388,7 +388,7 @@ export async function movePages(doc: PdfDoc, pages: number[], to: number): Promi
 }
 
 /** Converts any image Glance can display into PNG/JPEG bytes pdf-lib can embed. */
-async function imageForPdf(probe: Probe): Promise<PageOps.ImageInput> {
+export async function imageForPdf(probe: Probe): Promise<PageOps.ImageInput> {
   if (/\.(jpe?g|jfif)$/i.test(probe.path)) return { bytes: await platform.readFile(probe.path), type: 'jpg' }
   if (/\.png$/i.test(probe.path)) return { bytes: await platform.readFile(probe.path), type: 'png' }
   const res = await fetch(platform.imageUrl(probe))

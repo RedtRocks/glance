@@ -91,6 +91,9 @@ describe('page operations', () => {
     const doc = await PDFDocument.load(out)
     expect(doc.getPageCount()).toBe(2)
     expect(doc.getPage(1).getSize()).toEqual({ width: 1, height: 1 })
+    // A scan says its resolution: 1 px at 144 dpi is half a point.
+    const scanned = await PDFDocument.load(await insertImagePages(await labeled(1), [{ bytes: png, type: 'png', dpi: 144 }], 1))
+    expect(scanned.getPage(1).getSize()).toEqual({ width: 0.5, height: 0.5 })
   })
 })
 

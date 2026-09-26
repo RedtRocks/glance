@@ -12,7 +12,7 @@ import { checkForUpdates } from './updates'
 import { versionsOpen } from './versions'
 import { activeDoc, activeId, docs, type Doc, type ViewMode } from './documents'
 import { settings, updateSettings } from './settings'
-import { cleanupOpen, collageOpen, reduceOpen, customizeOpen, findOpen, inspectorOpen, promptText, redactTextOpen, toast, settingsOpen, sidebarVisible, slideshow } from './ui'
+import { cleanupOpen, collageOpen, reduceOpen, scanOpen, customizeOpen, findOpen, inspectorOpen, promptText, redactTextOpen, toast, settingsOpen, sidebarVisible, slideshow } from './ui'
 import { parsePageInput } from '../core/pageControls'
 import { printDoc } from './print'
 import { applyRedactions } from './actions'
@@ -118,6 +118,7 @@ export const COMMANDS: Command[] = [
   // File
   { id: 'file.open', label: 'Open…', keys: ['Ctrl+O'], run: actions.openWithDialog },
   { id: 'file.newFromClipboard', label: 'New from Clipboard', keys: ['Ctrl+N'], run: () => img.newFromClipboard(), enabled: () => platform.isTauri },
+  { id: 'file.scan', label: 'Import from Scanner…', run: () => void (scanOpen.value = true), enabled: () => platform.scanAvailable },
   { id: 'file.newWindow', label: 'New Window', keys: ['Ctrl+Shift+N'], run: () => platform.openNewWindow([]) },
   { id: 'file.save', label: 'Save', keys: ['Ctrl+S'], run: () => actions.save(), enabled: () => isPdf() || isImage() },
   { id: 'file.saveAs', label: 'Save As…', keys: ['Ctrl+Shift+S'], run: () => actions.saveAs(), enabled: () => isPdf() || isImage() },

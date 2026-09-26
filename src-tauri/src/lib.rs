@@ -7,6 +7,7 @@ mod fonts;
 mod history;
 mod metadata;
 mod ocr;
+mod scan;
 mod protocol;
 mod shell;
 mod signatures;
@@ -95,6 +96,8 @@ pub fn run() {
             metadata::remove_location,
             ocr::ocr_image,
             ocr::ocr_max_dimension,
+            scan::scanners_list,
+            scan::scan,
             files::claim_file,
             files::release_file,
             files::focus_file,

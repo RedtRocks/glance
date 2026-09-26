@@ -97,3 +97,4 @@ export const collageOpen = signal(false)
 
 /** File → Reduce File Size. */
 export const reduceOpen = signal(false)
+export const scanOpen = signal(false)

@@ -465,6 +465,27 @@ export async function ocrImage(rgba: Uint8ClampedArray, width: number, height: n
   return invoke<OcrResult>('ocr_image', bgra, { headers: { 'x-width': String(width), 'x-height': String(height) } })
 }
 
+// ---------------------------------------------------------------------------
+// Scanners (Windows.Devices.Scanners, see src-tauri/src/scan.rs)
+
+export interface ScannerInfo {
+  id: string
+  name: string
+  sources: ('flatbed' | 'feeder')[]
+}
+
+export const scanAvailable = isTauri && isWindows
+
+export async function listScanners(): Promise<ScannerInfo[]> {
+  return scanAvailable ? invoke<ScannerInfo[]>('scanners_list') : []
+}
+
+/** Scans with the device's own driver; returns the image files written and the resolution used. */
+export async function scan(id: string, source: 'auto' | 'flatbed' | 'feeder', dpi: number): Promise<{ files: string[]; dpi: number }> {
+  if (!scanAvailable) throw new Error('Scanning is available in the Windows app.')
+  return invoke('scan', { id, source, dpi })
+}
+
 export async function copyText(text: string): Promise<void> {
   if (isTauri) {
     const { writeText } = await import('@tauri-apps/plugin-clipboard-manager')

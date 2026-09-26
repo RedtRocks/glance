@@ -1,7 +1,7 @@
 import { useEffect } from 'preact/hooks'
 import { activeDoc, activeId, docs, findByPath } from '../state/documents'
 import { isDark, settings } from '../state/settings'
-import { cleanupOpen, collageOpen, reduceOpen, customizeOpen, inspectorOpen, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
+import { cleanupOpen, collageOpen, reduceOpen, scanOpen, customizeOpen, inspectorOpen, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
 import { confirmCloseWindow, openFiles } from '../state/actions'
 import { startAutosave } from '../state/autosave'
 import { checkForUpdates } from '../state/updates'
@@ -42,6 +42,7 @@ import { ImageDoc, PdfDoc } from '../state/documents'
 import { RedactTextDialog } from './dialogs/RedactTextDialog'
 import { CleanupDialog } from './dialogs/CleanupDialog'
 import { ReduceDialog } from './dialogs/ReduceDialog'
+import { ScanDialog } from './dialogs/ScanDialog'
 import { PdfExportDialog } from './dialogs/PdfExportDialog'
 import { AdjustColorPanel } from './image/AdjustColorPanel'
 import { AdjustSizeDialog } from './image/AdjustSizeDialog'
@@ -151,6 +152,7 @@ export function App() {
       <ContextMenu />
       {batchOpen.value && <BatchDialog />}
       {collageOpen.value && <CollageDialog />}
+      {scanOpen.value && <ScanDialog />}
       {versionsOpen.value && activeDoc.value && <VersionsDialog key={activeDoc.value.id} doc={activeDoc.value} />}
     </div>
   )
