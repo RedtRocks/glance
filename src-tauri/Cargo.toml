@@ -61,6 +61,8 @@ windows = { version = "0.62", features = [
   "Security_Cryptography",
   "ApplicationModel_DataTransfer",
   "Foundation_Collections",
+  "Win32_Graphics_Printing",
+  "Win32_Storage_Xps",
 ] }
 windows-collections = "0.3"
 

@@ -8,6 +8,8 @@ pub mod psd;
 pub mod raw_preview;
 #[cfg(windows)]
 pub mod wic;
+#[cfg(windows)]
+pub mod xps;
 
 use image::{DynamicImage, ImageDecoder, RgbaImage};
 use std::io::Cursor;
@@ -47,8 +49,16 @@ pub fn fit_dims(w: u32, h: u32, max: u32) -> (u32, u32) {
 
 /// Number of pages/frames the backend exposes for a file (multi-page TIFF, CBZ).
 pub fn page_count(path: &Path) -> u32 {
-    if formats::extension(path) == "cbz" {
+    let ext = formats::extension(path);
+    if ext == "cbz" {
         return archive::page_names(path).map(|n| n.len() as u32).unwrap_or(0);
+    }
+    if ext == "xps" || ext == "oxps" {
+        // Rendered by the Windows XPS rasterizer; 0 = can't be shown here.
+        #[cfg(windows)]
+        return xps::page_count(path).unwrap_or(0);
+        #[cfg(not(windows))]
+        return 0;
     }
     #[cfg(windows)]
     if let Ok(n) = wic::frame_count(path) {
@@ -72,6 +82,12 @@ fn decode_unguarded(path: &Path, page: u32, max: Option<u32>) -> Result<Decoded,
     if ext == "cbz" {
         let (_, bytes) = archive::read_page(path, page as usize)?;
         return decode_bytes(&bytes, None).map(|d| d.fit(max));
+    }
+
+    #[cfg(windows)]
+    if ext == "xps" || ext == "oxps" {
+        let (width, height, rgba) = xps::render(path, page, max)?;
+        return Ok(Decoded { width, height, rgba }.fit(max));
     }
 
     #[cfg(windows)]

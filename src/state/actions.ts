@@ -128,8 +128,13 @@ async function openFresh(path: string): Promise<Doc | null> {
       addDoc(doc)
       return doc
     }
-    case 'xps':
-      return notice(probe, 'XPS documents are coming soon', 'Glance will render XPS and OpenXPS through the Windows XPS engine in an upcoming update.')
+    case 'xps': {
+      // Pages come from the Windows XPS rasterizer (view-only, like multi-page TIFF).
+      if (probe.pages < 1) return notice(probe, 'Glance can’t show this XPS document', 'XPS pages are rendered by Windows. The file may be damaged, or this system has no XPS support.')
+      const doc = new ImageDoc(probe)
+      addDoc(doc)
+      return doc
+    }
     case 'model': {
       const doc = new ModelDoc(probe)
       addDoc(doc)
