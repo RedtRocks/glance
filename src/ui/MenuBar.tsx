@@ -37,7 +37,7 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'notice', Record
     Go: ['go.previous', 'go.next', 'go.first', 'go.last', 'go.page', '-', 'go.nextTab', 'go.previousTab'],
     Pages: [
       'edit.insertBlank', 'edit.insertFile', 'edit.duplicatePages', 'edit.deletePages', '-',
-      'tools.rotateLeft', 'tools.rotateRight', '-', 'file.exportPages', 'file.split'
+      'tools.rotateLeft', 'tools.rotateRight', '-', 'edit.stamps', '-', 'file.exportPages', 'file.split'
     ],
     Markup: [
       'tools.markup', 'tools.highlight', 'tools.text', 'tools.note', 'tools.signature', '-',
