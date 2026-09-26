@@ -1,0 +1,141 @@
+import type { JSX } from 'preact'
+import { settings, updateSettings } from '../../state/settings'
+import { ImageDoc, PdfDoc, type Doc } from '../../state/documents'
+import type { OutlineNode } from '../../pdf/engine'
+import { imageUrl } from '../../platform'
+import { pageDrag } from '../dragState'
+import { beginPageDrag, selectPage } from './pageDrag'
+import { PageThumb } from './PageThumb'
+
+const THUMB_WIDTH = 120
+
+function ThumbList({ doc }: { doc: PdfDoc }) {
+  const count = doc.pageCount.value
+  const current = doc.current.value
+  const selection = doc.selection.value
+  const drag = pageDrag.value
+  const indicator = drag && drag.targetDocId === doc.id ? drag.insertAt : null
+  return (
+    <div class="thumb-list" data-page-list={doc.id} role="listbox" aria-label="Pages" aria-multiselectable="true">
+      {Array.from({ length: count }, (_, i) => {
+        const selected = selection.includes(i)
+        return (
+          <div key={i}>
+            {indicator === i && <div class="drop-indicator" />}
+            <div
+              class={`thumb ${selected ? 'selected' : ''} ${i === current ? 'current' : ''}`}
+              data-page-index={i}
+              role="option"
+              aria-selected={selected}
+              aria-label={`Page ${i + 1}`}
+              onPointerDown={(e) => {
+                const pages = selected ? [...selection].sort((a, b) => a - b) : [i]
+                const icon = () => (e.currentTarget as HTMLElement | null)?.querySelector('canvas') ?? null
+                beginPageDrag(e, doc, pages, icon)
+              }}
+              onClick={(e) => {
+                selectPage(doc, i, e)
+                doc.goTo(i)
+              }}
+            >
+              <PageThumb doc={doc} index={i} width={THUMB_WIDTH} />
+              <span class="thumb-label">{i + 1}</span>
+            </div>
+          </div>
+        )
+      })}
+      {indicator === count && <div class="drop-indicator" />}
+    </div>
+  )
+}
+
+function ImageThumbList({ doc }: { doc: ImageDoc }) {
+  const current = doc.current.value
+  return (
+    <div class="thumb-list" role="listbox" aria-label="Pages">
+      {Array.from({ length: doc.pageCount.value }, (_, i) => (
+        <div
+          key={i}
+          class={`thumb ${i === current ? 'current selected' : ''}`}
+          role="option"
+          aria-selected={i === current}
+          onClick={() => (doc.current.value = i)}
+        >
+          <img class="thumb-img" loading="lazy" src={imageUrl(doc.probe, i, 256)} width={THUMB_WIDTH} alt={`Page ${i + 1}`} />
+          <span class="thumb-label">{i + 1}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function OutlineTree({ nodes, doc }: { nodes: OutlineNode[]; doc: PdfDoc }): JSX.Element {
+  return (
+    <ul class="toc">
+      {nodes.map((n, i) => (
+        <li key={i}>
+          <button class="toc-item" disabled={n.pageIndex === null} onClick={() => n.pageIndex !== null && doc.goTo(n.pageIndex)}>
+            <span>{n.title}</span>
+            {n.pageIndex !== null && <span class="toc-page">{n.pageIndex + 1}</span>}
+          </button>
+          {n.children.length > 0 && <OutlineTree nodes={n.children} doc={doc} />}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function Toc({ doc }: { doc: PdfDoc }) {
+  const outline = doc.outline.value
+  if (!outline.length) return <p class="sidebar-empty">This document has no table of contents.</p>
+  return <OutlineTree nodes={outline} doc={doc} />
+}
+
+function Resizer() {
+  return (
+    <div
+      class="sidebar-resizer"
+      role="separator"
+      aria-orientation="vertical"
+      onPointerDown={(e) => {
+        const start = e.clientX
+        const width = settings.value.sidebarWidth
+        const el = e.currentTarget as HTMLElement
+        el.setPointerCapture(e.pointerId)
+        const move = (ev: PointerEvent): void => updateSettings({ sidebarWidth: Math.min(420, Math.max(140, width + ev.clientX - start)) })
+        const up = (): void => {
+          el.removeEventListener('pointermove', move)
+          el.removeEventListener('pointerup', up)
+        }
+        el.addEventListener('pointermove', move)
+        el.addEventListener('pointerup', up)
+      }}
+    />
+  )
+}
+
+export function Sidebar({ doc }: { doc: Doc }) {
+  let body: JSX.Element | null = null
+  if (doc.kind === 'pdf') {
+    body = doc.sidebar.value === 'toc' ? <Toc doc={doc} /> : <ThumbList doc={doc} />
+  } else if (doc.kind === 'image' && doc.pageCount.value > 1) {
+    body = <ImageThumbList doc={doc} />
+  }
+  if (!body) return null
+  return (
+    <aside class="sidebar" style={{ width: settings.value.sidebarWidth }} data-drop-doc={doc.id}>
+      {doc.kind === 'pdf' && (
+        <div class="sidebar-tabs" role="tablist">
+          <button role="tab" aria-selected={doc.sidebar.value !== 'toc'} onClick={() => (doc.sidebar.value = 'thumbnails')}>
+            Thumbnails
+          </button>
+          <button role="tab" aria-selected={doc.sidebar.value === 'toc'} onClick={() => (doc.sidebar.value = 'toc')}>
+            Contents
+          </button>
+        </div>
+      )}
+      <div class="sidebar-body">{body}</div>
+      <Resizer />
+    </aside>
+  )
+}

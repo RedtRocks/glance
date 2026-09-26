@@ -1,0 +1,221 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Glance",
+  "version": "0.1.0",
+  "identifier": "io.github.redtrocks.glance",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "label": "main",
+        "title": "Glance",
+        "width": 1280,
+        "height": 860,
+        "minWidth": 560,
+        "minHeight": 400,
+        "center": true,
+        "transparent": true,
+        "visible": false,
+        "dragDropEnabled": true
+      }
+    ],
+    "security": {
+      "csp": {
+        "default-src": "'self' customprotocol: asset:",
+        "img-src": "'self' blob: data: glance: http://glance.localhost",
+        "media-src": "'self' blob: glance: http://glance.localhost",
+        "connect-src": "'self' ipc: http://ipc.localhost glance: http://glance.localhost blob: data:",
+        "script-src": "'self' 'wasm-unsafe-eval'",
+        "worker-src": "'self' blob:",
+        "style-src": "'self' 'unsafe-inline'",
+        "font-src": "'self' data:"
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "publisher": "Glance contributors",
+    "copyright": "Copyright 2026 Glance contributors. Apache-2.0.",
+    "category": "Productivity",
+    "shortDescription": "View and edit PDFs, images, and 3D models",
+    "longDescription": "Glance is a free, open-source, lightweight viewer and editor for PDFs, images, camera RAW, and 3D models, inspired by macOS Preview.",
+    "license": "Apache-2.0",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "fileAssociations": [
+      {
+        "ext": [
+          "pdf"
+        ],
+        "name": "PDF Document",
+        "description": "PDF Document",
+        "role": "Viewer",
+        "mimeType": "application/pdf"
+      },
+      {
+        "ext": [
+          "ai"
+        ],
+        "name": "Illustrator Document",
+        "description": "Adobe Illustrator (PDF-compatible)",
+        "role": "Viewer"
+      },
+      {
+        "ext": [
+          "ps",
+          "eps",
+          "epsf"
+        ],
+        "name": "PostScript Document",
+        "description": "PostScript / EPS",
+        "role": "Viewer"
+      },
+      {
+        "ext": [
+          "xps",
+          "oxps"
+        ],
+        "name": "XPS Document",
+        "description": "XPS Document",
+        "role": "Viewer"
+      },
+      {
+        "ext": [
+          "cbz"
+        ],
+        "name": "Comic Book Archive",
+        "description": "Comic Book Archive",
+        "role": "Viewer"
+      },
+      {
+        "ext": [
+          "jpg",
+          "jpeg",
+          "jfif",
+          "png",
+          "apng",
+          "gif",
+          "webp",
+          "bmp",
+          "dib",
+          "ico",
+          "svg",
+          "avif"
+        ],
+        "name": "Image",
+        "description": "Image",
+        "role": "Editor"
+      },
+      {
+        "ext": [
+          "tif",
+          "tiff",
+          "heic",
+          "heif",
+          "hif",
+          "jp2",
+          "j2k",
+          "jpf",
+          "jpx",
+          "jxl",
+          "jxr",
+          "wdp",
+          "hdp",
+          "exr",
+          "hdr",
+          "tga",
+          "dds",
+          "qoi",
+          "ppm",
+          "pgm",
+          "pbm",
+          "pam",
+          "pnm",
+          "icns",
+          "psd"
+        ],
+        "name": "Image",
+        "description": "Image",
+        "role": "Editor"
+      },
+      {
+        "ext": [
+          "cr2",
+          "cr3",
+          "crw",
+          "nef",
+          "nrw",
+          "arw",
+          "srf",
+          "sr2",
+          "raf",
+          "orf",
+          "rw2",
+          "raw",
+          "dng",
+          "pef",
+          "srw",
+          "x3f",
+          "erf",
+          "mef",
+          "mos",
+          "mrw",
+          "kdc",
+          "dcr",
+          "3fr",
+          "fff",
+          "iiq",
+          "rwl",
+          "gpr"
+        ],
+        "name": "Camera RAW Image",
+        "description": "Camera RAW Image",
+        "role": "Viewer"
+      },
+      {
+        "ext": [
+          "glb",
+          "gltf",
+          "obj",
+          "stl",
+          "ply",
+          "fbx",
+          "usdz",
+          "usda",
+          "usdc",
+          "dae",
+          "3mf",
+          "3ds"
+        ],
+        "name": "3D Model",
+        "description": "3D Model",
+        "role": "Viewer"
+      }
+    ],
+    "windows": {
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper",
+        "silent": true
+      },
+      "nsis": {
+        "installMode": "currentUser",
+        "displayLanguageSelector": false,
+        "installerIcon": "icons/icon.ico"
+      }
+    }
+  }
+}
