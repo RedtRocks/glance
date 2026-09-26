@@ -2119,3 +2119,21 @@ input[type='range'] {
   box-shadow: var(--page-shadow);
   background: #fff;
 }
+
+/* Clean Up PDF */
+.cleanup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cleanup-row {
+  align-items: flex-start;
+}
+.cleanup-row span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cleanup-row strong {
+  font-weight: 600;
+}

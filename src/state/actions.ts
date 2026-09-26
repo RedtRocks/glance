@@ -3,7 +3,7 @@ import * as platform from '../platform'
 import type { Probe } from '../platform'
 import type * as PageOps from '../core/pageOps'
 import { MARKER_KEY, newId, pageMaps, type Markup, type Rect } from '../core/markup'
-import { annotations, pageOps, redact } from './pdfModules'
+import { annotations, cleanup, pageOps, redact } from './pdfModules'
 import { openPdf } from '../pdf/engine'
 import { PasswordRequired } from '../pdf/engine'
 import {
@@ -80,8 +80,11 @@ export async function serialize(doc: PdfDoc): Promise<Uint8Array> {
   return doc.exclusive(async () => {
     const bytes = await doc.currentBytes()
     const markup = doc.markup.peek()
-    if (!markup.length) return bytes
-    return (await annotations()).writeMarkup(bytes, markup, { loadFont: platform.fontBytes })
+    // writeMarkup rewrites the whole file anyway; otherwise compact once appended
+    // updates (other apps, form filling) pass a quarter of the file (ADR 0007).
+    if (markup.length) return (await annotations()).writeMarkup(bytes, markup, { loadFont: platform.fontBytes })
+    const c = await cleanup()
+    return !doc.password && c.appendedShare(bytes) > c.COMPACT_THRESHOLD ? c.compact(bytes) : bytes
   })
 }
 

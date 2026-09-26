@@ -18,7 +18,7 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'notice', Record<string, E
     Help: HELP
   },
   pdf: {
-    File: ['file.open', 'file.openWith', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.versions', 'file.export', 'file.split', '-', 'file.print', '-', 'file.close', '-', 'file.settings'],
+    File: ['file.open', 'file.openWith', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.versions', 'file.export', 'file.split', 'file.cleanup', '-', 'file.print', '-', 'file.close', '-', 'file.settings'],
     Edit: ['edit.undo', 'edit.redo', '-', 'edit.delete', 'edit.selectAll', 'edit.find', '-', 'edit.addBookmark', '-', 'tools.ocr'],
     View: [
       '#Sidebar', 'view.hideSidebar', 'view.thumbnails', 'view.toc', 'view.notes', 'view.bookmarks', '-',

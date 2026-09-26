@@ -88,3 +88,6 @@ export const redactTextOpen = signal(false)
 
 /** Tools → Show Inspector (Ctrl+I). */
 export const inspectorOpen = signal(false)
+
+/** File → Clean Up PDF. */
+export const cleanupOpen = signal(false)

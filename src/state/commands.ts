@@ -11,7 +11,7 @@ import { batchOpen } from './batch'
 import { versionsOpen } from './versions'
 import { activeDoc, activeId, docs, type Doc, type ViewMode } from './documents'
 import { settings, updateSettings } from './settings'
-import { customizeOpen, findOpen, inspectorOpen, promptText, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from './ui'
+import { cleanupOpen, customizeOpen, findOpen, inspectorOpen, promptText, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from './ui'
 import { parsePageInput } from '../core/pageControls'
 import { printDoc } from './print'
 import { applyRedactions } from './actions'
@@ -125,6 +125,7 @@ export const COMMANDS: Command[] = [
   },
   { id: 'file.exportPages', label: 'Export Selected Pages…', run: () => actions.exportSelectedPages(), enabled: isPdf },
   { id: 'file.versions', label: 'Browse Versions…', run: () => void (versionsOpen.value = true), enabled: () => !!activeDoc.value?.path.value },
+  { id: 'file.cleanup', label: 'Clean Up PDF…', run: () => void (cleanupOpen.value = true), enabled: isPdf },
   { id: 'file.batch', label: 'Batch Edit Images…', run: () => void (batchOpen.value = true) },
   { id: 'file.openWith', label: 'Open With Another App…', run: () => shell.openWithOtherApp(), enabled: () => shell.canOpenWith() },
   { id: 'image.setWallpaper', label: 'Set as Desktop Background', run: () => shell.setAsWallpaper('desktop'), enabled: anyImage },
@@ -267,7 +268,7 @@ const VISIBILITY: [(() => boolean), string[]][] = [
   [() => ifPdf() || isImage(), ['file.save', 'file.saveAs', 'file.export', 'edit.undo', 'edit.redo', 'edit.delete']],
   [ifPdf, [
     'file.exportPages', 'file.split', 'edit.selectAll', 'edit.find', 'edit.insertBlank', 'edit.insertFile', 'edit.duplicatePages',
-    'edit.deletePages', 'edit.addBookmark', 'view.toc', 'view.notes', 'view.bookmarks', 'view.continuous', 'view.single', 'view.two',
+    'edit.deletePages', 'edit.addBookmark', 'file.cleanup', 'view.toc', 'view.notes', 'view.bookmarks', 'view.continuous', 'view.single', 'view.two',
     'view.contactSheet', 'view.darkPdf', 'tools.highlight', 'tools.note', 'tools.redactText', 'tools.applyRedactions', 'tools.ocr'
   ]],
   [ifPaged, ['view.hideSidebar', 'view.thumbnails', 'go.previous', 'go.next', 'go.first', 'go.last', 'go.page']],
