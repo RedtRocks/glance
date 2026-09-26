@@ -66,7 +66,15 @@ _Avoid_: Geotag, EXIF GPS
 
 **Version**:
 A saved earlier state of a document, kept each time Glance autosaves, which the user can browse and restore.
-_Avoid_: Backup, snapshot
+_Avoid_: Backup, snapshot, revision
+
+**Update**:
+A newer release of Glance itself. The user is told when one is available and may decline it.
+_Avoid_: Version (that means a document's saved state), upgrade
+
+**Text Recognition**:
+Finding text in scanned pages and photos so it can be searched, selected, and copied.
+_Avoid_: Live Text, OCR (in the UI)
 
 **Batch**:
 Applying one set of operations to many files at once.
