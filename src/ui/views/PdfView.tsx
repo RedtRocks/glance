@@ -7,6 +7,7 @@ import { ContactSheet } from './ContactSheet'
 import { markSelection } from '../markup/textSelection'
 import { tool } from '../../state/markupState'
 import { pageDrag } from '../dragState'
+import { usePanZoom } from '../usePanZoom'
 
 const PAD = 24
 const GAP = 16
@@ -151,11 +152,12 @@ function PdfScroller({ doc }: { doc: PdfDoc }) {
     }
   }
 
+  const panZoom = usePanZoom(scroller, doc)
   const drag = pageDrag.value
   const drop = drag && drag.docId !== doc.id && drag.targetDocId === doc.id ? drag.insertAt : null
   return (
     <div
-      class={`pdf-scroller tool-${tool.value} ${drop ? 'page-drop' : ''}`}
+      class={`pdf-scroller tool-${tool.value} ${panZoom} ${drop ? 'page-drop' : ''}`}
       data-page-drop={doc.id}
       data-page-count={doc.pageCount.value}
       ref={scroller} onScroll={onScroll} onWheel={onWheel} onPointerUp={onPointerUp} tabIndex={-1}>
