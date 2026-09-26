@@ -1,3 +1,4 @@
+mod certsig;
 mod color;
 mod commands;
 mod decode;
@@ -98,6 +99,8 @@ pub fn run() {
             signatures::signatures_list,
             signatures::signature_save,
             signatures::signature_delete,
+            certsig::verify_pdf_signature,
+            certsig::show_certificate,
             subject::subject_mask,
             encode::save_image,
             fonts::fonts_list,

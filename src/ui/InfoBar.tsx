@@ -1,18 +1,22 @@
 import type { ComponentChildren } from 'preact'
 import { Icon } from './Icon'
 
+type Severity = 'informational' | 'success' | 'warning' | 'error'
+const ICON = { informational: 'infoFilled', success: 'successFilled', warning: 'warningFilled', error: 'errorFilled' } as const
+
 /** WinUI InfoBar: docked, severity-colored, with optional actions. */
 export function InfoBar({ severity = 'informational', title, children, actions, onClose }: {
-  severity?: 'informational' | 'warning'
+  severity?: Severity
   title: string
   children?: ComponentChildren
   actions?: ComponentChildren
   onClose?: () => void
 }) {
+  const urgent = severity === 'warning' || severity === 'error'
   return (
-    <div class={`infobar ${severity}`} role={severity === 'warning' ? 'alert' : 'status'}>
+    <div class={`infobar ${severity}`} role={urgent ? 'alert' : 'status'}>
       <span class="infobar-icon" aria-hidden="true">
-        <Icon name={severity === 'warning' ? 'warningFilled' : 'infoFilled'} size={16} />
+        <Icon name={ICON[severity]} size={16} />
       </span>
       <div class="infobar-text">
         <strong class="infobar-title">{title}</strong>

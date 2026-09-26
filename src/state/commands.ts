@@ -12,7 +12,7 @@ import { checkForUpdates } from './updates'
 import { versionsOpen } from './versions'
 import { activeDoc, activeId, docs, type Doc, type ViewMode } from './documents'
 import { settings, updateSettings } from './settings'
-import { cleanupOpen, collageOpen, reduceOpen, scanOpen, customizeOpen, findOpen, inspectorOpen, promptText, redactTextOpen, toast, settingsOpen, sidebarVisible, slideshow } from './ui'
+import { cleanupOpen, collageOpen, reduceOpen, scanOpen, customizeOpen, findOpen, inspectorOpen, signaturesOpen, promptText, redactTextOpen, toast, settingsOpen, sidebarVisible, slideshow } from './ui'
 import { parsePageInput } from '../core/pageControls'
 import { printDoc } from './print'
 import { applyRedactions } from './actions'
@@ -214,6 +214,7 @@ export const COMMANDS: Command[] = [
   { id: 'model.wireframe', label: 'Wireframe', keys: ['W'], run: () => void (model() && (model()!.wireframe.value = !model()!.wireframe.value)), checked: () => !!model()?.wireframe.value },
   { id: 'model.autoRotate', label: 'Turntable', keys: ['T'], run: () => void (model() && (model()!.autoRotate.value = !model()!.autoRotate.value)), checked: () => !!model()?.autoRotate.value },
   { id: 'view.inspector', label: 'Inspector', keys: ['Ctrl+I'], run: () => void (inspectorOpen.value = !inspectorOpen.value), checked: () => inspectorOpen.value },
+  { id: 'view.signatures', label: 'Signatures', run: () => void (signaturesOpen.value = !signaturesOpen.value), checked: () => signaturesOpen.value },
   { id: 'view.customizeToolbar', label: 'Customize Toolbar…', run: () => void (customizeOpen.value = true) },
   // Go
   { id: 'go.previous', label: 'Previous Page', keys: ['Ctrl+Up', 'PageUp'], run: () => goPage(-1), enabled: multiPage },
@@ -292,7 +293,7 @@ const VISIBILITY: [(() => boolean), string[]][] = [
   [() => ifPdf() || isImage() || !!model(), ['file.export']],
   [ifPdf, [
     'file.exportPages', 'file.split', 'edit.selectAll', 'edit.find', 'edit.insertBlank', 'edit.insertFile', 'edit.duplicatePages',
-    'edit.deletePages', 'edit.addBookmark', 'file.cleanup', 'file.reduce', 'view.toc', 'view.notes', 'view.bookmarks', 'view.continuous', 'view.single', 'view.two',
+    'edit.deletePages', 'edit.addBookmark', 'view.signatures', 'file.cleanup', 'file.reduce', 'view.toc', 'view.notes', 'view.bookmarks', 'view.continuous', 'view.single', 'view.two',
     'view.contactSheet', 'view.darkPdf', 'tools.highlight', 'tools.note', 'tools.redactText', 'tools.applyRedactions', 'tools.ocr'
   ]],
   [ifPaged, ['view.hideSidebar', 'view.thumbnails', 'go.previous', 'go.next', 'go.first', 'go.last', 'go.page']],

@@ -36,6 +36,10 @@ _Avoid_: Annotation (the PDF storage term), drawing
 **Signature**:
 A saved handwritten signature the user can place as markup.
 
+**Certificate Signature**:
+A cryptographic signature embedded in a PDF by signing software (Adobe, DocuSign), tied to the signer's certificate. Glance checks whether it is valid; it is not markup.
+_Avoid_: Digital signature (in the UI), e-signature
+
 **Redaction**:
 A marked area whose content is permanently destroyed when applied. Not the same as a black rectangle drawn as markup.
 _Avoid_: Blackout, censor

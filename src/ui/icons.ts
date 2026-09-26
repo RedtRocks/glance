@@ -67,6 +67,9 @@ import bookmarks from '@fluentui/svg-icons/icons/bookmark_multiple_20_regular.sv
 import notes from '@fluentui/svg-icons/icons/comment_note_20_regular.svg?raw'
 import warningFilled from '@fluentui/svg-icons/icons/warning_20_filled.svg?raw'
 import infoFilled from '@fluentui/svg-icons/icons/info_20_filled.svg?raw'
+import successFilled from '@fluentui/svg-icons/icons/checkmark_circle_20_filled.svg?raw'
+import errorFilled from '@fluentui/svg-icons/icons/dismiss_circle_20_filled.svg?raw'
+import certificate from '@fluentui/svg-icons/icons/certificate_20_regular.svg?raw'
 import chevronSmall from '@fluentui/svg-icons/icons/chevron_down_12_regular.svg?raw'
 import crop from '@fluentui/svg-icons/icons/crop_20_regular.svg?raw'
 import adjustColor from '@fluentui/svg-icons/icons/color_20_regular.svg?raw'
@@ -85,5 +88,5 @@ const squiggly =
   '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><path d="M6 3.5a.5.5 0 0 0-1 0v6.45A5 5 0 0 0 10 15c2.77 0 5-2.26 5-5.05V3.5a.5.5 0 0 0-1 0v6.45C14 12.2 12.2 14 10 14s-4-1.8-4-4.05z"/><path d="M4.5 17.5l1.5-1.2 1.5 1.2 1.5-1.2 1.5 1.2 1.5-1.2 1.5 1.2 1.5-1.2 1.5 1.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>'
 import exportIcon from '@fluentui/svg-icons/icons/arrow_export_ltr_20_regular.svg?raw'
 
-export const ICONS = { sidebar, zoomIn, zoomOut, rotateRight, rotateLeft, highlight, search, print, share, more, up, down, left, right, open, close, settings, grid, toc, bookmark, moon, save, trash, add, addPage, fullscreen, slideshow, fitPage, zoomFit, undo, redo, edit, check, copy, image, cube, info, newWindow, document, pen, markup, cursor, draw, sketch, shapes, textBox, note, signature, redact, lineWidth, strokeColor, fillColor, textStyle, underline, strike, star, oval, square, roundRect, arrow, line, bubble, polygon, bookmarkAdd, bookmarks, notes, warningFilled, infoFilled, chevronSmall, crop, adjustColor, adjustSize, removeBg, copySubject, selectRect, selectEllipse, lasso, smartLasso, instantAlpha, flipH, flipV, exportIcon, squiggly }
+export const ICONS = { sidebar, zoomIn, zoomOut, rotateRight, rotateLeft, highlight, search, print, share, more, up, down, left, right, open, close, settings, grid, toc, bookmark, moon, save, trash, add, addPage, fullscreen, slideshow, fitPage, zoomFit, undo, redo, edit, check, copy, image, cube, info, newWindow, document, pen, markup, cursor, draw, sketch, shapes, textBox, note, signature, redact, lineWidth, strokeColor, fillColor, textStyle, underline, strike, star, oval, square, roundRect, arrow, line, bubble, polygon, bookmarkAdd, bookmarks, notes, warningFilled, infoFilled, successFilled, errorFilled, certificate, chevronSmall, crop, adjustColor, adjustSize, removeBg, copySubject, selectRect, selectEllipse, lasso, smartLasso, instantAlpha, flipH, flipV, exportIcon, squiggly }
 export type IconName = keyof typeof ICONS

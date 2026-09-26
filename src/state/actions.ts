@@ -22,6 +22,7 @@ import {
 import { alertDialog, promptText, showDialog, toast, withBusy } from './ui'
 import { editableImage, rotateImage, saveImage, saveImageAs } from './imageActions'
 import * as versions from './versions'
+import { mayHaveSignatures } from '../core/signatureStatus'
 
 const GS_INSTALL = 'winget install ArtifexSoftware.GhostScript'
 
@@ -84,8 +85,10 @@ export async function serialize(doc: PdfDoc): Promise<Uint8Array> {
     // writeMarkup rewrites the whole file anyway; otherwise compact once appended
     // updates (other apps, form filling) pass a quarter of the file (ADR 0007).
     if (markup.length) return (await annotations()).writeMarkup(bytes, markup, { loadFont: platform.fontBytes })
+    // Compacting drops the revisions certificate signatures cover, which breaks them.
+    if (doc.password || mayHaveSignatures(bytes)) return bytes
     const c = await cleanup()
-    return !doc.password && c.appendedShare(bytes) > c.COMPACT_THRESHOLD ? c.compact(bytes) : bytes
+    return c.appendedShare(bytes) > c.COMPACT_THRESHOLD ? c.compact(bytes) : bytes
   })
 }
 
