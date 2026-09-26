@@ -3,7 +3,7 @@ import type { ImageDoc } from '../../state/documents'
 import { imageSelection } from '../../state/imageState'
 import { tool, IMAGE_SELECT_TOOLS } from '../../state/markupState'
 import * as engine from '../../image/engine'
-import { maskBounds } from '../../core/image/alpha'
+import { InstantAlphaGesture } from '../../image/instantAlpha'
 import type { Pt } from '../../core/image/select'
 import type { Raster } from '../../core/image/raster'
 import { toast } from '../../state/ui'
@@ -21,6 +21,7 @@ export function SelectionOverlay({ doc, scale }: { doc: ImageDoc; scale: number 
   const nat = doc.natural.value
   const [draft, setDraft] = useState<Pt[] | null>(null)
   const preview = useRef<{ raster: Raster; scale: number } | null>(null)
+  const gesture = useRef<InstantAlphaGesture | null>(null)
 
   const toImage = (e: PointerEvent): Pt => {
     const r = host.current!.getBoundingClientRect()
@@ -52,7 +53,10 @@ export function SelectionOverlay({ doc, scale }: { doc: ImageDoc; scale: number 
     else drawMask(null, 1, 1)
   }, [sel])
 
-  const onPointerDown = async (e: PointerEvent): Promise<void> => {
+  // Switching tools or documents (or unmounting) abandons a drag in progress.
+  useEffect(() => () => gesture.current?.cancel(), [t, doc])
+
+  const onPointerDown = (e: PointerEvent): void => {
     if (!active || e.button !== 0) return
     e.preventDefault()
     e.stopPropagation()
@@ -62,38 +66,54 @@ export function SelectionOverlay({ doc, scale }: { doc: ImageDoc; scale: number 
     imageSelection.value = null
 
     if (cur === 'instantAlpha') {
-      const full = await engine.ensureRaster(doc)
-      preview.current ??= await engine.previewCopy(full, 1200)
-      const pv = preview.current
-      let tolerance = 0.08
-      let busy = false
-      const run = async (): Promise<void> => {
-        if (busy) return
-        busy = true
-        const mask = await engine.flood(pv.raster, start[0] * pv.scale, start[1] * pv.scale, tolerance)
-        drawMask(mask, pv.raster.width, pv.raster.height)
-        busy = false
-      }
-      void run()
+      gesture.current?.cancel()
+      // Listeners go on before anything async, so a quick click can't lose its pointerup.
+      const g = new InstantAlphaGesture(start, {
+        prepare: async () => {
+          const full = await engine.ensureRaster(doc)
+          preview.current ??= await engine.previewCopy(full, 1200)
+          return { full, preview: preview.current }
+        },
+        flood: engine.flood,
+        show: drawMask,
+        commit: (selection) => {
+          imageSelection.value = selection
+          if (!hinted) {
+            hinted = true
+            toast(t('Press Delete to remove the selected area, or Crop to keep it.'))
+          }
+        }
+      })
+      gesture.current = g
       const move = (ev: PointerEvent): void => {
         const p = toImage(ev)
-        // Dragging farther widens the color range, like Preview.
-        tolerance = Math.min(0.9, 0.04 + Math.hypot(p[0] - start[0], p[1] - start[1]) * scale / 250)
-        void run()
+        g.move(Math.hypot(p[0] - start[0], p[1] - start[1]) * scale)
       }
-      const up = async (): Promise<void> => {
+      const detach = (): void => {
         el.removeEventListener('pointermove', move)
         el.removeEventListener('pointerup', up)
-        const mask = await engine.flood(full, start[0], start[1], tolerance)
-        const bounds = maskBounds(mask, full.width, full.height) ?? { x: 0, y: 0, width: 0, height: 0 }
-        imageSelection.value = { kind: 'mask', mask, width: full.width, height: full.height, bounds }
-        if (!hinted) {
-          hinted = true
-          toast(t('Press Delete to remove the selected area, or Crop to keep it.'))
-        }
+        el.removeEventListener('pointercancel', cancel)
+        window.removeEventListener('keydown', key, true)
+      }
+      const up = (): void => {
+        detach()
+        void g.end()
+      }
+      const cancel = (): void => {
+        detach()
+        g.cancel()
+      }
+      // Escape mid-drag cancels this drag only (capture phase, ahead of the global shortcuts).
+      const key = (ev: KeyboardEvent): void => {
+        if (ev.key !== 'Escape') return
+        ev.preventDefault()
+        ev.stopPropagation()
+        cancel()
       }
       el.addEventListener('pointermove', move)
       el.addEventListener('pointerup', up)
+      el.addEventListener('pointercancel', cancel)
+      window.addEventListener('keydown', key, true)
       return
     }
 
@@ -125,9 +145,13 @@ export function SelectionOverlay({ doc, scale }: { doc: ImageDoc; scale: number 
     el.addEventListener('pointerup', up)
   }
 
+  const pixels = doc.raster.value
   useEffect(() => {
     preview.current = null
-  }, [doc.raster.value])
+    // Undo/redo can swap in pixels of another size; a mask for the old size would misalign.
+    const s = imageSelection.peek()
+    if (pixels && s?.kind === 'mask' && (s.width !== pixels.width || s.height !== pixels.height)) imageSelection.value = null
+  }, [pixels])
 
   if (!nat) return null
   const shape = draft ?? null
@@ -153,7 +177,7 @@ export function SelectionOverlay({ doc, scale }: { doc: ImageDoc; scale: number 
       ref={host}
       class={`selection-overlay ${active ? 'active' : ''}`}
       style={{ width: nat.width * scale, height: nat.height * scale }}
-      onPointerDown={(e) => void onPointerDown(e)}
+      onPointerDown={onPointerDown}
     >
       <canvas ref={maskCanvas} class="selection-mask" />
       <svg class="marching-ants" width={nat.width * scale} height={nat.height * scale}>

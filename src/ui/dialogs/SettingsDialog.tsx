@@ -116,7 +116,7 @@ export function SettingsDialog() {
             </select>
           </SettingsCard>
           <SettingsCard icon="save" title={t('Save changes automatically')}
-            description={t('A few seconds after you stop editing. Every save keeps a version you can go back to (File → Browse Versions). JPEG images and documents with pending redactions are only saved when you choose Save.')}>
+            description={t('About ten seconds after you stop editing, and at most once a minute. Every save keeps a version you can go back to (File → Browse Versions). JPEG images and documents with pending redactions are only saved when you choose Save.')}>
             <Toggle checked={s.autosave} label={t('Save changes automatically')} onChange={(v) => updateSettings({ autosave: v })} />
           </SettingsCard>
           <SettingsCard icon="info" title={t('Check for updates')}
