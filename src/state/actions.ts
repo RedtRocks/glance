@@ -474,15 +474,19 @@ export async function dragOutPages(doc: PdfDoc, pages: number[], icon: HTMLCanva
   await platform.dragOut(file, iconPath)
 }
 
-export async function exportSelectedPages(doc = activeDoc.value): Promise<void> {
+export async function exportSelectedPages(doc = activeDoc.value, opts: { protect?: import('../core/protect').ProtectOptions } = {}): Promise<void> {
   if (doc?.kind !== 'pdf') return
   const pages = selectedOrCurrent(doc)
+  const all = pages.length === doc.pageCount.value
   const base = doc.name.value.replace(/\.[^.]+$/, '')
-  const target = await platform.saveDialog(`${base} (${pagesLabel(pages)}).pdf`, [{ name: 'PDF document', extensions: ['pdf'] }])
+  const target = await platform.saveDialog(all ? `${base}.pdf` : `${base} (${pagesLabel(pages)}).pdf`, [{ name: 'PDF document', extensions: ['pdf'] }])
   if (!target) return
-  const bytes = await withBusy('Exporting…', async () => (await pageOps()).extractPages(await serialize(doc), pages))
+  const bytes = await withBusy('Exporting…', async () => {
+    const out = await (await pageOps()).extractPages(await serialize(doc), pages)
+    return opts.protect ? (await import('../core/protect')).protectPdf(out, opts.protect) : out
+  })
   await platform.writeFile(target, bytes)
-  toast(`Exported ${pagesLabel(pages)}`)
+  toast(`Exported ${all ? 'the document' : pagesLabel(pages)}${opts.protect ? ' with a password' : ''}`)
 }
 
 export type PageImageFormat = 'png' | 'jpg' | 'tiff'

@@ -218,3 +218,24 @@ export async function saveImageAs(doc: ImageDoc, format: ExportFormat = 'png', q
   }
   toast(switchTo ? 'Saved' : 'Exported')
 }
+
+/**
+ * File → New from Clipboard (Ctrl+N): the copied image opens as a new, unsaved
+ * document; Save asks where to put it.
+ */
+export async function newFromClipboard(): Promise<void> {
+  const img = await platform.readClipboardImage()
+  if (!img) return toast('There’s no image on the clipboard.')
+  const png = await engine.encodePng({ width: img.width, height: img.height, data: new Uint8ClampedArray(img.rgba.buffer, img.rgba.byteOffset, img.rgba.byteLength) })
+  const stamp = new Date().toISOString().slice(0, 19).replace('T', ' ').replace(/:/g, '.')
+  const tmp = await platform.writeTemp(`Clipboard ${stamp}.png`, png)
+  const { openFiles } = await import('./actions')
+  const { findByPath } = await import('./documents')
+  await openFiles([tmp])
+  const doc = findByPath(tmp)
+  if (doc instanceof ImageDoc) {
+    doc.name.value = 'Untitled.png'
+    doc.path.value = null // Save → Save As
+    doc.dirty.value = true
+  }
+}

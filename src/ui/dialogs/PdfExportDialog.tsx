@@ -20,6 +20,11 @@ export function PdfExportDialog({ doc }: { doc: PdfDoc }) {
   const [which, setWhich] = useState<'all' | 'selected' | 'current'>(selected > 1 ? 'selected' : 'current')
   const [dpi, setDpi] = useState(150)
   const [quality, setQuality] = useState(90)
+  const [lock, setLock] = useState(false)
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [allow, setAllow] = useState({ printing: true, copying: true, editing: false })
+  const passwordProblem = lock && (!password ? 'Enter a password.' : password !== confirm ? 'The passwords don’t match.' : null)
   const close = (): void => void (exportOpen.value = false)
   const count = which === 'all' ? doc.pageCount.value : which === 'selected' ? Math.max(1, selected) : 1
 
@@ -28,7 +33,7 @@ export function PdfExportDialog({ doc }: { doc: PdfDoc }) {
     if (format === 'pdf') {
       if (which === 'all') doc.selection.value = [...Array(doc.pageCount.value).keys()]
       else if (which === 'current') doc.selection.value = [doc.current.value]
-      void exportSelectedPages(doc)
+      void exportSelectedPages(doc, lock ? { protect: { password, allowPrinting: allow.printing, allowCopying: allow.copying, allowEditing: allow.editing } } : {})
     } else {
       void exportPagesAsImages(doc, { format, dpi, quality, which })
     }
@@ -43,7 +48,7 @@ export function PdfExportDialog({ doc }: { doc: PdfDoc }) {
           <button class="btn" onClick={close}>
             Cancel
           </button>
-          <button class="btn primary" onClick={run}>
+          <button class="btn primary" disabled={format === 'pdf' && !!passwordProblem} onClick={run}>
             Export…
           </button>
         </>
@@ -67,6 +72,41 @@ export function PdfExportDialog({ doc }: { doc: PdfDoc }) {
           <option value="all">All pages ({doc.pageCount.value})</option>
         </select>
       </label>
+      {format === 'pdf' && (
+        <div class="protect">
+          <label class="check-row">
+            <input type="checkbox" checked={lock} onChange={(e) => setLock((e.target as HTMLInputElement).checked)} /> Encrypt with a password
+          </label>
+          {lock && (
+            <>
+              <label class="field">
+                <span>Password</span>
+                <input type="password" autocomplete="new-password" value={password} onInput={(e) => setPassword((e.target as HTMLInputElement).value)} />
+              </label>
+              <label class="field">
+                <span>Verify</span>
+                <input type="password" autocomplete="new-password" value={confirm} onInput={(e) => setConfirm((e.target as HTMLInputElement).value)} />
+              </label>
+              <div class="check-line">
+                {(
+                  [
+                    ['printing', 'Allow printing'],
+                    ['copying', 'Allow copying text'],
+                    ['editing', 'Allow editing']
+                  ] as const
+                ).map(([k, label]) => (
+                  <label key={k} class="check-row">
+                    <input type="checkbox" checked={allow[k]} onChange={(e) => setAllow({ ...allow, [k]: (e.target as HTMLInputElement).checked })} /> {label}
+                  </label>
+                ))}
+              </div>
+              <small class={passwordProblem ? 'field-error' : 'muted'}>
+                {passwordProblem ?? 'AES-256. Keep the password somewhere safe: without it the file can’t be opened.'}
+              </small>
+            </>
+          )}
+        </div>
+      )}
       {format !== 'pdf' && (
         <label class="field">
           <span>Resolution</span>

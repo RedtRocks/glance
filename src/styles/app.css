@@ -2196,3 +2196,12 @@ input[type='range'] {
   max-height: 420px;
   box-shadow: var(--page-shadow);
 }
+
+.protect {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.field-error {
+  color: #c42b1c;
+}
