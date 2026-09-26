@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'preact/hooks'
 import { COLORS, type Color, type Markup } from '../../core/markup'
-import { activeDoc, type PdfDoc } from '../../state/documents'
+import { activeDoc, ImageDoc, PdfDoc, type MarkupHost } from '../../state/documents'
+import { adjustColorOpen, adjustSizeOpen } from '../../state/imageState'
+import { copySubject, cropToSelection, removeBackground } from '../../state/imageActions'
 import {
   activeSignature,
   css,
@@ -29,6 +31,13 @@ const SHAPES: [Tool, IconName, string][] = [
   ['star', 'star', 'Star'],
   ['polygon', 'polygon', 'Polygon (click points, double-click to finish)'],
   ['bubble', 'bubble', 'Speech bubble']
+]
+
+const IMAGE_SELECT: [Tool, IconName, string][] = [
+  ['selectRect', 'selectRect', 'Rectangular selection'],
+  ['selectEllipse', 'selectEllipse', 'Elliptical selection'],
+  ['lasso', 'lasso', 'Lasso selection'],
+  ['smartLasso', 'smartLasso', 'Smart lasso (snaps to edges)']
 ]
 
 const PALETTE: Color[] = [COLORS.red, COLORS.orange, COLORS.yellow, COLORS.green, COLORS.blue, COLORS.purple, COLORS.black, COLORS.white]
@@ -62,7 +71,7 @@ function Swatches({ value, onPick, allowNone }: { value: Color | null; onPick: (
 }
 
 /** Updates the default style and, if something is selected, that markup too. */
-function restyle(doc: PdfDoc | null, patch: Partial<Markup['style']>, textPatch?: Partial<{ fontSize: number; color: Color }>): void {
+function restyle(doc: MarkupHost | null, patch: Partial<Markup['style']>, textPatch?: Partial<{ fontSize: number; color: Color }>): void {
   style.value = { ...style.value, ...patch }
   if (textPatch) textStyle.value = { ...textStyle.value, ...textPatch }
   const id = selectedId.peek()
@@ -77,13 +86,13 @@ function restyle(doc: PdfDoc | null, patch: Partial<Markup['style']>, textPatch?
   doc.edit('Change Style', { markup: next })
 }
 
-function selectedMarkup(doc: PdfDoc | null): Markup | undefined {
+function selectedMarkup(doc: MarkupHost | null): Markup | undefined {
   return doc?.markup.value.find((m) => m.id === selectedId.value)
 }
 
-function textMarkup(doc: PdfDoc | null, kind: TextMarkupKind): void {
+function textMarkup(doc: MarkupHost | null, kind: TextMarkupKind): void {
   const root = document.querySelector<HTMLElement>('.pdf-scroller')
-  if (doc && root && markSelection(doc, root, kind)) return
+  if (doc instanceof PdfDoc && root && markSelection(doc, root, kind)) return
   setTool(tool.value === kind ? 'select' : kind)
 }
 
@@ -136,9 +145,20 @@ function Signatures({ close }: { close: () => void }) {
   )
 }
 
+function ActionButton({ icon, label, onClick }: { icon: IconName; label: string; onClick: () => void }) {
+  return (
+    <button class="tb-button" title={label} aria-label={label} onClick={onClick}>
+      <Icon name={icon} />
+    </button>
+  )
+}
+
 export function MarkupToolbar() {
-  const doc = activeDoc.value
-  if (!markupBar.value || doc?.kind !== 'pdf') return null
+  const active = activeDoc.value
+  const image = active instanceof ImageDoc && active.editable ? active : null
+  const doc = active?.kind === 'pdf' ? active : image
+  if (!markupBar.value || !doc) return null
+  const selectTool = IMAGE_SELECT.find(([t]) => t === tool.value)
   const sel = selectedMarkup(doc)
   const st = sel?.style ?? style.value
   const ts = sel?.type === 'text' ? { fontSize: sel.fontSize, color: sel.color } : textStyle.value
@@ -146,13 +166,36 @@ export function MarkupToolbar() {
   return (
     <div class="markup-toolbar" role="toolbar" aria-label="Markup">
       <ToolButton t="select" icon="cursor" label="Select and move markup" />
+      {image && (
+        <>
+          <Popover icon={selectTool?.[1] ?? 'selectRect'} label="Selection tools" pressed={!!selectTool}>
+            {(close) => (
+              <div class="flyout-col">
+                {IMAGE_SELECT.map(([t, icon, label]) => (
+                  <button
+                    key={t}
+                    class="menu-item"
+                    onClick={() => {
+                      setTool(t)
+                      close()
+                    }}
+                  >
+                    <Icon name={icon} size={16} /> <span>{label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </Popover>
+          <ToolButton t="instantAlpha" icon="instantAlpha" label="Instant Alpha: drag over a color to select it" />
+        </>
+      )}
       <span class="tb-sep" />
       <ToolButton t="sketch" icon="sketch" label="Sketch (shapes are recognized)" />
       <ToolButton t="draw" icon="draw" label="Draw" />
       <Popover icon={shapeTool?.[1] ?? 'shapes'} label="Shapes" pressed={!!shapeTool}>
         {(close) => (
           <div class="shape-grid">
-            {SHAPES.map(([t, icon, label]) => (
+            {[...SHAPES, ...(image ? ([['loupe', 'zoomIn', 'Loupe (magnifier)']] as [Tool, IconName, string][]) : [])].map(([t, icon, label]) => (
               <button
                 key={t}
                 class={`tb-button ${tool.value === t ? 'pressed' : ''}`}
@@ -170,13 +213,13 @@ export function MarkupToolbar() {
         )}
       </Popover>
       <ToolButton t="text" icon="textBox" label="Text box" />
-      <ToolButton t="note" icon="note" label="Note" />
+      {!image && <ToolButton t="note" icon="note" label="Note" />}
       <span class="tb-sep" />
-      <button class={`tb-button ${tool.value === 'highlight' ? 'pressed' : ''}`} title="Highlight selected text" aria-label="Highlight" onClick={() => textMarkup(doc, 'highlight')}>
+      {!image && <button class={`tb-button ${tool.value === 'highlight' ? 'pressed' : ''}`} title="Highlight selected text" aria-label="Highlight" onClick={() => textMarkup(doc, 'highlight')}>
         <Icon name="highlight" />
         <span class="swatch-bar" style={{ background: css(highlightColor.value) }} />
-      </button>
-      <Popover icon="underline" label="Highlight color, underline and strikethrough">
+      </button>}
+      {!image && <Popover icon="underline" label="Highlight color, underline and strikethrough">
         {(close) => (
           <div class="flyout-col">
             <Swatches value={highlightColor.value} onPick={(c) => c && (highlightColor.value = c)} />
@@ -188,7 +231,7 @@ export function MarkupToolbar() {
             </button>
           </div>
         )}
-      </Popover>
+      </Popover>}
       <Popover icon="signature" label="Sign" pressed={tool.value === 'signature'}>
         {(close) => <Signatures close={close} />}
       </Popover>
@@ -236,6 +279,16 @@ export function MarkupToolbar() {
           </div>
         )}
       </Popover>
+      {image && (
+        <>
+          <span class="tb-sep" />
+          <ActionButton icon="crop" label="Crop to selection (Ctrl+K)" onClick={() => void cropToSelection(image)} />
+          <ActionButton icon="adjustColor" label="Adjust color (Ctrl+Shift+C)" onClick={() => (adjustColorOpen.value = true)} />
+          <ActionButton icon="adjustSize" label="Adjust size (Ctrl+Shift+U)" onClick={() => (adjustSizeOpen.value = true)} />
+          <ActionButton icon="removeBg" label="Remove background (Ctrl+Shift+K)" onClick={() => void removeBackground(image)} />
+          <ActionButton icon="copySubject" label="Copy subject" onClick={() => void copySubject(image)} />
+        </>
+      )}
       <div class="tb-spacer" />
       <button class="tb-button" title="Hide markup toolbar (Ctrl+Shift+A)" aria-label="Hide markup toolbar" onClick={() => {
           setTool('select')

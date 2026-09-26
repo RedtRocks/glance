@@ -21,6 +21,13 @@ export type Tool =
   | 'note'
   | 'signature'
   | 'redact'
+  | 'loupe'
+  // Image selection tools
+  | 'selectRect'
+  | 'selectEllipse'
+  | 'lasso'
+  | 'smartLasso'
+  | 'instantAlpha'
 
 export const SHAPE_TOOLS: Tool[] = ['rect', 'roundRect', 'oval', 'line', 'arrow', 'star', 'polygon', 'bubble']
 export const TEXT_MARKUP_TOOLS: Tool[] = ['highlight', 'underline', 'strike']
@@ -51,3 +58,5 @@ export function css(c: Color | null, alpha = 1): string {
   const [r, g, b] = c.map((v) => Math.round(v * 255))
   return alpha < 1 ? `rgba(${r},${g},${b},${alpha})` : `rgb(${r},${g},${b})`
 }
+
+export const IMAGE_SELECT_TOOLS: Tool[] = ['selectRect', 'selectEllipse', 'lasso', 'smartLasso', 'instantAlpha']

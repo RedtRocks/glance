@@ -13,6 +13,8 @@ import { printDoc } from './print'
 import { applyRedactions } from './actions'
 import { markupBar, selectedId, setTool, signatureDialog, tool } from './markupState'
 import { bookmarksFor, setBookmarks } from './bookmarks'
+import { adjustColorOpen, adjustSizeOpen, exportOpen, imageSelection } from './imageState'
+import * as img from './imageActions'
 
 export interface Command {
   id: string
@@ -33,6 +35,9 @@ export function stepZoom(current: number, dir: 1 | -1): number {
 }
 
 const pdf = () => (activeDoc.value?.kind === 'pdf' ? activeDoc.value : null)
+const image = () => img.editableImage(activeDoc.value)
+const isImage = () => image() !== null
+const markupHost = () => pdf() ?? image()
 const hasDoc = () => activeDoc.value !== null
 const isPdf = () => pdf() !== null
 const multiPage = () => {
@@ -90,15 +95,22 @@ export const COMMANDS: Command[] = [
   // File
   { id: 'file.open', label: 'Open…', keys: ['Ctrl+O'], run: actions.openWithDialog },
   { id: 'file.newWindow', label: 'New Window', keys: ['Ctrl+Shift+N'], run: () => platform.openNewWindow([]) },
-  { id: 'file.save', label: 'Save', keys: ['Ctrl+S'], run: () => actions.save(), enabled: isPdf },
-  { id: 'file.saveAs', label: 'Save As…', keys: ['Ctrl+Shift+S'], run: () => actions.saveAs(), enabled: isPdf },
-  { id: 'file.exportPages', label: 'Export Selected Pages…', keys: ['Ctrl+E'], run: () => actions.exportSelectedPages(), enabled: isPdf },
+  { id: 'file.save', label: 'Save', keys: ['Ctrl+S'], run: () => actions.save(), enabled: () => isPdf() || isImage() },
+  { id: 'file.saveAs', label: 'Save As…', keys: ['Ctrl+Shift+S'], run: () => actions.saveAs(), enabled: () => isPdf() || isImage() },
+  {
+    id: 'file.export',
+    label: 'Export…',
+    keys: ['Ctrl+E'],
+    run: () => (isImage() ? void (exportOpen.value = true) : actions.exportSelectedPages()),
+    enabled: () => isPdf() || isImage()
+  },
+  { id: 'file.exportPages', label: 'Export Selected Pages…', run: () => actions.exportSelectedPages(), enabled: isPdf },
   { id: 'file.print', label: 'Print…', keys: ['Ctrl+P'], run: () => printDoc(activeDoc.value), enabled: hasDoc },
   { id: 'file.close', label: 'Close Tab', keys: ['Ctrl+W', 'Ctrl+F4'], run: () => actions.closeDoc(), enabled: hasDoc },
   { id: 'file.settings', label: 'Settings', keys: ['Ctrl+,'], run: () => void (settingsOpen.value = true) },
   // Edit
-  { id: 'edit.undo', label: 'Undo', keys: ['Ctrl+Z'], run: () => actions.undo(), enabled: () => !!pdf()?.history.canUndo },
-  { id: 'edit.redo', label: 'Redo', keys: ['Ctrl+Y', 'Ctrl+Shift+Z'], run: () => actions.redo(), enabled: () => !!pdf()?.history.canRedo },
+  { id: 'edit.undo', label: 'Undo', keys: ['Ctrl+Z'], run: () => actions.undo(), enabled: () => !!(pdf() ?? image())?.history.canUndo },
+  { id: 'edit.redo', label: 'Redo', keys: ['Ctrl+Y', 'Ctrl+Shift+Z'], run: () => actions.redo(), enabled: () => !!(pdf() ?? image())?.history.canRedo },
   { id: 'edit.selectAll', label: 'Select All Pages', keys: ['Ctrl+A'], run: () => actions.selectAllPages(), enabled: isPdf },
   { id: 'edit.find', label: 'Find…', keys: ['Ctrl+F'], run: () => void (findOpen.value = true), enabled: isPdf },
   { id: 'edit.insertBlank', label: 'Insert Blank Page', run: () => actions.insertBlankPage(), enabled: isPdf },
@@ -109,17 +121,21 @@ export const COMMANDS: Command[] = [
     keys: ['Delete', 'Backspace'],
     // Selected markup first; otherwise the selected pages.
     run: () => {
-      const d = pdf()
+      const host = markupHost()
       const id = selectedId.peek()
-      if (d && id && d.markup.peek().some((m) => m.id === id)) {
-        d.edit('Delete Markup', { markup: d.markup.peek().filter((m) => m.id !== id) })
+      if (host && id && host.markup.peek().some((m) => m.id === id)) {
+        host.edit('Delete Markup', { markup: host.markup.peek().filter((m) => m.id !== id) })
         selectedId.value = null
         return
       }
+      const im = image()
+      if (im && imageSelection.peek()) return void img.deleteSelection(im)
+      const d = pdf()
       if (d && d.selection.peek().length) return actions.deletePages()
     },
-    enabled: isPdf
+    enabled: () => isPdf() || isImage()
   },
+  { id: 'edit.invertSelection', label: 'Invert Selection', keys: ['Ctrl+Shift+I'], run: () => void img.invertSelection(image()!), enabled: () => isImage() && !!imageSelection.value },
   { id: 'edit.deletePages', label: 'Delete Selected Pages', run: () => actions.deletePages(), enabled: isPdf },
   { id: 'edit.addBookmark', label: 'Add Bookmark', keys: ['Ctrl+D'], run: () => addBookmark(), enabled: isPdf },
   // View
@@ -176,15 +192,23 @@ export const COMMANDS: Command[] = [
         markupBar.value = true
       }
     },
-    enabled: isPdf,
+    enabled: () => isPdf() || isImage(),
     checked: () => markupBar.value
   },
   { id: 'tools.highlight', label: 'Highlight', keys: ['Ctrl+Shift+H'], run: () => toggleTool('highlight'), enabled: isPdf, checked: () => tool.value === 'highlight' },
-  { id: 'tools.text', label: 'Add Text Box', keys: ['Ctrl+Shift+T'], run: () => toggleTool('text'), enabled: isPdf },
+  { id: 'tools.text', label: 'Add Text Box', keys: ['Ctrl+Shift+T'], run: () => toggleTool('text'), enabled: () => isPdf() || isImage() },
   { id: 'tools.note', label: 'Add Note', keys: ['Ctrl+Shift+O'], run: () => toggleTool('note'), enabled: isPdf },
-  { id: 'tools.signature', label: 'Signature…', keys: ['Ctrl+Shift+J'], run: () => void (signatureDialog.value = true), enabled: isPdf },
-  { id: 'tools.redact', label: 'Redact', keys: ['Ctrl+Shift+R'], run: () => toggleTool('redact'), enabled: isPdf, checked: () => tool.value === 'redact' },
+  { id: 'tools.signature', label: 'Signature…', keys: ['Ctrl+Shift+J'], run: () => void (signatureDialog.value = true), enabled: () => isPdf() || isImage() },
+  { id: 'tools.redact', label: 'Redact', keys: ['Ctrl+Shift+R'], run: () => toggleTool('redact'), enabled: () => isPdf() || isImage(), checked: () => tool.value === 'redact' },
   { id: 'tools.applyRedactions', label: 'Apply Redactions…', run: () => void applyRedactions(), enabled: () => !!pdf()?.redactions.value.length },
+  { id: 'tools.crop', label: 'Crop to Selection', keys: ['Ctrl+K'], run: () => void img.cropToSelection(image()!), enabled: isImage },
+  { id: 'tools.instantAlpha', label: 'Instant Alpha', run: () => toggleTool('instantAlpha'), enabled: isImage, checked: () => tool.value === 'instantAlpha' },
+  { id: 'tools.removeBackground', label: 'Remove Background', keys: ['Ctrl+Shift+K'], run: () => void img.removeBackground(image()!), enabled: isImage },
+  { id: 'tools.copySubject', label: 'Copy Subject', run: () => void img.copySubject(image()!), enabled: isImage },
+  { id: 'tools.adjustColor', label: 'Adjust Color…', keys: ['Ctrl+Shift+C'], run: () => void (adjustColorOpen.value = true), enabled: isImage },
+  { id: 'tools.adjustSize', label: 'Adjust Size…', keys: ['Ctrl+Shift+U'], run: () => void (adjustSizeOpen.value = true), enabled: isImage },
+  { id: 'tools.flipHorizontal', label: 'Flip Horizontal', run: () => void img.flipImage(image()!, 'horizontal'), enabled: isImage },
+  { id: 'tools.flipVertical', label: 'Flip Vertical', run: () => void img.flipImage(image()!, 'vertical'), enabled: isImage },
   { id: 'tools.rotateLeft', label: 'Rotate Left', keys: ['Ctrl+L'], run: () => actions.rotatePages(-90), enabled: hasDoc },
   { id: 'tools.rotateRight', label: 'Rotate Right', keys: ['Ctrl+R'], run: () => actions.rotatePages(90), enabled: hasDoc },
   // Help

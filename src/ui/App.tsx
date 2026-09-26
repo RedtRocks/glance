@@ -24,6 +24,11 @@ import { MarkupToolbar } from './markup/MarkupToolbar'
 import { SignatureDialog } from './markup/SignatureDialog'
 import { RedactionBar } from './RedactionBar'
 import { signatureDialog } from '../state/markupState'
+import { adjustColorOpen, adjustSizeOpen, exportOpen, imageSelection } from '../state/imageState'
+import { ImageDoc } from '../state/documents'
+import { AdjustColorPanel } from './image/AdjustColorPanel'
+import { AdjustSizeDialog } from './image/AdjustSizeDialog'
+import { ExportDialog } from './image/ExportDialog'
 
 function Viewer() {
   const doc = activeDoc.value
@@ -39,6 +44,7 @@ function Viewer() {
           {doc.kind === 'notice' && <NoticeView doc={doc} />}
         </div>
       </main>
+      {doc instanceof ImageDoc && doc.editable && adjustColorOpen.value && <AdjustColorPanel key={doc.id} doc={doc} />}
     </div>
   )
 }
@@ -68,6 +74,10 @@ export function App() {
   // Window title follows the active document (Windows shows it in the taskbar).
   const doc = activeDoc.value
   useEffect(() => {
+    imageSelection.value = null
+    adjustColorOpen.value = false
+  }, [doc?.id])
+  useEffect(() => {
     const name = doc?.name.value
     void platform.setWindowTitle(name ? `${doc?.dirty.value ? '• ' : ''}${name} - Glance` : 'Glance')
   }, [doc, doc?.name.value, doc?.dirty.value])
@@ -87,6 +97,8 @@ export function App() {
       {settingsOpen.value && <SettingsDialog />}
       {customizeOpen.value && <CustomizeToolbar />}
       {signatureDialog.value && <SignatureDialog />}
+      {activeDoc.value instanceof ImageDoc && adjustSizeOpen.value && <AdjustSizeDialog doc={activeDoc.value} />}
+      {activeDoc.value instanceof ImageDoc && exportOpen.value && <ExportDialog doc={activeDoc.value} />}
       <DialogHost />
       <Toasts />
     </div>

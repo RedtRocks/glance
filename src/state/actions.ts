@@ -19,6 +19,7 @@ import {
   type Doc
 } from './documents'
 import { alertDialog, promptText, showDialog, toast, withBusy } from './ui'
+import { editableImage, rotateImage, saveImage, saveImageAs } from './imageActions'
 
 const GS_INSTALL = 'winget install ArtifexSoftware.GhostScript'
 
@@ -184,6 +185,7 @@ async function resolvePendingRedactions(doc: PdfDoc): Promise<boolean> {
 }
 
 export async function save(doc: Doc | null = activeDoc.value): Promise<void> {
+  if (doc instanceof ImageDoc) return saveImage(doc)
   if (!doc || doc.kind !== 'pdf') return
   const path = doc.path.value
   if (!path) return saveAs(doc)
@@ -194,6 +196,7 @@ export async function save(doc: Doc | null = activeDoc.value): Promise<void> {
 }
 
 export async function saveAs(doc: Doc | null = activeDoc.value): Promise<void> {
+  if (doc instanceof ImageDoc) return saveImageAs(doc)
   if (!doc || doc.kind !== 'pdf') return
   const base = doc.name.value.replace(/\.[^.]+$/, '')
   const target = await platform.saveDialog(`${base}.pdf`, [{ name: 'PDF document', extensions: ['pdf'] }])
@@ -246,6 +249,8 @@ async function run(doc: PdfDoc, label: string, op: Parameters<PdfDoc['apply']>[1
 }
 
 export async function rotatePages(delta: 90 | -90, doc = activeDoc.value): Promise<void> {
+  const img = editableImage(doc)
+  if (img) return rotateImage(img, delta > 0)
   if (doc?.kind === 'image') {
     doc.rotation.value = (doc.rotation.value + delta + 360) % 360
     return
@@ -379,10 +384,10 @@ export function selectAllPages(doc = activeDoc.value): void {
 }
 
 export async function undo(doc = activeDoc.value): Promise<void> {
-  if (doc?.kind === 'pdf') await doc.undo()
+  if (doc?.kind === 'pdf' || doc?.kind === 'image') await doc.undo()
 }
 export async function redo(doc = activeDoc.value): Promise<void> {
-  if (doc?.kind === 'pdf') await doc.redo()
+  if (doc?.kind === 'pdf' || doc?.kind === 'image') await doc.redo()
 }
 
 export async function showAbout(): Promise<void> {

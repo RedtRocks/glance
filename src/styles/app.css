@@ -701,9 +701,16 @@ select {
   display: grid;
   place-items: center;
 }
-.checkerboard {
-  background: repeating-conic-gradient(#e6e6e6 0% 25%, #fff 0% 50%) 50% / 16px 16px;
+.image-page {
+  position: relative;
   box-shadow: var(--page-shadow);
+}
+.image-page > img,
+.image-pixels {
+  display: block;
+}
+.checkerboard {
+  background: repeating-conic-gradient(#e6e6e6 0% 25%, #fff 0% 50%) 0 0 / 16px 16px;
 }
 .info-bar {
   padding: 8px 16px;
@@ -1642,4 +1649,182 @@ select {
 .toggle-switch input:checked::before {
   background: var(--on-accent);
   transform: translateX(20px);
+}
+
+/* ---------- Image editing ---------- */
+.image-page .markup-layer {
+  z-index: 3;
+}
+.loupe-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.selection-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+.selection-overlay.active {
+  pointer-events: auto;
+  cursor: crosshair;
+}
+.selection-mask {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.marching-ants {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.marching-ants * {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+.ants-back * {
+  stroke: #fff;
+  stroke-width: 1;
+}
+.ants-front * {
+  stroke: #000;
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+  animation: ants 600ms linear infinite;
+}
+@keyframes ants {
+  to {
+    stroke-dashoffset: -8;
+  }
+}
+
+/* Windows side pane (Adjust Color) */
+.side-pane {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  width: 300px;
+  background: var(--layer-alt);
+  border-left: 1px solid var(--stroke);
+}
+.side-pane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 8px 8px 16px;
+}
+.side-pane-header h2 {
+  margin: 0;
+  font: 600 14px/20px var(--font);
+}
+.side-pane-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.side-pane-footer {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--stroke);
+  background: var(--bg-solid);
+}
+.side-pane-footer .btn {
+  flex: 1;
+  min-width: 0;
+}
+.side-pane-actions {
+  display: flex;
+  gap: 8px;
+}
+.side-pane-actions .btn {
+  flex: 1;
+  min-width: 0;
+}
+.histogram canvas {
+  display: block;
+  width: 100%;
+  height: 80px;
+  border-radius: var(--radius);
+  background: var(--subtle-press);
+}
+.levels {
+  position: relative;
+  height: 20px;
+}
+.levels input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  margin: 0;
+  background: transparent;
+  pointer-events: none;
+  appearance: none;
+}
+.levels input::-webkit-slider-thumb {
+  pointer-events: auto;
+  appearance: none;
+  width: 12px;
+  height: 14px;
+  border: 1px solid var(--stroke-strong);
+  border-radius: 3px;
+  background: var(--card);
+  cursor: ew-resize;
+}
+.levels input:nth-child(1)::-webkit-slider-thumb {
+  background: #000;
+}
+.levels input:nth-child(2)::-webkit-slider-thumb {
+  background: #888;
+}
+.levels input:nth-child(3)::-webkit-slider-thumb {
+  background: #fff;
+}
+.slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.slider-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+.slider-value {
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+input[type='range'] {
+  accent-color: var(--accent);
+}
+.size-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.size-grid .field input,
+.size-grid .field select {
+  width: 100%;
+}
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.check-row input {
+  accent-color: var(--accent);
+  width: 18px;
+  height: 18px;
 }

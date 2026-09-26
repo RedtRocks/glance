@@ -181,7 +181,8 @@ const SUBTYPE: Record<Markup['type'], string> = {
   highlight: 'Highlight',
   underline: 'Underline',
   strike: 'StrikeOut',
-  signature: 'Stamp'
+  signature: 'Stamp',
+  loupe: 'Circle' // images only; never written to PDFs
 }
 
 function pdfDate(ms: number): string {

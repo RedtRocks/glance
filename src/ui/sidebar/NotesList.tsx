@@ -19,7 +19,8 @@ const ICON: Record<Markup['type'], IconName> = {
   line: 'line',
   arrow: 'arrow',
   polygon: 'polygon',
-  ink: 'draw'
+  ink: 'draw',
+  loupe: 'zoomIn'
 }
 
 const LABEL: Record<Markup['type'], string> = {
@@ -37,7 +38,8 @@ const LABEL: Record<Markup['type'], string> = {
   line: 'Line',
   arrow: 'Arrow',
   polygon: 'Polygon',
-  ink: 'Drawing'
+  ink: 'Drawing',
+  loupe: 'Loupe'
 }
 
 function excerpt(m: Markup): string {

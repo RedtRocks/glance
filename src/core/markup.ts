@@ -39,6 +39,8 @@ export type Markup =
   /** Quads: [x1,y1 (top-left), x2,y2 (top-right), x3,y3 (bottom-left), x4,y4 (bottom-right)]. */
   | (Base & { type: 'highlight' | 'underline' | 'strike'; quads: number[][]; text?: string })
   | (Base & { type: 'signature'; rect: Rect; png: Uint8Array })
+  /** Magnifying circle over an image (images only; flattened on save). */
+  | (Base & { type: 'loupe'; rect: Rect; zoom: number })
 
 export type MarkupType = Markup['type']
 
@@ -240,6 +242,7 @@ export function outlinePath(m: Markup): string {
     case 'roundRect':
       return roundRectPath(m.rect)
     case 'oval':
+    case 'loupe':
       return ellipsePath(m.rect)
     case 'star':
       return polyPath(starPoints(m.rect), true)

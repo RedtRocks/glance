@@ -6,7 +6,9 @@
 
 Glance brings Preview's everyday superpowers to Windows: rearranging and merging PDF pages by dragging, dragging pages out to create new files, real redaction, markup and signatures, background removal, metadata scrubbing, batch processing, and more. It's built to feel native on Windows 11 (Fluent design, Mica, Explorer integration) while staying small and fast.
 
-> **Status: early development (Milestone 2).** Viewing, PDF page management, markup, signatures, forms and redaction work today. Everything else is on the roadmap below and in [`docs/adr`](docs/adr).
+> **Status: early development (Milestone 3).** Viewing, PDF page management, markup, signatures, forms, redaction and image editing work today. Everything else is on the roadmap below and in [`docs/adr`](docs/adr).
+>
+> **[Download the latest release](https://github.com/RedtRocks/viewer/releases/latest)** (Windows 10/11, x64 and ARM64).
 
 ## Why it's light
 
@@ -33,7 +35,11 @@ Glance brings Preview's everyday superpowers to Windows: rearranging and merging
 | Fill in PDF forms | ✅ |
 | Redaction that truly removes content (pages rasterized; form data, thumbnails, tags and orphaned objects purged) | ✅ |
 | Highlights & Notes sidebar, bookmarks | ✅ |
-| Instant Alpha, Remove Background / Copy Subject (bundled AI model), Adjust Color/Size, crop | Milestone 3 |
+| Remove Background and Copy Subject with a bundled AI model (U²-Net-p, runs locally in Rust) | ✅ |
+| Instant Alpha; rectangular, elliptical, lasso and smart-lasso selection; crop, delete, invert selection | ✅ |
+| Adjust Color (exposure, contrast, highlights, shadows, saturation, temperature, tint, sepia, sharpness, levels with histogram, Auto Levels) with live preview | ✅ |
+| Adjust Size (fit-into presets, units, resolution), rotate and flip | ✅ |
+| Markup on images (shapes, text, signatures, loupe), flattened on save; export as PNG, JPEG, WebP, TIFF, BMP or PDF | ✅ |
 | Inspector: metadata and GPS removal, annotation/link cleanup; autosave and version history | Milestone 4 |
 | 3D models, collage, batch processing, text recognition (Windows OCR) | Milestone 5 |
 | Windows 11 context menu, Share, installer polish, update notifications | Milestone 6 |

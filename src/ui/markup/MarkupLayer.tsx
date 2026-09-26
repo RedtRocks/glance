@@ -12,7 +12,7 @@ import {
   type Pt,
   type Rect
 } from '../../core/markup'
-import type { PdfDoc } from '../../state/documents'
+import type { MarkupHost } from '../../state/documents'
 import {
   activeSignature,
   css,
@@ -30,7 +30,7 @@ import {
 import { RedactionMark, Shape, cssBox } from './Shape'
 
 interface Props {
-  doc: PdfDoc
+  doc: MarkupHost
   index: number
   vp: PageViewport
   /** Thumbnails render markup without interaction. */
@@ -42,7 +42,7 @@ type Drag =
   | { kind: 'resize'; id: string; corner: 0 | 1 | 2 | 3; from: Rect; to: Rect }
   | { kind: 'endpoint'; id: string; end: 'from' | 'to'; at: Pt }
 
-const DRAW_TOOLS = new Set<Tool>([...SHAPE_TOOLS, 'sketch', 'draw', 'text', 'note', 'signature', 'redact'])
+const DRAW_TOOLS = new Set<Tool>([...SHAPE_TOOLS, 'sketch', 'draw', 'text', 'note', 'signature', 'redact', 'loupe'])
 
 function base(page: number) {
   return { id: newId(), page, style: { ...style.peek() }, created: Date.now() }
@@ -238,6 +238,10 @@ export function MarkupLayer({ doc, index, vp, interactive = true }: Props) {
           return { ...base(index), type: 'ink', strokes: [[...points]] }
         case 'redact':
           return null
+        case 'loupe': {
+          const r = Math.hypot(end[0] - start[0], end[1] - start[1])
+          return { ...base(index), style: { ...style.peek(), stroke: [0.2, 0.2, 0.2], width: 3 }, type: 'loupe', rect: [start[0] - r, start[1] - r, start[0] + r, start[1] + r], zoom: 2 }
+        }
         default:
           return { ...base(index), type: t as 'rect', rect: normRect(start, end) }
       }
@@ -276,7 +280,9 @@ export function MarkupLayer({ doc, index, vp, interactive = true }: Props) {
         return
       }
       // A plain click drops a default-sized shape, like Preview.
-      const m = tiny
+      const m = tiny && t === 'loupe'
+        ? { ...base(index), style: { ...style.peek(), stroke: [0.2, 0.2, 0.2] as [number, number, number], width: 3 }, type: 'loupe' as const, rect: [start[0] - 60, start[1] - 60, start[0] + 60, start[1] + 60] as Rect, zoom: 2 }
+        : tiny
         ? t === 'line' || t === 'arrow'
           ? { ...base(index), type: t, from: start, to: [start[0] + 100, start[1]] as Pt }
           : { ...base(index), type: t as 'rect', rect: [start[0] - 50, start[1] - 35, start[0] + 50, start[1] + 35] as Rect }
@@ -388,7 +394,7 @@ function Selection({ m, vp }: { m: Markup; vp: PageViewport }) {
 }
 
 /** Text boxes are HTML so they wrap like the saved appearance; editing happens in place. */
-function TextBox({ doc, m, vp, editing }: { doc: PdfDoc; m: Extract<Markup, { type: 'text' }>; vp: PageViewport; editing: boolean }) {
+function TextBox({ doc, m, vp, editing }: { doc: MarkupHost; m: Extract<Markup, { type: 'text' }>; vp: PageViewport; editing: boolean }) {
   const ref = useRef<HTMLTextAreaElement>(null)
   const [x, y] = vp.convertToViewportPoint(m.rect[0], m.rect[3])
   const s = vp.scale
@@ -436,7 +442,7 @@ function TextBox({ doc, m, vp, editing }: { doc: PdfDoc; m: Extract<Markup, { ty
   )
 }
 
-function NoteEditor({ doc, m, vp }: { doc: PdfDoc; m: Extract<Markup, { type: 'note' }>; vp: PageViewport }) {
+function NoteEditor({ doc, m, vp }: { doc: MarkupHost; m: Extract<Markup, { type: 'note' }>; vp: PageViewport }) {
   const ref = useRef<HTMLTextAreaElement>(null)
   const [x, y] = vp.convertToViewportPoint(m.at[0], m.at[1])
   useEffect(() => ref.current?.focus(), [])

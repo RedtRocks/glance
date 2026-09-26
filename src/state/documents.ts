@@ -4,6 +4,7 @@ import { History } from './history'
 import { openPdf, readOutline, PasswordRequired, type OutlineNode } from '../pdf/engine'
 import type { Probe } from '../platform'
 import { remapPages, type Markup, type PageMap, type Redaction } from '../core/markup'
+import type { Raster } from '../core/image/raster'
 
 let seq = 0
 const nextId = (): string => `doc${++seq}`
@@ -26,7 +27,7 @@ abstract class BaseDoc {
   }
 }
 
-export class PdfDoc extends BaseDoc {
+export class PdfDoc extends BaseDoc implements MarkupHost {
   readonly kind = 'pdf' as const
   bytes: Uint8Array = new Uint8Array()
   password?: string
@@ -181,7 +182,24 @@ interface Snapshot {
   redactions: Redaction[]
 }
 
-export class ImageDoc extends BaseDoc {
+/** What the markup layer needs from a document (PDF pages or an image). */
+export interface MarkupHost {
+  readonly id: string
+  readonly markup: Signal<Markup[]>
+  readonly redactions: Signal<Redaction[]>
+  edit(label: string, change: { markup?: Markup[]; redactions?: Redaction[] }): void
+}
+
+interface ImageSnapshot {
+  raster: Raster | null
+  markup: Markup[]
+  redactions: Redaction[]
+}
+
+/** Formats Glance can write back in place (see src-tauri/src/encode.rs). */
+export const WRITABLE_IMAGE_EXTS = ['png', 'jpg', 'jpeg', 'jfif', 'webp', 'bmp', 'dib', 'tif', 'tiff', 'tga', 'qoi', 'ico']
+
+export class ImageDoc extends BaseDoc implements MarkupHost {
   readonly kind = 'image' as const
   readonly probe: Probe
   readonly pageCount: Signal<number>
@@ -189,10 +207,18 @@ export class ImageDoc extends BaseDoc {
   readonly selection = signal<number[]>([])
   readonly zoom = signal<number | 'fit'>('fit')
   readonly effectiveScale = signal(1)
-  /** View-only rotation in degrees (editing tools arrive with the image milestone). */
+  /** Display rotation for view-only images (editable images rotate their pixels). */
   readonly rotation = signal(0)
   readonly natural = signal<{ width: number; height: number } | null>(null)
   readonly notice: string | null
+  /** Decoded pixels, created on the first edit; until then the <img> path is used. */
+  readonly raster = signal<Raster | null>(null)
+  readonly markup = signal<Markup[]>([])
+  readonly redactions = signal<Redaction[]>([])
+  readonly history = new History<ImageSnapshot>(12)
+  readonly historyVersion = signal(0)
+  /** Temporary pixels shown instead of `raster` (live Adjust Color preview). */
+  readonly preview = signal<Raster | null>(null)
 
   constructor(probe: Probe, notice: string | null = null) {
     super(probe.name, probe.path)
@@ -200,6 +226,74 @@ export class ImageDoc extends BaseDoc {
     this.pageCount = signal(Math.max(1, probe.pages))
     this.notice = notice
     if (this.pageCount.value <= 1) this.sidebar.value = 'none'
+  }
+
+  /** Multi-page images (TIFF, CBZ) and EPS previews are view-only for now. */
+  get editable(): boolean {
+    return this.pageCount.peek() <= 1 && !this.notice
+  }
+
+  get writableInPlace(): boolean {
+    const ext = /\.([^.\\/]+)$/.exec(this.path.peek() ?? '')?.[1]?.toLowerCase() ?? ''
+    return WRITABLE_IMAGE_EXTS.includes(ext)
+  }
+
+  private queue: Promise<unknown> = Promise.resolve()
+  exclusive<T>(fn: () => Promise<T>): Promise<T> {
+    const run = this.queue.then(fn, fn)
+    this.queue = run.catch(() => undefined)
+    return run
+  }
+
+  private snapshot(): ImageSnapshot {
+    return { raster: this.raster.peek(), markup: this.markup.peek(), redactions: this.redactions.peek() }
+  }
+
+  /** Replaces the pixels as one undoable step. `op` must not mutate its input. */
+  async applyPixels(label: string, op: (r: Raster) => Promise<Raster> | Raster): Promise<void> {
+    return this.exclusive(async () => {
+      const current = this.raster.peek()
+      if (!current) throw new Error('image not loaded')
+      const next = await op(current)
+      this.history.push(label, this.snapshot())
+      this.raster.value = next
+      this.natural.value = { width: next.width, height: next.height }
+      this.historyVersion.value++
+      this.dirty.value = true
+    })
+  }
+
+  edit(label: string, change: { markup?: Markup[]; redactions?: Redaction[] }): void {
+    this.history.push(label, this.snapshot())
+    if (change.markup) this.markup.value = change.markup
+    if (change.redactions) this.redactions.value = change.redactions
+    this.historyVersion.value++
+    this.dirty.value = true
+  }
+
+  private restore(s: ImageSnapshot): void {
+    this.raster.value = s.raster
+    if (s.raster) this.natural.value = { width: s.raster.width, height: s.raster.height }
+    this.markup.value = s.markup
+    this.redactions.value = s.redactions
+  }
+
+  async undo(): Promise<void> {
+    const e = this.history.undo(this.snapshot())
+    if (e) {
+      this.restore(e.state)
+      this.historyVersion.value++
+      this.dirty.value = true
+    }
+  }
+
+  async redo(): Promise<void> {
+    const e = this.history.redo(this.snapshot())
+    if (e) {
+      this.restore(e.state)
+      this.historyVersion.value++
+      this.dirty.value = true
+    }
   }
 }
 

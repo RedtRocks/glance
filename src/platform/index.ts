@@ -310,3 +310,42 @@ export async function deleteSignature(id: string): Promise<void> {
   if (isTauri) return invoke('signature_delete', { id })
   sessionStorage.setItem(BROWSER_SIGS, JSON.stringify((await listSignatures()).filter((s) => s.id !== id)))
 }
+
+// ---------------------------------------------------------------------------
+// Image editing backends
+
+/** U²-Net-p subject mask: 320×320 RGB in, 320×320 mask out (see src-tauri/src/subject.rs). */
+export async function subjectMask(rgb: Uint8Array): Promise<Uint8Array> {
+  const res = await invoke<ArrayBuffer>('subject_mask', rgb)
+  return new Uint8Array(res)
+}
+
+/** Encodes RGBA pixels natively and writes them to `path` in `format`. */
+export async function saveImage(path: string, format: string, width: number, height: number, rgba: Uint8ClampedArray, quality = 92): Promise<void> {
+  if (!isTauri) {
+    const c = new OffscreenCanvas(width, height)
+    c.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(rgba), width, height), 0, 0)
+    const type = format === 'jpg' || format === 'jpeg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png'
+    const blob = await c.convertToBlob({ type, quality: quality / 100 })
+    await writeFile(path, new Uint8Array(await blob.arrayBuffer()))
+    return
+  }
+  await invoke('save_image', new Uint8Array(rgba.buffer, rgba.byteOffset, rgba.byteLength), {
+    headers: {
+      'x-path': encodeURIComponent(path),
+      'x-format': format,
+      'x-width': String(width),
+      'x-height': String(height),
+      'x-quality': String(quality)
+    }
+  })
+}
+
+export async function copyPngToClipboard(png: Uint8Array): Promise<void> {
+  if (!isTauri) {
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': new Blob([png as BlobPart], { type: 'image/png' }) })])
+    return
+  }
+  const { writeImage } = await import('@tauri-apps/plugin-clipboard-manager')
+  await writeImage(png)
+}

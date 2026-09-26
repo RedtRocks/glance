@@ -140,7 +140,7 @@ function Overflow() {
       {open && (
         <div class="overflow-menu">
           <MenuItems
-            items={['file.print', 'file.exportPages', '-', 'view.slideshow', 'view.darkPdf', '-', 'view.customizeToolbar', 'file.settings']}
+            items={['file.print', 'file.export', '-', 'view.slideshow', 'view.darkPdf', '-', 'view.customizeToolbar', 'file.settings']}
             onDone={() => (menuOpen.value = null)}
           />
         </div>
@@ -184,7 +184,7 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
   {
     id: 'markup',
     label: 'Markup',
-    applies: isPdf,
+    applies: (c) => isPdf(c) || (c.doc?.kind === 'image' && c.doc.editable),
     render: () => <Btn icon="markup" label="Show Markup Toolbar" command="tools.markup" pressed={markupBar.value} />
   },
   {

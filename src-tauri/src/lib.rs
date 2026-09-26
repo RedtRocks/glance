@@ -1,7 +1,9 @@
 mod commands;
 mod decode;
+mod encode;
 mod protocol;
 mod signatures;
+mod subject;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{Emitter, Manager};
@@ -55,6 +57,7 @@ pub fn run() {
             if let Some(win) = app.get_webview_window("main") {
                 apply_backdrop(&win);
             }
+            subject::warm_up();
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -69,6 +72,8 @@ pub fn run() {
             signatures::signatures_list,
             signatures::signature_save,
             signatures::signature_delete,
+            subject::subject_mask,
+            encode::save_image,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Glance");

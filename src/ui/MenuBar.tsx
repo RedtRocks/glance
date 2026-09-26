@@ -7,8 +7,8 @@ import { Icon } from './Icon'
 type Entry = string | '-'
 
 export const MENUS: Record<string, Entry[]> = {
-  File: ['file.open', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.exportPages', '-', 'file.print', '-', 'file.close', '-', 'file.settings'],
-  Edit: ['edit.undo', 'edit.redo', '-', 'edit.selectAll', 'edit.find', '-', 'edit.insertBlank', 'edit.insertFile', 'edit.deletePages', '-', 'edit.addBookmark'],
+  File: ['file.open', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.export', 'file.exportPages', '-', 'file.print', '-', 'file.close', '-', 'file.settings'],
+  Edit: ['edit.undo', 'edit.redo', '-', 'edit.delete', 'edit.selectAll', 'edit.invertSelection', 'edit.find', '-', 'edit.insertBlank', 'edit.insertFile', 'edit.deletePages', '-', 'edit.addBookmark'],
   View: [
     'view.hideSidebar', 'view.thumbnails', 'view.toc', 'view.notes', 'view.bookmarks', 'view.contactSheet', '-',
     'view.continuous', 'view.single', 'view.two', '-',
@@ -19,7 +19,8 @@ export const MENUS: Record<string, Entry[]> = {
   Tools: [
     'tools.markup', 'tools.highlight', 'tools.text', 'tools.note', 'tools.signature', '-',
     'tools.redact', 'tools.applyRedactions', '-',
-    'tools.rotateLeft', 'tools.rotateRight'
+    'tools.adjustColor', 'tools.adjustSize', 'tools.crop', 'tools.instantAlpha', 'tools.removeBackground', 'tools.copySubject', '-',
+    'tools.rotateLeft', 'tools.rotateRight', 'tools.flipHorizontal', 'tools.flipVertical'
   ],
   Help: ['help.github', 'help.about']
 }

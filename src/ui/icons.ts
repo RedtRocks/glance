@@ -68,6 +68,19 @@ import notes from '@fluentui/svg-icons/icons/comment_note_20_regular.svg?raw'
 import warningFilled from '@fluentui/svg-icons/icons/warning_20_filled.svg?raw'
 import infoFilled from '@fluentui/svg-icons/icons/info_20_filled.svg?raw'
 import chevronSmall from '@fluentui/svg-icons/icons/chevron_down_12_regular.svg?raw'
+import crop from '@fluentui/svg-icons/icons/crop_20_regular.svg?raw'
+import adjustColor from '@fluentui/svg-icons/icons/color_20_regular.svg?raw'
+import adjustSize from '@fluentui/svg-icons/icons/resize_image_20_regular.svg?raw'
+import removeBg from '@fluentui/svg-icons/icons/image_off_20_regular.svg?raw'
+import copySubject from '@fluentui/svg-icons/icons/person_square_20_regular.svg?raw'
+import selectRect from '@fluentui/svg-icons/icons/square_hint_20_regular.svg?raw'
+import selectEllipse from '@fluentui/svg-icons/icons/circle_hint_20_regular.svg?raw'
+import lasso from '@fluentui/svg-icons/icons/lasso_20_regular.svg?raw'
+import smartLasso from '@fluentui/svg-icons/icons/select_object_20_regular.svg?raw'
+import instantAlpha from '@fluentui/svg-icons/icons/wand_20_regular.svg?raw'
+import flipH from '@fluentui/svg-icons/icons/flip_horizontal_20_regular.svg?raw'
+import flipV from '@fluentui/svg-icons/icons/flip_vertical_20_regular.svg?raw'
+import exportIcon from '@fluentui/svg-icons/icons/arrow_export_ltr_20_regular.svg?raw'
 
-export const ICONS = { sidebar, zoomIn, zoomOut, rotateRight, rotateLeft, highlight, search, print, share, more, up, down, left, right, open, close, settings, grid, toc, bookmark, moon, save, trash, add, addPage, fullscreen, slideshow, fitPage, zoomFit, undo, redo, edit, check, copy, image, cube, info, newWindow, document, pen, markup, cursor, draw, sketch, shapes, textBox, note, signature, redact, lineWidth, strokeColor, fillColor, textStyle, underline, strike, star, oval, square, roundRect, arrow, line, bubble, polygon, bookmarkAdd, bookmarks, notes, warningFilled, infoFilled, chevronSmall }
+export const ICONS = { sidebar, zoomIn, zoomOut, rotateRight, rotateLeft, highlight, search, print, share, more, up, down, left, right, open, close, settings, grid, toc, bookmark, moon, save, trash, add, addPage, fullscreen, slideshow, fitPage, zoomFit, undo, redo, edit, check, copy, image, cube, info, newWindow, document, pen, markup, cursor, draw, sketch, shapes, textBox, note, signature, redact, lineWidth, strokeColor, fillColor, textStyle, underline, strike, star, oval, square, roundRect, arrow, line, bubble, polygon, bookmarkAdd, bookmarks, notes, warningFilled, infoFilled, chevronSmall, crop, adjustColor, adjustSize, removeBg, copySubject, selectRect, selectEllipse, lasso, smartLasso, instantAlpha, flipH, flipV, exportIcon }
 export type IconName = keyof typeof ICONS
