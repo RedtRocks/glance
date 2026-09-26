@@ -3,13 +3,14 @@ import type { PDFDocumentProxy } from 'pdfjs-dist'
 import { History } from './history'
 import { openPdf, readOutline, PasswordRequired, type OutlineNode } from '../pdf/engine'
 import type { Probe } from '../platform'
+import { remapPages, type Markup, type PageMap, type Redaction } from '../core/markup'
 
 let seq = 0
 const nextId = (): string => `doc${++seq}`
 
 export type Zoom = number | 'fit-width' | 'fit-page'
 export type ViewMode = 'continuous' | 'single' | 'two'
-export type SidebarMode = 'thumbnails' | 'toc' | 'none'
+export type SidebarMode = 'thumbnails' | 'toc' | 'notes' | 'bookmarks' | 'none'
 
 abstract class BaseDoc {
   readonly id = nextId()
@@ -45,7 +46,11 @@ export class PdfDoc extends BaseDoc {
   readonly contactSheet = signal(false)
   /** Scroll requests from page controls, sidebar, search and shortcuts. */
   readonly jump = signal<{ page: number; seq: number } | null>(null)
-  readonly history = new History<Uint8Array>(25)
+  /** Editable markup, kept outside the page bytes until save (ADR 0003). */
+  readonly markup = signal<Markup[]>([])
+  /** Marked but not yet applied redactions (ADR 0005). */
+  readonly redactions = signal<Redaction[]>([])
+  readonly history = new History<Snapshot>(40)
   readonly historyVersion = signal(0)
   encrypted = false
 
@@ -73,34 +78,107 @@ export class PdfDoc extends BaseDoc {
     if (old) void old.loadingTask.destroy()
   }
 
-  /** Applies a byte-level operation as one undoable step. */
-  async apply(label: string, op: (bytes: Uint8Array) => Promise<Uint8Array>): Promise<void> {
+  private snapshot(): Snapshot {
+    return { bytes: this.bytes, markup: this.markup.peek(), redactions: this.redactions.peek() }
+  }
+
+  private async restore(snap: Snapshot): Promise<void> {
+    if (snap.bytes !== this.bytes) await this.load(snap.bytes)
+    this.markup.value = snap.markup
+    this.redactions.value = snap.redactions
+  }
+
+  private queue: Promise<unknown> = Promise.resolve()
+
+  /**
+   * Runs document operations one at a time, so e.g. Save issued right after Rotate
+   * waits for the rotation instead of writing the old bytes.
+   */
+  exclusive<T>(fn: () => Promise<T>): Promise<T> {
+    const run = this.queue.then(fn, fn)
+    this.queue = run.catch(() => undefined)
+    return run
+  }
+
+  /**
+   * Bytes including form values typed into the page since the last load. Page
+   * operations start from these so filled-in fields are never lost.
+   */
+  async currentBytes(): Promise<Uint8Array> {
+    const proxy = this.proxy.peek()
+    if (proxy && proxy.annotationStorage.size > 0 && this.formsEdited) {
+      this.bytes = await proxy.saveDocument()
+      this.formsEdited = false
+    }
+    return this.bytes
+  }
+  formsEdited = false
+
+  /**
+   * Applies a byte-level operation as one undoable step. `pages` tells where each
+   * old page ended up, so markup and redactions stay on their pages.
+   */
+  async apply(
+    label: string,
+    op: (bytes: Uint8Array) => Promise<Uint8Array | { bytes: Uint8Array; markup?: Markup[]; pages?: PageMap }>,
+    pages?: PageMap
+  ): Promise<void> {
+    return this.exclusive(() => this.applyNow(label, op, pages))
+  }
+
+  private async applyNow(
+    label: string,
+    op: (bytes: Uint8Array) => Promise<Uint8Array | { bytes: Uint8Array; markup?: Markup[]; pages?: PageMap }>,
+    pages?: PageMap
+  ): Promise<void> {
     if (this.encrypted) throw new Error('Remove the password protection before editing pages of this PDF.')
-    const prev = this.bytes
-    const next = await op(prev)
-    await this.load(next)
-    this.history.push(label, prev)
+    const before = this.snapshot()
+    const result = await op(await this.currentBytes())
+    const next = result instanceof Uint8Array ? { bytes: result } : result
+    await this.load(next.bytes)
+    pages ??= next.pages
+    if (pages) {
+      this.markup.value = remapPages(this.markup.peek(), pages)
+      this.redactions.value = remapPages(this.redactions.peek(), pages)
+    }
+    if (next.markup?.length) this.markup.value = [...this.markup.peek(), ...next.markup]
+    this.history.push(label, before)
+    this.historyVersion.value++
+    this.dirty.value = true
+  }
+
+  /** Markup/redaction edits: no page re-render, still one undo step each. */
+  edit(label: string, change: { markup?: Markup[]; redactions?: Redaction[] }): void {
+    this.history.push(label, this.snapshot())
+    if (change.markup) this.markup.value = change.markup
+    if (change.redactions) this.redactions.value = change.redactions
     this.historyVersion.value++
     this.dirty.value = true
   }
 
   async undo(): Promise<void> {
-    const entry = this.history.undo(this.bytes)
+    return this.exclusive(() => this.step('undo'))
+  }
+
+  async redo(): Promise<void> {
+    return this.exclusive(() => this.step('redo'))
+  }
+
+  private async step(dir: 'undo' | 'redo'): Promise<void> {
+    const entry = dir === 'undo' ? this.history.undo(this.snapshot()) : this.history.redo(this.snapshot())
     if (entry) {
-      await this.load(entry.state)
+      await this.restore(entry.state)
       this.historyVersion.value++
       this.dirty.value = true
     }
   }
 
-  async redo(): Promise<void> {
-    const entry = this.history.redo(this.bytes)
-    if (entry) {
-      await this.load(entry.state)
-      this.historyVersion.value++
-      this.dirty.value = true
-    }
-  }
+}
+
+interface Snapshot {
+  bytes: Uint8Array
+  markup: Markup[]
+  redactions: Redaction[]
 }
 
 export class ImageDoc extends BaseDoc {

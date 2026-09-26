@@ -62,3 +62,11 @@ export function thumbnail(doc: PdfDoc, index: number, cssWidth: number): Promise
   cache.set(k, promise)
   return promise
 }
+
+/** Viewport matching a thumbnail of `cssWidth`, for drawing markup over it. */
+export async function thumbViewport(doc: PdfDoc, index: number, cssWidth: number): Promise<import('pdfjs-dist').PageViewport | null> {
+  const proxy = doc.proxy.peek()
+  if (!proxy) return null
+  const page = await proxy.getPage(index + 1)
+  return page.getViewport({ scale: cssWidth / page.getViewport({ scale: 1 }).width })
+}

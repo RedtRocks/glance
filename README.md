@@ -6,7 +6,7 @@
 
 Glance brings Preview's everyday superpowers to Windows: rearranging and merging PDF pages by dragging, dragging pages out to create new files, real redaction, markup and signatures, background removal, metadata scrubbing, batch processing, and more. It's built to feel native on Windows 11 (Fluent design, Mica, Explorer integration) while staying small and fast.
 
-> **Status: early development (Milestone 1).** Viewing and PDF page management work today. Everything else is on the roadmap below and in [`docs/adr`](docs/adr).
+> **Status: early development (Milestone 2).** Viewing, PDF page management, markup, signatures, forms and redaction work today. Everything else is on the roadmap below and in [`docs/adr`](docs/adr).
 
 ## Why it's light
 
@@ -27,7 +27,12 @@ Glance brings Preview's everyday superpowers to Windows: rearranging and merging
 | Context-aware toolbar (page controls only for multi-page documents), Customize Toolbar | ✅ |
 | Rebindable keyboard shortcuts (Windows conventions, Preview's shortcuts mapped) | ✅ |
 | Formats: PDF, AI, EPS/PS (via Ghostscript), JPEG, PNG, GIF, WebP, AVIF, BMP, ICO, SVG, TIFF, HEIC, JPEG 2000, JPEG XL, JPEG XR, EXR, HDR, TGA, DDS, QOI, PNM, ICNS, PSD, CBZ, camera RAW ([full list](docs/FORMATS.md)) | ✅ (XPS and 3D coming) |
-| Markup, signatures, forms, redaction | Milestone 2 |
+| Markup: sketch (shape recognition), draw, rectangle, rounded rectangle, oval, line, arrow, star, polygon, speech bubble, text boxes, notes, highlight/underline/strikethrough; move, resize, restyle, undo | ✅ |
+| Markup saved as standard, editable PDF annotations (reopen in Glance to keep editing) | ✅ |
+| Signatures: draw with mouse/pen (pressure) or import a photo; stored encrypted with Windows DPAPI | ✅ |
+| Fill in PDF forms | ✅ |
+| Redaction that truly removes content (pages rasterized; form data, thumbnails, tags and orphaned objects purged) | ✅ |
+| Highlights & Notes sidebar, bookmarks | ✅ |
 | Instant Alpha, Remove Background / Copy Subject (bundled AI model), Adjust Color/Size, crop | Milestone 3 |
 | Inspector: metadata and GPS removal, annotation/link cleanup; autosave and version history | Milestone 4 |
 | 3D models, collage, batch processing, text recognition (Windows OCR) | Milestone 5 |

@@ -8,15 +8,19 @@ type Entry = string | '-'
 
 export const MENUS: Record<string, Entry[]> = {
   File: ['file.open', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.exportPages', '-', 'file.print', '-', 'file.close', '-', 'file.settings'],
-  Edit: ['edit.undo', 'edit.redo', '-', 'edit.selectAll', 'edit.find', '-', 'edit.insertBlank', 'edit.insertFile', 'edit.deletePages'],
+  Edit: ['edit.undo', 'edit.redo', '-', 'edit.selectAll', 'edit.find', '-', 'edit.insertBlank', 'edit.insertFile', 'edit.deletePages', '-', 'edit.addBookmark'],
   View: [
-    'view.hideSidebar', 'view.thumbnails', 'view.toc', 'view.contactSheet', '-',
+    'view.hideSidebar', 'view.thumbnails', 'view.toc', 'view.notes', 'view.bookmarks', 'view.contactSheet', '-',
     'view.continuous', 'view.single', 'view.two', '-',
     'view.zoomIn', 'view.zoomOut', 'view.actualSize', 'view.zoomToFit', '-',
     'view.darkPdf', 'view.fullscreen', 'view.slideshow', '-', 'view.customizeToolbar'
   ],
   Go: ['go.previous', 'go.next', 'go.first', 'go.last', 'go.page', '-', 'go.nextTab', 'go.previousTab'],
-  Tools: ['tools.rotateLeft', 'tools.rotateRight'],
+  Tools: [
+    'tools.markup', 'tools.highlight', 'tools.text', 'tools.note', 'tools.signature', '-',
+    'tools.redact', 'tools.applyRedactions', '-',
+    'tools.rotateLeft', 'tools.rotateRight'
+  ],
   Help: ['help.github', 'help.about']
 }
 

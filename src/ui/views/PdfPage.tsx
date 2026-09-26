@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
-import type { PDFPageProxy, RenderTask } from 'pdfjs-dist'
+import type { PageViewport, RenderTask } from 'pdfjs-dist'
 import type { PdfDoc } from '../../state/documents'
 import { pdfjs } from '../../pdf/engine'
 import { findQuery } from '../../state/ui'
-import { openUrl } from '../../platform'
+import { createLinkService } from '../../pdf/linkService'
+import { setViewport } from '../../pdf/viewports'
+import { MarkupLayer } from '../markup/MarkupLayer'
 
 /** Largest backing store we allocate for one page canvas (~64 MB of RGBA). */
 const MAX_PIXELS = 16_000_000
@@ -26,53 +28,14 @@ function markHits(layer: HTMLElement | null, query: string): void {
   }
 }
 
-async function buildLinks(page: PDFPageProxy, scale: number, host: HTMLElement, doc: PdfDoc): Promise<void> {
-  host.replaceChildren()
-  const viewport = page.getViewport({ scale })
-  const annots = await page.getAnnotations({ intent: 'display' })
-  for (const a of annots) {
-    if (a.subtype !== 'Link' || (!a.url && !a.dest)) continue
-    const [x1, y1] = viewport.convertToViewportPoint(a.rect[0], a.rect[1])
-    const [x2, y2] = viewport.convertToViewportPoint(a.rect[2], a.rect[3])
-    const el = document.createElement('a')
-    el.className = 'pdf-link'
-    Object.assign(el.style, {
-      left: `${Math.min(x1, x2)}px`,
-      top: `${Math.min(y1, y2)}px`,
-      width: `${Math.abs(x2 - x1)}px`,
-      height: `${Math.abs(y2 - y1)}px`
-    })
-    if (a.url) {
-      el.href = a.url
-      el.title = a.url
-      el.onclick = (e) => {
-        e.preventDefault()
-        void openUrl(a.url)
-      }
-    } else {
-      el.href = '#'
-      el.onclick = async (e) => {
-        e.preventDefault()
-        const proxy = doc.proxy.peek()
-        if (!proxy) return
-        const dest = typeof a.dest === 'string' ? await proxy.getDestination(a.dest) : a.dest
-        if (!dest?.[0]) return
-        const ref = dest[0]
-        const idx = typeof ref === 'number' ? ref : await proxy.getPageIndex(ref)
-        doc.goTo(idx)
-      }
-    }
-    host.appendChild(el)
-  }
-}
-
 export function PdfPage({ doc, index, scale, width, height, root, dark }: Props) {
   const box = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const textRef = useRef<HTMLDivElement>(null)
-  const linkRef = useRef<HTMLDivElement>(null)
+  const annotRef = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
   const [rendered, setRendered] = useState<string | null>(null)
+  const [vp, setVp] = useState<PageViewport | null>(null)
   const revision = doc.revision.value
   const query = findQuery.value
 
@@ -111,6 +74,8 @@ export function PdfPage({ doc, index, scale, width, height, root, dark }: Props)
       if (cancelled) return
       const dpr = window.devicePixelRatio || 1
       const css = page.getViewport({ scale })
+      setVp(css)
+      setViewport(doc.id, index, css)
       let ratio = dpr
       if (css.width * css.height * ratio * ratio > MAX_PIXELS) ratio = Math.sqrt(MAX_PIXELS / (css.width * css.height))
       const viewport = page.getViewport({ scale: scale * ratio })
@@ -135,7 +100,40 @@ export function PdfPage({ doc, index, scale, width, height, root, dark }: Props)
         await tl.render().catch(() => undefined)
         markHits(host, findQuery.peek())
       }
-      if (linkRef.current && !cancelled) await buildLinks(page, scale, linkRef.current, doc).catch(() => undefined)
+      // Links and fillable form fields (PDF.js annotation layer).
+      const annotHost = annotRef.current
+      if (annotHost && !cancelled) {
+        annotHost.replaceChildren()
+        const storage = proxy.annotationStorage
+        ;(storage as unknown as { onSetModified: () => void }).onSetModified = () => {
+          doc.formsEdited = true
+          doc.dirty.value = true
+        }
+        const linkService = createLinkService(doc)
+        const layer = new lib.AnnotationLayer({
+          div: annotHost,
+          page,
+          viewport: css,
+          linkService,
+          annotationStorage: storage,
+          accessibilityManager: null,
+          annotationCanvasMap: null,
+          annotationEditorUIManager: null,
+          structTreeLayer: null,
+          commentManager: null
+        })
+        await layer
+          .render({
+            viewport: css.clone({ dontFlip: true }),
+            div: annotHost,
+            annotations: await page.getAnnotations({ intent: 'display' }),
+            page,
+            linkService: linkService as never,
+            annotationStorage: storage,
+            renderForms: true
+          })
+          .catch((e: unknown) => console.warn('annotation layer failed', e))
+      }
     })().catch((e) => {
       if (e?.name !== 'RenderingCancelledException') console.warn('render failed', e)
     })
@@ -157,7 +155,8 @@ export function PdfPage({ doc, index, scale, width, height, root, dark }: Props)
     >
       <canvas ref={canvasRef} class={dark ? 'dark-pdf' : ''} />
       <div ref={textRef} class="textLayer" />
-      <div ref={linkRef} class="link-layer" />
+      <div ref={annotRef} class="annotationLayer" />
+      {vp && <MarkupLayer doc={doc} index={index} vp={vp} />}
       {!rendered && <div class="page-placeholder" aria-hidden="true" />}
     </div>
   )

@@ -20,6 +20,10 @@ import { Toasts } from './Toasts'
 import { useShortcuts } from './useShortcuts'
 import { useFileDrop } from './useFileDrop'
 import { fileDragOver } from './dragState'
+import { MarkupToolbar } from './markup/MarkupToolbar'
+import { SignatureDialog } from './markup/SignatureDialog'
+import { RedactionBar } from './RedactionBar'
+import { signatureDialog } from '../state/markupState'
 
 function Viewer() {
   const doc = activeDoc.value
@@ -28,9 +32,12 @@ function Viewer() {
     <div class="workspace">
       {sidebarVisible.value && <Sidebar doc={doc} />}
       <main class="viewer" aria-label={doc.name.value}>
-        {doc.kind === 'pdf' && <PdfView key={doc.id} doc={doc} />}
-        {doc.kind === 'image' && <ImageView key={doc.id} doc={doc} />}
-        {doc.kind === 'notice' && <NoticeView doc={doc} />}
+        {doc.kind === 'pdf' && <RedactionBar doc={doc} />}
+        <div class="viewer-stage">
+          {doc.kind === 'pdf' && <PdfView key={doc.id} doc={doc} />}
+          {doc.kind === 'image' && <ImageView key={doc.id} doc={doc} />}
+          {doc.kind === 'notice' && <NoticeView doc={doc} />}
+        </div>
       </main>
     </div>
   )
@@ -73,11 +80,13 @@ export function App() {
           <MenuBar />
           <Toolbar />
         </div>
+        <MarkupToolbar />
       </header>
       <Viewer />
       {slideshow.value && <Slideshow />}
       {settingsOpen.value && <SettingsDialog />}
       {customizeOpen.value && <CustomizeToolbar />}
+      {signatureDialog.value && <SignatureDialog />}
       <DialogHost />
       <Toasts />
     </div>

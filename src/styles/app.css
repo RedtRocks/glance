@@ -398,25 +398,8 @@ select {
 }
 .sidebar-tabs {
   display: flex;
-  gap: 4px;
-  padding: 8px;
-}
-.sidebar-tabs button,
-.segmented button {
-  flex: 1;
-  height: 28px;
-  border: 1px solid transparent;
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--text-2);
-  font-size: 12px;
-}
-.sidebar-tabs button[aria-selected='true'],
-.segmented button[aria-selected='true'] {
-  background: var(--control);
-  border-color: var(--stroke);
-  color: var(--text);
-  font-weight: 600;
+  padding: 4px 6px 0;
+  border-bottom: 1px solid var(--stroke);
 }
 .sidebar-body {
   flex: 1;
@@ -547,7 +530,10 @@ select {
   flex: none;
   background: #fff;
   box-shadow: var(--page-shadow);
+  /* PDF.js sizes its layers with round(..., var(--scale-round-x)); define them. */
   --user-unit: 1;
+  --scale-round-x: 1px;
+  --scale-round-y: 1px;
 }
 .pdf-page canvas {
   position: absolute;
@@ -867,7 +853,8 @@ select {
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
 .modal-footer .btn {
-  flex: 1;
+  flex: 1 1 0;
+  max-width: calc(50% - 4px);
 }
 .field {
   display: flex;
@@ -909,9 +896,7 @@ select {
 .segmented {
   display: flex;
   gap: 4px;
-  padding: 3px;
-  background: var(--subtle-press);
-  border-radius: var(--radius);
+  border-bottom: 1px solid var(--stroke);
 }
 .shortcut-table {
   display: flex;
@@ -1062,4 +1047,599 @@ select {
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* ---------- Markup ---------- */
+.pdf-page .annotationLayer {
+  z-index: 3;
+  /* Fallback size for WebView2 runtimes without CSS round() (Chromium < 125). */
+  inset: 0;
+}
+.markup-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 4;
+}
+.markup-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+}
+.markup-layer.drawing {
+  cursor: crosshair;
+}
+.markup-layer.tool-text {
+  cursor: text;
+}
+.markup-layer.tool-note,
+.markup-layer.tool-signature {
+  cursor: copy;
+}
+.pdf-scroller.tool-highlight .textLayer span,
+.pdf-scroller.tool-underline .textLayer span,
+.pdf-scroller.tool-strike .textLayer span {
+  cursor: text;
+}
+.selection-box {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.selection .handle {
+  fill: #fff;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+.text-box {
+  position: absolute;
+  margin: 0;
+  border: 0;
+  box-sizing: border-box;
+  transform-origin: 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  overflow: hidden;
+  background: transparent;
+  user-select: none;
+}
+.text-box.editing {
+  pointer-events: auto;
+  resize: none;
+  outline: 1px dashed var(--accent);
+  background: rgba(255, 255, 255, 0.65);
+  user-select: text;
+}
+.note-editor {
+  position: absolute;
+  z-index: 6;
+  width: 220px;
+  height: 140px;
+  padding: 6px;
+  pointer-events: auto;
+  background: #fff4b8;
+  border: 1px solid #d9b300;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-flyout);
+}
+.note-editor textarea {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  resize: none;
+  background: transparent;
+  color: #1a1a1a;
+  font: 13px/1.4 var(--font);
+  outline: none;
+}
+.thumb-frame {
+  position: relative;
+}
+.thumb-frame .markup-layer {
+  pointer-events: none;
+}
+
+.markup-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 44px;
+  padding: 0 8px;
+  background: var(--layer-alt);
+  border-bottom: 1px solid var(--stroke);
+  animation: fly-in 120ms cubic-bezier(0, 0, 0, 1);
+}
+.tb-sep {
+  width: 1px;
+  height: 20px;
+  margin: 0 6px;
+  background: var(--stroke-strong);
+}
+.popover {
+  position: relative;
+}
+.tb-button.with-chevron {
+  width: auto;
+  padding: 0 4px 0 8px;
+  gap: 2px;
+  display: inline-flex;
+  align-items: center;
+}
+.tb-button {
+  position: relative;
+}
+.chevron {
+  display: inline-grid;
+  place-items: center;
+  margin-left: 2px;
+  color: var(--text-2);
+}
+.swatch-bar {
+  position: absolute;
+  left: 9px;
+  bottom: 4px;
+  width: 18px;
+  height: 3px;
+  border-radius: 2px;
+  box-shadow: 0 0 0 0.5px var(--stroke-strong);
+}
+.flyout {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 60;
+  padding: 8px;
+  min-width: 180px;
+  background: var(--flyout);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-flyout);
+  animation: fly-in 120ms cubic-bezier(0, 0, 0, 1);
+}
+.flyout-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.flyout .menu-item {
+  display: flex;
+  gap: 8px;
+}
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(5, 28px);
+  gap: 6px;
+}
+.swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--stroke-strong);
+  cursor: pointer;
+}
+.swatch.selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.swatch.none {
+  background: linear-gradient(135deg, transparent 45%, #c42b1c 45%, #c42b1c 55%, transparent 55%), var(--card);
+}
+.shape-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 36px);
+  gap: 4px;
+}
+.width-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.width-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  height: 30px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+}
+.width-item:hover,
+.width-item.selected {
+  background: var(--subtle-hover);
+}
+.width-item span {
+  display: block;
+  border-radius: 4px;
+}
+.sig-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 260px;
+}
+.sig-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.sig-pick {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px;
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  background: #fff;
+  color: #1a1a1a;
+}
+.sig-pick img {
+  height: 36px;
+  max-width: 150px;
+  object-fit: contain;
+}
+.muted.small {
+  font-size: 11px;
+}
+.signature-pad {
+  display: block;
+  border: 1px solid var(--stroke-strong);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(transparent calc(78% - 1px), #c8c8c8 calc(78% - 1px), #c8c8c8 78%, transparent 78%), #fff;
+  cursor: crosshair;
+  touch-action: none;
+}
+.inline-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.field.grow {
+  flex: 1;
+}
+.btn:disabled {
+  opacity: 0.5;
+}
+
+/* ---------- WinUI SelectorBar (sidebar modes, settings sections) ---------- */
+.sidebar-tabs button,
+.segmented button {
+  position: relative;
+  flex: 1;
+  display: grid;
+  place-items: center;
+  height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-2);
+}
+.segmented button {
+  flex: none;
+  font-size: 14px;
+}
+.sidebar-tabs button:hover,
+.segmented button:hover {
+  background: var(--subtle-hover);
+  color: var(--text);
+}
+.sidebar-tabs button[aria-selected='true'],
+.segmented button[aria-selected='true'] {
+  color: var(--text);
+  font-weight: 600;
+}
+.sidebar-tabs button[aria-selected='true']::after,
+.segmented button[aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 1px;
+  width: 16px;
+  height: 3px;
+  margin-left: -8px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+/* ---------- WinUI ListView (Highlights & Notes, Bookmarks) ---------- */
+.notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 4px;
+}
+.notes-page {
+  padding: 12px 8px 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.note-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  min-height: 40px;
+  padding: 10px 8px 10px 12px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  text-align: left;
+}
+.note-item:hover {
+  background: var(--subtle-hover);
+}
+.note-item:active {
+  background: var(--subtle-press);
+}
+.note-item.selected {
+  background: var(--subtle-hover);
+}
+.note-item.selected::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: 16px;
+  margin-top: -8px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+.note-icon {
+  display: grid;
+  place-items: center;
+  height: 20px;
+  color: var(--text-2);
+}
+.note-body {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+.note-kind {
+  font-size: 14px;
+  color: var(--text);
+}
+.note-text {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.bookmark-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.bookmark-row .note-item {
+  align-items: center;
+}
+.bookmark-row .note-text {
+  font-size: 14px;
+  color: var(--text);
+}
+.bookmark-row .icon-button {
+  opacity: 0;
+}
+.bookmark-row:hover .icon-button,
+.bookmark-row .icon-button:focus-visible {
+  opacity: 1;
+}
+.toc-item {
+  min-height: 32px;
+  align-items: center;
+  font-size: 14px;
+}
+.sidebar-empty {
+  padding: 12px 8px;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+/* ---------- WinUI InfoBar ---------- */
+.viewer {
+  display: flex;
+  flex-direction: column;
+}
+.viewer-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+.infobar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+  min-height: 48px;
+  margin: 8px 8px 0;
+  padding: 6px 8px 6px 16px;
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  font-size: 14px;
+  background: var(--infobar-info-bg);
+}
+.infobar.warning {
+  background: var(--infobar-warning-bg);
+}
+.infobar-icon {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+}
+.infobar.warning .infobar-icon {
+  color: var(--infobar-warning-icon);
+}
+.infobar-text {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 12px;
+  row-gap: 2px;
+  line-height: 20px;
+}
+.infobar-title {
+  font-weight: 600;
+}
+.infobar-actions {
+  display: flex;
+  gap: 8px;
+}
+.infobar-actions .btn {
+  min-width: auto;
+}
+:root {
+  --infobar-info-bg: rgba(246, 246, 246, 0.5);
+  --infobar-warning-bg: #fff4ce;
+  --infobar-warning-icon: #9d5d00;
+}
+:root[data-theme='dark'] {
+  --infobar-info-bg: rgba(255, 255, 255, 0.0326);
+  --infobar-warning-bg: #433519;
+  --infobar-warning-icon: #fce100;
+}
+
+/* ---------- Windows 11 overlay-style scrollbars ---------- */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+  background: transparent;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  min-height: 32px;
+  border: 4px solid transparent;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35) padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  border-width: 3px;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+:root[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+:root[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.55);
+}
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* ---------- Windows 11 SettingsCard + ToggleSwitch ---------- */
+.settings-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.settings-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 68px;
+  padding: 12px 16px;
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+}
+.settings-card-icon {
+  display: grid;
+  place-items: center;
+  color: var(--text);
+}
+.settings-card-text {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+}
+.settings-card-title {
+  font-size: 14px;
+  line-height: 20px;
+}
+.settings-card-desc {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-2);
+}
+.settings-card-control select,
+.number-box {
+  height: 32px;
+  min-width: 120px;
+  padding: 0 10px;
+  border: 1px solid var(--stroke);
+  border-bottom-color: var(--stroke-strong);
+  border-radius: var(--radius);
+  background: var(--control);
+}
+.number-box {
+  min-width: 0;
+  width: 80px;
+}
+.settings-card-control select:focus,
+.number-box:focus {
+  outline: none;
+  border-bottom: 2px solid var(--accent);
+  background: var(--layer-alt);
+}
+.toggle-switch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+.toggle-state {
+  min-width: 24px;
+  text-align: right;
+}
+.toggle-switch input {
+  appearance: none;
+  position: relative;
+  width: 40px;
+  height: 20px;
+  margin: 0;
+  border: 1px solid var(--text-2);
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+  transition: background 120ms;
+}
+.toggle-switch input::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text-2);
+  transition: transform 160ms cubic-bezier(0.55, 0.55, 0, 1), width 120ms;
+}
+.toggle-switch input:hover::before {
+  width: 14px;
+  height: 14px;
+  top: 2px;
+}
+.toggle-switch input:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.toggle-switch input:checked::before {
+  background: var(--on-accent);
+  transform: translateX(20px);
 }

@@ -17,7 +17,7 @@ export interface Settings {
   checkForUpdates: boolean
 }
 
-export const DEFAULT_TOOLBAR = ['sidebar', 'pageControls', 'spacer', 'zoomOut', 'zoomIn', 'rotate', 'search', 'overflow']
+export const DEFAULT_TOOLBAR = ['sidebar', 'pageControls', 'spacer', 'zoomOut', 'zoomIn', 'rotate', 'highlight', 'markup', 'search', 'overflow']
 
 const DEFAULTS: Settings = {
   theme: 'system',
@@ -31,10 +31,23 @@ const DEFAULTS: Settings = {
 
 const KEY = 'glance.settings.v1'
 
+/** Toolbar items added in later versions are appended for users with a saved toolbar. */
+const ADDED_ITEMS: Record<string, string> = { highlight: 'rotate', markup: 'highlight' }
+
 function load(): Settings {
   try {
     const raw = localStorage.getItem(KEY)
-    if (raw) return { ...DEFAULTS, ...JSON.parse(raw) }
+    if (raw) {
+      const saved = { ...DEFAULTS, ...JSON.parse(raw) } as Settings & { seenItems?: string[] }
+      const seen = new Set(saved.seenItems ?? [])
+      for (const [item, after] of Object.entries(ADDED_ITEMS)) {
+        if (seen.has(item) || saved.toolbar.includes(item)) continue
+        const i = saved.toolbar.indexOf(after)
+        saved.toolbar.splice(i >= 0 ? i + 1 : saved.toolbar.length - 1, 0, item)
+      }
+      saved.seenItems = [...new Set([...seen, ...Object.keys(ADDED_ITEMS)])]
+      return saved
+    }
   } catch {
     /* storage unavailable: use defaults */
   }

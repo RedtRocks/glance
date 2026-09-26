@@ -6,6 +6,10 @@ import { imageUrl } from '../../platform'
 import { pageDrag } from '../dragState'
 import { beginPageDrag, selectPage } from './pageDrag'
 import { PageThumb } from './PageThumb'
+import { NotesList } from './NotesList'
+import { BookmarksList } from './BookmarksList'
+import { Icon } from '../Icon'
+import type { IconName } from '../icons'
 
 const THUMB_WIDTH = 120
 
@@ -117,7 +121,9 @@ function Resizer() {
 export function Sidebar({ doc }: { doc: Doc }) {
   let body: JSX.Element | null = null
   if (doc.kind === 'pdf') {
-    body = doc.sidebar.value === 'toc' ? <Toc doc={doc} /> : <ThumbList doc={doc} />
+    const mode = doc.sidebar.value
+    body =
+      mode === 'toc' ? <Toc doc={doc} /> : mode === 'notes' ? <NotesList doc={doc} /> : mode === 'bookmarks' ? <BookmarksList doc={doc} /> : <ThumbList doc={doc} />
   } else if (doc.kind === 'image' && doc.pageCount.value > 1) {
     body = <ImageThumbList doc={doc} />
   }
@@ -126,12 +132,21 @@ export function Sidebar({ doc }: { doc: Doc }) {
     <aside class="sidebar" style={{ width: settings.value.sidebarWidth }} data-drop-doc={doc.id}>
       {doc.kind === 'pdf' && (
         <div class="sidebar-tabs" role="tablist">
-          <button role="tab" aria-selected={doc.sidebar.value !== 'toc'} onClick={() => (doc.sidebar.value = 'thumbnails')}>
-            Thumbnails
-          </button>
-          <button role="tab" aria-selected={doc.sidebar.value === 'toc'} onClick={() => (doc.sidebar.value = 'toc')}>
-            Contents
-          </button>
+          {(
+            [
+              ['thumbnails', 'grid', 'Thumbnails'],
+              ['toc', 'toc', 'Table of contents'],
+              ['notes', 'notes', 'Highlights and notes'],
+              ['bookmarks', 'bookmarks', 'Bookmarks']
+            ] as [typeof doc.sidebar.value, IconName, string][]
+          ).map(([mode, icon, label]) => {
+            const selected = doc.sidebar.value === mode || (mode === 'thumbnails' && doc.sidebar.value === 'none')
+            return (
+              <button key={mode} role="tab" title={label} aria-label={label} aria-selected={selected} onClick={() => (doc.sidebar.value = mode)}>
+                <Icon name={icon} size={16} />
+              </button>
+            )
+          })}
         </div>
       )}
       <div class="sidebar-body">{body}</div>

@@ -2,14 +2,20 @@ import { useEffect } from 'preact/hooks'
 import { comboFromEvent } from '../core/shortcuts'
 import { bindings, runCommand } from '../state/commands'
 import { dialog, settingsOpen, customizeOpen, slideshow } from '../state/ui'
+import { editingId, selectedId, setTool, signatureDialog, tool } from '../state/markupState'
 
 /** Keys that must keep their text-editing meaning inside inputs. */
-const TEXT_KEYS = new Set(['Ctrl+A', 'Ctrl+Z', 'Ctrl+Y', 'Ctrl+Shift+Z', 'Home', 'End', 'Delete', 'PageUp', 'PageDown', 'Ctrl+C', 'Ctrl+V', 'Ctrl+X'])
+const TEXT_KEYS = new Set(['Ctrl+A', 'Ctrl+Z', 'Ctrl+Y', 'Ctrl+Shift+Z', 'Home', 'End', 'Delete', 'Backspace', 'PageUp', 'PageDown', 'Ctrl+C', 'Ctrl+V', 'Ctrl+X'])
 
 export function useShortcuts(): void {
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
-      if (dialog.peek() || settingsOpen.peek() || customizeOpen.peek() || slideshow.peek()) return
+      if (dialog.peek() || settingsOpen.peek() || customizeOpen.peek() || slideshow.peek() || signatureDialog.peek() || editingId.peek()) return
+      if (e.key === 'Escape' && (tool.peek() !== 'select' || selectedId.peek())) {
+        if (tool.peek() !== 'select') setTool('select')
+        selectedId.value = null
+        return
+      }
       const combo = comboFromEvent(e)
       if (!combo) return
       const t = e.target as HTMLElement | null
