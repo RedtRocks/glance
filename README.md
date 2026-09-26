@@ -49,7 +49,7 @@ Glance brings Preview's everyday superpowers to Windows: rearranging and merging
 | Set an image as the desktop background or lock screen | ✅ |
 | Autosave and version history (File → Browse Versions); reopen tabs on launch (optional, in Settings); Clean Up PDF (annotations, links, metadata, attachments, scripts) | ✅ |
 | Share (Windows share sheet), Send to, update notifications you can skip or turn off | ✅ |
-| 3D models: GLB/glTF, OBJ, STL, PLY, 3MF, DAE, FBX, USDZ, 3DS (orbit, wireframe, turntable, animations, snapshot) | ✅ |
+| 3D models: GLB/glTF, OBJ, STL, PLY, 3MF, DAE, FBX, USDZ, 3DS (orbit, camera views, wireframe, turntable, lighting, backgrounds, clay/normals/X-ray materials, ground shadow, grid, animations, snapshot) | ✅ |
 | Create Collage (justified rows or grid) | ✅ |
 | Password-protected PDF export (AES-256, permissions), Reduce File Size, New from Clipboard, Import from Scanner | ✅ |
 | Page numbers, headers, footers and text or image watermarks on PDFs (Pages → Header, Footer & Watermark, with live preview) | ✅ |

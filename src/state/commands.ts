@@ -37,7 +37,7 @@ export interface Command {
   visible?: () => boolean
 }
 
-const ZOOM_STEPS = [0.1, 0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5, 6.4, 8]
+export const ZOOM_STEPS = [0.1, 0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5, 6.4, 8]
 
 export function stepZoom(current: number, dir: 1 | -1): number {
   if (dir > 0) return ZOOM_STEPS.find((z) => z > current + 1e-3) ?? ZOOM_STEPS.at(-1)!
@@ -215,6 +215,22 @@ export const COMMANDS: Command[] = [
   { id: 'model.resetView', label: msg('Reset View'), run: () => void (model() && (model()!.viewRequest.value = { kind: 'reset' })) },
   { id: 'model.wireframe', label: msg('Wireframe'), keys: ['W'], run: () => void (model() && (model()!.wireframe.value = !model()!.wireframe.value)), checked: () => !!model()?.wireframe.value },
   { id: 'model.autoRotate', label: msg('Turntable'), keys: ['T'], run: () => void (model() && (model()!.autoRotate.value = !model()!.autoRotate.value)), checked: () => !!model()?.autoRotate.value },
+  { id: 'model.shadow', label: msg('Ground Shadow'), run: () => void (model() && (model()!.shadow.value = !model()!.shadow.value)), checked: () => !!model()?.shadow.value },
+  { id: 'model.grid', label: msg('Floor Grid'), run: () => void (model() && (model()!.grid.value = !model()!.grid.value)), checked: () => !!model()?.grid.value },
+  ...(
+    [
+      ['front', msg('Front View')],
+      ['back', msg('Back View')],
+      ['left', msg('Left View')],
+      ['right', msg('Right View')],
+      ['top', msg('Top View')],
+      ['bottom', msg('Bottom View')]
+    ] as const
+  ).map(([view, label]) => ({
+    id: `model.view.${view}`,
+    label,
+    run: () => void (model() && (model()!.viewRequest.value = { kind: 'view', view }))
+  })),
   { id: 'view.inspector', label: msg('Inspector'), keys: ['Ctrl+I'], run: () => void (inspectorOpen.value = !inspectorOpen.value), checked: () => inspectorOpen.value },
   { id: 'view.signatures', label: msg('Signatures'), run: () => void (signaturesOpen.value = !signaturesOpen.value), checked: () => signaturesOpen.value },
   { id: 'view.customizeToolbar', label: msg('Customize Toolbar…'), run: () => void (customizeOpen.value = true) },
@@ -317,7 +333,7 @@ const VISIBILITY: [(() => boolean), string[]][] = [
   [() => ifPdf() || anyImage(), ['file.versions']],
   [ifViewable, ['view.zoomIn', 'view.zoomOut', 'view.zoomToFit', 'view.fullscreen']],
   [() => ifPdf() || anyImage(), ['file.print', 'view.actualSize', 'view.slideshow', 'tools.rotateLeft', 'tools.rotateRight']],
-  [() => activeDoc.value?.kind === 'model', ['model.wireframe', 'model.autoRotate', 'model.resetView']],
+  [() => activeDoc.value?.kind === 'model', ['model.wireframe', 'model.autoRotate', 'model.resetView', 'model.shadow', 'model.grid', 'model.view.front', 'model.view.back', 'model.view.left', 'model.view.right', 'model.view.top', 'model.view.bottom']],
   [() => ifPdf() || isImage(), ['file.save', 'file.saveAs', 'edit.undo', 'edit.redo', 'edit.delete']],
   [() => ifPdf() || isImage() || !!model(), ['file.export']],
   [ifPdf, [
