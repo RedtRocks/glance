@@ -1,0 +1,55 @@
+[package]
+name = "glance"
+version = "0.1.0"
+description = "Glance: a lightweight viewer and editor for PDFs, images, and 3D models"
+authors = ["Glance contributors"]
+license = "Apache-2.0"
+repository = "https://github.com/RedtRocks/viewer"
+edition = "2021"
+rust-version = "1.80"
+
+[lib]
+name = "glance_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-clipboard-manager = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-single-instance = "2"
+tauri-plugin-drag = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+percent-encoding = "2"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "bmp", "ico", "tiff", "webp", "tga", "exr", "hdr", "dds", "pnm", "qoi"] }
+psd = "0.3"
+icns = "0.5"
+jxl-oxide = { version = "0.12", features = ["image"] }
+hayro-jpeg2000 = "0.4"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+which = "7"
+
+[target.'cfg(windows)'.dependencies]
+window-vibrancy = "0.6"
+windows = { version = "0.62", features = [
+  "Win32_Foundation",
+  "Win32_System_Com",
+  "Win32_Graphics_Imaging",
+  "Win32_System_Com_StructuredStorage",
+  "Win32_System_Variant",
+] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true
+
+[profile.dev.package."*"]
+# Decoders are painfully slow unoptimized; keep our own crate debuggable.
+opt-level = 2
