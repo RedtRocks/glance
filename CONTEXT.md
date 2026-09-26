@@ -19,6 +19,10 @@ _Avoid_: Page (for animations)
 **Sidebar**:
 The panel beside a document listing its pages, table of contents, highlights and notes, or bookmarks.
 
+**Page Controls**:
+Previous/next page buttons, plus a page number field for long documents. Shown only when the document has more than one page.
+_Avoid_: Page flicker, pager
+
 **Contact Sheet**:
 A full-window grid of large page thumbnails, used for overview and reordering.
 _Avoid_: Grid view, overview
