@@ -24,6 +24,8 @@ const SLIDERS: SliderDef[] = [
   { key: 'temperature', label: 'Temperature', min: -1, max: 1, step: 0.01 },
   { key: 'tint', label: 'Tint', min: -1, max: 1, step: 0.01 },
   { key: 'sepia', label: 'Sepia', min: 0, max: 1, step: 0.01 },
+  { key: 'gamma', label: 'Gamma', min: 0.2, max: 3, step: 0.01 },
+  { key: 'definition', label: 'Definition', min: -1, max: 1, step: 0.01 },
   { key: 'sharpness', label: 'Sharpness', min: 0, max: 1, step: 0.01 }
 ]
 

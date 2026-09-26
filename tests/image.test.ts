@@ -152,3 +152,34 @@ describe('adjust size', () => {
     expect(proportional(2000, 4000, 3000)).toBe(1500)
   })
 })
+
+describe('definition', () => {
+  // Left half 100, right half 150: a soft mid-scale edge.
+  const edge = () => {
+    const w = 200
+    const h = 100
+    const data = new Uint8ClampedArray(w * h * 4)
+    for (let i = 0; i < w * h; i++) {
+      const v = i % w < w / 2 ? 100 : 150
+      data.set([v, v, v, 255], i * 4)
+    }
+    return { width: w, height: h, data }
+  }
+  const at = (img: { width: number; data: Uint8ClampedArray }, x: number, y = 50) => img.data[(y * img.width + x) * 4]
+
+  it('raises local contrast across an edge and leaves flat areas alone', () => {
+    const img = edge()
+    applyAdjust(img, { ...DEFAULT_ADJUST, definition: 1 })
+    expect(at(img, 97)).toBeLessThan(100)
+    expect(at(img, 102)).toBeGreaterThan(150)
+    expect(at(img, 10)).toBe(100)
+    expect(at(img, 190)).toBe(150)
+  })
+
+  it('negative definition softens the edge', () => {
+    const img = edge()
+    applyAdjust(img, { ...DEFAULT_ADJUST, definition: -1 })
+    expect(at(img, 97)).toBeGreaterThan(100)
+    expect(at(img, 102)).toBeLessThan(150)
+  })
+})

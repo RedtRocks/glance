@@ -23,6 +23,8 @@ export interface AdjustParams {
   sepia: number
   /** 0..1 */
   sharpness: number
+  /** -1..1: local contrast (clarity); negative softens. */
+  definition: number
   /** Levels: input black and white points (0..255) and midtone gamma (0.2..5). */
   black: number
   white: number
@@ -39,6 +41,7 @@ export const DEFAULT_ADJUST: AdjustParams = {
   tint: 0,
   sepia: 0,
   sharpness: 0,
+  definition: 0,
   black: 0,
   white: 255,
   gamma: 1
@@ -106,7 +109,56 @@ export function applyAdjust(img: Raster, p: AdjustParams): void {
     data[i + 1] = g * 255
     data[i + 2] = b * 255
   }
+  if (p.definition) define(img, p.definition)
   if (p.sharpness > 0) sharpen(img, p.sharpness)
+}
+
+/** Box blur of one channel plane, horizontal then vertical (running sums, O(n)). */
+function boxBlur(src: Float32Array, w: number, h: number, r: number): Float32Array {
+  const tmp = new Float32Array(src.length)
+  const out = new Float32Array(src.length)
+  const n = 2 * r + 1
+  for (let y = 0; y < h; y++) {
+    const row = y * w
+    let sum = 0
+    for (let k = -r; k <= r; k++) sum += src[row + Math.min(w - 1, Math.max(0, k))]
+    for (let x = 0; x < w; x++) {
+      tmp[row + x] = sum / n
+      sum += src[row + Math.min(w - 1, x + r + 1)] - src[row + Math.max(0, x - r)]
+    }
+  }
+  for (let x = 0; x < w; x++) {
+    let sum = 0
+    for (let k = -r; k <= r; k++) sum += tmp[Math.min(h - 1, Math.max(0, k)) * w + x]
+    for (let y = 0; y < h; y++) {
+      out[y * w + x] = sum / n
+      sum += tmp[Math.min(h - 1, y + r + 1) * w + x] - tmp[Math.max(0, y - r) * w + x]
+    }
+  }
+  return out
+}
+
+/**
+ * Definition: unsharp mask on luminance with a wide radius (2% of the short side),
+ * boosting mid-scale contrast without halos on fine detail. The radius follows the
+ * image size so the reduced live preview looks like the full-resolution result.
+ */
+export function define(img: Raster, amount: number): void {
+  const { width: w, height: h, data } = img
+  const r = Math.max(2, Math.round(Math.min(w, h) * 0.02))
+  const L = new Float32Array(w * h)
+  for (let i = 0, j = 0; j < L.length; i += 4, j++) L[j] = 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2]
+  // Two box passes approximate a Gaussian.
+  const blur = boxBlur(boxBlur(L, w, h, r), w, h, r)
+  const k = amount * 0.8
+  for (let i = 0, j = 0; j < L.length; i += 4, j++) {
+    // Midtone-weighted so shadows and highlights don't clip.
+    const t = L[j] / 255
+    const d = (L[j] - blur[j]) * k * (1 - (2 * t - 1) ** 2)
+    data[i] += d
+    data[i + 1] += d
+    data[i + 2] += d
+  }
 }
 
 /** Unsharp mask with a 3×3 box blur. */
