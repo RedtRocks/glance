@@ -7,6 +7,7 @@
  */
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 import workerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'
+import { t } from '../i18n'
 
 type PdfJs = typeof import('pdfjs-dist')
 let loading: Promise<PdfJs> | null = null
@@ -25,7 +26,7 @@ const assetBase = new URL('pdfjs/', document.baseURI).href
 
 export class PasswordRequired extends Error {
   constructor(readonly incorrect: boolean) {
-    super(incorrect ? 'Incorrect password' : 'Password required')
+    super(incorrect ? t('Incorrect password') : t('Password required'))
   }
 }
 

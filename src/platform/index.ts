@@ -6,6 +6,7 @@
  */
 
 import type { ShellRequest } from '../core/explorer'
+import { t } from '../i18n'
 
 export type Kind = 'pdf' | 'image' | 'model' | 'postscript' | 'xps' | 'archive' | 'unsupported'
 
@@ -117,6 +118,7 @@ export async function writeTemp(name: string, data: Uint8Array): Promise<string>
 }
 
 export interface FileFilter {
+  /** English, marked with msg(); translated when the dialog opens. */
   name: string
   extensions: string[]
 }
@@ -132,7 +134,7 @@ export async function openDialog(options: { multiple?: boolean; filters?: FileFi
     })
   }
   const { open } = await import('@tauri-apps/plugin-dialog')
-  const res = await open({ multiple: options.multiple ?? true, filters: options.filters })
+  const res = await open({ multiple: options.multiple ?? true, filters: translateFilters(options.filters) })
   if (!res) return []
   return Array.isArray(res) ? res : [res]
 }
@@ -140,22 +142,28 @@ export async function openDialog(options: { multiple?: boolean; filters?: FileFi
 export async function saveDialog(defaultPath: string, filters?: FileFilter[]): Promise<string | null> {
   if (!isTauri) return defaultPath
   const { save } = await import('@tauri-apps/plugin-dialog')
-  return save({ defaultPath, filters })
+  return save({ defaultPath, filters: translateFilters(filters) })
 }
 
-export async function confirmDialog(message: string, title = 'Glance', okLabel = 'OK'): Promise<boolean> {
+function translateFilters(filters?: FileFilter[]): FileFilter[] | undefined {
+  return filters?.map((f) => ({ ...f, name: t(f.name) }))
+}
+
+// i18n-ignore: the product name as the default window title
+export async function confirmDialog(message: string, title = 'Glance', okLabel?: string): Promise<boolean> {
   if (!isTauri) return window.confirm(message)
   const { ask } = await import('@tauri-apps/plugin-dialog')
-  return ask(message, { title, kind: 'warning', okLabel, cancelLabel: 'Cancel' })
+  return ask(message, { title, kind: 'warning', okLabel: okLabel ?? t('OK'), cancelLabel: t('Cancel') })
 }
 
+// i18n-ignore: the product name as the default window title
 export async function messageDialog(message: string, title = 'Glance'): Promise<void> {
   if (!isTauri) {
     window.alert(message)
     return
   }
-  const { message: msg } = await import('@tauri-apps/plugin-dialog')
-  await msg(message, { title })
+  const { message: show } = await import('@tauri-apps/plugin-dialog')
+  await show(message, { title })
 }
 
 export async function initialFiles(): Promise<string[]> {
@@ -197,7 +205,7 @@ export async function openNewWindow(paths: string[]): Promise<void> {
   const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow')
   const label = `doc-${Date.now()}`
   const url = `index.html#open=${encodeURIComponent(JSON.stringify(paths))}`
-  new WebviewWindow(label, { url, title: 'Glance', width: 1100, height: 800, transparent: false })
+  new WebviewWindow(label, { url, title: 'Glance' /* i18n-ignore: product name */, width: 1100, height: 800, transparent: false })
 }
 
 /** Second launches (Open with, Send to) forward their files here. */
@@ -424,13 +432,13 @@ export async function onCloseRequested(canClose: () => Promise<boolean>, hasUnsa
 
 /** Shows the Windows "Open with" picker for the file. */
 export async function openWith(path: string): Promise<void> {
-  if (!isTauri) throw new Error('Open With is available in the Windows app.')
+  if (!isTauri) throw new Error(t('Open With is available in the Windows app.'))
   await invoke('open_with', { path })
 }
 
 /** Uses the image bytes (JPEG/PNG/BMP) as the desktop background or the lock screen. */
 export async function setWallpaper(bytes: Uint8Array, ext: string, target: 'desktop' | 'lock'): Promise<void> {
-  if (!isTauri) throw new Error('Setting the background is available in the Windows app.')
+  if (!isTauri) throw new Error(t('Setting the background is available in the Windows app.'))
   await invoke('set_wallpaper', bytes, { headers: { 'x-target': target, 'x-ext': ext } })
 }
 
@@ -452,7 +460,7 @@ export async function imageMetadata(path: string): Promise<ImageMetadata | null>
 
 /** Rewrites each file without GPS data. Returns messages for files that failed. */
 export async function removeLocation(paths: string[]): Promise<string[]> {
-  if (!isTauri) throw new Error('Removing location is available in the Windows app.')
+  if (!isTauri) throw new Error(t('Removing location is available in the Windows app.'))
   return invoke<string[]>('remove_location', { paths })
 }
 
@@ -473,7 +481,7 @@ export async function ocrMaxDimension(): Promise<number> {
 
 /** Recognizes text in RGBA pixels. */
 export async function ocrImage(rgba: Uint8ClampedArray, width: number, height: number): Promise<OcrResult> {
-  if (!ocrAvailable) throw new Error('Text recognition uses the Windows OCR engine, available in the Windows app.')
+  if (!ocrAvailable) throw new Error(t('Text recognition uses the Windows OCR engine, available in the Windows app.'))
   const bgra = new Uint8Array(rgba.length)
   for (let i = 0; i < rgba.length; i += 4) {
     bgra[i] = rgba[i + 2]
@@ -501,7 +509,7 @@ export async function listScanners(): Promise<ScannerInfo[]> {
 
 /** Scans with the device's own driver; returns the image files written and the resolution used. */
 export async function scan(id: string, source: 'auto' | 'flatbed' | 'feeder', dpi: number): Promise<{ files: string[]; dpi: number }> {
-  if (!scanAvailable) throw new Error('Scanning is available in the Windows app.')
+  if (!scanAvailable) throw new Error(t('Scanning is available in the Windows app.'))
   return invoke('scan', { id, source, dpi })
 }
 
@@ -557,7 +565,7 @@ export async function historyList(path: string): Promise<VersionInfo[]> {
 export async function historyRead(path: string, id: string): Promise<Uint8Array> {
   if (!isTauri) {
     const v = memHistory.get(path)?.find((x) => x.info.id === id)
-    if (!v) throw new Error('That version no longer exists.')
+    if (!v) throw new Error(t('That version no longer exists.'))
     return v.bytes.slice()
   }
   return new Uint8Array(await invoke<ArrayBuffer>('history_read', { path, id }))
@@ -619,6 +627,6 @@ export async function fileStamp(path: string): Promise<FileStamp | null> {
 
 /** Opens the Windows share sheet for these files. */
 export async function shareFiles(paths: string[], title: string): Promise<void> {
-  if (!isTauri) throw new Error('Sharing uses the Windows share sheet, available in the Windows app.')
+  if (!isTauri) throw new Error(t('Sharing uses the Windows share sheet, available in the Windows app.'))
   await invoke('share_files', { paths, title })
 }

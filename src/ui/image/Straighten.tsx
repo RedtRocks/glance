@@ -4,6 +4,7 @@ import { straighten } from '../../state/imageState'
 import { straightenImage } from '../../state/imageActions'
 import { MAX_STRAIGHTEN, straightenGeometry } from '../../core/image/transform'
 import { Icon } from '../Icon'
+import { t } from '../../i18n'
 
 const clampAngle = (a: number): number => Math.max(-MAX_STRAIGHTEN, Math.min(MAX_STRAIGHTEN, Math.round(a * 10) / 10))
 
@@ -95,7 +96,7 @@ export function StraightenBar({ doc }: { doc: ImageDoc }) {
   }, [])
   if (!st) return null
   return (
-    <div class="straighten-bar" role="toolbar" aria-label="Straighten">
+    <div class="straighten-bar" role="toolbar" aria-label={t('Straighten')}>
       <Icon name="straighten" />
       <input
         ref={slider}
@@ -104,8 +105,8 @@ export function StraightenBar({ doc }: { doc: ImageDoc }) {
         max={MAX_STRAIGHTEN}
         step={0.1}
         value={st.angle}
-        aria-label="Angle"
-        title="Drag the slider, or drag on the image. Double-click to reset."
+        aria-label={t('Angle')}
+        title={t('Drag the slider, or drag on the image. Double-click to reset.')}
         onInput={(e) => setStraightenAngle(Number((e.target as HTMLInputElement).value))}
         onDblClick={() => setStraightenAngle(0)}
       />
@@ -116,24 +117,24 @@ export function StraightenBar({ doc }: { doc: ImageDoc }) {
           max={MAX_STRAIGHTEN}
           step={0.1}
           value={st.angle.toFixed(1)}
-          aria-label="Angle in degrees"
+          aria-label={t('Angle in degrees')}
           onChange={(e) => setStraightenAngle(Number((e.target as HTMLInputElement).value) || 0)}
         />
         °
       </label>
-      <label class="toggle-switch" title="Crop away the empty corners">
+      <label class="toggle-switch" title={t('Crop away the empty corners')}>
         <input type="checkbox" role="switch" checked={st.crop} onChange={(e) => (straighten.value = { ...st, crop: (e.target as HTMLInputElement).checked })} />
-        Crop to fill
+        {t('Crop to fill')}
       </label>
       <button class="btn" disabled={st.angle === 0} onClick={() => setStraightenAngle(0)}>
-        Reset
+        {t('Reset')}
       </button>
       <span class="tb-sep" />
       <button class="btn" onClick={cancel}>
-        Cancel
+        {t('Cancel')}
       </button>
       <button class="btn primary" disabled={st.angle === 0} onClick={done}>
-        Done
+        {t('Done')}
       </button>
     </div>
   )

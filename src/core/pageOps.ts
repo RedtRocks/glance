@@ -3,6 +3,7 @@
  * leaves document-level data (outline, metadata, forms) intact.
  */
 import { PDFDocument, PDFName, PDFNumber, degrees, type PDFPage } from '@cantoo/pdf-lib'
+import { t } from '../i18n'
 
 async function load(bytes: Uint8Array): Promise<PDFDocument> {
   return PDFDocument.load(bytes, { ignoreEncryption: true, updateMetadata: false })
@@ -79,7 +80,7 @@ export async function rotatePages(bytes: Uint8Array, indices: number[], delta: 9
 
 export async function deletePages(bytes: Uint8Array, indices: number[]): Promise<Uint8Array> {
   const doc = await load(bytes)
-  if (indices.length >= doc.getPageCount()) throw new Error('A document must keep at least one page.')
+  if (indices.length >= doc.getPageCount()) throw new Error(t('A document must keep at least one page.'))
   for (const i of [...new Set(indices)].sort((a, b) => b - a)) doc.removePage(i)
   return save(doc)
 }

@@ -6,6 +6,7 @@ import { applyColorAdjustments } from '../../state/imageActions'
 import * as engine from '../../image/engine'
 import type { Raster } from '../../core/image/raster'
 import { Icon } from '../Icon'
+import { msg, t } from '../../i18n'
 
 interface SliderDef {
   key: keyof AdjustParams
@@ -16,17 +17,17 @@ interface SliderDef {
 }
 
 const SLIDERS: SliderDef[] = [
-  { key: 'exposure', label: 'Exposure', min: -3, max: 3, step: 0.05 },
-  { key: 'contrast', label: 'Contrast', min: -1, max: 1, step: 0.01 },
-  { key: 'highlights', label: 'Highlights', min: -1, max: 1, step: 0.01 },
-  { key: 'shadows', label: 'Shadows', min: -1, max: 1, step: 0.01 },
-  { key: 'saturation', label: 'Saturation', min: -1, max: 1, step: 0.01 },
-  { key: 'temperature', label: 'Temperature', min: -1, max: 1, step: 0.01 },
-  { key: 'tint', label: 'Tint', min: -1, max: 1, step: 0.01 },
-  { key: 'sepia', label: 'Sepia', min: 0, max: 1, step: 0.01 },
-  { key: 'gamma', label: 'Gamma', min: 0.2, max: 3, step: 0.01 },
-  { key: 'definition', label: 'Definition', min: -1, max: 1, step: 0.01 },
-  { key: 'sharpness', label: 'Sharpness', min: 0, max: 1, step: 0.01 }
+  { key: 'exposure', label: msg('Exposure'), min: -3, max: 3, step: 0.05 },
+  { key: 'contrast', label: msg('Contrast'), min: -1, max: 1, step: 0.01 },
+  { key: 'highlights', label: msg('Highlights'), min: -1, max: 1, step: 0.01 },
+  { key: 'shadows', label: msg('Shadows'), min: -1, max: 1, step: 0.01 },
+  { key: 'saturation', label: msg('Saturation'), min: -1, max: 1, step: 0.01 },
+  { key: 'temperature', label: msg('Temperature'), min: -1, max: 1, step: 0.01 },
+  { key: 'tint', label: msg('Tint'), min: -1, max: 1, step: 0.01 },
+  { key: 'sepia', label: msg('Sepia'), min: 0, max: 1, step: 0.01 },
+  { key: 'gamma', label: msg('Gamma'), min: 0.2, max: 3, step: 0.01 },
+  { key: 'definition', label: msg('Definition'), min: -1, max: 1, step: 0.01 },
+  { key: 'sharpness', label: msg('Sharpness'), min: 0, max: 1, step: 0.01 }
 ]
 
 function HistogramView({ h, params, onLevels }: { h: Histogram | null; params: AdjustParams; onLevels: (p: Partial<AdjustParams>) => void }) {
@@ -50,10 +51,10 @@ function HistogramView({ h, params, onLevels }: { h: Histogram | null; params: A
   return (
     <div class="histogram">
       <canvas ref={ref} width={256} height={80} />
-      <div class="levels" role="group" aria-label="Levels">
-        <input type="range" min={0} max={254} value={params.black} aria-label="Black point" onInput={(e) => onLevels({ black: Math.min(Number((e.target as HTMLInputElement).value), params.white - 1) })} />
-        <input type="range" min={0.2} max={5} step={0.01} value={params.gamma} aria-label="Midtones" style={{ direction: 'rtl' }} onInput={(e) => onLevels({ gamma: Number((e.target as HTMLInputElement).value) })} />
-        <input type="range" min={1} max={255} value={params.white} aria-label="White point" onInput={(e) => onLevels({ white: Math.max(Number((e.target as HTMLInputElement).value), params.black + 1) })} />
+      <div class="levels" role="group" aria-label={t('Levels')}>
+        <input type="range" min={0} max={254} value={params.black} aria-label={t('Black point')} onInput={(e) => onLevels({ black: Math.min(Number((e.target as HTMLInputElement).value), params.white - 1) })} />
+        <input type="range" min={0.2} max={5} step={0.01} value={params.gamma} aria-label={t('Midtones')} style={{ direction: 'rtl' }} onInput={(e) => onLevels({ gamma: Number((e.target as HTMLInputElement).value) })} />
+        <input type="range" min={1} max={255} value={params.white} aria-label={t('White point')} onInput={(e) => onLevels({ white: Math.max(Number((e.target as HTMLInputElement).value), params.black + 1) })} />
       </div>
     </div>
   )
@@ -113,10 +114,10 @@ export function AdjustColorPanel({ doc }: { doc: ImageDoc }) {
   }
 
   return (
-    <aside class="side-pane" aria-label="Adjust Color">
+    <aside class="side-pane" aria-label={t('Adjust Color')}>
       <header class="side-pane-header">
-        <h2>Adjust color</h2>
-        <button class="icon-button" aria-label="Close" onClick={close}>
+        <h2>{t('Adjust color')}</h2>
+        <button class="icon-button" aria-label={t('Close')} onClick={close}>
           <Icon name="close" size={16} />
         </button>
       </header>
@@ -125,7 +126,7 @@ export function AdjustColorPanel({ doc }: { doc: ImageDoc }) {
         {SLIDERS.map((s) => (
           <label class="slider-row" key={s.key}>
             <span class="slider-label">
-              {s.label}
+              {t(s.label)}
               <span class="slider-value">{params[s.key] === DEFAULT_ADJUST[s.key] ? '' : params[s.key] > 0 && s.min < 0 ? `+${params[s.key].toFixed(2)}` : params[s.key].toFixed(2)}</span>
             </span>
             <input
@@ -140,12 +141,12 @@ export function AdjustColorPanel({ doc }: { doc: ImageDoc }) {
           </label>
         ))}
         <div class="side-pane-actions">
-          <button class="btn" onClick={() => base.current && update(autoLevels(histogram(base.current, 2)))}>Auto Levels</button>
-          <button class="btn" onClick={() => update({ ...DEFAULT_ADJUST })}>Reset All</button>
+          <button class="btn" onClick={() => base.current && update(autoLevels(histogram(base.current, 2)))}>{t('Auto Levels')}</button>
+          <button class="btn" onClick={() => update({ ...DEFAULT_ADJUST })}>{t('Reset All')}</button>
         </div>
       </div>
       <footer class="side-pane-footer">
-        <button class="btn" onClick={close}>Cancel</button>
+        <button class="btn" onClick={close}>{t('Cancel')}</button>
         <button
           class="btn primary"
           disabled={isIdentity(params)}
@@ -155,7 +156,7 @@ export function AdjustColorPanel({ doc }: { doc: ImageDoc }) {
             await applyColorAdjustments(doc, p)
           }}
         >
-          Apply
+          {t('Apply')}
         </button>
       </footer>
     </aside>

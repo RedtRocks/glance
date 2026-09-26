@@ -6,6 +6,7 @@ import { toast } from '../../state/ui'
 import * as platform from '../../platform'
 import { Icon } from '../Icon'
 import { Popover } from '../markup/Popover'
+import { intlLocale, msg, t } from '../../i18n'
 
 /** A file next to the model, referenced by name (textures, .bin buffers, .mtl materials). */
 function sibling(modelPath: string, relative: string): string {
@@ -16,44 +17,44 @@ function sibling(modelPath: string, relative: string): string {
 }
 
 const LIGHTING: [Lighting, string][] = [
-  ['studio', 'Studio'],
-  ['soft', 'Soft'],
-  ['sunlight', 'Sunlight'],
-  ['dramatic', 'Dramatic'],
-  ['flat', 'Flat']
+  ['studio', msg('Studio')],
+  ['soft', msg('Soft')],
+  ['sunlight', msg('Sunlight')],
+  ['dramatic', msg('Dramatic')],
+  ['flat', msg('Flat')]
 ]
 const BACKDROPS: [Backdrop, string][] = [
-  ['theme', 'Default'],
-  ['white', 'White'],
-  ['black', 'Black'],
-  ['gradient', 'Gradient'],
-  ['room', 'Studio room']
+  ['theme', msg('Default')],
+  ['white', msg('White')],
+  ['black', msg('Black')],
+  ['gradient', msg('Gradient')],
+  ['room', msg('Studio room')]
 ]
 const LOOKS: [Look, string][] = [
-  ['original', 'Original'],
-  ['clay', 'Clay'],
-  ['normals', 'Normals'],
-  ['xray', 'X-ray']
+  ['original', msg('Original')],
+  ['clay', msg('Clay')],
+  ['normals', msg('Normals')],
+  ['xray', msg('X-ray')]
 ]
 const VIEWS: [CameraView, string][] = [
-  ['front', 'Front'],
-  ['back', 'Back'],
-  ['left', 'Left'],
-  ['right', 'Right'],
-  ['top', 'Top'],
-  ['bottom', 'Bottom'],
-  ['home', 'Three-quarter']
+  ['front', msg('Front')],
+  ['back', msg('Back')],
+  ['left', msg('Left')],
+  ['right', msg('Right')],
+  ['top', msg('Top')],
+  ['bottom', msg('Bottom')],
+  ['home', msg('Three-quarter')]
 ]
 
 /** A labeled row of choices in the Effects flyout. */
 function Choices<T extends string>({ label, options, value, onPick }: { label: string; options: [T, string][]; value: T; onPick: (v: T) => void }) {
   return (
-    <div class="effect-group" role="radiogroup" aria-label={label}>
-      <span class="flyout-label">{label}</span>
+    <div class="effect-group" role="radiogroup" aria-label={t(label)}>
+      <span class="flyout-label">{t(label)}</span>
       <div class="effect-chips">
         {options.map(([v, text]) => (
           <button key={v} class={`effect-chip ${value === v ? 'pressed' : ''}`} role="radio" aria-checked={value === v} onClick={() => onPick(v)}>
-            {text}
+            {t(text)}
           </button>
         ))}
       </div>
@@ -62,7 +63,7 @@ function Choices<T extends string>({ label, options, value, onPick }: { label: s
 }
 
 function fmt(n: number): string {
-  return n >= 1e6 ? `${(n / 1e6).toFixed(1)} M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)} K` : String(n)
+  return new Intl.NumberFormat(intlLocale.value, { notation: 'compact', maximumFractionDigits: 1 }).format(n)
 }
 
 function resetEffects(doc: ModelDoc): void {
@@ -145,35 +146,35 @@ export function ModelView({ doc }: { doc: ModelDoc }) {
     const v = viewer.current
     if (!v) return
     const base = doc.name.peek().replace(/\.[^.]+$/, '')
-    const target = await platform.saveDialog(`${base}.png`, [{ name: 'PNG image', extensions: ['png'] }])
+    const target = await platform.saveDialog(`${base}.png`, [{ name: t('PNG image'), extensions: ['png'] }])
     if (!target) return
     await platform.writeFile(target, new Uint8Array(await (await v.snapshot()).arrayBuffer()))
-    toast('Snapshot saved')
+    toast(t('Snapshot saved'))
   }
 
   return (
     <div class="model-view">
-      <canvas ref={canvas} class="model-canvas" aria-label={`3D view of ${doc.name.value}`} />
+      <canvas ref={canvas} class="model-canvas" aria-label={t('3D view of {name}', { name: doc.name.value })} />
       {error ? (
         <div class="notice model-error">
-          <h2>Glance can’t show this model</h2>
+          <h2>{t('Glance can’t show this model')}</h2>
           <p>{error}</p>
         </div>
       ) : (
-        !stats && <div class="model-loading muted">Loading model…</div>
+        !stats && <div class="model-loading muted">{t('Loading model…')}</div>
       )}
       {stats && (
-        <div class="model-controls" role="toolbar" aria-label="3D view">
-          <button class="tb-button" title="Reset view (Ctrl+9)" aria-label="Reset view" onClick={() => viewer.current?.resetView()}>
+        <div class="model-controls" role="toolbar" aria-label={t('3D view')}>
+          <button class="tb-button" title={t('Reset view (Ctrl+9)')} aria-label={t('Reset view')} onClick={() => viewer.current?.resetView()}>
             <Icon name="zoomFit" />
           </button>
-          <button class={`tb-button ${doc.wireframe.value ? 'pressed' : ''}`} title="Wireframe (W)" aria-label="Wireframe" aria-pressed={doc.wireframe.value} onClick={() => (doc.wireframe.value = !doc.wireframe.value)}>
+          <button class={`tb-button ${doc.wireframe.value ? 'pressed' : ''}`} title={t('Wireframe (W)')} aria-label={t('Wireframe')} aria-pressed={doc.wireframe.value} onClick={() => (doc.wireframe.value = !doc.wireframe.value)}>
             <Icon name="grid" />
           </button>
-          <button class={`tb-button ${doc.autoRotate.value ? 'pressed' : ''}`} title="Turntable (T)" aria-label="Turntable" aria-pressed={doc.autoRotate.value} onClick={() => (doc.autoRotate.value = !doc.autoRotate.value)}>
+          <button class={`tb-button ${doc.autoRotate.value ? 'pressed' : ''}`} title={t('Turntable (T)')} aria-label={t('Turntable')} aria-pressed={doc.autoRotate.value} onClick={() => (doc.autoRotate.value = !doc.autoRotate.value)}>
             <Icon name="rotateRight" />
           </button>
-          <Popover icon="cube" label="Camera views">
+          <Popover icon="cube" label={t('Camera views')}>
             {(close) => (
               <div class="flyout-col">
                 {VIEWS.map(([view, label]) => (
@@ -185,38 +186,44 @@ export function ModelView({ doc }: { doc: ModelDoc }) {
                       close()
                     }}
                   >
-                    <span>{label}</span>
+                    <span>{t(label)}</span>
                   </button>
                 ))}
               </div>
             )}
           </Popover>
-          <Popover icon="sparkle" label="Effects" pressed={effectsOn}>
+          <Popover icon="sparkle" label={t('Effects')} pressed={effectsOn}>
             {() => (
               <div class="effects">
-                <Choices label="Lighting" options={LIGHTING} value={doc.lighting.value} onPick={(v) => (doc.lighting.value = v)} />
-                <Choices label="Background" options={BACKDROPS} value={doc.backdrop.value} onPick={(v) => (doc.backdrop.value = v)} />
-                <Choices label="Material" options={LOOKS} value={doc.look.value} onPick={(v) => (doc.look.value = v)} />
+                <Choices label={msg('Lighting')} options={LIGHTING} value={doc.lighting.value} onPick={(v) => (doc.lighting.value = v)} />
+                <Choices label={msg('Background')} options={BACKDROPS} value={doc.backdrop.value} onPick={(v) => (doc.backdrop.value = v)} />
+                <Choices label={msg('Material')} options={LOOKS} value={doc.look.value} onPick={(v) => (doc.look.value = v)} />
                 <div class="effect-toggles">
                   <label>
-                    <input type="checkbox" checked={doc.shadow.value} onChange={(e) => (doc.shadow.value = (e.target as HTMLInputElement).checked)} /> Ground shadow
+                    <input type="checkbox" checked={doc.shadow.value} onChange={(e) => (doc.shadow.value = (e.target as HTMLInputElement).checked)} /> {t('Ground shadow')}
                   </label>
                   <label>
-                    <input type="checkbox" checked={doc.grid.value} onChange={(e) => (doc.grid.value = (e.target as HTMLInputElement).checked)} /> Floor grid
+                    <input type="checkbox" checked={doc.grid.value} onChange={(e) => (doc.grid.value = (e.target as HTMLInputElement).checked)} /> {t('Floor grid')}
                   </label>
                 </div>
                 <button class="btn effect-reset" disabled={!effectsOn} onClick={() => resetEffects(doc)}>
-                  Reset effects
+                  {t('Reset effects')}
                 </button>
               </div>
             )}
           </Popover>
-          <button class="tb-button" title="Save snapshot (Ctrl+E)" aria-label="Save snapshot" onClick={() => void snapshot()}>
+          <button class="tb-button" title={t('Save snapshot (Ctrl+E)')} aria-label={t('Save snapshot')} onClick={() => void snapshot()}>
             <Icon name="exportIcon" />
           </button>
           <span class="model-stats muted">
-            {fmt(stats.triangles)} {stats.triangles === 1 ? 'triangle' : 'triangles'} · {stats.meshes} {stats.meshes === 1 ? 'mesh' : 'meshes'}
-            {stats.animations ? ` · ${stats.animations} animation${stats.animations === 1 ? '' : 's'}` : ''}
+            {stats.animations
+              ? t('{count, plural, one {{triangles} triangle} other {{triangles} triangles}} · {meshes, plural, one {# mesh} other {# meshes}} · {animations, plural, one {# animation} other {# animations}}', {
+                  count: stats.triangles,
+                  triangles: fmt(stats.triangles),
+                  meshes: stats.meshes,
+                  animations: stats.animations
+                })
+              : t('{count, plural, one {{triangles} triangle} other {{triangles} triangles}} · {meshes, plural, one {# mesh} other {# meshes}}', { count: stats.triangles, triangles: fmt(stats.triangles), meshes: stats.meshes })}
           </span>
         </div>
       )}

@@ -3,6 +3,7 @@ import type { PdfDoc } from '../../state/documents'
 import { selectedId, setTool, editingId } from '../../state/markupState'
 import { Icon } from '../Icon'
 import type { IconName } from '../icons'
+import { msg, t } from '../../i18n'
 
 const ICON: Record<Markup['type'], IconName> = {
   highlight: 'highlight',
@@ -10,7 +11,7 @@ const ICON: Record<Markup['type'], IconName> = {
   squiggly: 'squiggly',
   strike: 'strike',
   note: 'note',
-  text: 'textBox',
+  text: 'textBox', // i18n-ignore: icon name
   signature: 'signature',
   rect: 'square',
   roundRect: 'roundRect',
@@ -25,23 +26,23 @@ const ICON: Record<Markup['type'], IconName> = {
 }
 
 const LABEL: Record<Markup['type'], string> = {
-  highlight: 'Highlight',
-  underline: 'Underline',
-  squiggly: 'Squiggly underline',
-  strike: 'Strikethrough',
-  note: 'Note',
-  text: 'Text box',
-  signature: 'Signature',
-  rect: 'Rectangle',
-  roundRect: 'Rounded rectangle',
-  oval: 'Oval',
-  star: 'Star',
-  bubble: 'Speech bubble',
-  line: 'Line',
-  arrow: 'Arrow',
-  polygon: 'Polygon',
-  ink: 'Drawing',
-  loupe: 'Loupe'
+  highlight: msg('Highlight'),
+  underline: msg('Underline'),
+  squiggly: msg('Squiggly underline'),
+  strike: msg('Strikethrough'),
+  note: msg('Note'),
+  text: msg('Text box'),
+  signature: msg('Signature'),
+  rect: msg('Rectangle'),
+  roundRect: msg('Rounded rectangle'),
+  oval: msg('Oval'),
+  star: msg('Star'),
+  bubble: msg('Speech bubble'),
+  line: msg('Line'),
+  arrow: msg('Arrow'),
+  polygon: msg('Polygon'),
+  ink: msg('Drawing'),
+  loupe: msg('Loupe')
 }
 
 function excerpt(m: Markup): string {
@@ -53,7 +54,7 @@ function excerpt(m: Markup): string {
 /** Preview's "Highlights and Notes" sidebar. */
 export function NotesList({ doc }: { doc: PdfDoc }) {
   const items = [...doc.markup.value].sort((a, b) => a.page - b.page || a.created - b.created)
-  if (!items.length) return <p class="sidebar-empty">Highlights, notes and other markup you add appear here.</p>
+  if (!items.length) return <p class="sidebar-empty">{t('Highlights, notes and other markup you add appear here.')}</p>
   let lastPage = -1
   return (
     <div class="notes-list">
@@ -62,7 +63,7 @@ export function NotesList({ doc }: { doc: PdfDoc }) {
         lastPage = m.page
         return (
           <div key={m.id}>
-            {header && <div class="notes-page">Page {m.page + 1}</div>}
+            {header && <div class="notes-page">{t('Page {page}', { page: m.page + 1 })}</div>}
             <button
               class={`note-item ${selectedId.value === m.id ? 'selected' : ''}`}
               onClick={() => {
@@ -78,7 +79,7 @@ export function NotesList({ doc }: { doc: PdfDoc }) {
                 <Icon name={ICON[m.type]} size={16} />
               </span>
               <span class="note-body">
-                <span class="note-kind">{LABEL[m.type]}</span>
+                <span class="note-kind">{t(LABEL[m.type])}</span>
                 {excerpt(m) && <span class="note-text">{excerpt(m)}</span>}
               </span>
             </button>
