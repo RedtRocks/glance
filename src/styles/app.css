@@ -2270,6 +2270,7 @@ input[type='range'] {
   .stamp {
     grid-template-columns: 1fr;
   }
+}
 
 /* ---------- Hand and Zoom tools (H, Space, Z) ---------- */
 .view-hand,
