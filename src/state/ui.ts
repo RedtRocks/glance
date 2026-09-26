@@ -88,3 +88,13 @@ export const redactTextOpen = signal(false)
 
 /** Tools → Show Inspector (Ctrl+I). */
 export const inspectorOpen = signal(false)
+
+/** File → Clean Up PDF. */
+export const cleanupOpen = signal(false)
+
+/** File → Create Collage. */
+export const collageOpen = signal(false)
+
+/** File → Reduce File Size. */
+export const reduceOpen = signal(false)
+export const scanOpen = signal(false)

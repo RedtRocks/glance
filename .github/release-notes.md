@@ -1,29 +1,17 @@
 Glance is a free, open-source, lightweight viewer and editor for PDFs, images and camera RAW on Windows, inspired by macOS Preview.
 
-> **Early preview.** Most of Preview's everyday features work: PDF viewing and page management, markup, signatures, forms, real redaction, text recognition, and image editing with background removal. Autosave with version history, 3D models and Windows 11 context-menu entries are next. See the [README](https://github.com/RedtRocks/viewer#features) for the full list.
+> **Early preview.** Most of Preview's everyday features work, plus version history, 3D models and more. The Windows 11 right-click menu entry comes once releases are code-signed. See the [README](https://github.com/RedtRocks/glance#features) for the full list.
 
-## New in 0.2.0
+## New in 0.3.0
 
-**Fixes from testing 0.1.0**
-- Highlights no longer hide the text underneath.
-- Closing a window with unsaved changes asks to save them (pending redactions included).
-- The sidebar no longer shows another document's pages after switching tabs.
-- Dragging pages between PDFs is easier: hover a tab to open it, then drop exactly where you want. Right-click a page for Copy/Move To, Duplicate, Split and more.
-- Menus show only what applies to the open file, and the View menu uses one-choice groups.
-
-**PDF**
-- Text boxes in any installed font; highlights in any color; squiggly underline; loupe (magnifier).
-- Duplicate pages, Split PDF, and export pages as PNG, JPEG or TIFF.
-- Remove Sensitive Text finds names, emails, phone, card and ID numbers to redact.
-- Recognize Text (Windows OCR) makes scanned PDFs searchable and selectable.
-- Sign with your camera.
-
-**Images**
-- Remove Background and Copy Subject, Instant Alpha, selections, crop, Adjust Color (now with Definition and Gamma) and Adjust Size.
-- Inspector (Ctrl+I) with EXIF, color profile and **Remove Location**.
-- Batch Edit Images: rotate, resize, convert and remove location for many images at once.
-- Export in Display P3, Adobe RGB or Gray; copy text from an image; set an image as your desktop background or lock screen.
-- Open PSD, AI and RAW files in another app with one click.
+- **Version history and autosave.** Every save keeps a version (File → Browse Versions: preview, restore or open a copy). Edits save automatically a few seconds after you stop (turn it off in Settings). Versions share unchanged data, so they take little space.
+- **Safe with other apps and windows.** A file opens in one window only; if another app changes it, Glance pauses autosave and asks before replacing anything.
+- **3D models.** GLB/glTF, OBJ, STL, PLY, 3MF, Collada, FBX, USDZ and 3DS: orbit, zoom, wireframe, turntable, animations and PNG snapshots.
+- **XPS and OpenXPS** documents, rendered by Windows.
+- **Clean Up PDF** removes comments, links, metadata, attached files and scripts for real, and PDFs are compacted when saving.
+- **Create Collage** from photos (rows or grid).
+- **Password-protect PDFs** when exporting (AES-256, with printing/copying/editing permissions), **Reduce File Size** for image-heavy PDFs, **New from Clipboard** (Ctrl+N) and **Import from Scanner** (flatbed or feeder, straight into a PDF).
+- **Share** through the Windows share sheet, **Send to → Glance** in Explorer, and **update notifications** you can skip or turn off.
 
 ## Download
 
@@ -44,7 +32,7 @@ Requires Windows 10 (1809+) or Windows 11. The installer downloads the WebView2 
 
 ## Privacy
 
-No telemetry, no account, no network access. Background removal and text recognition run on your PC. Saved signatures are encrypted with your Windows account.
+No telemetry and no account. The only network request is an optional daily update check (Settings). Background removal and text recognition run on your PC. Saved signatures are encrypted with your Windows account.
 
 ## Verify your download
 

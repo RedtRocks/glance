@@ -15,6 +15,10 @@ export interface Settings {
   shortcuts: Record<string, string[]>
   sidebarWidth: number
   checkForUpdates: boolean
+  /** Release tag the user chose to skip ("v0.3.0"). */
+  skippedVersion?: string
+  /** Save edits automatically a few seconds after they stop (earlier versions stay in the history). */
+  autosave: boolean
 }
 
 export const DEFAULT_TOOLBAR = ['sidebar', 'pageControls', 'spacer', 'zoomOut', 'zoomIn', 'rotate', 'highlight', 'markup', 'search', 'overflow']
@@ -26,7 +30,8 @@ const DEFAULTS: Settings = {
   toolbar: DEFAULT_TOOLBAR,
   shortcuts: {},
   sidebarWidth: 188,
-  checkForUpdates: true
+  checkForUpdates: true,
+  autosave: true
 }
 
 const KEY = 'glance.settings.v1'

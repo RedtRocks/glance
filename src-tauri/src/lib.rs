@@ -2,9 +2,12 @@ mod color;
 mod commands;
 mod decode;
 mod encode;
+mod files;
 mod fonts;
+mod history;
 mod metadata;
 mod ocr;
+mod scan;
 mod protocol;
 mod shell;
 mod signatures;
@@ -48,7 +51,8 @@ pub fn run() {
                 let _ = win.set_focus();
             }
             if !files.is_empty() {
-                let _ = app.emit("open-files", files);
+                // Only the main window opens them (every window listens for the event).
+                let _ = app.emit_to("main", "open-files", files);
             }
         }))
         .plugin(tauri_plugin_dialog::init())
@@ -57,6 +61,12 @@ pub fn run() {
         .plugin(tauri_plugin_drag::init())
         .register_asynchronous_uri_scheme_protocol("glance", |_ctx, request, responder| {
             tauri::async_runtime::spawn_blocking(move || responder.respond(protocol::handle(request)));
+        })
+        .manage(files::OpenFiles::default())
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::Destroyed = event {
+                files::release_window(window.app_handle(), window.label());
+            }
         })
         .setup(|app| {
             if let Some(win) = app.get_webview_window("main") {
@@ -86,7 +96,20 @@ pub fn run() {
             metadata::remove_location,
             ocr::ocr_image,
             ocr::ocr_max_dimension,
+            scan::scanners_list,
+            scan::scan,
+            files::claim_file,
+            files::release_file,
+            files::focus_file,
+            files::file_stamp,
+            history::history_record,
+            history::history_record_file,
+            history::history_list,
+            history::history_read,
+            history::history_delete,
+            history::history_rename,
             shell::set_wallpaper,
+            shell::share_files,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Glance");

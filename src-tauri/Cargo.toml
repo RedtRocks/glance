@@ -1,6 +1,6 @@
 [package]
 name = "glance"
-version = "0.2.0"
+version = "0.3.0"
 description = "Glance: a lightweight viewer and editor for PDFs, images, and 3D models"
 authors = ["Glance contributors"]
 license = "Apache-2.0"
@@ -33,6 +33,8 @@ zip = { version = "2", default-features = false, features = ["deflate"] }
 which = "7"
 base64 = "0.22"
 kamadak-exif = "0.6"
+fastcdc = "3"
+blake3 = { version = "1", default-features = false, features = ["std", "pure"] }
 little_exif = "0.6"
 ttf-parser = { version = "0.25", default-features = false, features = ["std", "opentype-layout"] }
 tract-onnx = "0.23"
@@ -57,7 +59,15 @@ windows = { version = "0.62", features = [
   "Graphics_Imaging",
   "Globalization",
   "Security_Cryptography",
+  "ApplicationModel_DataTransfer",
+  "Foundation_Collections",
+  "Win32_Graphics_Printing",
+  "Win32_Storage_Xps",
+  "Devices_Scanners",
+  "Devices_Enumeration",
+  "Storage_Search",
 ] }
+windows-collections = "0.3"
 
 [profile.release]
 codegen-units = 1

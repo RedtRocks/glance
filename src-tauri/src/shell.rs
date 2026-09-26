@@ -64,6 +64,71 @@ pub async fn set_wallpaper(app: tauri::AppHandle, request: Request<'_>) -> Resul
 }
 
 #[cfg(windows)]
+mod share {
+    use std::sync::Mutex;
+    use windows::core::{AgileReference, Interface, HSTRING};
+    use windows::ApplicationModel::DataTransfer::{DataRequestedEventArgs, DataTransferManager};
+    use windows::Foundation::TypedEventHandler;
+    use windows::Storage::{IStorageItem, StorageFile};
+    use windows::Win32::Foundation::HWND;
+    use windows::Win32::UI::Shell::IDataTransferManagerInterop;
+
+    /// The handler registered for the last share, removed before the next one.
+    static LAST: Mutex<Option<(isize, i64)>> = Mutex::new(None);
+
+    /// Opens the Windows share sheet for files. Must run on the window's UI thread.
+    pub fn share(hwnd: isize, paths: &[String], title: &str) -> windows::core::Result<()> {
+        // Agile references: the handler may run on another thread.
+        let items: Vec<AgileReference<IStorageItem>> = paths
+            .iter()
+            .map(|p| AgileReference::new(&StorageFile::GetFileFromPathAsync(&HSTRING::from(p.as_str()))?.join()?.cast::<IStorageItem>()?))
+            .collect::<windows::core::Result<_>>()?;
+        let interop = windows::core::factory::<DataTransferManager, IDataTransferManagerInterop>()?;
+        let window = HWND(hwnd as _);
+        let manager: DataTransferManager = unsafe { interop.GetForWindow(window)? };
+        if let Some((h, token)) = LAST.lock().unwrap().take() {
+            if h == hwnd {
+                let _ = manager.RemoveDataRequested(token);
+            }
+        }
+        let title = HSTRING::from(title);
+        let token = manager.DataRequested(&TypedEventHandler::<DataTransferManager, DataRequestedEventArgs>::new(move |_, args| {
+            if let Some(args) = args.as_ref() {
+                let data = args.Request()?.Data()?;
+                data.Properties()?.SetTitle(&title)?;
+                let resolved: Vec<Option<IStorageItem>> = items.iter().map(|r| r.resolve().ok()).collect();
+                let list: windows_collections::IIterable<IStorageItem> = resolved.into();
+                data.SetStorageItemsReadOnly(&list)?;
+            }
+            Ok(())
+        }))?;
+        *LAST.lock().unwrap() = Some((hwnd, token));
+        unsafe { interop.ShowShareUIForWindow(window) }
+    }
+}
+
+/// Opens the Windows share sheet (mail, Nearby Share, apps) for these files.
+#[tauri::command]
+pub async fn share_files(app: tauri::AppHandle, window: tauri::WebviewWindow, paths: Vec<String>, title: String) -> Result<(), String> {
+    #[cfg(windows)]
+    {
+        let hwnd = window.hwnd().map_err(|e| e.to_string())?.0 as isize;
+        let (tx, rx) = std::sync::mpsc::channel();
+        // The share UI belongs to the window's thread.
+        app.run_on_main_thread(move || {
+            let _ = tx.send(share::share(hwnd, &paths, &title).map_err(|e| e.message()));
+        })
+        .map_err(|e| e.to_string())?;
+        tauri::async_runtime::spawn_blocking(move || rx.recv().map_err(|e| e.to_string())?).await.map_err(|e| e.to_string())?
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = (app, window, paths, title);
+        Err("Sharing uses the Windows share sheet and is only available on Windows.".into())
+    }
+}
+
+#[cfg(windows)]
 mod win {
     use windows::core::{HSTRING, PCWSTR};
     use windows::Storage::StorageFile;

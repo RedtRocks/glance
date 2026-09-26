@@ -140,7 +140,7 @@ function Overflow() {
       {open && (
         <div class="overflow-menu">
           <MenuItems
-            items={['file.print', 'file.export', 'file.openWith', '-', 'image.setWallpaper', 'image.setLockScreen', '-', 'view.slideshow', 'view.darkPdf', '-', 'view.customizeToolbar', 'file.settings']}
+            items={['file.share', 'file.print', 'file.export', 'file.openWith', '-', 'image.setWallpaper', 'image.setLockScreen', '-', 'view.slideshow', 'view.darkPdf', '-', 'view.customizeToolbar', 'file.settings']}
             onDone={() => (menuOpen.value = null)}
           />
         </div>
@@ -150,7 +150,8 @@ function Overflow() {
 }
 
 const isPdf = (c: ToolbarContext) => c.doc?.kind === 'pdf'
-const isViewable = (c: ToolbarContext) => !!c.doc && c.doc.kind !== 'notice'
+const isViewable = (c: ToolbarContext) => c.doc?.kind === 'pdf' || c.doc?.kind === 'image'
+const isShown = (c: ToolbarContext) => !!c.doc && c.doc.kind !== 'notice'
 
 export const TOOLBAR_ITEMS: ToolbarItem[] = [
   {
@@ -163,9 +164,9 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
   },
   { id: 'pageControls', label: 'Page Controls', applies: (c) => isViewable(c) && c.pageCount > 1, render: (c) => <PageControls doc={c.doc!} /> },
   { id: 'spacer', label: 'Flexible Space', applies: () => true, render: () => <div class="tb-spacer" /> },
-  { id: 'zoomOut', label: 'Zoom Out', applies: isViewable, render: () => <Btn icon="zoomOut" label="Zoom Out" command="view.zoomOut" /> },
-  { id: 'zoomIn', label: 'Zoom In', applies: isViewable, render: () => <Btn icon="zoomIn" label="Zoom In" command="view.zoomIn" /> },
-  { id: 'zoomFit', label: 'Zoom to Fit', applies: isViewable, render: () => <Btn icon="zoomFit" label="Zoom to Fit" command="view.zoomToFit" /> },
+  { id: 'zoomOut', label: 'Zoom Out', applies: isShown, render: () => <Btn icon="zoomOut" label="Zoom Out" command="view.zoomOut" /> },
+  { id: 'zoomIn', label: 'Zoom In', applies: isShown, render: () => <Btn icon="zoomIn" label="Zoom In" command="view.zoomIn" /> },
+  { id: 'zoomFit', label: 'Zoom to Fit', applies: isShown, render: () => <Btn icon="zoomFit" label="Zoom to Fit" command="view.zoomToFit" /> },
   {
     id: 'rotate',
     label: 'Rotate',

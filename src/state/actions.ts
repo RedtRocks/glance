@@ -3,7 +3,7 @@ import * as platform from '../platform'
 import type { Probe } from '../platform'
 import type * as PageOps from '../core/pageOps'
 import { MARKER_KEY, newId, pageMaps, type Markup, type Rect } from '../core/markup'
-import { annotations, pageOps, redact } from './pdfModules'
+import { annotations, cleanup, pageOps, redact } from './pdfModules'
 import { openPdf } from '../pdf/engine'
 import { PasswordRequired } from '../pdf/engine'
 import {
@@ -13,6 +13,7 @@ import {
   docs,
   findByPath,
   ImageDoc,
+  ModelDoc,
   NoticeDoc,
   PdfDoc,
   removeDoc,
@@ -20,6 +21,7 @@ import {
 } from './documents'
 import { alertDialog, promptText, showDialog, toast, withBusy } from './ui'
 import { editableImage, rotateImage, saveImage, saveImageAs } from './imageActions'
+import * as versions from './versions'
 
 const GS_INSTALL = 'winget install ArtifexSoftware.GhostScript'
 
@@ -79,8 +81,11 @@ export async function serialize(doc: PdfDoc): Promise<Uint8Array> {
   return doc.exclusive(async () => {
     const bytes = await doc.currentBytes()
     const markup = doc.markup.peek()
-    if (!markup.length) return bytes
-    return (await annotations()).writeMarkup(bytes, markup, { loadFont: platform.fontBytes })
+    // writeMarkup rewrites the whole file anyway; otherwise compact once appended
+    // updates (other apps, form filling) pass a quarter of the file (ADR 0007).
+    if (markup.length) return (await annotations()).writeMarkup(bytes, markup, { loadFont: platform.fontBytes })
+    const c = await cleanup()
+    return !doc.password && c.appendedShare(bytes) > c.COMPACT_THRESHOLD ? c.compact(bytes) : bytes
   })
 }
 
@@ -90,6 +95,22 @@ async function openOne(path: string): Promise<Doc | null> {
     activeId.value = existing.id
     return existing
   }
+  // The same file is only ever open in one window: hand over to the window that has it.
+  const owner = await platform.claimFile(path)
+  if (owner) {
+    await platform.focusFile(owner, path).catch(() => undefined)
+    return null
+  }
+  const doc = await openFresh(path).catch((e) => {
+    void platform.releaseFile(path)
+    throw e
+  })
+  if (!doc) void platform.releaseFile(path)
+  else void versions.rememberStamp(doc)
+  return doc
+}
+
+async function openFresh(path: string): Promise<Doc | null> {
   const probe = await platform.probe(path)
   switch (probe.kind) {
     case 'pdf': {
@@ -107,10 +128,18 @@ async function openOne(path: string): Promise<Doc | null> {
       addDoc(doc)
       return doc
     }
-    case 'xps':
-      return notice(probe, 'XPS documents are coming soon', 'Glance will render XPS and OpenXPS through the Windows XPS engine in an upcoming update.')
-    case 'model':
-      return notice(probe, '3D models are coming soon', 'The 3D viewer (GLB, OBJ, STL, USDZ and more) is part of an upcoming update.')
+    case 'xps': {
+      // Pages come from the Windows XPS rasterizer (view-only, like multi-page TIFF).
+      if (probe.pages < 1) return notice(probe, 'Glance can’t show this XPS document', 'XPS pages are rendered by Windows. The file may be damaged, or this system has no XPS support.')
+      const doc = new ImageDoc(probe)
+      addDoc(doc)
+      return doc
+    }
+    case 'model': {
+      const doc = new ModelDoc(probe)
+      addDoc(doc)
+      return doc
+    }
     default:
       return notice(probe, 'Glance can’t open this file', 'This file type isn’t supported. If you think it should be, please open an issue on GitHub.')
   }
@@ -186,15 +215,52 @@ async function resolvePendingRedactions(doc: PdfDoc): Promise<boolean> {
   return choice === 'skip'
 }
 
-export async function save(doc: Doc | null = activeDoc.value): Promise<void> {
-  if (doc instanceof ImageDoc) return saveImage(doc)
+export async function save(doc: Doc | null = activeDoc.value, opts: { auto?: boolean } = {}): Promise<void> {
+  if (doc instanceof ImageDoc) return saveImage(doc, opts)
   if (!doc || doc.kind !== 'pdf') return
   const path = doc.path.value
-  if (!path) return saveAs(doc)
-  if (!(await resolvePendingRedactions(doc))) return
-  await withBusy('Saving…', async () => platform.writeFile(path, await serialize(doc)))
+  if (!path) return opts.auto ? undefined : saveAs(doc)
+  // Autosave never asks questions: it waits while redactions are pending.
+  if (opts.auto && doc.redactions.peek().length) return
+  if (!opts.auto && !(await resolvePendingRedactions(doc))) return
+  const disk = await versions.checkDisk(doc, path, !!opts.auto)
+  if (disk === 'cancel') return
+  if (disk === 'copy') return saveAs(doc)
+  await versions.beforeOverwrite(doc, path)
+  const run = async () => {
+    const bytes = await serialize(doc)
+    await platform.writeFile(path, bytes)
+    return bytes
+  }
+  const bytes = opts.auto ? await run() : await withBusy('Saving…', run)
   doc.dirty.value = false
-  toast('Saved')
+  await versions.rememberStamp(doc)
+  await versions.afterWrite(path, opts.auto ? 'Autosaved' : 'Saved', bytes)
+  if (!opts.auto) toast('Saved')
+  await offerToDeleteRedactedVersions(doc, path)
+}
+
+/**
+ * After redactions reach the file, earlier versions still contain the removed
+ * content (ADR 0006): say so and offer to delete them. Never mandatory.
+ */
+export async function offerToDeleteRedactedVersions(doc: Doc, path: string): Promise<void> {
+  if (!versions.redactedDocs.has(doc)) return
+  versions.redactedDocs.delete(doc)
+  const older = (await platform.historyList(path).catch(() => [])).slice(1)
+  if (!older.length) return
+  const choice = await showDialog<'keep' | 'delete'>({
+    title: 'Earlier versions still contain the redacted content',
+    body: `“${doc.name.peek()}” has ${older.length} earlier ${older.length === 1 ? 'version' : 'versions'} in Glance’s version history, made before you redacted it. Anyone with access to this PC’s account could restore them.`,
+    buttons: [
+      { label: 'Keep versions', value: 'keep' },
+      { label: `Delete earlier versions`, value: 'delete', primary: true }
+    ]
+  })
+  if (choice === 'delete') {
+    const n = await platform.historyDelete(path, older.map((v) => v.id))
+    toast(`Deleted ${n} earlier ${n === 1 ? 'version' : 'versions'}`)
+  }
 }
 
 export async function saveAs(doc: Doc | null = activeDoc.value): Promise<void> {
@@ -204,11 +270,23 @@ export async function saveAs(doc: Doc | null = activeDoc.value): Promise<void> {
   const target = await platform.saveDialog(`${base}.pdf`, [{ name: 'PDF document', extensions: ['pdf'] }])
   if (!target) return
   if (!(await resolvePendingRedactions(doc))) return
-  await withBusy('Saving…', async () => platform.writeFile(target, await serialize(doc)))
+  // Replacing another file: keep what was there as a version.
+  await versions.afterWrite(target, 'Before replacing').catch(() => undefined)
+  const bytes = await withBusy('Saving…', async () => {
+    const b = await serialize(doc)
+    await platform.writeFile(target, b)
+    return b
+  })
+  const old = doc.path.value
   doc.path.value = target
   doc.name.value = platform.baseName(target)
   doc.dirty.value = false
+  if (old) void platform.releaseFile(old)
+  void platform.claimFile(target)
+  await versions.rememberStamp(doc)
+  await versions.afterWrite(target, 'Saved', bytes)
   toast('Saved')
+  await offerToDeleteRedactedVersions(doc, target)
 }
 
 /** Asks to save or discard unsaved changes. Returns false if the user cancelled. */
@@ -310,7 +388,7 @@ export async function movePages(doc: PdfDoc, pages: number[], to: number): Promi
 }
 
 /** Converts any image Glance can display into PNG/JPEG bytes pdf-lib can embed. */
-async function imageForPdf(probe: Probe): Promise<PageOps.ImageInput> {
+export async function imageForPdf(probe: Probe): Promise<PageOps.ImageInput> {
   if (/\.(jpe?g|jfif)$/i.test(probe.path)) return { bytes: await platform.readFile(probe.path), type: 'jpg' }
   if (/\.png$/i.test(probe.path)) return { bytes: await platform.readFile(probe.path), type: 'png' }
   const res = await fetch(platform.imageUrl(probe))
@@ -396,15 +474,19 @@ export async function dragOutPages(doc: PdfDoc, pages: number[], icon: HTMLCanva
   await platform.dragOut(file, iconPath)
 }
 
-export async function exportSelectedPages(doc = activeDoc.value): Promise<void> {
+export async function exportSelectedPages(doc = activeDoc.value, opts: { protect?: import('../core/protect').ProtectOptions } = {}): Promise<void> {
   if (doc?.kind !== 'pdf') return
   const pages = selectedOrCurrent(doc)
+  const all = pages.length === doc.pageCount.value
   const base = doc.name.value.replace(/\.[^.]+$/, '')
-  const target = await platform.saveDialog(`${base} (${pagesLabel(pages)}).pdf`, [{ name: 'PDF document', extensions: ['pdf'] }])
+  const target = await platform.saveDialog(all ? `${base}.pdf` : `${base} (${pagesLabel(pages)}).pdf`, [{ name: 'PDF document', extensions: ['pdf'] }])
   if (!target) return
-  const bytes = await withBusy('Exporting…', async () => (await pageOps()).extractPages(await serialize(doc), pages))
+  const bytes = await withBusy('Exporting…', async () => {
+    const out = await (await pageOps()).extractPages(await serialize(doc), pages)
+    return opts.protect ? (await import('../core/protect')).protectPdf(out, opts.protect) : out
+  })
   await platform.writeFile(target, bytes)
-  toast(`Exported ${pagesLabel(pages)}`)
+  toast(`Exported ${all ? 'the document' : pagesLabel(pages)}${opts.protect ? ' with a password' : ''}`)
 }
 
 export type PageImageFormat = 'png' | 'jpg' | 'tiff'
@@ -588,6 +670,7 @@ export async function applyRedactions(doc: Doc | null = activeDoc.value, confirm
   })
   if (done) {
     doc.redactions.value = []
+    versions.redactedDocs.add(doc)
     toast(`Redacted ${reds.length} ${reds.length === 1 ? 'area' : 'areas'}`)
   }
   return done

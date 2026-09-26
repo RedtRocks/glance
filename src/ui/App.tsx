@@ -1,8 +1,11 @@
 import { useEffect } from 'preact/hooks'
-import { activeDoc, docs } from '../state/documents'
+import { activeDoc, activeId, docs, findByPath } from '../state/documents'
 import { isDark, settings } from '../state/settings'
-import { customizeOpen, inspectorOpen, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
+import { cleanupOpen, collageOpen, reduceOpen, scanOpen, customizeOpen, inspectorOpen, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
 import { confirmCloseWindow, openFiles } from '../state/actions'
+import { startAutosave } from '../state/autosave'
+import { checkForUpdates } from '../state/updates'
+import { UpdateBar } from './UpdateBar'
 import * as platform from '../platform'
 import { MenuBar } from './MenuBar'
 import { TabStrip } from './TabStrip'
@@ -11,6 +14,7 @@ import { Sidebar } from './sidebar/Sidebar'
 import { PdfView } from './views/PdfView'
 import { ImageView } from './views/ImageView'
 import { NoticeView } from './views/NoticeView'
+import { ModelView } from './views/ModelView'
 import { Welcome } from './views/Welcome'
 import { Slideshow } from './views/Slideshow'
 import { DialogHost } from './dialogs/Dialog'
@@ -19,6 +23,9 @@ import { CustomizeToolbar } from './dialogs/CustomizeToolbar'
 import { Toasts } from './Toasts'
 import { ContextMenu } from './ContextMenu'
 import { BatchDialog } from './dialogs/BatchDialog'
+import { CollageDialog } from './dialogs/CollageDialog'
+import { VersionsDialog } from './dialogs/VersionsDialog'
+import { versionsOpen } from '../state/versions'
 import { batchOpen } from '../state/batch'
 import { useShortcuts } from './useShortcuts'
 import { useFileDrop } from './useFileDrop'
@@ -28,10 +35,14 @@ import { SignatureDialog } from './markup/SignatureDialog'
 import { RedactionBar } from './RedactionBar'
 import { ExternalAppBar } from './ExternalAppBar'
 import { InspectorPane } from './InspectorPane'
+import { ConflictBar } from './ConflictBar'
 import { signatureDialog } from '../state/markupState'
 import { adjustColorOpen, adjustSizeOpen, exportOpen, imageSelection } from '../state/imageState'
 import { ImageDoc, PdfDoc } from '../state/documents'
 import { RedactTextDialog } from './dialogs/RedactTextDialog'
+import { CleanupDialog } from './dialogs/CleanupDialog'
+import { ReduceDialog } from './dialogs/ReduceDialog'
+import { ScanDialog } from './dialogs/ScanDialog'
 import { PdfExportDialog } from './dialogs/PdfExportDialog'
 import { AdjustColorPanel } from './image/AdjustColorPanel'
 import { AdjustSizeDialog } from './image/AdjustSizeDialog'
@@ -46,10 +57,12 @@ function Viewer() {
       <main class="viewer" aria-label={doc.name.value}>
         {doc.kind === 'pdf' && <RedactionBar doc={doc} />}
         <ExternalAppBar key={doc.id} doc={doc} />
+        <ConflictBar doc={doc} />
         <div class="viewer-stage">
           {doc.kind === 'pdf' && <PdfView key={doc.id} doc={doc} />}
           {doc.kind === 'image' && <ImageView key={doc.id} doc={doc} />}
           {doc.kind === 'notice' && <NoticeView doc={doc} />}
+          {doc.kind === 'model' && <ModelView key={doc.id} doc={doc} />}
         </div>
       </main>
       {doc instanceof ImageDoc && doc.editable && adjustColorOpen.value && <AdjustColorPanel key={doc.id} doc={doc} />}
@@ -77,6 +90,17 @@ export function App() {
     let dispose: (() => void) | undefined
     void platform.onOpenFiles((paths) => void openFiles(paths)).then((d) => (dispose = d))
     void platform.showWindow()
+    const stopAutosave = startAutosave()
+    // A few seconds after start, so it never competes with opening files.
+    const updateTimer = window.setTimeout(() => void checkForUpdates(), 5000)
+    // Another window asked us to show a file this window already has open.
+    let unactivate: (() => void) | undefined
+    void platform
+      .onActivateFile((path) => {
+        const d = findByPath(path)
+        if (d) activeId.value = d.id
+      })
+      .then((u) => (unactivate = u))
     let unguard: (() => void) | undefined
     void platform
       .onCloseRequested(confirmCloseWindow, () => docs.peek().some((d) => d.dirty.peek()))
@@ -84,6 +108,9 @@ export function App() {
     return () => {
       dispose?.()
       unguard?.()
+      stopAutosave()
+      unactivate?.()
+      clearTimeout(updateTimer)
     }
   }, [])
 
@@ -107,6 +134,7 @@ export function App() {
           <Toolbar />
         </div>
         <MarkupToolbar />
+        <UpdateBar />
       </header>
       <Viewer />
       {slideshow.value && <Slideshow />}
@@ -115,12 +143,17 @@ export function App() {
       {signatureDialog.value && <SignatureDialog />}
       {activeDoc.value instanceof ImageDoc && adjustSizeOpen.value && <AdjustSizeDialog doc={activeDoc.value} />}
       {activeDoc.value instanceof PdfDoc && redactTextOpen.value && <RedactTextDialog doc={activeDoc.value} />}
+      {activeDoc.value instanceof PdfDoc && cleanupOpen.value && <CleanupDialog doc={activeDoc.value} />}
+      {activeDoc.value instanceof PdfDoc && reduceOpen.value && <ReduceDialog doc={activeDoc.value} />}
       {activeDoc.value instanceof ImageDoc && exportOpen.value && <ExportDialog doc={activeDoc.value} />}
       {activeDoc.value instanceof PdfDoc && exportOpen.value && <PdfExportDialog doc={activeDoc.value} />}
       <DialogHost />
       <Toasts />
       <ContextMenu />
       {batchOpen.value && <BatchDialog />}
+      {collageOpen.value && <CollageDialog />}
+      {scanOpen.value && <ScanDialog />}
+      {versionsOpen.value && activeDoc.value && <VersionsDialog key={activeDoc.value.id} doc={activeDoc.value} />}
     </div>
   )
 }

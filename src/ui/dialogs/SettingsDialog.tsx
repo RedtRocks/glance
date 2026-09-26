@@ -102,6 +102,12 @@ export function SettingsDialog() {
               <option value="dark">Dark</option>
             </select>
           </SettingsCard>
+          <SettingsCard icon="save" title="Save changes automatically" description="A few seconds after you stop editing. Every save keeps a version you can go back to (File → Browse Versions). JPEG images and documents with pending redactions are only saved when you choose Save.">
+            <Toggle checked={s.autosave} label="Save changes automatically" onChange={(v) => updateSettings({ autosave: v })} />
+          </SettingsCard>
+          <SettingsCard icon="info" title="Check for updates" description="Once a day Glance asks GitHub whether a newer version exists and tells you. Nothing is downloaded or sent until you choose Download.">
+            <Toggle checked={s.checkForUpdates} label="Check for updates" onChange={(v) => updateSettings({ checkForUpdates: v })} />
+          </SettingsCard>
           <SettingsCard icon="document" title="Dark appearance for PDFs" description="Invert page colors while Glance is dark. Images inside PDFs are inverted too.">
             <Toggle checked={s.darkPdf} label="Dark appearance for PDFs" onChange={(v) => updateSettings({ darkPdf: v })} />
           </SettingsCard>

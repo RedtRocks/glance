@@ -27,7 +27,7 @@ pub async fn probe(path: String) -> Result<Probe, String> {
             .unwrap_or(0);
         let kind = decode::formats::classify(p, &head[..n]);
         let pages = match kind {
-            Kind::Image | Kind::Archive => decode::page_count(p),
+            Kind::Image | Kind::Archive | Kind::Xps => decode::page_count(p),
             _ => 1,
         };
         Ok(Probe {

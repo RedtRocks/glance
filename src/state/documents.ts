@@ -2,7 +2,7 @@ import { computed, signal, type Signal } from '@preact/signals'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 import { History } from './history'
 import { openPdf, readOutline, PasswordRequired, type OutlineNode } from '../pdf/engine'
-import type { Probe } from '../platform'
+import { releaseFile, type Probe } from '../platform'
 import { remapPages, type Markup, type PageMap, type Redaction } from '../core/markup'
 import type { Raster } from '../core/image/raster'
 
@@ -317,7 +317,24 @@ export class NoticeDoc extends BaseDoc {
   }
 }
 
-export type Doc = PdfDoc | ImageDoc | NoticeDoc
+/** A 3D model (GLB, OBJ, STL, …), shown in the lazy-loaded three.js viewer. */
+export class ModelDoc extends BaseDoc {
+  readonly kind = 'model' as const
+  readonly probe: Probe
+  readonly pageCount = signal(1)
+  readonly current = signal(0)
+  readonly wireframe = signal(false)
+  readonly autoRotate = signal(false)
+  /** View requests from commands (zoom in/out, reset); the view consumes them. */
+  readonly viewRequest = signal<{ kind: 'zoom'; dir: 1 | -1 } | { kind: 'reset' } | { kind: 'snapshot' } | null>(null)
+  constructor(probe: Probe) {
+    super(probe.name, probe.path)
+    this.probe = probe
+    this.sidebar.value = 'none'
+  }
+}
+
+export type Doc = PdfDoc | ImageDoc | NoticeDoc | ModelDoc
 
 export const docs = signal<Doc[]>([])
 export const activeId = signal<string | null>(null)
@@ -334,6 +351,8 @@ export function removeDoc(id: string): void {
   if (idx < 0) return
   const doc = list[idx]
   if (doc.kind === 'pdf') void doc.proxy.peek()?.loadingTask.destroy()
+  const path = doc.path.peek() ?? (doc.kind === 'pdf' ? doc.convertedFrom : null)
+  if (path) void releaseFile(path)
   const next = list.filter((d) => d.id !== id)
   docs.value = next
   if (activeId.value === id) activeId.value = next[Math.min(idx, next.length - 1)]?.id ?? null

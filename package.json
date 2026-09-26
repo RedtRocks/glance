@@ -1,6 +1,6 @@
 {
   "name": "glance",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Glance: a free, open-source, lightweight viewer and editor for PDFs, images, and 3D models on Windows, inspired by macOS Preview.",
   "license": "Apache-2.0",
@@ -24,12 +24,14 @@
     "@tauri-apps/plugin-dialog": "2.7.3",
     "@tauri-apps/plugin-opener": "2.5.5",
     "pdfjs-dist": "6.3.289",
-    "preact": "10.29.8"
+    "preact": "10.29.8",
+    "three": "0.180.0"
   },
   "devDependencies": {
     "@preact/preset-vite": "2.10.6",
     "@tauri-apps/cli": "2.11.5",
     "@types/node": "22.20.4",
+    "@types/three": "0.180.0",
     "typescript": "5.9.3",
     "vite": "7.3.6",
     "vitest": "3.2.7"

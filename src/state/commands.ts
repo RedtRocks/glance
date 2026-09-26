@@ -8,9 +8,11 @@ import * as actions from './actions'
 import * as shell from './shellActions'
 import * as ocr from './ocrActions'
 import { batchOpen } from './batch'
+import { checkForUpdates } from './updates'
+import { versionsOpen } from './versions'
 import { activeDoc, activeId, docs, type Doc, type ViewMode } from './documents'
 import { settings, updateSettings } from './settings'
-import { customizeOpen, findOpen, inspectorOpen, promptText, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from './ui'
+import { cleanupOpen, collageOpen, reduceOpen, scanOpen, customizeOpen, findOpen, inspectorOpen, promptText, redactTextOpen, toast, settingsOpen, sidebarVisible, slideshow } from './ui'
 import { parsePageInput } from '../core/pageControls'
 import { printDoc } from './print'
 import { applyRedactions } from './actions'
@@ -42,6 +44,7 @@ export function stepZoom(current: number, dir: 1 | -1): number {
 }
 
 const pdf = () => (activeDoc.value?.kind === 'pdf' ? activeDoc.value : null)
+const model = () => (activeDoc.value?.kind === 'model' ? activeDoc.value : null)
 /** The sidebar pane actually on screen, or null when hidden. */
 const sidebarShown = () => {
   const pane = activeDoc.value?.sidebar.value
@@ -66,6 +69,7 @@ const multiPage = () => {
 function zoom(dir: 1 | -1): void {
   const d = activeDoc.value
   if (!d || d.kind === 'notice') return
+  if (d.kind === 'model') return void (d.viewRequest.value = { kind: 'zoom', dir })
   const next = stepZoom(d.effectiveScale.value, dir)
   if (d.kind === 'pdf') d.zoom.value = next
   else d.zoom.value = next
@@ -74,6 +78,7 @@ function zoom(dir: 1 | -1): void {
 function setZoom(mode: 'actual' | 'fit'): void {
   const d = activeDoc.value
   if (!d || d.kind === 'notice') return
+  if (d.kind === 'model') return void (d.viewRequest.value = { kind: 'reset' })
   if (d.kind === 'pdf') d.zoom.value = mode === 'actual' ? 1 : 'fit-page'
   else d.zoom.value = mode === 'actual' ? 1 : 'fit'
 }
@@ -112,6 +117,8 @@ function cycleTab(dir: 1 | -1): void {
 export const COMMANDS: Command[] = [
   // File
   { id: 'file.open', label: 'Open…', keys: ['Ctrl+O'], run: actions.openWithDialog },
+  { id: 'file.newFromClipboard', label: 'New from Clipboard', keys: ['Ctrl+N'], run: () => img.newFromClipboard(), enabled: () => platform.isTauri },
+  { id: 'file.scan', label: 'Import from Scanner…', run: () => void (scanOpen.value = true), enabled: () => platform.scanAvailable },
   { id: 'file.newWindow', label: 'New Window', keys: ['Ctrl+Shift+N'], run: () => platform.openNewWindow([]) },
   { id: 'file.save', label: 'Save', keys: ['Ctrl+S'], run: () => actions.save(), enabled: () => isPdf() || isImage() },
   { id: 'file.saveAs', label: 'Save As…', keys: ['Ctrl+Shift+S'], run: () => actions.saveAs(), enabled: () => isPdf() || isImage() },
@@ -119,11 +126,17 @@ export const COMMANDS: Command[] = [
     id: 'file.export',
     label: 'Export…',
     keys: ['Ctrl+E'],
-    run: () => void (exportOpen.value = true),
-    enabled: () => isPdf() || isImage()
+    // Models export a snapshot of the current view.
+    run: () => void (model() ? (model()!.viewRequest.value = { kind: 'snapshot' }) : (exportOpen.value = true)),
+    enabled: () => isPdf() || isImage() || !!model()
   },
   { id: 'file.exportPages', label: 'Export Selected Pages…', run: () => actions.exportSelectedPages(), enabled: isPdf },
+  { id: 'file.versions', label: 'Browse Versions…', run: () => void (versionsOpen.value = true), enabled: () => !!activeDoc.value?.path.value },
+  { id: 'file.reduce', label: 'Reduce File Size…', run: () => void (reduceOpen.value = true), enabled: isPdf },
+  { id: 'file.cleanup', label: 'Clean Up PDF…', run: () => void (cleanupOpen.value = true), enabled: isPdf },
+  { id: 'file.collage', label: 'Create Collage…', run: () => void (collageOpen.value = true) },
   { id: 'file.batch', label: 'Batch Edit Images…', run: () => void (batchOpen.value = true) },
+  { id: 'file.share', label: 'Share…', run: () => shell.shareDoc(), enabled: () => platform.isTauri },
   { id: 'file.openWith', label: 'Open With Another App…', run: () => shell.openWithOtherApp(), enabled: () => shell.canOpenWith() },
   { id: 'image.setWallpaper', label: 'Set as Desktop Background', run: () => shell.setAsWallpaper('desktop'), enabled: anyImage },
   { id: 'image.setLockScreen', label: 'Set as Lock Screen', run: () => shell.setAsWallpaper('lock'), enabled: anyImage },
@@ -197,6 +210,9 @@ export const COMMANDS: Command[] = [
   },
   { id: 'view.fullscreen', label: 'Full Screen', keys: ['F11'], run: () => platform.toggleFullscreen() },
   { id: 'view.slideshow', label: 'Slideshow', keys: ['Ctrl+Shift+F'], run: () => void (slideshow.value = true), enabled: hasDoc },
+  { id: 'model.resetView', label: 'Reset View', run: () => void (model() && (model()!.viewRequest.value = { kind: 'reset' })) },
+  { id: 'model.wireframe', label: 'Wireframe', keys: ['W'], run: () => void (model() && (model()!.wireframe.value = !model()!.wireframe.value)), checked: () => !!model()?.wireframe.value },
+  { id: 'model.autoRotate', label: 'Turntable', keys: ['T'], run: () => void (model() && (model()!.autoRotate.value = !model()!.autoRotate.value)), checked: () => !!model()?.autoRotate.value },
   { id: 'view.inspector', label: 'Inspector', keys: ['Ctrl+I'], run: () => void (inspectorOpen.value = !inspectorOpen.value), checked: () => inspectorOpen.value },
   { id: 'view.customizeToolbar', label: 'Customize Toolbar…', run: () => void (customizeOpen.value = true) },
   // Go
@@ -243,8 +259,18 @@ export const COMMANDS: Command[] = [
   { id: 'tools.rotateLeft', label: 'Rotate Left', keys: ['Ctrl+L'], run: () => actions.rotatePages(-90), enabled: hasDoc },
   { id: 'tools.rotateRight', label: 'Rotate Right', keys: ['Ctrl+R'], run: () => actions.rotatePages(90), enabled: hasDoc },
   // Help
+  {
+    id: 'help.updates',
+    label: 'Check for Updates…',
+    run: async () => {
+      const r = await checkForUpdates({ force: true })
+      if (r === 'current') toast('Glance is up to date')
+      else if (r === 'error') toast('Couldn’t reach GitHub to check for updates', 'error')
+      else if (r === 'off') toast('Update checks are available in the Windows app')
+    }
+  },
   { id: 'help.about', label: 'About Glance', run: actions.showAbout },
-  { id: 'help.github', label: 'Glance on GitHub', run: () => platform.openUrl('https://github.com/RedtRocks/viewer') }
+  { id: 'help.github', label: 'Glance on GitHub', run: () => platform.openUrl('https://github.com/RedtRocks/glance') }
 ]
 
 // Which commands make sense for which kind of file. A PNG gets no page, outline or
@@ -256,15 +282,17 @@ const ifMarkup = () => ifPdf() || isImage()
 const ifPaged = () => ifPdf() || multiPage()
 const VISIBILITY: [(() => boolean), string[]][] = [
   [hasDoc, ['file.close', 'file.openWith', 'view.customizeToolbar']],
+  [() => ifPdf() || anyImage(), ['file.share']],
   [ifViewable, ['view.inspector']],
-  [ifViewable, [
-    'file.print', 'view.zoomIn', 'view.zoomOut', 'view.actualSize', 'view.zoomToFit', 'view.slideshow', 'view.fullscreen',
-    'tools.rotateLeft', 'tools.rotateRight'
-  ]],
-  [() => ifPdf() || isImage(), ['file.save', 'file.saveAs', 'file.export', 'edit.undo', 'edit.redo', 'edit.delete']],
+  [() => ifPdf() || anyImage(), ['file.versions']],
+  [ifViewable, ['view.zoomIn', 'view.zoomOut', 'view.zoomToFit', 'view.fullscreen']],
+  [() => ifPdf() || anyImage(), ['file.print', 'view.actualSize', 'view.slideshow', 'tools.rotateLeft', 'tools.rotateRight']],
+  [() => activeDoc.value?.kind === 'model', ['model.wireframe', 'model.autoRotate', 'model.resetView']],
+  [() => ifPdf() || isImage(), ['file.save', 'file.saveAs', 'edit.undo', 'edit.redo', 'edit.delete']],
+  [() => ifPdf() || isImage() || !!model(), ['file.export']],
   [ifPdf, [
     'file.exportPages', 'file.split', 'edit.selectAll', 'edit.find', 'edit.insertBlank', 'edit.insertFile', 'edit.duplicatePages',
-    'edit.deletePages', 'edit.addBookmark', 'view.toc', 'view.notes', 'view.bookmarks', 'view.continuous', 'view.single', 'view.two',
+    'edit.deletePages', 'edit.addBookmark', 'file.cleanup', 'file.reduce', 'view.toc', 'view.notes', 'view.bookmarks', 'view.continuous', 'view.single', 'view.two',
     'view.contactSheet', 'view.darkPdf', 'tools.highlight', 'tools.note', 'tools.redactText', 'tools.applyRedactions', 'tools.ocr'
   ]],
   [ifPaged, ['view.hideSidebar', 'view.thumbnails', 'go.previous', 'go.next', 'go.first', 'go.last', 'go.page']],

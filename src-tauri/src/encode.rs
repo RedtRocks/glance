@@ -8,6 +8,7 @@ use tauri::ipc::{InvokeBody, Request};
 
 /// Encodes RGBA pixels into `format`. JPEG has no alpha, so transparent pixels are
 /// composited onto white (Preview does the same).
+#[cfg(test)]
 pub fn encode(format: &str, width: u32, height: u32, rgba: &[u8], quality: u8) -> Result<Vec<u8>, String> {
     encode_with_profile(format, width, height, rgba, quality, None)
 }

@@ -4,7 +4,7 @@
  */
 import * as engine from '../image/engine'
 import * as platform from '../platform'
-import { activeDoc, ImageDoc, type Doc } from './documents'
+import { activeDoc, ImageDoc, PdfDoc, type Doc } from './documents'
 import { alertDialog, toast, withBusy } from './ui'
 
 /** Formats that are really another app's working files; Glance shows a flattened preview. */
@@ -76,5 +76,29 @@ export async function setAsWallpaper(target: 'desktop' | 'lock', doc: Doc | null
     toast(target === 'desktop' ? 'Set as desktop background' : 'Set as lock screen')
   } catch (e) {
     await alertDialog(target === 'desktop' ? 'Couldn’t set the background' : 'Couldn’t set the lock screen', String(e))
+  }
+}
+
+/**
+ * File → Share: the saved file, or, with unsaved edits, a temporary copy that
+ * includes them (markup, form entries, pixel edits).
+ */
+export async function shareDoc(doc: Doc | null = activeDoc.value): Promise<void> {
+  if (!doc || doc.kind === 'notice') return
+  try {
+    let path = doc.path.peek()
+    if (!path || doc.dirty.peek()) {
+      const name = doc.name.peek()
+      if (doc instanceof PdfDoc) {
+        const { serialize } = await import('./actions')
+        path = await platform.writeTemp(name.replace(/\.[^.]+$/, '') + '.pdf', await serialize(doc))
+      } else if (doc instanceof ImageDoc) {
+        const { bytes, ext } = await imageBytes(doc)
+        path = await platform.writeTemp(`${name.replace(/\.[^.]+$/, '')}.${ext}`, bytes)
+      }
+    }
+    if (path) await platform.shareFiles([path], doc.name.peek())
+  } catch (e) {
+    toast(String((e as Error).message ?? e), 'error')
   }
 }

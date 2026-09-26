@@ -10,6 +10,8 @@ import { activeDoc, ImageDoc, type Doc } from './documents'
 import { imageSelection } from './imageState'
 import { showDialog, toast, withBusy } from './ui'
 import { pageOps } from './pdfModules'
+import { afterWrite, beforeOverwrite, checkDisk, redactedDocs, rememberStamp } from './versions'
+import { offerToDeleteRedactedVersions } from './actions'
 
 export function editableImage(doc: Doc | null = activeDoc.value): ImageDoc | null {
   return doc instanceof ImageDoc && doc.editable ? doc : null
@@ -154,10 +156,12 @@ function hasTransparency(r: Raster): boolean {
   return false
 }
 
-export async function saveImage(doc: ImageDoc): Promise<void> {
+export async function saveImage(doc: ImageDoc, opts: { auto?: boolean } = {}): Promise<void> {
   const path = doc.path.peek()
-  if (!path || !doc.writableInPlace) return saveImageAs(doc)
+  if (!path || !doc.writableInPlace) return opts.auto ? undefined : saveImageAs(doc)
   if (!doc.dirty.peek()) return
+  // Autosave re-encodes only lossless formats; JPEG would lose quality on every save.
+  if (opts.auto && (LOSSY.includes(extOf(path)) || doc.redactions.peek().length)) return
   const ext = extOf(path)
   if (['jpg', 'jpeg', 'jfif', 'bmp', 'dib'].includes(ext) && doc.raster.peek() && hasTransparency(doc.raster.peek()!)) {
     const choice = await showDialog<'png' | 'flatten' | 'cancel'>({
@@ -172,7 +176,13 @@ export async function saveImage(doc: ImageDoc): Promise<void> {
     if (choice === 'png') return saveImageAs(doc, 'png')
     if (choice !== 'flatten') return
   }
-  await withBusy('Saving…', () => writeImage(doc, path, extOf(path), 92))
+  const disk = await checkDisk(doc, path, !!opts.auto)
+  if (disk === 'cancel') return
+  if (disk === 'copy') return saveImageAs(doc)
+  await beforeOverwrite(doc, path)
+  if (opts.auto) await writeImage(doc, path, extOf(path), 92)
+  else await withBusy('Saving…', () => writeImage(doc, path, extOf(path), 92))
+  if (doc.redactions.peek().length) redactedDocs.add(doc)
   // Markup is now part of the pixels.
   if (doc.markup.peek().length || doc.redactions.peek().length) {
     doc.raster.value = await engine.flatten(doc)
@@ -180,8 +190,13 @@ export async function saveImage(doc: ImageDoc): Promise<void> {
     doc.redactions.value = []
   }
   doc.dirty.value = false
-  toast('Saved')
+  await rememberStamp(doc)
+  await afterWrite(path, opts.auto ? 'Autosaved' : 'Saved')
+  if (!opts.auto) toast('Saved')
+  await offerToDeleteRedactedVersions(doc, path)
 }
+
+const LOSSY = ['jpg', 'jpeg', 'jfif', 'webp']
 
 export async function saveImageAs(doc: ImageDoc, format: ExportFormat = 'png', quality = 92, switchTo = true, profile?: platform.ColorProfile): Promise<void> {
   const base = doc.name.peek().replace(/\.[^.]+$/, '')
@@ -189,11 +204,38 @@ export async function saveImageAs(doc: ImageDoc, format: ExportFormat = 'png', q
   const target = await platform.saveDialog(`${base}.${fmt.exts[0]}`, [{ name: fmt.label, extensions: [...fmt.exts] }])
   if (!target) return
   const chosen = EXPORT_FORMATS.find((f) => (f.exts as readonly string[]).includes(extOf(target)))?.id ?? format
+  if (switchTo) await afterWrite(target, 'Before replacing')
   await withBusy('Saving…', () => writeImage(doc, target, chosen, quality, profile))
+  if (switchTo) await afterWrite(target, 'Saved')
   if (switchTo && chosen !== 'pdf') {
+    const old = doc.path.value
+    if (old) void platform.releaseFile(old)
+    void platform.claimFile(target)
     doc.path.value = target
     doc.name.value = platform.baseName(target)
     doc.dirty.value = false
+    await rememberStamp(doc)
   }
   toast(switchTo ? 'Saved' : 'Exported')
+}
+
+/**
+ * File → New from Clipboard (Ctrl+N): the copied image opens as a new, unsaved
+ * document; Save asks where to put it.
+ */
+export async function newFromClipboard(): Promise<void> {
+  const img = await platform.readClipboardImage()
+  if (!img) return toast('There’s no image on the clipboard.')
+  const png = await engine.encodePng({ width: img.width, height: img.height, data: new Uint8ClampedArray(img.rgba.buffer, img.rgba.byteOffset, img.rgba.byteLength) })
+  const stamp = new Date().toISOString().slice(0, 19).replace('T', ' ').replace(/:/g, '.')
+  const tmp = await platform.writeTemp(`Clipboard ${stamp}.png`, png)
+  const { openFiles } = await import('./actions')
+  const { findByPath } = await import('./documents')
+  await openFiles([tmp])
+  const doc = findByPath(tmp)
+  if (doc instanceof ImageDoc) {
+    doc.name.value = 'Untitled.png'
+    doc.path.value = null // Save → Save As
+    doc.dirty.value = true
+  }
 }
