@@ -102,7 +102,7 @@ export function SettingsDialog() {
               <option value="dark">Dark</option>
             </select>
           </SettingsCard>
-          <SettingsCard icon="save" title="Save changes automatically" description="A few seconds after you stop editing. Every save keeps a version you can go back to (File → Browse Versions). JPEG images and documents with pending redactions are only saved when you choose Save.">
+          <SettingsCard icon="save" title="Save changes automatically" description="About ten seconds after you stop editing, and at most once a minute. Every save keeps a version you can go back to (File → Browse Versions). JPEG images and documents with pending redactions are only saved when you choose Save.">
             <Toggle checked={s.autosave} label="Save changes automatically" onChange={(v) => updateSettings({ autosave: v })} />
           </SettingsCard>
           <SettingsCard icon="tabs" title="Reopen tabs on launch" description="Open the files you had open when Glance last closed, on the same page and zoom. Files that were moved or deleted are skipped.">
