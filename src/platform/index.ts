@@ -5,6 +5,8 @@
  * (for development and automated UI tests) with graceful fallbacks.
  */
 
+import type { ShellRequest } from '../core/explorer'
+
 export type Kind = 'pdf' | 'image' | 'model' | 'postscript' | 'xps' | 'archive' | 'unsupported'
 
 export interface Probe {
@@ -203,6 +205,23 @@ export async function onOpenFiles(cb: (paths: string[]) => void): Promise<() => 
   if (!isTauri) return () => {}
   const { listen } = await import('@tauri-apps/api/event')
   return listen<string[]>('open-files', (e) => cb(e.payload))
+}
+
+/**
+ * Explorer's right-click verbs (Combine into PDF, Remove Location Info). Requests that
+ * arrived before the listener existed are delivered right after it is registered.
+ */
+export async function onShellRequest(cb: (r: ShellRequest) => void): Promise<() => void> {
+  if (!isTauri) return () => {}
+  const { listen } = await import('@tauri-apps/api/event')
+  const unlisten = await listen<ShellRequest>('shell-request', (e) => cb(e.payload))
+  for (const r of await invoke<ShellRequest[]>('take_shell_requests')) cb(r)
+  return unlisten
+}
+
+/** `name` in `dir`, numbered ("name 2.pdf") if a file already has that name. */
+export async function uniquePath(dir: string, name: string): Promise<string> {
+  return invoke<string>('unique_path', { dir, name })
 }
 
 export interface DropEvent {

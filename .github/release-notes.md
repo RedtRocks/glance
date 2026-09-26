@@ -1,6 +1,6 @@
 Glance is a free, open-source, lightweight viewer and editor for PDFs, images and camera RAW on Windows, inspired by macOS Preview.
 
-> **Early preview.** Most of Preview's everyday features work, plus version history, 3D models and more. The Windows 11 right-click menu entry comes once releases are code-signed. See the [README](https://github.com/RedtRocks/glance#features) for the full list.
+> **Early preview.** Most of Preview's everyday features work, plus version history, 3D models and more. Glance's entries in Explorer's right-click menu are under **Show more options** on Windows 11; the top-level entry comes once releases are code-signed. See the [README](https://github.com/RedtRocks/glance#features) for the full list.
 
 ## New in 0.3.0
 
@@ -11,6 +11,7 @@ Glance is a free, open-source, lightweight viewer and editor for PDFs, images an
 - **Clean Up PDF** removes comments, links, metadata, attached files and scripts for real, and PDFs are compacted when saving.
 - **Create Collage** from photos (rows or grid).
 - **Password-protect PDFs** when exporting (AES-256, with printing/copying/editing permissions), **Reduce File Size** for image-heavy PDFs, **New from Clipboard** (Ctrl+N) and **Import from Scanner** (flatbed or feeder, straight into a PDF).
+- **Explorer right-click menu:** Open in Glance, Combine into PDF (selected PDFs and images, in name order, as a new PDF next to them) and Remove Location Info. On Windows 11 they're under Show more options.
 - **Share** through the Windows share sheet, **Send to → Glance** in Explorer, and **update notifications** you can skip or turn off.
 
 ## Download
