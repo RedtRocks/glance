@@ -245,6 +245,19 @@ select {
   left: calc(100% + 2px);
   min-width: 200px;
 }
+.menu-heading {
+  padding: 6px 10px 2px 36px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.radio-dot {
+  display: block;
+  width: 6px;
+  height: 6px;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: currentColor;
+}
 .menu-item {
   display: grid;
   grid-template-columns: 20px 1fr auto;
@@ -1890,4 +1903,45 @@ input[type='range'] {
   accent-color: var(--accent);
   width: 18px;
   height: 18px;
+}
+
+/* Remove sensitive text */
+.redact-text {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.check-line {
+  display: flex;
+  gap: 20px;
+}
+.check-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+}
+.match-list {
+  height: 180px;
+  overflow: auto;
+  padding: 4px 8px;
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+.match-list .match {
+  padding: 4px 0;
+}
+.match-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Consolas, 'Cascadia Mono', monospace;
+}
+.muted {
+  color: var(--text-2);
+}
+.small {
+  font-size: 12px;
+  margin: 0;
 }

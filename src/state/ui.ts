@@ -82,3 +82,6 @@ export interface ContextMenuItem {
 }
 /** Right-click menu; '-' entries are separators. */
 export const contextMenu = signal<{ x: number; y: number; items: (ContextMenuItem | '-')[] } | null>(null)
+
+/** Tools → Remove Sensitive Text (search-and-redact). */
+export const redactTextOpen = signal(false)

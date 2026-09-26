@@ -8,7 +8,7 @@ import * as actions from './actions'
 import * as shell from './shellActions'
 import { activeDoc, activeId, docs, type Doc, type ViewMode } from './documents'
 import { settings, updateSettings } from './settings'
-import { customizeOpen, findOpen, promptText, settingsOpen, sidebarVisible, slideshow } from './ui'
+import { customizeOpen, findOpen, promptText, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from './ui'
 import { parsePageInput } from '../core/pageControls'
 import { printDoc } from './print'
 import { applyRedactions } from './actions'
@@ -26,6 +26,8 @@ export interface Command {
   enabled?: () => boolean
   /** Checked state for toggles shown in menus. */
   checked?: () => boolean
+  /** Commands sharing a group are mutually exclusive choices (shown with a radio dot). */
+  radio?: string
 }
 
 const ZOOM_STEPS = [0.1, 0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5, 6.4, 8]
@@ -36,6 +38,16 @@ export function stepZoom(current: number, dir: 1 | -1): number {
 }
 
 const pdf = () => (activeDoc.value?.kind === 'pdf' ? activeDoc.value : null)
+/** The sidebar pane actually on screen, or null when hidden. */
+const sidebarShown = () => {
+  const pane = activeDoc.value?.sidebar.value
+  return sidebarVisible.value && pane && pane !== 'none' ? pane : null
+}
+const layout = () => {
+  const d = pdf()
+  return !d ? null : d.contactSheet.value ? 'contact' : d.viewMode.value
+}
+
 const image = () => img.editableImage(activeDoc.value)
 const isImage = () => image() !== null
 const anyImage = () => activeDoc.value?.kind === 'image'
@@ -146,25 +158,28 @@ export const COMMANDS: Command[] = [
   { id: 'edit.deletePages', label: 'Delete Selected Pages', run: () => actions.deletePages(), enabled: isPdf },
   { id: 'edit.addBookmark', label: 'Add Bookmark', keys: ['Ctrl+D'], run: () => addBookmark(), enabled: isPdf },
   // View
-  { id: 'view.hideSidebar', label: 'Hide Sidebar', keys: ['Ctrl+Shift+1'], run: () => showSidebar('none'), enabled: hasDoc },
-  { id: 'view.thumbnails', label: 'Thumbnails', keys: ['Ctrl+Shift+2'], run: () => showSidebar('thumbnails'), enabled: multiPage, checked: () => sidebarVisible.value && activeDoc.value?.sidebar.value === 'thumbnails' },
-  { id: 'view.toc', label: 'Table of Contents', keys: ['Ctrl+Shift+3'], run: () => showSidebar('toc'), enabled: isPdf, checked: () => sidebarVisible.value && activeDoc.value?.sidebar.value === 'toc' },
-  { id: 'view.notes', label: 'Highlights and Notes', keys: ['Ctrl+Shift+4'], run: () => showSidebar('notes'), enabled: isPdf, checked: () => sidebarVisible.value && activeDoc.value?.sidebar.value === 'notes' },
-  { id: 'view.bookmarks', label: 'Bookmarks', keys: ['Ctrl+Shift+5'], run: () => showSidebar('bookmarks'), enabled: isPdf, checked: () => sidebarVisible.value && activeDoc.value?.sidebar.value === 'bookmarks' },
+  { id: 'view.hideSidebar', label: 'No Sidebar', keys: ['Ctrl+Shift+1'], run: () => showSidebar('none'), enabled: hasDoc, radio: 'sidebar', checked: () => !sidebarShown() },
+  { id: 'view.thumbnails', label: 'Thumbnails', keys: ['Ctrl+Shift+2'], run: () => showSidebar('thumbnails'), enabled: multiPage, radio: 'sidebar', checked: () => sidebarShown() === 'thumbnails' },
+  { id: 'view.toc', label: 'Table of Contents', keys: ['Ctrl+Shift+3'], run: () => showSidebar('toc'), enabled: isPdf, radio: 'sidebar', checked: () => sidebarShown() === 'toc' },
+  { id: 'view.notes', label: 'Highlights and Notes', keys: ['Ctrl+Shift+4'], run: () => showSidebar('notes'), enabled: isPdf, radio: 'sidebar', checked: () => sidebarShown() === 'notes' },
+  { id: 'view.bookmarks', label: 'Bookmarks', keys: ['Ctrl+Shift+5'], run: () => showSidebar('bookmarks'), enabled: isPdf, radio: 'sidebar', checked: () => sidebarShown() === 'bookmarks' },
+  // Page layout: the three scroll modes and the contact sheet are one choice.
+  { id: 'view.continuous', label: 'Continuous Scroll', keys: ['Ctrl+1'], run: () => setView('continuous'), enabled: isPdf, radio: 'layout', checked: () => layout() === 'continuous' },
+  { id: 'view.single', label: 'Single Page', keys: ['Ctrl+2'], run: () => setView('single'), enabled: isPdf, radio: 'layout', checked: () => layout() === 'single' },
+  { id: 'view.two', label: 'Two Pages', keys: ['Ctrl+3'], run: () => setView('two'), enabled: isPdf, radio: 'layout', checked: () => layout() === 'two' },
   {
     id: 'view.contactSheet',
     label: 'Contact Sheet',
     keys: ['Ctrl+Shift+6'],
+    // The toolbar button toggles; from the menu it is one of the layouts.
     run: () => {
       const d = pdf()
       if (d) d.contactSheet.value = !d.contactSheet.value
     },
     enabled: isPdf,
-    checked: () => !!pdf()?.contactSheet.value
+    radio: 'layout',
+    checked: () => layout() === 'contact'
   },
-  { id: 'view.continuous', label: 'Continuous Scroll', keys: ['Ctrl+1'], run: () => setView('continuous'), enabled: isPdf, checked: () => pdf()?.viewMode.value === 'continuous' },
-  { id: 'view.single', label: 'Single Page', keys: ['Ctrl+2'], run: () => setView('single'), enabled: isPdf, checked: () => pdf()?.viewMode.value === 'single' },
-  { id: 'view.two', label: 'Two Pages', keys: ['Ctrl+3'], run: () => setView('two'), enabled: isPdf, checked: () => pdf()?.viewMode.value === 'two' },
   { id: 'view.zoomIn', label: 'Zoom In', keys: ['Ctrl+=', 'Ctrl+Shift+='], run: () => zoom(1), enabled: hasDoc },
   { id: 'view.zoomOut', label: 'Zoom Out', keys: ['Ctrl+-'], run: () => zoom(-1), enabled: hasDoc },
   { id: 'view.actualSize', label: 'Actual Size', keys: ['Ctrl+0'], run: () => setZoom('actual'), enabled: hasDoc },
@@ -206,6 +221,7 @@ export const COMMANDS: Command[] = [
   { id: 'tools.text', label: 'Add Text Box', keys: ['Ctrl+Shift+T'], run: () => toggleTool('text'), enabled: () => isPdf() || isImage() },
   { id: 'tools.note', label: 'Add Note', keys: ['Ctrl+Shift+O'], run: () => toggleTool('note'), enabled: isPdf },
   { id: 'tools.signature', label: 'Signature…', keys: ['Ctrl+Shift+J'], run: () => void (signatureDialog.value = true), enabled: () => isPdf() || isImage() },
+  { id: 'tools.redactText', label: 'Remove Sensitive Text…', run: () => void (redactTextOpen.value = true), enabled: isPdf },
   { id: 'tools.redact', label: 'Redact', keys: ['Ctrl+Shift+R'], run: () => toggleTool('redact'), enabled: () => isPdf() || isImage(), checked: () => tool.value === 'redact' },
   { id: 'tools.applyRedactions', label: 'Apply Redactions…', run: () => void applyRedactions(), enabled: () => !!pdf()?.redactions.value.length },
   { id: 'tools.crop', label: 'Crop to Selection', keys: ['Ctrl+K'], run: () => void img.cropToSelection(image()!), enabled: isImage },
