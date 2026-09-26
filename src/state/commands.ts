@@ -2,7 +2,7 @@
  * Every user command in one registry: the menu bar, toolbar, keyboard shortcuts and
  * the shortcut editor all read from here.
  */
-import { normalizeCombo } from '../core/shortcuts'
+import { cycleTool, displayCombo, normalizeCombo, stepWidth } from '../core/shortcuts'
 import * as platform from '../platform'
 import * as actions from './actions'
 import * as shell from './shellActions'
@@ -16,7 +16,7 @@ import { cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpe
 import { parsePageInput } from '../core/pageControls'
 import { printDoc } from './print'
 import { applyRedactions } from './actions'
-import { markupBar, selectedId, setTool, signatureDialog, tool } from './markupState'
+import { markupBar, restyle, selectedId, setTool, SHAPE_TOOLS, signatureDialog, style, tool, WIDTHS, type Tool } from './markupState'
 import { bookmarksFor, setBookmarks } from './bookmarks'
 import { adjustColorOpen, adjustSizeOpen, exportOpen, imageSelection } from './imageState'
 import * as img from './imageActions'
@@ -199,10 +199,10 @@ export const COMMANDS: Command[] = [
     radio: 'layout',
     checked: () => layout() === 'contact'
   },
-  { id: 'view.zoomIn', label: 'Zoom In', keys: ['Ctrl+=', 'Ctrl+Shift+='], run: () => zoom(1), enabled: hasDoc },
-  { id: 'view.zoomOut', label: 'Zoom Out', keys: ['Ctrl+-'], run: () => zoom(-1), enabled: hasDoc },
-  { id: 'view.actualSize', label: 'Actual Size', keys: ['Ctrl+0'], run: () => setZoom('actual'), enabled: hasDoc },
-  { id: 'view.zoomToFit', label: 'Zoom to Fit', keys: ['Ctrl+9'], run: () => setZoom('fit'), enabled: hasDoc },
+  { id: 'view.zoomIn', label: 'Zoom In', keys: ['Ctrl+=', 'Ctrl+Shift+=', '=', 'Shift+='], run: () => zoom(1), enabled: hasDoc },
+  { id: 'view.zoomOut', label: 'Zoom Out', keys: ['Ctrl+-', '-'], run: () => zoom(-1), enabled: hasDoc },
+  { id: 'view.actualSize', label: 'Actual Size', keys: ['Ctrl+0', 'Shift+0'], run: () => setZoom('actual'), enabled: hasDoc },
+  { id: 'view.zoomToFit', label: 'Zoom to Fit', keys: ['Ctrl+9', 'Shift+1'], run: () => setZoom('fit'), enabled: hasDoc },
   {
     id: 'view.darkPdf',
     label: 'Dark Appearance for PDFs',
@@ -231,7 +231,7 @@ export const COMMANDS: Command[] = [
     keys: ['Ctrl+Shift+A'],
     run: () => {
       if (markupBar.value) {
-        setTool('select') // also re-shows the bar, so hide it after
+        setTool('select')
         markupBar.value = false
       } else {
         markupBar.value = true
@@ -240,17 +240,30 @@ export const COMMANDS: Command[] = [
     enabled: () => isPdf() || isImage(),
     checked: () => markupBar.value
   },
+  // Single-key tools, as in Photoshop, Illustrator and Figma. Pressing a key again
+  // steps through its group (M: rectangle then ellipse selection; U: the shapes).
+  { id: 'tools.select', label: 'Select and Move', keys: ['V'], run: () => pickTool(['select']), enabled: () => isPdf() || anyImage(), checked: () => tool.value === 'select' },
+  { id: 'tools.hand', label: 'Hand', keys: ['H'], run: () => pickTool(['hand']), enabled: () => isPdf() || anyImage(), checked: () => tool.value === 'hand' },
+  { id: 'tools.zoom', label: 'Zoom Tool', keys: ['Z'], run: () => pickTool(['zoom']), enabled: () => isPdf() || anyImage(), checked: () => tool.value === 'zoom' },
+  { id: 'tools.marquee', label: 'Rectangular / Elliptical Selection', keys: ['M'], run: () => pickTool(['selectRect', 'selectEllipse']), enabled: isImage, checked: () => tool.value === 'selectRect' || tool.value === 'selectEllipse' },
+  { id: 'tools.lasso', label: 'Lasso / Smart Lasso', keys: ['L'], run: () => pickTool(['lasso', 'smartLasso']), enabled: isImage, checked: () => tool.value === 'lasso' || tool.value === 'smartLasso' },
+  { id: 'tools.brush', label: 'Draw / Sketch', keys: ['B'], run: () => pickTool(['draw', 'sketch']), enabled: () => isPdf() || isImage(), checked: () => tool.value === 'draw' || tool.value === 'sketch' },
+  { id: 'tools.shapes', label: 'Shapes', keys: ['U'], run: () => pickTool(SHAPE_TOOLS), enabled: () => isPdf() || isImage(), checked: () => SHAPE_TOOLS.includes(tool.value) },
+  { id: 'tools.rectangle', label: 'Rectangle', keys: ['R'], run: () => pickTool(['rect']), enabled: () => isPdf() || isImage(), checked: () => tool.value === 'rect' },
+  { id: 'tools.oval', label: 'Oval', keys: ['O'], run: () => pickTool(['oval']), enabled: () => isPdf() || isImage(), checked: () => tool.value === 'oval' },
+  { id: 'tools.thinner', label: 'Thinner Line', keys: ['['], run: () => stepLine(-1), enabled: () => isPdf() || isImage() },
+  { id: 'tools.thicker', label: 'Thicker Line', keys: [']'], run: () => stepLine(1), enabled: () => isPdf() || isImage() },
   { id: 'tools.highlight', label: 'Highlight', keys: ['Ctrl+Shift+H'], run: () => toggleTool('highlight'), enabled: isPdf, checked: () => tool.value === 'highlight' },
-  { id: 'tools.text', label: 'Add Text Box', keys: ['Ctrl+Shift+T'], run: () => toggleTool('text'), enabled: () => isPdf() || isImage() },
-  { id: 'tools.note', label: 'Add Note', keys: ['Ctrl+Shift+O'], run: () => toggleTool('note'), enabled: isPdf },
+  { id: 'tools.text', label: 'Add Text Box', keys: ['T', 'Ctrl+Shift+T'], run: () => toggleTool('text'), enabled: () => isPdf() || isImage() },
+  { id: 'tools.note', label: 'Add Note', keys: ['S', 'Ctrl+Shift+O'], run: () => toggleTool('note'), enabled: isPdf },
   { id: 'tools.signature', label: 'Signature…', keys: ['Ctrl+Shift+J'], run: () => void (signatureDialog.value = true), enabled: () => isPdf() || isImage() },
   { id: 'tools.ocr', label: 'Recognize Text (OCR)…', run: () => ocr.recognizePdfText(), enabled: isPdf },
   { id: 'tools.copyImageText', label: 'Copy Text from Image', run: () => ocr.copyImageText() },
   { id: 'tools.redactText', label: 'Remove Sensitive Text…', run: () => void (redactTextOpen.value = true), enabled: isPdf },
   { id: 'tools.redact', label: 'Redact', keys: ['Ctrl+Shift+R'], run: () => toggleTool('redact'), enabled: () => isPdf() || isImage(), checked: () => tool.value === 'redact' },
   { id: 'tools.applyRedactions', label: 'Apply Redactions…', run: () => void applyRedactions(), enabled: () => !!pdf()?.redactions.value.length },
-  { id: 'tools.crop', label: 'Crop to Selection', keys: ['Ctrl+K'], run: () => void img.cropToSelection(image()!), enabled: isImage },
-  { id: 'tools.instantAlpha', label: 'Instant Alpha', run: () => toggleTool('instantAlpha'), enabled: isImage, checked: () => tool.value === 'instantAlpha' },
+  { id: 'tools.crop', label: 'Crop to Selection', keys: ['C', 'Ctrl+K'], run: () => void img.cropToSelection(image()!), enabled: isImage },
+  { id: 'tools.instantAlpha', label: 'Instant Alpha', keys: ['W'], run: () => toggleTool('instantAlpha'), enabled: isImage, checked: () => tool.value === 'instantAlpha' },
   { id: 'tools.removeBackground', label: 'Remove Background', keys: ['Ctrl+Shift+K'], run: () => void img.removeBackground(image()!), enabled: isImage },
   { id: 'tools.copySubject', label: 'Copy Subject', run: () => void img.copySubject(image()!), enabled: isImage },
   { id: 'tools.adjustColor', label: 'Adjust Color…', keys: ['Ctrl+Shift+C'], run: () => void (adjustColorOpen.value = true), enabled: isImage },
@@ -297,10 +310,11 @@ const VISIBILITY: [(() => boolean), string[]][] = [
     'view.contactSheet', 'view.darkPdf', 'tools.highlight', 'tools.note', 'tools.redactText', 'tools.applyRedactions', 'tools.ocr'
   ]],
   [ifPaged, ['view.hideSidebar', 'view.thumbnails', 'go.previous', 'go.next', 'go.first', 'go.last', 'go.page']],
-  [ifMarkup, ['tools.markup', 'tools.text', 'tools.signature', 'tools.redact']],
+  [ifMarkup, ['tools.markup', 'tools.text', 'tools.signature', 'tools.redact', 'tools.brush', 'tools.shapes', 'tools.rectangle', 'tools.oval', 'tools.thinner', 'tools.thicker']],
+  [() => ifPdf() || anyImage(), ['tools.select', 'tools.hand', 'tools.zoom']],
   [anyImage, ['image.setWallpaper', 'image.setLockScreen', 'tools.copyImageText']],
   [isImage, [
-    'edit.invertSelection', 'tools.crop', 'tools.instantAlpha', 'tools.removeBackground', 'tools.copySubject', 'tools.adjustColor',
+    'edit.invertSelection', 'tools.crop', 'tools.instantAlpha', 'tools.marquee', 'tools.lasso', 'tools.removeBackground', 'tools.copySubject', 'tools.adjustColor',
     'tools.adjustSize', 'tools.flipHorizontal', 'tools.flipVertical'
   ]],
   [() => docs.value.length > 1, ['go.nextTab', 'go.previousTab']]
@@ -321,10 +335,41 @@ export function isVisible(id: string): boolean {
   return !!cmd && (cmd.visible?.() ?? true)
 }
 
+export function isEnabled(id: string): boolean {
+  const cmd = commandById.get(id)
+  return !!cmd && (cmd.enabled?.() ?? true)
+}
+
 export async function runCommand(id: string): Promise<void> {
   const cmd = commandById.get(id)
   if (!cmd || (cmd.enabled && !cmd.enabled())) return
   await cmd.run()
+}
+
+/**
+ * The command a key press runs. Some single keys mean different things for
+ * different files (T is Text on a page but Turntable on a 3D model), so prefer the
+ * command that applies to the open file.
+ */
+export function commandForCombo(combo: string): string | undefined {
+  const map = bindings()
+  const ids = Object.keys(map).filter((k) => map[k].includes(combo))
+  return ids.find((k) => isVisible(k) && isEnabled(k)) ?? ids[0]
+}
+
+/**
+ * Where a command's shortcut is live. Model commands and page tools never apply to
+ * the same file, so they may share keys; everything else must be unique.
+ */
+export function keyScope(id: string): string {
+  if (id.startsWith('model.')) return 'model'
+  return id.startsWith('tools.') ? 'page' : ''
+}
+
+/** A tooltip with the command's first shortcut, e.g. "Text box (T)". */
+export function tip(label: string, id?: string): string {
+  const k = id ? keysFor(id)[0] : undefined
+  return k ? `${label} (${displayCombo(k)})` : label
 }
 
 /** Effective bindings (defaults with user overrides), canonicalized. */
@@ -341,6 +386,16 @@ export function keysFor(id: string): string[] {
 
 function toggleTool(t: Parameters<typeof setTool>[0]): void {
   setTool(tool.peek() === t ? 'select' : t)
+}
+
+function pickTool(group: readonly Tool[]): void {
+  setTool(cycleTool(group, tool.peek()))
+}
+
+function stepLine(dir: 1 | -1): void {
+  const host = markupHost()
+  const sel = host?.markup.peek().find((m) => m.id === selectedId.peek())
+  restyle(host, { width: stepWidth(WIDTHS, sel?.style.width ?? style.peek().width, dir) })
 }
 
 async function addBookmark(): Promise<void> {

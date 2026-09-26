@@ -28,7 +28,7 @@ Glance brings Preview's everyday superpowers to Windows: rearranging and merging
 | Search, print, slideshow, dark appearance for PDFs | ✅ |
 | Export pages as PDF, PNG, JPEG or TIFF (72-600 ppi) | ✅ |
 | Context-aware toolbar (page controls only for multi-page documents), Customize Toolbar | ✅ |
-| Rebindable keyboard shortcuts (Windows conventions, Preview's shortcuts mapped) | ✅ |
+| Rebindable keyboard shortcuts (Windows conventions, Preview's shortcuts mapped, Photoshop-style single-key tools: V, H, Z, M, L, W, B, U, R, O, T, S, C, [ ], Space to pan) | ✅ |
 | Formats: PDF, AI, EPS/PS (via Ghostscript), XPS/OXPS, JPEG, PNG, GIF, WebP, AVIF, BMP, ICO, SVG, TIFF, HEIC, JPEG 2000, JPEG XL, JPEG XR, EXR, HDR, TGA, DDS, QOI, PNM, ICNS, PSD, CBZ, camera RAW ([full list](docs/FORMATS.md)); Open With another app for PSD, AI and RAW | ✅ |
 | Markup: sketch (shape recognition), draw, rectangle, rounded rectangle, oval, line, arrow, star, polygon, speech bubble, loupe (magnifier), text boxes in any installed font, notes, highlight (any color), underline, strikethrough, squiggly underline | ✅ |
 | Markup saved as standard, editable PDF annotations (reopen in Glance to keep editing) | ✅ |
