@@ -10,7 +10,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -320,6 +320,7 @@ pub async fn history_rename(app: tauri::AppHandle, from: String, to: String) -> 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::Path;
 
     fn temp_store(limit: u64) -> (Store, PathBuf) {
         static N: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
