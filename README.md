@@ -96,7 +96,7 @@ CONTEXT.md           Domain glossary
 
 Issues and pull requests are welcome. Please read [`CONTEXT.md`](CONTEXT.md) for the project's vocabulary and [`docs/adr`](docs/adr) for the decisions behind the design.
 
-**Translations.** Write every piece of UI text through `t()` from `src/i18n` (see the comment at the top of `src/i18n/index.ts`), in English, with placeholders instead of string concatenation: `t('Exported {file}', { file })`, `t('{count, plural, one {# page} other {# pages}}', { count })`. Text defined outside components, such as command labels, is marked with `msg()` and passed through `t()` where it's shown. `npm run i18n` lists text that skips `t()`. To add or update a language, run `npm run i18n -- <code>` (for example `de` or `pt-BR`) and fill in `src/i18n/locales/<code>.json`. To check layout with longer text, pick the pseudo-locale in Settings → Language (shown in dev builds).
+**Translations.** Write every piece of UI text through `t()` from `src/i18n` (see the comment at the top of `src/i18n/index.ts`), in English, with placeholders instead of string concatenation: `t('Exported {file}', { file })`, `t('{count, plural, one {# page} other {# pages}}', { count })`. Text defined outside components, such as command labels, is marked with `msg()` and passed through `t()` where it's shown. `npm test` fails on UI text that skips `t()`, and `npm run i18n` lists it. To add or update a language, run `npm run i18n -- <code>` (for example `de` or `pt-BR`) and fill in `src/i18n/locales/<code>.json`. To check layout with longer text, pick the pseudo-locale in Settings → Language (shown in dev builds).
 
 ## License
 
