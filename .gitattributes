@@ -1,0 +1,4 @@
+
+# Signature fixtures: the signed bytes must match exactly (no CRLF conversion).
+src-tauri/testdata/** binary
+tests/signatures/*.pdf binary
