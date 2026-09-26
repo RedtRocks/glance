@@ -6,7 +6,7 @@
 
 Glance brings Preview's everyday superpowers to Windows: rearranging and merging PDF pages by dragging, dragging pages out to create new files, real redaction, markup and signatures, background removal, metadata scrubbing, batch processing, and more. It's built to feel native on Windows 11 (Fluent design, Mica, Explorer integration) while staying small and fast.
 
-> **Status: early development.** Viewing, PDF page management, markup, signatures, forms, redaction, OCR, image editing, batch editing and metadata tools work today. Everything else is on the roadmap below and in [`docs/adr`](docs/adr).
+> **Status: early preview.** Viewing, PDF page management, markup, signatures, forms, redaction, OCR, image editing, batch editing and metadata tools work today. Everything else is on the roadmap below and in [`docs/adr`](docs/adr).
 >
 > **[Download the latest release](https://github.com/RedtRocks/glance/releases/latest)** (Windows 10/11, x64 and ARM64).
 
@@ -29,7 +29,7 @@ Glance brings Preview's everyday superpowers to Windows: rearranging and merging
 | Export pages as PDF, PNG, JPEG or TIFF (72-600 ppi) | ✅ |
 | Context-aware toolbar (page controls only for multi-page documents), Customize Toolbar | ✅ |
 | Rebindable keyboard shortcuts (Windows conventions, Preview's shortcuts mapped) | ✅ |
-| Formats: PDF, AI, EPS/PS (via Ghostscript), JPEG, PNG, GIF, WebP, AVIF, BMP, ICO, SVG, TIFF, HEIC, JPEG 2000, JPEG XL, JPEG XR, EXR, HDR, TGA, DDS, QOI, PNM, ICNS, PSD, CBZ, camera RAW ([full list](docs/FORMATS.md)); Open With another app for PSD, AI and RAW | ✅ (XPS and 3D coming) |
+| Formats: PDF, AI, EPS/PS (via Ghostscript), XPS/OXPS, JPEG, PNG, GIF, WebP, AVIF, BMP, ICO, SVG, TIFF, HEIC, JPEG 2000, JPEG XL, JPEG XR, EXR, HDR, TGA, DDS, QOI, PNM, ICNS, PSD, CBZ, camera RAW ([full list](docs/FORMATS.md)); Open With another app for PSD, AI and RAW | ✅ |
 | Markup: sketch (shape recognition), draw, rectangle, rounded rectangle, oval, line, arrow, star, polygon, speech bubble, loupe (magnifier), text boxes in any installed font, notes, highlight (any color), underline, strikethrough, squiggly underline | ✅ |
 | Markup saved as standard, editable PDF annotations (reopen in Glance to keep editing) | ✅ |
 | Signatures: draw with mouse/pen (pressure), capture with the camera, or import a photo; stored encrypted with Windows DPAPI | ✅ |
@@ -47,7 +47,8 @@ Glance brings Preview's everyday superpowers to Windows: rearranging and merging
 | Set an image as the desktop background or lock screen | ✅ |
 | Autosave and version history (File → Browse Versions); Clean Up PDF (annotations, links, metadata, attachments, scripts) | ✅ |
 | Share (Windows share sheet), Send to, update notifications you can skip or turn off | ✅ |
-| 3D models, collage | Milestone 5 |
+| 3D models: GLB/glTF, OBJ, STL, PLY, 3MF, DAE, FBX, USDZ, 3DS (orbit, wireframe, turntable, animations, snapshot) | ✅ |
+| Create Collage (justified rows or grid) | ✅ |
 | Windows 11 context menu (needs a signed build) | Milestone 6 |
 
 Signing on an iPhone or iPad (Preview's Continuity feature) isn't possible on Windows; use the camera or a photo of your signature instead.
