@@ -7,6 +7,8 @@ import { MarkupLayer } from '../markup/MarkupLayer'
 import { imageViewport } from '../../image/viewport'
 import { SelectionOverlay } from '../image/SelectionOverlay'
 import { InfoBar } from '../InfoBar'
+import { straighten } from '../../state/imageState'
+import { StraightenBar, StraightenOverlay, straightenPreview } from '../image/Straighten'
 
 /** Draws the magnified content of loupe markup (the ring itself is SVG in the markup layer). */
 function LoupeLayer({ doc, source, scale }: { doc: ImageDoc; source: HTMLCanvasElement | HTMLImageElement | null; scale: number }) {
@@ -112,6 +114,8 @@ export function ImageView({ doc }: { doc: ImageDoc }) {
   const h = natural ? natural.height * scale : 0
   const boxW = turned ? h : w
   const boxH = turned ? w : h
+  const st = doc.editable ? straighten.value : null
+  const turn = st && w ? straightenPreview(w, h, st.angle, st.crop) : null
   const vp = useMemo(() => (natural ? imageViewport(natural.width, natural.height, scale) : null), [natural?.width, natural?.height, scale])
 
   return (
@@ -133,8 +137,8 @@ export function ImageView({ doc }: { doc: ImageDoc }) {
             <p>{error}</p>
           </div>
         ) : (
-          <div class="image-stage" style={{ width: Math.max(boxW + 48, view.w), height: Math.max(boxH + 48, view.h) }}>
-            <div class="image-page checkerboard" style={{ width: w || undefined, height: h || undefined, transform: `rotate(${rotation}deg)` }}>
+          <div class={`image-stage${turn ? ' straightening' : ''}`} style={{ width: Math.max(boxW + 48, view.w), height: Math.max(boxH + 48, view.h) }}>
+            <div class="image-page checkerboard" style={{ width: w || undefined, height: h || undefined, transform: turn ? turn.transform : `rotate(${rotation}deg)` }}>
               {raster ? (
                 <canvas ref={canvas} class="image-pixels" style={{ width: w, height: h, imageRendering: scale >= 3 ? 'pixelated' : 'auto' }} />
               ) : (
@@ -157,11 +161,13 @@ export function ImageView({ doc }: { doc: ImageDoc }) {
               )}
               {vp && <LoupeLayer doc={doc} source={raster ? canvas.current : img.current} scale={scale} />}
               {vp && doc.editable && <MarkupLayer doc={doc} index={0} vp={vp} />}
-              {doc.editable && <SelectionOverlay doc={doc} scale={scale} />}
+              {doc.editable && !st && <SelectionOverlay doc={doc} scale={scale} />}
             </div>
+            {turn && <StraightenOverlay width={turn.frame.width} height={turn.frame.height} />}
           </div>
         )}
       </div>
+      {doc.editable && straighten.value && <StraightenBar doc={doc} />}
     </div>
   )
 }

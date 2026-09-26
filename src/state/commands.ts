@@ -18,7 +18,7 @@ import { printDoc } from './print'
 import { applyRedactions } from './actions'
 import { markupBar, selectedId, setTool, signatureDialog, tool } from './markupState'
 import { bookmarksFor, setBookmarks } from './bookmarks'
-import { adjustColorOpen, adjustSizeOpen, exportOpen, imageSelection } from './imageState'
+import { adjustColorOpen, adjustSizeOpen, exportOpen, imageSelection, straighten } from './imageState'
 import * as img from './imageActions'
 
 export interface Command {
@@ -254,6 +254,19 @@ export const COMMANDS: Command[] = [
   { id: 'tools.copySubject', label: 'Copy Subject', run: () => void img.copySubject(image()!), enabled: isImage },
   { id: 'tools.adjustColor', label: 'Adjust Color…', keys: ['Ctrl+Shift+C'], run: () => void (adjustColorOpen.value = true), enabled: isImage },
   { id: 'tools.adjustSize', label: 'Adjust Size…', keys: ['Ctrl+Shift+U'], run: () => void (adjustSizeOpen.value = true), enabled: isImage },
+  {
+    id: 'tools.straighten',
+    label: 'Straighten…',
+    keys: ['Ctrl+Shift+L'],
+    run: () => {
+      if (tool.peek() !== 'select') setTool('select')
+      imageSelection.value = null
+      adjustColorOpen.value = false
+      straighten.value = { angle: 0, crop: true }
+    },
+    enabled: isImage,
+    checked: () => !!straighten.value
+  },
   { id: 'tools.flipHorizontal', label: 'Flip Horizontal', run: () => void img.flipImage(image()!, 'horizontal'), enabled: isImage },
   { id: 'tools.flipVertical', label: 'Flip Vertical', run: () => void img.flipImage(image()!, 'vertical'), enabled: isImage },
   { id: 'tools.rotateLeft', label: 'Rotate Left', keys: ['Ctrl+L'], run: () => actions.rotatePages(-90), enabled: hasDoc },
@@ -300,7 +313,7 @@ const VISIBILITY: [(() => boolean), string[]][] = [
   [anyImage, ['image.setWallpaper', 'image.setLockScreen', 'tools.copyImageText']],
   [isImage, [
     'edit.invertSelection', 'tools.crop', 'tools.instantAlpha', 'tools.removeBackground', 'tools.copySubject', 'tools.adjustColor',
-    'tools.adjustSize', 'tools.flipHorizontal', 'tools.flipVertical'
+    'tools.adjustSize', 'tools.straighten', 'tools.flipHorizontal', 'tools.flipVertical'
   ]],
   [() => docs.value.length > 1, ['go.nextTab', 'go.previousTab']]
 ]

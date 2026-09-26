@@ -7,6 +7,7 @@ import { applyAdjust, type AdjustParams } from '../core/image/adjust'
 import { applyMask, featherMask, floodMask, invertMask } from '../core/image/alpha'
 import { selectionMask, type Selection } from '../core/image/select'
 import type { Raster } from '../core/image/raster'
+import { rotateAny } from '../core/image/transform'
 
 export type WorkerRequest =
   | { id: number; op: 'adjust'; raster: Raster; params: AdjustParams }
@@ -14,6 +15,7 @@ export type WorkerRequest =
   | { id: number; op: 'selectionMask'; raster: Raster; selection: Selection }
   | { id: number; op: 'applyMask'; raster: Raster; mask: Uint8Array; mode: 'erase' | 'keep'; feather: number; invert: boolean }
   | { id: number; op: 'resize'; raster: Raster; width: number; height: number }
+  | { id: number; op: 'rotate'; raster: Raster; degrees: number; crop: boolean }
 
 export type WorkerResponse = { id: number; raster?: Raster; mask?: Uint8Array; error?: string }
 
@@ -65,6 +67,9 @@ self.onmessage = (e: MessageEvent<WorkerRequest>) => {
       }
       case 'resize':
         res = { id: req.id, raster: resize(req.raster, req.width, req.height) }
+        break
+      case 'rotate':
+        res = { id: req.id, raster: rotateAny(req.raster, req.degrees, req.crop) }
         break
     }
     const transfer: Transferable[] = []
