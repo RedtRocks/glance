@@ -4,6 +4,7 @@ import { openFiles, save } from '../state/actions'
 import { conflicts } from '../state/versions'
 import * as platform from '../platform'
 import { InfoBar } from './InfoBar'
+import { t } from '../i18n'
 
 /** Shown when another app changed the file: autosave waits until the user decides. */
 export function ConflictBar({ doc }: { doc: Doc }) {
@@ -11,26 +12,26 @@ export function ConflictBar({ doc }: { doc: Doc }) {
   const reload = async (): Promise<void> => {
     const path = doc.path.peek()
     if (!path) return
-    if (doc.dirty.peek() && !(await platform.confirmDialog('Discard your unsaved changes and load the file as it is on disk now?', 'Reload', 'Discard and reload'))) return
+    if (doc.dirty.peek() && !(await platform.confirmDialog(t('Discard your unsaved changes and load the file as it is on disk now?'), t('Reload'), t('Discard and reload')))) return
     removeDoc(doc.id)
     await openFiles([path])
   }
   return (
     <InfoBar
       severity="warning"
-      title="This file was changed by another app"
+      title={t('This file was changed by another app')}
       actions={
         <>
           <button class="btn" onClick={() => void reload()}>
-            Reload
+            {t('Reload')}
           </button>
           <button class="btn primary" onClick={() => void save(doc)}>
-            Keep my version…
+            {t('Keep my version…')}
           </button>
         </>
       }
     >
-      Autosave is paused so neither version is lost.
+      {t('Autosave is paused so neither version is lost.')}
     </InfoBar>
   )
 }

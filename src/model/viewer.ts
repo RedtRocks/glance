@@ -4,6 +4,7 @@
  * model animates or auto-rotates.
  */
 import * as THREE from 'three'
+import { t } from '../i18n'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 
@@ -104,7 +105,7 @@ export async function parseModel(bytes: ArrayBuffer, name: string, resolve: Reso
     case 'dae': {
       const { ColladaLoader } = await import('three/examples/jsm/loaders/ColladaLoader.js')
       const c = new ColladaLoader(manager).parse(text(bytes), '')
-      if (!c) throw new Error('This Collada file has no scene.')
+      if (!c) throw new Error(t('This Collada file has no scene.'))
       return { object: c.scene, clips: c.scene.animations ?? [] }
     }
     case 'fbx': {
@@ -121,7 +122,7 @@ export async function parseModel(bytes: ArrayBuffer, name: string, resolve: Reso
       return { object: new TDSLoader(manager).parse(bytes, ''), clips: [] }
     }
     default:
-      throw new Error(`.${ext(name)} models aren’t supported yet.`)
+      throw new Error(t('.{ext} models aren’t supported yet.', { ext: ext(name) }))
   }
 }
 

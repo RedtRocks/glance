@@ -5,13 +5,14 @@ import { flip, rotate90 } from '../core/image/transform'
 import type { Raster } from '../core/image/raster'
 import * as engine from '../image/engine'
 import * as platform from '../platform'
+import { t } from '../i18n'
 
 export const batchOpen = signal(false)
 export const batchProgress = signal<{ done: number; total: number; current: string } | null>(null)
 
 async function decode(path: string): Promise<Raster> {
   const probe = await platform.probe(path)
-  if (probe.kind !== 'image') throw new Error('not an image Glance can read')
+  if (probe.kind !== 'image') throw new Error(t('not an image Glance can read'))
   const res = await fetch(platform.imageUrl(probe))
   if (!res.ok) throw new Error(await res.text())
   const bmp = await createImageBitmap(await res.blob(), { imageOrientation: 'from-image', premultiplyAlpha: 'none' })

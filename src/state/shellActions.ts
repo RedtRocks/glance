@@ -7,18 +7,23 @@ import * as platform from '../platform'
 import { activeDoc, ImageDoc, PdfDoc, type Doc } from './documents'
 import { alertDialog, toast, withBusy } from './ui'
 import { canRemoveLocation, type ShellRequest } from '../core/explorer'
+import { msg, t } from '../i18n'
 
-/** Formats that are really another app's working files; Glance shows a flattened preview. */
+/**
+ * Formats that are really another app's working files; Glance shows a flattened preview.
+ * `kind` and `detail` are marked with msg(); externalHint() translates them.
+ */
+const PHOTOSHOP = { kind: msg('Photoshop document'), detail: msg('Glance shows the flattened image. To edit layers, text or effects, open it in Photoshop or another image editor.') }
 const EXTERNAL: Record<string, { kind: string; detail: string }> = {
-  psd: { kind: 'Photoshop document', detail: 'Glance shows the flattened image. To edit layers, text or effects, open it in Photoshop or another image editor.' },
-  psb: { kind: 'Photoshop document', detail: 'Glance shows the flattened image. To edit layers, text or effects, open it in Photoshop or another image editor.' },
-  ai: { kind: 'Illustrator artwork', detail: 'Glance shows the PDF-compatible version. To edit the artwork, open it in Illustrator or another vector editor.' },
-  eps: { kind: 'EPS artwork', detail: 'Glance shows a rendered preview. To edit it, open it in a vector editor.' },
-  xcf: { kind: 'GIMP image', detail: 'To edit layers, open it in GIMP.' },
+  psd: PHOTOSHOP,
+  psb: PHOTOSHOP,
+  ai: { kind: msg('Illustrator artwork'), detail: msg('Glance shows the PDF-compatible version. To edit the artwork, open it in Illustrator or another vector editor.') },
+  eps: { kind: msg('EPS artwork'), detail: msg('Glance shows a rendered preview. To edit it, open it in a vector editor.') },
+  xcf: { kind: msg('GIMP image'), detail: msg('To edit layers, open it in GIMP.') },
   ...Object.fromEntries(
     ['cr2', 'cr3', 'nef', 'nrw', 'arw', 'srf', 'sr2', 'raf', 'orf', 'rw2', 'dng', 'pef', 'srw', 'x3f', 'erf', '3fr', 'iiq', 'mrw', 'kdc', 'dcr'].map((e) => [
       e,
-      { kind: 'Camera RAW photo', detail: 'Glance shows the preview the camera embedded. To develop the RAW data, open it in a photo editor.' }
+      { kind: msg('Camera RAW photo'), detail: msg('Glance shows the preview the camera embedded. To develop the RAW data, open it in a photo editor.') }
     ])
   )
 }
@@ -27,9 +32,10 @@ function ext(doc: Doc): string {
   return /\.([^.\\/]+)$/.exec(doc.path.peek() ?? doc.name.peek())?.[1]?.toLowerCase() ?? ''
 }
 
-/** Why this file is better edited elsewhere, or null for Glance's own formats. */
+/** Why this file is better edited elsewhere (translated), or null for Glance's own formats. */
 export function externalHint(doc: Doc | null): { kind: string; detail: string } | null {
-  return doc ? (EXTERNAL[ext(doc)] ?? null) : null
+  const hint = doc ? EXTERNAL[ext(doc)] : undefined
+  return hint ? { kind: t(hint.kind), detail: t(hint.detail) } : null
 }
 
 export function canOpenWith(doc: Doc | null = activeDoc.value): boolean {
@@ -70,13 +76,13 @@ async function imageBytes(doc: ImageDoc): Promise<{ bytes: Uint8Array; ext: stri
 export async function setAsWallpaper(target: 'desktop' | 'lock', doc: Doc | null = activeDoc.value): Promise<void> {
   if (!(doc instanceof ImageDoc)) return
   try {
-    await withBusy(target === 'desktop' ? 'Setting background…' : 'Setting lock screen…', async () => {
+    await withBusy(target === 'desktop' ? t('Setting background…') : t('Setting lock screen…'), async () => {
       const { bytes, ext } = await imageBytes(doc)
       await platform.setWallpaper(bytes, ext, target)
     })
-    toast(target === 'desktop' ? 'Set as desktop background' : 'Set as lock screen')
+    toast(target === 'desktop' ? t('Set as desktop background') : t('Set as lock screen'))
   } catch (e) {
-    await alertDialog(target === 'desktop' ? 'Couldn’t set the background' : 'Couldn’t set the lock screen', String(e))
+    await alertDialog(target === 'desktop' ? t('Couldn’t set the background') : t('Couldn’t set the lock screen'), String(e))
   }
 }
 
@@ -114,22 +120,22 @@ export async function handleShellRequest(r: ShellRequest): Promise<void> {
       await removeLocationFrom(r.files)
     }
   } catch (e) {
-    await alertDialog(r.action === 'combine' ? 'Couldn’t combine into PDF' : 'Couldn’t remove location info', String((e as Error).message ?? e))
+    await alertDialog(r.action === 'combine' ? t('Couldn’t combine into PDF') : t('Couldn’t remove location info'), String((e as Error).message ?? e))
   }
 }
 
 async function removeLocationFrom(paths: string[]): Promise<void> {
   const supported = paths.filter(canRemoveLocation)
   const unsupported = paths.filter((p) => !canRemoveLocation(p)).map(platform.baseName)
-  const failed = supported.length ? await withBusy('Removing location info…', () => platform.removeLocation(supported)) : []
+  const failed = supported.length ? await withBusy(t('Removing location info…'), () => platform.removeLocation(supported)) : []
   const done = supported.length - failed.length
-  const problems = [...failed, ...unsupported.map((n) => `${n}: this format has no location info Glance can remove`)]
+  const problems = [...failed, ...unsupported.map((n) => t('{file}: this format has no location info Glance can remove', { file: n }))]
   if (problems.length) {
     await alertDialog(
-      done ? `Removed location info from ${done} of ${paths.length} files` : 'Couldn’t remove location info',
+      done ? t('Removed location info from {done} of {total, plural, one {# file} other {# files}}', { done, total: paths.length }) : t('Couldn’t remove location info'),
       problems.join('\n')
     )
   } else {
-    toast(done === 1 ? `Removed location info from ${platform.baseName(supported[0])}` : `Removed location info from ${done} files`)
+    toast(done === 1 ? t('Removed location info from {file}', { file: platform.baseName(supported[0]) }) : t('{count, plural, one {Removed location info from # file} other {Removed location info from # files}}', { count: done }))
   }
 }

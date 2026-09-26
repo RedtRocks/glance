@@ -4,14 +4,15 @@ import type { ImageDoc } from '../../state/documents'
 import { adjustSizeOpen } from '../../state/imageState'
 import { adjustSize } from '../../state/imageActions'
 import { Modal } from '../dialogs/Dialog'
+import { msg, t } from '../../i18n'
 
 const UNITS: [Unit, string][] = [
-  ['px', 'pixels'],
-  ['percent', 'percent'],
-  ['in', 'inches'],
-  ['cm', 'cm'],
-  ['mm', 'mm'],
-  ['pt', 'points']
+  ['px', msg('pixels')],
+  ['percent', msg('percent')],
+  ['in', msg('inches')],
+  ['cm', msg('cm')],
+  ['mm', msg('mm')],
+  ['pt', msg('points')]
 ]
 
 const round = (v: number, unit: Unit): number => (unit === 'px' ? Math.round(v) : Math.round(v * 100) / 100)
@@ -51,11 +52,11 @@ export function AdjustSizeDialog({ doc }: { doc: ImageDoc }) {
 
   return (
     <Modal
-      title="Adjust size"
+      title={t('Adjust size')}
       onClose={close}
       footer={
         <>
-          <button class="btn" onClick={close}>Cancel</button>
+          <button class="btn" onClick={close}>{t('Cancel')}</button>
           <button
             class="btn primary"
             disabled={unchanged}
@@ -64,52 +65,59 @@ export function AdjustSizeDialog({ doc }: { doc: ImageDoc }) {
               void adjustSize(doc, pxW, pxH)
             }}
           >
-            Resize
+            {t('Resize')}
           </button>
         </>
       }
     >
       <label class="field">
-        <span>Fit into</span>
+        <span>{t('Fit into')}</span>
         <select value={preset} onChange={(e) => choosePreset((e.target as HTMLSelectElement).value)}>
-          <option value="custom">Custom</option>
+          <option value="custom">{t('Custom')}</option>
           {FIT_PRESETS.map(([label]) => (
             <option key={label} value={label}>
-              {label} pixels
+              {t('{size} pixels', { size: t(label) })}
             </option>
           ))}
         </select>
       </label>
       <div class="size-grid">
         <label class="field">
-          <span>Width</span>
+          <span>{t('Width')}</span>
           <input type="number" min={0} step="any" value={round(fromPixels(pxW, unit, dpi, nat.width), unit)} onChange={(e) => setWidth(Number((e.target as HTMLInputElement).value))} />
         </label>
         <label class="field">
-          <span>Height</span>
+          <span>{t('Height')}</span>
           <input type="number" min={0} step="any" value={round(fromPixels(pxH, unit, dpi, nat.height), unit)} onChange={(e) => setHeight(Number((e.target as HTMLInputElement).value))} />
         </label>
         <label class="field">
-          <span>Units</span>
+          <span>{t('Units')}</span>
           <select value={unit} onChange={(e) => setUnit((e.target as HTMLSelectElement).value as Unit)}>
             {UNITS.map(([u, label]) => (
               <option key={u} value={u}>
-                {label}
+                {t(label)}
               </option>
             ))}
           </select>
         </label>
         <label class="field">
-          <span>Resolution (pixels/inch)</span>
+          <span>{t('Resolution (pixels/inch)')}</span>
           <input type="number" min={1} value={dpi} onChange={(e) => setDpi(Math.max(1, Number((e.target as HTMLInputElement).value) || 72))} />
         </label>
       </div>
       <label class="check-row">
         <input type="checkbox" checked={keep} onChange={(e) => setKeep((e.target as HTMLInputElement).checked)} />
-        <span>Scale proportionally</span>
+        <span>{t('Scale proportionally')}</span>
       </label>
       <p class="muted">
-        Current: {nat.width} × {nat.height} px ({describeBytes(nat.width, nat.height)}). New: {pxW} × {pxH} px ({describeBytes(pxW, pxH)}).
+        {t('Current: {width} × {height} px ({size}). New: {newWidth} × {newHeight} px ({newSize}).', {
+          width: nat.width,
+          height: nat.height,
+          size: describeBytes(nat.width, nat.height),
+          newWidth: pxW,
+          newHeight: pxH,
+          newSize: describeBytes(pxW, pxH)
+        })}
       </p>
     </Modal>
   )

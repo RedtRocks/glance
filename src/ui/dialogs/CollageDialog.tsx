@@ -5,6 +5,7 @@ import { OPEN_FILTERS, openFiles } from '../../state/actions'
 import { collageOpen, toast, withBusy } from '../../state/ui'
 import * as platform from '../../platform'
 import { Modal } from './Dialog'
+import { t } from '../../i18n'
 
 const IMAGE_EXTS = OPEN_FILTERS[0].extensions.filter((e) => !['pdf', 'ai', 'ps', 'eps', 'epsf', 'xps', 'oxps', 'cbz'].includes(e))
 type Background = 'white' | 'black' | 'transparent'
@@ -55,19 +56,19 @@ export function CollageDialog() {
   }, [thumbs, layout, width, gap, columns, bg])
 
   const add = async (): Promise<void> => {
-    const picked = await platform.openDialog({ multiple: true, filters: [{ name: 'Images', extensions: IMAGE_EXTS }] })
+    const picked = await platform.openDialog({ multiple: true, filters: [{ name: t('Images'), extensions: IMAGE_EXTS }] })
     setFiles([...new Set([...files, ...picked])])
   }
 
   const save = async (): Promise<void> => {
     const format = bg === 'transparent' ? 'png' : 'jpg'
-    const target = await platform.saveDialog(`Collage.${format}`, [
-      { name: 'JPEG image', extensions: ['jpg'] },
-      { name: 'PNG image', extensions: ['png'] }
+    const target = await platform.saveDialog(`${t('Collage')}.${format}`, [
+      { name: t('JPEG image'), extensions: ['jpg'] },
+      { name: t('PNG image'), extensions: ['png'] }
     ])
     if (!target) return
     const fmt = /\.png$/i.test(target) ? 'png' : 'jpg'
-    await withBusy('Creating collage…', async () => {
+    await withBusy(t('Creating collage…'), async () => {
       const full = await Promise.all(files.map((f) => bitmap(f)))
       const c = new OffscreenCanvas(1, 1)
       const g = c.getContext('2d')!
@@ -77,47 +78,47 @@ export function CollageDialog() {
       full.forEach((b) => b.close())
     })
     close()
-    toast('Collage saved')
+    toast(t('Collage saved'))
     if (platform.isTauri) await openFiles([target])
   }
 
   return (
     <Modal
-      title="Create collage"
+      title={t('Create collage')}
       wide
       onClose={close}
       footer={
         <>
           <button class="btn" onClick={close}>
-            Cancel
+            {t('Cancel')}
           </button>
           <button class="btn primary" disabled={files.length < 2} onClick={() => void save()}>
-            Save collage…
+            {t('Save collage…')}
           </button>
         </>
       }
     >
       <div class="collage">
-        <div class="collage-preview">{thumbs.length ? <canvas ref={preview} /> : <p class="muted">Add at least two images.</p>}</div>
+        <div class="collage-preview">{thumbs.length ? <canvas ref={preview} /> : <p class="muted">{t('Add at least two images.')}</p>}</div>
         <div class="batch-options">
           <div class="batch-files-head">
-            <span class="flyout-label">{files.length} {files.length === 1 ? 'image' : 'images'}</span>
+            <span class="flyout-label">{t('{count, plural, one {# image} other {# images}}', { count: files.length })}</span>
             <button class="btn" onClick={() => void add()}>
-              Add images…
+              {t('Add images…')}
             </button>
           </div>
           <label class="field">
-            <span>Layout</span>
+            <span>{t('Layout')}</span>
             <select value={layout} onChange={(e) => setLayout((e.target as HTMLSelectElement).value as 'rows' | 'grid')}>
-              <option value="rows">Rows (whole photos)</option>
-              <option value="grid">Grid (equal tiles)</option>
+              <option value="rows">{t('Rows (whole photos)')}</option>
+              <option value="grid">{t('Grid (equal tiles)')}</option>
             </select>
           </label>
           {layout === 'grid' && (
             <label class="field">
-              <span>Columns</span>
+              <span>{t('Columns')}</span>
               <select value={columns} onChange={(e) => setColumns(Number((e.target as HTMLSelectElement).value))}>
-                <option value={0}>Automatic</option>
+                <option value={0}>{t('Automatic')}</option>
                 {[2, 3, 4, 5, 6].map((n) => (
                   <option key={n} value={n}>
                     {n}
@@ -127,23 +128,23 @@ export function CollageDialog() {
             </label>
           )}
           <label class="field">
-            <span>Width</span>
+            <span>{t('Width')}</span>
             <select value={width} onChange={(e) => setWidth(Number((e.target as HTMLSelectElement).value))}>
               {[1080, 2000, 3000, 4000, 6000].map((w) => (
                 <option key={w} value={w}>
-                  {w} pixels
+                  {t('{count, plural, one {# pixel} other {# pixels}}', { count: w })}
                 </option>
               ))}
             </select>
           </label>
           <label class="field">
-            <span>Spacing</span>
+            <span>{t('Spacing')}</span>
             <select value={gap} onChange={(e) => setGap(Number((e.target as HTMLSelectElement).value))}>
               {[
-                [0, 'None'],
-                [8, 'Thin'],
-                [16, 'Medium'],
-                [40, 'Wide']
+                [0, t('None')],
+                [8, t('Thin')],
+                [16, t('Medium')],
+                [40, t('Wide')]
               ].map(([v, l]) => (
                 <option key={v} value={v}>
                   {l}
@@ -152,11 +153,11 @@ export function CollageDialog() {
             </select>
           </label>
           <label class="field">
-            <span>Background</span>
+            <span>{t('Background')}</span>
             <select value={bg} onChange={(e) => setBg((e.target as HTMLSelectElement).value as Background)}>
-              <option value="white">White</option>
-              <option value="black">Black</option>
-              <option value="transparent">Transparent (PNG)</option>
+              <option value="white">{t('White')}</option>
+              <option value="black">{t('Black')}</option>
+              <option value="transparent">{t('Transparent (PNG)')}</option>
             </select>
           </label>
         </div>

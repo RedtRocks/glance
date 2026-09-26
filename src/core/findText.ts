@@ -6,6 +6,7 @@
  * within their item and rects are padded, so redaction boxes fully cover the glyphs.
  */
 import type { Rect } from './markup'
+import { msg } from '../i18n'
 
 export interface TextItem {
   str: string
@@ -48,14 +49,14 @@ export interface SensitivePattern {
   re: RegExp
 }
 
-/** Common kinds of personal data, like Preview's "Remove sensitive text" suggestions. */
+/** Common kinds of personal data, like Preview's "Remove sensitive text" suggestions. Labels are marked with msg(): show them with t(). */
 export const SENSITIVE_PATTERNS: SensitivePattern[] = [
-  { id: 'email', label: 'Email addresses', re: /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g },
-  { id: 'phone', label: 'Phone numbers', re: /(?<![\w-])(?:\+\d{1,3}[\s.-]?)?(?:\(\d{2,4}\)[\s.-]?)?\d{2,4}(?:[\s.-]\d{2,4}){1,4}(?![\w-])/g },
-  { id: 'card', label: 'Card numbers', re: /(?<!\d)(?:\d[ -]?){12,18}\d(?!\d)/g },
-  { id: 'id', label: 'ID numbers (SSN, national ID)', re: /(?<!\d)\d{3}-\d{2}-\d{4}(?!\d)|(?<![A-Za-z0-9])[A-Z]{2}\d{6}[A-D](?![A-Za-z0-9])/g },
-  { id: 'iban', label: 'Bank accounts (IBAN)', re: /\b[A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){2,7}(?: ?[A-Z0-9]{1,3})?\b/g },
-  { id: 'date', label: 'Dates', re: /\b(?:\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}|\d{4}-\d{2}-\d{2})\b/g }
+  { id: 'email', label: msg('Email addresses'), re: /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g },
+  { id: 'phone', label: msg('Phone numbers'), re: /(?<![\w-])(?:\+\d{1,3}[\s.-]?)?(?:\(\d{2,4}\)[\s.-]?)?\d{2,4}(?:[\s.-]\d{2,4}){1,4}(?![\w-])/g },
+  { id: 'card', label: msg('Card numbers'), re: /(?<!\d)(?:\d[ -]?){12,18}\d(?!\d)/g },
+  { id: 'id', label: msg('ID numbers (SSN, national ID)'), re: /(?<!\d)\d{3}-\d{2}-\d{4}(?!\d)|(?<![A-Za-z0-9])[A-Z]{2}\d{6}[A-D](?![A-Za-z0-9])/g },
+  { id: 'iban', label: msg('Bank accounts (IBAN)'), re: /\b[A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){2,7}(?: ?[A-Z0-9]{1,3})?\b/g },
+  { id: 'date', label: msg('Dates'), re: /\b(?:\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}|\d{4}-\d{2}-\d{2})\b/g }
 ]
 
 /** A literal search term as a global regex. */

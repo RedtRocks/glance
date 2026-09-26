@@ -1,5 +1,6 @@
 import { signal } from '@preact/signals'
 import type { ComponentChildren } from 'preact'
+import { t } from '../i18n'
 
 export interface DialogButton<T> {
   label: string
@@ -31,15 +32,15 @@ export async function promptText(title: string, label: string, opts: { password?
     body: null,
     input: { label, password: opts.password, initial: opts.initial },
     buttons: [
-      { label: 'Cancel', value: null },
-      { label: opts.ok ?? 'OK', value: '__input__', primary: true }
+      { label: t('Cancel'), value: null },
+      { label: opts.ok ?? t('OK'), value: '__input__', primary: true }
     ]
   })
   return res
 }
 
 export async function alertDialog(title: string, body: ComponentChildren): Promise<void> {
-  await showDialog({ title, body, buttons: [{ label: 'OK', value: true, primary: true }] })
+  await showDialog({ title, body, buttons: [{ label: t('OK'), value: true, primary: true }] })
 }
 
 export interface Toast {
@@ -50,9 +51,9 @@ export interface Toast {
 export const toasts = signal<Toast[]>([])
 let toastSeq = 0
 export function toast(text: string, kind: Toast['kind'] = 'info'): void {
-  const t = { id: ++toastSeq, text, kind }
-  toasts.value = [...toasts.value, t]
-  setTimeout(() => (toasts.value = toasts.value.filter((x) => x.id !== t.id)), kind === 'error' ? 7000 : 3500)
+  const item = { id: ++toastSeq, text, kind }
+  toasts.value = [...toasts.value, item]
+  setTimeout(() => (toasts.value = toasts.value.filter((x) => x.id !== item.id)), kind === 'error' ? 7000 : 3500)
 }
 
 export const busy = signal<string | null>(null)

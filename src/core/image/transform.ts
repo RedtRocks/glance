@@ -1,4 +1,5 @@
 import { raster, type IRect, type Raster } from './raster'
+import { t } from '../../i18n'
 
 export function rotate90(img: Raster, clockwise: boolean): Raster {
   const { width: w, height: h, data } = img
@@ -33,7 +34,7 @@ export function crop(img: Raster, r: IRect): Raster {
   const y = Math.max(0, Math.floor(r.y))
   const w = Math.min(img.width - x, Math.round(r.width))
   const h = Math.min(img.height - y, Math.round(r.height))
-  if (w <= 0 || h <= 0) throw new Error('Nothing to crop')
+  if (w <= 0 || h <= 0) throw new Error(t('Nothing to crop'))
   const out = raster(w, h)
   for (let row = 0; row < h; row++) {
     const s = ((y + row) * img.width + x) * 4
