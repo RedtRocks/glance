@@ -1,0 +1,78 @@
+name: Release
+
+# Build Windows installers and publish a GitHub Release, either by pushing a tag like
+# v0.1.0, or from the Actions tab ("Run workflow") with a version: the release and its
+# tag are then created on the selected branch's commit.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Version to release, e.g. v0.1.0 (the tag is created if it doesn't exist)
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Windows ${{ matrix.arch }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            target: x86_64-pc-windows-msvc
+          - arch: arm64
+            target: aarch64-pc-windows-msvc
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          key: release-${{ matrix.target }}
+      - run: npm ci
+      - name: Build installer
+        run: npx tauri build --target ${{ matrix.target }} --bundles nsis
+      - name: Name installer
+        shell: pwsh
+        run: |
+          $tag = "${{ github.event.inputs.tag || github.ref_name }}"
+          $exe = Get-ChildItem "src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe" | Select-Object -First 1
+          New-Item -ItemType Directory -Force dist-release | Out-Null
+          Copy-Item $exe.FullName "dist-release/Glance-$tag-windows-${{ matrix.arch }}-setup.exe"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ matrix.arch }}
+          path: dist-release/*.exe
+
+  publish:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist-release
+          merge-multiple: true
+      - name: Checksums
+        run: cd dist-release && sha256sum *.exe > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          target_commitish: ${{ github.sha }}
+          name: Glance ${{ github.event.inputs.tag || github.ref_name }}
+          body_path: .github/release-notes.md
+          files: |
+            dist-release/*.exe
+            dist-release/SHA256SUMS.txt
