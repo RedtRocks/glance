@@ -120,6 +120,10 @@ export function SettingsDialog() {
             description={t('About ten seconds after you stop editing, and at most once a minute. Every save keeps a version you can go back to (File → Browse Versions). JPEG images and documents with pending redactions are only saved when you choose Save.')}>
             <Toggle checked={s.autosave} label={t('Save changes automatically')} onChange={(v) => updateSettings({ autosave: v })} />
           </SettingsCard>
+          <SettingsCard icon="tabs" title={t('Reopen tabs on launch')}
+            description={t('Open the files you had open when Glance last closed, on the same page and zoom. Files that were moved or deleted are skipped.')}>
+            <Toggle checked={s.reopenTabs} label={t('Reopen tabs on launch')} onChange={(v) => updateSettings({ reopenTabs: v })} />
+          </SettingsCard>
           {storeInstall.value ? null : (
             <SettingsCard icon="info" title={t('Check for updates')}
               description={t('Once a day Glance asks GitHub whether a newer version exists and tells you. Nothing is downloaded or sent until you choose Download.')}>
