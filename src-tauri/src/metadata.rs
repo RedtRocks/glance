@@ -26,6 +26,21 @@ pub struct ImageMetadata {
     pub has_location: bool,
     /// Whether Glance can rewrite this format to remove location.
     pub can_remove_location: bool,
+    /// Name of the embedded ICC color profile, if any.
+    pub color_profile: Option<String>,
+}
+
+/// Embedded ICC profile of PNG, JPEG, TIFF or WebP files.
+fn embedded_icc(bytes: &[u8]) -> Option<Vec<u8>> {
+    use image::ImageDecoder;
+    let c = || Cursor::new(bytes);
+    match image::guess_format(bytes).ok()? {
+        image::ImageFormat::Png => image::codecs::png::PngDecoder::new(c()).ok()?.icc_profile().ok()?,
+        image::ImageFormat::Jpeg => image::codecs::jpeg::JpegDecoder::new(c()).ok()?.icc_profile().ok()?,
+        image::ImageFormat::Tiff => image::codecs::tiff::TiffDecoder::new(c()).ok()?.icc_profile().ok()?,
+        image::ImageFormat::WebP => image::codecs::webp::WebPDecoder::new(c()).ok()?.icc_profile().ok()?,
+        _ => None,
+    }
 }
 
 fn little_type(path: &Path) -> Option<little_exif::filetype::FileExtension> {
@@ -58,6 +73,7 @@ fn degrees(exif: &exif::Exif, value: exif::Tag, reference: exif::Tag) -> Option<
 
 pub fn read(path: &Path, bytes: &[u8]) -> ImageMetadata {
     let mut out = ImageMetadata { can_remove_location: little_type(path).is_some(), ..Default::default() };
+    out.color_profile = embedded_icc(bytes).map(|icc| crate::color::profile_name(&icc).unwrap_or_else(|| "Embedded profile".into()));
     let Ok(exif) = exif::Reader::new().read_from_container(&mut Cursor::new(bytes)) else { return out };
     let mut camera = Group { title: "Camera", ..Default::default() };
     let mut image = Group { title: "Image", ..Default::default() };

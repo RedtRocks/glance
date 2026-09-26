@@ -1,3 +1,4 @@
+mod color;
 mod commands;
 mod decode;
 mod encode;

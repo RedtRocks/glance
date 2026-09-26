@@ -321,7 +321,10 @@ export async function subjectMask(rgb: Uint8Array): Promise<Uint8Array> {
 }
 
 /** Encodes RGBA pixels natively and writes them to `path` in `format`. */
-export async function saveImage(path: string, format: string, width: number, height: number, rgba: Uint8ClampedArray, quality = 92): Promise<void> {
+/** Target color space for exported images; pixels are converted from sRGB and the ICC profile embedded. */
+export type ColorProfile = 'srgb' | 'p3' | 'adobergb' | 'gray'
+
+export async function saveImage(path: string, format: string, width: number, height: number, rgba: Uint8ClampedArray, quality = 92, profile?: ColorProfile): Promise<void> {
   if (!isTauri) {
     const c = new OffscreenCanvas(width, height)
     c.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(rgba), width, height), 0, 0)
@@ -336,7 +339,8 @@ export async function saveImage(path: string, format: string, width: number, hei
       'x-format': format,
       'x-width': String(width),
       'x-height': String(height),
-      'x-quality': String(quality)
+      'x-quality': String(quality),
+      ...(profile ? { 'x-profile': profile } : {})
     }
   })
 }
@@ -418,6 +422,7 @@ export interface ImageMetadata {
   location: [number, number] | null
   has_location: boolean
   can_remove_location: boolean
+  color_profile: string | null
 }
 
 export async function imageMetadata(path: string): Promise<ImageMetadata | null> {

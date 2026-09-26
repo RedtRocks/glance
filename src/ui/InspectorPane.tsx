@@ -127,6 +127,7 @@ export function InspectorPane({ doc }: { doc: Doc }) {
       <div class="side-pane-body">
         <Section title="General" rows={general} />
         {doc.kind === 'pdf' && <Section title="Document" rows={pdfRows} />}
+        {meta && <Section title="Color" rows={[['Color profile', meta.color_profile ?? 'None (sRGB assumed)']]} />}
         {meta?.has_location && (
           <section class="inspector-section location">
             <h3>Location</h3>

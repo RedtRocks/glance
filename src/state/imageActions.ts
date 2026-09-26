@@ -138,7 +138,7 @@ function extOf(path: string): string {
   return /\.([^.\\/]+)$/.exec(path)?.[1]?.toLowerCase() ?? ''
 }
 
-async function writeImage(doc: ImageDoc, path: string, format: string, quality: number): Promise<void> {
+async function writeImage(doc: ImageDoc, path: string, format: string, quality: number, profile?: platform.ColorProfile): Promise<void> {
   const flat = await engine.flatten(doc)
   if (format === 'pdf') {
     const png = await engine.encodePng(flat)
@@ -146,7 +146,7 @@ async function writeImage(doc: ImageDoc, path: string, format: string, quality: 
     await platform.writeFile(path, pdf)
     return
   }
-  await platform.saveImage(path, format, flat.width, flat.height, flat.data, quality)
+  await platform.saveImage(path, format, flat.width, flat.height, flat.data, quality, profile)
 }
 
 function hasTransparency(r: Raster): boolean {
@@ -183,13 +183,13 @@ export async function saveImage(doc: ImageDoc): Promise<void> {
   toast('Saved')
 }
 
-export async function saveImageAs(doc: ImageDoc, format: ExportFormat = 'png', quality = 92, switchTo = true): Promise<void> {
+export async function saveImageAs(doc: ImageDoc, format: ExportFormat = 'png', quality = 92, switchTo = true, profile?: platform.ColorProfile): Promise<void> {
   const base = doc.name.peek().replace(/\.[^.]+$/, '')
   const fmt = EXPORT_FORMATS.find((f) => f.id === format)!
   const target = await platform.saveDialog(`${base}.${fmt.exts[0]}`, [{ name: fmt.label, extensions: [...fmt.exts] }])
   if (!target) return
   const chosen = EXPORT_FORMATS.find((f) => (f.exts as readonly string[]).includes(extOf(target)))?.id ?? format
-  await withBusy('Saving…', () => writeImage(doc, target, chosen, quality))
+  await withBusy('Saving…', () => writeImage(doc, target, chosen, quality, profile))
   if (switchTo && chosen !== 'pdf') {
     doc.path.value = target
     doc.name.value = platform.baseName(target)
