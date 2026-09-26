@@ -2,6 +2,7 @@
  * Explorer's right-click verbs (see src-tauri/src/explorer.rs): Combine into PDF and
  * Remove Location Info. Pure helpers, unit tested.
  */
+import { t } from '../i18n'
 
 export type ShellAction = 'combine' | 'remove-location'
 
@@ -26,8 +27,8 @@ export function combineOrder(paths: string[]): string[] {
 
 /** The new PDF is named after the first file: "Scan 1.jpg" → "Scan 1 (combined).pdf". */
 export function combinedName(first: string): string {
-  const stem = base(first).replace(/\.[^.]+$/, '') || 'Combined'
-  return `${stem} (combined).pdf`
+  const stem = base(first).replace(/\.[^.]+$/, '') || t('Combined')
+  return t('{name} (combined)', { name: stem }) + '.pdf'
 }
 
 /** Formats whose location info Glance can remove (see src-tauri/src/metadata.rs). */

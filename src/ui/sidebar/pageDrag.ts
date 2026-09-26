@@ -10,6 +10,7 @@ import { activeId, docs, PdfDoc } from '../../state/documents'
 import { deletePages, dragOutPages, duplicatePages, exportSelectedPages, movePages, rotatePages, sendPagesTo, splitDocument, transferPages } from '../../state/actions'
 import { contextMenu, toast } from '../../state/ui'
 import { dropTabId, pageDrag } from '../dragState'
+import { t } from '../../i18n'
 
 const THRESHOLD = 5
 /** How far past the window edge the pointer must go before the drag leaves Glance. */
@@ -53,7 +54,9 @@ export function beginPageDrag(e: PointerEvent, doc: PdfDoc, pages: number[], ico
   let draggedOut = false
   let ghost: HTMLElement | null = null
   let spring: { tabId: string; timer: number } | null = null
-  const what = pages.length > 1 ? `${pages.length} pages` : `Page ${pages[0] + 1}`
+  const single = pages.length === 1
+  const vars = { count: pages.length, page: pages[0] + 1 }
+  const what = single ? t('Page {page}', vars) : t('{count, plural, one {# page} other {# pages}}', vars)
 
   const move = (ev: PointerEvent): void => {
     if (!dragging) {
@@ -74,7 +77,7 @@ export function beginPageDrag(e: PointerEvent, doc: PdfDoc, pages: number[], ico
     if (outside && !draggedOut) {
       draggedOut = true
       cleanup()
-      void dragOutPages(doc, pages, icon()).catch((err) => toast(`Drag failed: ${err}`, 'error'))
+      void dragOutPages(doc, pages, icon()).catch((err) => toast(t('Drag failed: {error}', { error: String(err) }), 'error'))
       return
     }
 
@@ -91,8 +94,10 @@ export function beginPageDrag(e: PointerEvent, doc: PdfDoc, pages: number[], ico
   function hint(targetId: string | null, shift: boolean): string {
     if (!targetId || targetId === doc.id) return what
     const dst = docs.peek().find((d) => d.id === targetId)
-    if (!(dst instanceof PdfDoc)) return `${what} — can’t drop here`
-    return `${shift ? 'Move' : 'Copy'} ${what.toLowerCase()} to “${dst.name.peek()}”${shift ? '' : ' (Shift to move)'}`
+    if (!(dst instanceof PdfDoc)) return single ? t('Page {page} — can’t drop here', vars) : t('{count, plural, one {# page} other {# pages}} — can’t drop here', vars)
+    const to = { ...vars, name: dst.name.peek() }
+    if (shift) return single ? t('Move page {page} to “{name}”', to) : t('Move {count, plural, one {# page} other {# pages}} to “{name}”', to)
+    return single ? t('Copy page {page} to “{name}” (Shift to move)', to) : t('Copy {count, plural, one {# page} other {# pages}} to “{name}” (Shift to move)', to)
   }
 
   function springTab(tabId: string | null): void {
@@ -120,7 +125,7 @@ export function beginPageDrag(e: PointerEvent, doc: PdfDoc, pages: number[], ico
       if (dst instanceof PdfDoc) {
         void transferPages(doc, pages, dst, dst.pageCount.peek(), move).then(() => (activeId.value = dst.id))
       } else {
-        toast('Pages can only be dropped onto PDF documents.')
+        toast(t('Pages can only be dropped onto PDF documents.'))
       }
       return
     }
@@ -170,22 +175,22 @@ export function pageContextMenu(e: MouseEvent, doc: PdfDoc, index: number): void
   const n = doc.selection.peek().length
   const others = docs.peek().filter((d): d is PdfDoc => d instanceof PdfDoc && d !== doc)
   const target = (move: boolean) => others.map((d) => ({ label: d.name.peek(), run: () => sendPagesTo(d, move, doc) }))
-  const noun = n > 1 ? `${n} Pages` : 'Page'
+  const count = { count: n }
   contextMenu.value = {
     x: e.clientX,
     y: e.clientY,
     items: [
-      { label: `Copy ${noun} To`, items: target(false), disabled: !others.length },
-      { label: `Move ${noun} To`, items: target(true), disabled: !others.length },
+      { label: t('{count, plural, one {Copy Page To} other {Copy # Pages To}}', count), items: target(false), disabled: !others.length },
+      { label: t('{count, plural, one {Move Page To} other {Move # Pages To}}', count), items: target(true), disabled: !others.length },
       '-',
-      { label: `Duplicate ${noun}`, run: () => duplicatePages(doc) },
-      { label: 'Rotate Left', run: () => rotatePages(-90, doc) },
-      { label: 'Rotate Right', run: () => rotatePages(90, doc) },
+      { label: t('{count, plural, one {Duplicate Page} other {Duplicate # Pages}}', count), run: () => duplicatePages(doc) },
+      { label: t('Rotate Left'), run: () => rotatePages(-90, doc) },
+      { label: t('Rotate Right'), run: () => rotatePages(90, doc) },
       '-',
-      { label: `Export ${noun}…`, run: () => exportSelectedPages(doc) },
-      { label: 'Split PDF…', run: () => splitDocument(doc), disabled: doc.pageCount.peek() < 2 },
+      { label: t('{count, plural, one {Export Page…} other {Export # Pages…}}', count), run: () => exportSelectedPages(doc) },
+      { label: t('Split PDF…'), run: () => splitDocument(doc), disabled: doc.pageCount.peek() < 2 },
       '-',
-      { label: `Delete ${noun}`, run: () => deletePages(doc) }
+      { label: t('{count, plural, one {Delete Page} other {Delete # Pages}}', count), run: () => deletePages(doc) }
     ]
   }
 }

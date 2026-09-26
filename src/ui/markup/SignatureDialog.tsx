@@ -3,6 +3,7 @@ import { Modal } from '../dialogs/Dialog'
 import { activeSignature, setTool, signatureDialog } from '../../state/markupState'
 import { saveSignature } from '../../platform'
 import { toast } from '../../state/ui'
+import { t } from '../../i18n'
 
 const W = 560
 const H = 200
@@ -73,7 +74,7 @@ function inkFromPhoto(img: CanvasImageSource & { width: number; height: number }
 
 export function SignatureDialog() {
   const canvas = useRef<HTMLCanvasElement>(null)
-  const [name, setName] = useState('My signature')
+  const [name, setName] = useState(() => t('My signature'))
   const [empty, setEmpty] = useState(true)
   const close = (): void => void (signatureDialog.value = false)
 
@@ -140,10 +141,10 @@ export function SignatureDialog() {
   const video = useRef<HTMLVideoElement>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
   const stopCamera = (): void => {
-    stream?.getTracks().forEach((t) => t.stop())
+    stream?.getTracks().forEach((track) => track.stop())
     setStream(null)
   }
-  useEffect(() => () => stream?.getTracks().forEach((t) => t.stop()), [stream])
+  useEffect(() => () => stream?.getTracks().forEach((track) => track.stop()), [stream])
   useEffect(() => {
     if (stream && video.current) video.current.srcObject = stream
   }, [stream])
@@ -151,7 +152,7 @@ export function SignatureDialog() {
     try {
       setStream(await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false }))
     } catch (e) {
-      toast(`Camera unavailable: ${(e as Error).message || e}`, 'error')
+      toast(t('Camera unavailable: {error}', { error: (e as Error).message || String(e) }), 'error')
     }
   }
   const capture = (): void => {
@@ -179,29 +180,29 @@ export function SignatureDialog() {
   const save = async (): Promise<void> => {
     const png = exportTrimmed(canvas.current!)
     if (!png) return
-    const sig = await saveSignature(name.trim() || 'Signature', png)
+    const sig = await saveSignature(name.trim() || t('Signature'), png)
     activeSignature.value = sig
     setTool('signature')
     close()
-    toast('Signature saved. Click on the page to place it.')
+    toast(t('Signature saved. Click on the page to place it.'))
   }
 
   return (
     <Modal
-      title="Create signature"
+      title={t('Create signature')}
       wide
       onClose={close}
       footer={
         <>
-          <button class="btn" onClick={close}>Cancel</button>
-          <button class="btn primary" disabled={empty} onClick={() => void save()}>Save signature</button>
+          <button class="btn" onClick={close}>{t('Cancel')}</button>
+          <button class="btn primary" disabled={empty} onClick={() => void save()}>{t('Save signature')}</button>
         </>
       }
     >
       <p class="muted">
         {stream
-          ? 'Sign on white paper and hold it up to the camera so the signature sits on the line, then choose Capture.'
-          : 'Sign with your mouse, touchpad or pen, use your camera, or import a photo of your signature on white paper.'}
+          ? t('Sign on white paper and hold it up to the camera so the signature sits on the line, then choose Capture.')
+          : t('Sign with your mouse, touchpad or pen, use your camera, or import a photo of your signature on white paper.')}
       </p>
       <canvas ref={canvas} class="signature-pad" style={{ width: '100%', aspectRatio: `${W} / ${H}`, display: stream ? 'none' : undefined }} onPointerDown={draw} />
       {stream && (
@@ -213,18 +214,18 @@ export function SignatureDialog() {
       <div class="inline-actions">
         {stream ? (
           <>
-            <button class="btn primary" onClick={capture}>Capture</button>
-            <button class="btn" onClick={stopCamera}>Cancel camera</button>
+            <button class="btn primary" onClick={capture}>{t('Capture')}</button>
+            <button class="btn" onClick={stopCamera}>{t('Cancel camera')}</button>
           </>
         ) : (
           <>
-            <button class="btn" onClick={clear}>Clear</button>
-            <button class="btn" onClick={() => void startCamera()}>Camera</button>
-            <button class="btn" onClick={fromImage}>Import from photo…</button>
+            <button class="btn" onClick={clear}>{t('Clear')}</button>
+            <button class="btn" onClick={() => void startCamera()}>{t('Camera')}</button>
+            <button class="btn" onClick={fromImage}>{t('Import from photo…')}</button>
           </>
         )}
         <label class="field grow">
-          <span>Name</span>
+          <span>{t('Name')}</span>
           <input value={name} onInput={(e) => setName((e.target as HTMLInputElement).value)} />
         </label>
       </div>

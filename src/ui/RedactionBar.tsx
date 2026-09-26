@@ -1,6 +1,7 @@
 import type { PdfDoc } from '../state/documents'
 import { applyRedactions, discardRedactions } from '../state/actions'
 import { InfoBar } from './InfoBar'
+import { t } from '../i18n'
 
 /** Pending redactions are loud: the content is still in the file until applied. Not closable. */
 export function RedactionBar({ doc }: { doc: PdfDoc }) {
@@ -9,15 +10,15 @@ export function RedactionBar({ doc }: { doc: PdfDoc }) {
   return (
     <InfoBar
       severity="warning"
-      title="Redactions not applied"
+      title={t('Redactions not applied')}
       actions={
         <>
-          <button class="btn" onClick={() => discardRedactions(doc)}>Discard</button>
-          <button class="btn primary" onClick={() => void applyRedactions(doc)}>Apply redactions</button>
+          <button class="btn" onClick={() => discardRedactions(doc)}>{t('Discard')}</button>
+          <button class="btn primary" onClick={() => void applyRedactions(doc)}>{t('Apply redactions')}</button>
         </>
       }
     >
-      {n} marked {n === 1 ? 'area' : 'areas'}. The content underneath stays in the file until you apply.
+      {t('{count, plural, one {# marked area.} other {# marked areas.}} The content underneath stays in the file until you apply.', { count: n })}
     </InfoBar>
   )
 }

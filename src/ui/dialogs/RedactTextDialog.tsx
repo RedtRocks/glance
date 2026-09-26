@@ -4,6 +4,7 @@ import { newId } from '../../core/markup'
 import type { PdfDoc } from '../../state/documents'
 import { redactTextOpen, toast } from '../../state/ui'
 import { Modal } from './Dialog'
+import { t } from '../../i18n'
 
 interface Found {
   key: string
@@ -62,7 +63,7 @@ export function RedactTextDialog({ doc }: { doc: PdfDoc }) {
   const mark = (): void => {
     const reds = chosen.flatMap((f) => f.rects.map((rect) => ({ id: newId('redact'), page: f.page, rect })))
     doc.edit('Mark Text for Redaction', { redactions: [...doc.redactions.peek(), ...reds] })
-    toast(`${chosen.length} ${chosen.length === 1 ? 'match' : 'matches'} marked. Review, then Apply Redactions.`)
+    toast(t('{count, plural, one {# match marked.} other {# matches marked.}} Review, then Apply Redactions.', { count: chosen.length }))
     const first = Math.min(...chosen.map((f) => f.page))
     if (Number.isFinite(first)) doc.goTo(first)
     close()
@@ -71,46 +72,46 @@ export function RedactTextDialog({ doc }: { doc: PdfDoc }) {
   const toggle = (id: string, on: boolean): void => setKinds(on ? [...kinds, id] : kinds.filter((k) => k !== id))
   return (
     <Modal
-      title="Remove sensitive text"
+      title={t('Remove sensitive text')}
       onClose={close}
       wide
       footer={
         <>
           <button class="btn" onClick={close}>
-            Cancel
+            {t('Cancel')}
           </button>
           <button class="btn primary" disabled={!chosen.length} onClick={mark}>
-            {chosen.length ? `Mark ${chosen.length} for redaction` : 'Mark for redaction'}
+            {chosen.length ? t('Mark {count} for redaction', { count: chosen.length }) : t('Mark for redaction')}
           </button>
         </>
       }
     >
       <div class="redact-text">
         <label class="field">
-          <span>Find text</span>
-          <input type="search" value={term} placeholder="Name, account number, phrase…" onInput={(e) => setTerm((e.target as HTMLInputElement).value)} />
+          <span>{t('Find text')}</span>
+          <input type="search" value={term} placeholder={t('Name, account number, phrase…')} onInput={(e) => setTerm((e.target as HTMLInputElement).value)} />
         </label>
         <div class="check-line">
           <label class="check-row">
-            <input type="checkbox" checked={matchCase} onChange={(e) => setMatchCase((e.target as HTMLInputElement).checked)} /> Match case
+            <input type="checkbox" checked={matchCase} onChange={(e) => setMatchCase((e.target as HTMLInputElement).checked)} /> {t('Match case')}
           </label>
           <label class="check-row">
-            <input type="checkbox" checked={wholeWord} onChange={(e) => setWholeWord((e.target as HTMLInputElement).checked)} /> Whole words
+            <input type="checkbox" checked={wholeWord} onChange={(e) => setWholeWord((e.target as HTMLInputElement).checked)} /> {t('Whole words')}
           </label>
         </div>
-        <span class="flyout-label">Also find</span>
+        <span class="flyout-label">{t('Also find')}</span>
         <div class="check-grid">
           {SENSITIVE_PATTERNS.map((p) => (
             <label key={p.id} class="check-row">
-              <input type="checkbox" checked={kinds.includes(p.id)} onChange={(e) => toggle(p.id, (e.target as HTMLInputElement).checked)} /> {p.label}
+              <input type="checkbox" checked={kinds.includes(p.id)} onChange={(e) => toggle(p.id, (e.target as HTMLInputElement).checked)} /> {t(p.label)}
             </label>
           ))}
         </div>
-        <div class="match-list" role="list" aria-label="Matches">
+        <div class="match-list" role="list" aria-label={t('Matches')}>
           {!pages ? (
-            <p class="muted">Reading the document’s text…</p>
+            <p class="muted">{t('Reading the document’s text…')}</p>
           ) : !found.length ? (
-            <p class="muted">{term || kinds.length ? 'No matches. For scanned pages, run Edit → Recognize Text (OCR) first.' : 'Type text or choose what to find.'}</p>
+            <p class="muted">{term || kinds.length ? t('No matches. For scanned pages, run Edit → Recognize Text (OCR) first.') : t('Type text or choose what to find.')}</p>
           ) : (
             found.slice(0, 500).map((f) => (
               <label key={f.key} class="check-row match" role="listitem">
@@ -125,12 +126,12 @@ export function RedactTextDialog({ doc }: { doc: PdfDoc }) {
                   }}
                 />
                 <span class="match-text">{f.text}</span>
-                <span class="muted">Page {f.page + 1}</span>
+                <span class="muted">{t('Page {page}', { page: f.page + 1 })}</span>
               </label>
             ))
           )}
         </div>
-        <p class="muted small">Redaction removes the text and rasterizes the affected pages when you apply it. It can’t be undone after saving.</p>
+        <p class="muted small">{t('Redaction removes the text and rasterizes the affected pages when you apply it. It can’t be undone after saving.')}</p>
       </div>
     </Modal>
   )
