@@ -73,7 +73,7 @@ function resetEffects(doc: ModelDoc): void {
   doc.grid.value = false
 }
 
-/** Orbit (drag), pan (right-drag or Shift+drag), zoom (wheel); floating controls like Preview's 3D view. */
+/** Orbit (drag or two-finger touchpad drag), pan (right-drag, Shift+drag or Shift + two fingers), zoom (wheel or pinch); floating controls like Preview's 3D view. */
 export function ModelView({ doc }: { doc: ModelDoc }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const viewer = useRef<ModelViewer | null>(null)

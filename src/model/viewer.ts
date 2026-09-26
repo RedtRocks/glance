@@ -6,6 +6,7 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
+import { isTouchpad } from '../core/touchpad'
 
 export interface ModelStats {
   meshes: number
@@ -289,6 +290,32 @@ export async function createViewer(canvas: HTMLCanvasElement, bytes: ArrayBuffer
   }
   controls.addEventListener('change', () => (dirty = true))
 
+  // Touchpad: two-finger drag orbits, Shift + two-finger drag pans, and pinch
+  // (a Ctrl+wheel) zooms through OrbitControls. A mouse wheel still zooms.
+  const onWheel = (e: WheelEvent) => {
+    if (e.ctrlKey || !isTouchpad(e)) return
+    e.preventDefault()
+    e.stopImmediatePropagation()
+    const h = canvas.clientHeight || 1
+    const offset = camera.position.clone().sub(controls.target)
+    if (e.shiftKey) {
+      const perPixel = (2 * offset.length() * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / h
+      const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0)
+      const up = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1)
+      const move = right.multiplyScalar(e.deltaX * perPixel).add(up.multiplyScalar(-e.deltaY * perPixel))
+      camera.position.add(move)
+      controls.target.add(move)
+    } else {
+      const s = new THREE.Spherical().setFromVector3(offset)
+      s.theta += (2 * Math.PI * e.deltaX) / h
+      s.phi = THREE.MathUtils.clamp(s.phi + (2 * Math.PI * e.deltaY) / h, 1e-3, Math.PI - 1e-3)
+      camera.position.copy(controls.target).add(offset.setFromSpherical(s))
+    }
+    controls.update()
+    dirty = true
+  }
+  canvas.addEventListener('wheel', onWheel, { capture: true, passive: false })
+
   // Lighting presets move and recolor the same lights.
   const setLighting = (preset: Lighting) => {
     const rig = LIGHTING[preset]
@@ -408,6 +435,7 @@ export async function createViewer(canvas: HTMLCanvasElement, bytes: ArrayBuffer
     resize,
     dispose: () => {
       cancelAnimationFrame(frame)
+      canvas.removeEventListener('wheel', onWheel, { capture: true })
       controls.dispose()
       for (const [mesh, mat] of originals) mesh.material = mat
       object.traverse((o) => {

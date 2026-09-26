@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks'
 import type { ImageDoc } from '../../state/documents'
-import { stepZoom } from '../../state/commands'
+import { wheelZoom } from '../gestures'
 import { imageUrl } from '../../platform'
 import { tool } from '../../state/markupState'
 import { MarkupLayer } from '../markup/MarkupLayer'
@@ -86,6 +86,17 @@ export function ImageView({ doc }: { doc: ImageDoc }) {
     doc.effectiveScale.value = scale
   }, [scale])
 
+  // Wheel and pinch zoom keep the point under the pointer in place.
+  const zoomAnchor = useRef<{ px: number; py: number; x: number; y: number; from: number } | null>(null)
+  useLayoutEffect(() => {
+    const a = zoomAnchor.current
+    const el = box.current
+    zoomAnchor.current = null
+    if (!a || !el || a.from === scale) return
+    el.scrollLeft = (a.x * scale) / a.from - a.px
+    el.scrollTop = (a.y * scale) / a.from - a.py
+  }, [scale])
+
   // Drag to pan (Select tool only; drawing tools own the pointer).
   const onPointerDown = (e: PointerEvent): void => {
     const el = box.current
@@ -122,9 +133,18 @@ export function ImageView({ doc }: { doc: ImageDoc }) {
         ref={box}
         onPointerDown={onPointerDown}
         onWheel={(e) => {
+          // Ctrl+wheel, or a touchpad pinch (which arrives as one). Two-finger
+          // scrolling pans natively.
           if (!e.ctrlKey) return
           e.preventDefault()
-          doc.zoom.value = stepZoom(scale, e.deltaY < 0 ? 1 : -1)
+          const el = e.currentTarget as HTMLElement
+          const r = el.getBoundingClientRect()
+          const px = e.clientX - r.left
+          const py = e.clientY - r.top
+          zoomAnchor.current = { px, py, x: el.scrollLeft + px, y: el.scrollTop + py, from: scale }
+          // Several pinch events can land before a render: build on the latest zoom.
+          const z = doc.zoom.peek()
+          doc.zoom.value = wheelZoom(typeof z === 'number' ? z : scale, e)
         }}
       >
         {error ? (
