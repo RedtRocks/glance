@@ -19,6 +19,8 @@ export interface Settings {
   skippedVersion?: string
   /** Save edits automatically a few seconds after they stop (earlier versions stay in the history). */
   autosave: boolean
+  /** UI language code, or 'system' to follow Windows. See i18n/index.ts. */
+  language: string
   /** Reopen the files that were open when Glance last closed. */
   reopenTabs: boolean
 }
@@ -34,6 +36,7 @@ const DEFAULTS: Settings = {
   sidebarWidth: 188,
   checkForUpdates: true,
   autosave: true,
+  language: 'system',
   reopenTabs: false
 }
 

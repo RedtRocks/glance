@@ -8,6 +8,7 @@ import { NOTE_SIZE, fontStack, outlinePath, type Markup, type Redaction } from '
 import type { ImageDoc } from '../state/documents'
 import * as platform from '../platform'
 import type { WorkerRequest, WorkerResponse } from './worker'
+import { t } from '../i18n'
 
 // ---------------------------------------------------------------------------
 // Worker
@@ -129,7 +130,7 @@ export async function removeBackground(r: Raster): Promise<Raster> {
 export async function subjectPng(r: Raster): Promise<Uint8Array> {
   const cut = await removeBackground(r)
   const b = maskBounds(alphaMask(cut), cut.width, cut.height, 24)
-  if (!b) throw new Error('No subject found in this image.')
+  if (!b) throw new Error(t('No subject found in this image.'))
   return encodePng(crop(cut, b))
 }
 

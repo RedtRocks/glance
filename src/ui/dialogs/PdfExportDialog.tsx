@@ -3,13 +3,14 @@ import type { PdfDoc } from '../../state/documents'
 import { exportOpen } from '../../state/imageState'
 import { exportPagesAsImages, exportSelectedPages, type PageImageFormat } from '../../state/actions'
 import { Modal } from './Dialog'
+import { msg, t } from '../../i18n'
 
 type Format = 'pdf' | PageImageFormat
 const FORMATS: [Format, string][] = [
-  ['pdf', 'PDF document'],
-  ['png', 'PNG image'],
-  ['jpg', 'JPEG image'],
-  ['tiff', 'TIFF image']
+  ['pdf', msg('PDF document')],
+  ['png', msg('PNG image')],
+  ['jpg', msg('JPEG image')],
+  ['tiff', msg('TIFF image')]
 ]
 const DPIS = [72, 150, 300, 600]
 
@@ -24,7 +25,7 @@ export function PdfExportDialog({ doc }: { doc: PdfDoc }) {
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [allow, setAllow] = useState({ printing: true, copying: true, editing: false })
-  const passwordProblem = lock && (!password ? 'Enter a password.' : password !== confirm ? 'The passwords don’t match.' : null)
+  const passwordProblem = lock && (!password ? t('Enter a password.') : password !== confirm ? t('The passwords don’t match.') : null)
   const close = (): void => void (exportOpen.value = false)
   const count = which === 'all' ? doc.pageCount.value : which === 'selected' ? Math.max(1, selected) : 1
 
@@ -41,58 +42,58 @@ export function PdfExportDialog({ doc }: { doc: PdfDoc }) {
 
   return (
     <Modal
-      title="Export"
+      title={t('Export')}
       onClose={close}
       footer={
         <>
           <button class="btn" onClick={close}>
-            Cancel
+            {t('Cancel')}
           </button>
           <button class="btn primary" disabled={format === 'pdf' && !!passwordProblem} onClick={run}>
-            Export…
+            {t('Export…')}
           </button>
         </>
       }
     >
       <label class="field">
-        <span>Format</span>
+        <span>{t('Format')}</span>
         <select value={format} onChange={(e) => setFormat((e.target as HTMLSelectElement).value as Format)}>
           {FORMATS.map(([id, label]) => (
             <option key={id} value={id}>
-              {label}
+              {t(label)}
             </option>
           ))}
         </select>
       </label>
       <label class="field">
-        <span>Pages</span>
+        <span>{t('Pages')}</span>
         <select value={which} onChange={(e) => setWhich((e.target as HTMLSelectElement).value as typeof which)}>
-          <option value="current">Current page ({doc.current.value + 1})</option>
-          {selected > 1 && <option value="selected">Selected pages ({selected})</option>}
-          <option value="all">All pages ({doc.pageCount.value})</option>
+          <option value="current">{t('Current page ({page})', { page: doc.current.value + 1 })}</option>
+          {selected > 1 && <option value="selected">{t('Selected pages ({count})', { count: selected })}</option>}
+          <option value="all">{t('All pages ({count})', { count: doc.pageCount.value })}</option>
         </select>
       </label>
       {format === 'pdf' && (
         <div class="protect">
           <label class="check-row">
-            <input type="checkbox" checked={lock} onChange={(e) => setLock((e.target as HTMLInputElement).checked)} /> Encrypt with a password
+            <input type="checkbox" checked={lock} onChange={(e) => setLock((e.target as HTMLInputElement).checked)} /> {t('Encrypt with a password')}
           </label>
           {lock && (
             <>
               <label class="field">
-                <span>Password</span>
+                <span>{t('Password')}</span>
                 <input type="password" autocomplete="new-password" value={password} onInput={(e) => setPassword((e.target as HTMLInputElement).value)} />
               </label>
               <label class="field">
-                <span>Verify</span>
+                <span>{t('Verify')}</span>
                 <input type="password" autocomplete="new-password" value={confirm} onInput={(e) => setConfirm((e.target as HTMLInputElement).value)} />
               </label>
               <div class="check-line">
                 {(
                   [
-                    ['printing', 'Allow printing'],
-                    ['copying', 'Allow copying text'],
-                    ['editing', 'Allow editing']
+                    ['printing', t('Allow printing')],
+                    ['copying', t('Allow copying text')],
+                    ['editing', t('Allow editing')]
                   ] as const
                 ).map(([k, label]) => (
                   <label key={k} class="check-row">
@@ -101,7 +102,7 @@ export function PdfExportDialog({ doc }: { doc: PdfDoc }) {
                 ))}
               </div>
               <small class={passwordProblem ? 'field-error' : 'muted'}>
-                {passwordProblem ?? 'AES-256. Keep the password somewhere safe: without it the file can’t be opened.'}
+                {passwordProblem ?? t('AES-256. Keep the password somewhere safe: without it the file can’t be opened.')}
               </small>
             </>
           )}
@@ -109,11 +110,15 @@ export function PdfExportDialog({ doc }: { doc: PdfDoc }) {
       )}
       {format !== 'pdf' && (
         <label class="field">
-          <span>Resolution</span>
+          <span>{t('Resolution')}</span>
           <select value={dpi} onChange={(e) => setDpi(Number((e.target as HTMLSelectElement).value))}>
             {DPIS.map((d) => (
               <option key={d} value={d}>
-                {d} pixels/inch{d === 150 ? ' (screen)' : d === 300 ? ' (print)' : ''}
+                {d === 150
+                  ? t('{dpi} pixels/inch (screen)', { dpi: d })
+                  : d === 300
+                    ? t('{dpi} pixels/inch (print)', { dpi: d })
+                    : t('{dpi} pixels/inch', { dpi: d })}
               </option>
             ))}
           </select>
@@ -121,16 +126,16 @@ export function PdfExportDialog({ doc }: { doc: PdfDoc }) {
       )}
       {format === 'jpg' && (
         <label class="field">
-          <span>Quality: {quality}</span>
+          <span>{t('Quality: {quality}', { quality })}</span>
           <input type="range" min={10} max={100} value={quality} onInput={(e) => setQuality(Number((e.target as HTMLInputElement).value))} />
         </label>
       )}
       <p class="muted">
         {format === 'pdf'
-          ? 'Creates a new PDF with these pages; markup and form entries are included.'
+          ? t('Creates a new PDF with these pages; markup and form entries are included.')
           : count > 1
-            ? `Creates ${count} images, one per page, named “… (page N)”. Markup and form entries are included.`
-            : 'Markup and form entries are included in the image.'}
+            ? t('Creates {count} images, one per page, named “… (page N)”. Markup and form entries are included.', { count })
+            : t('Markup and form entries are included in the image.')}
       </p>
     </Modal>
   )

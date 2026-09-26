@@ -251,7 +251,7 @@ const SUBTYPE: Record<Markup['type'], string> = {
   arrow: 'Line',
   polygon: 'Polygon',
   ink: 'Ink',
-  text: 'FreeText',
+  text: 'FreeText', // i18n-ignore: PDF annotation subtype
   note: 'Text',
   highlight: 'Highlight',
   underline: 'Underline',
