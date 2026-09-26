@@ -31,7 +31,8 @@ function files(dir) {
   })
 }
 
-const wordy = (s) => /[A-Za-z]{2,}/.test(s)
+/** Has English words, and isn't a dotted id like 'tools.text'. */
+const wordy = (s) => /[A-Za-z]{2,}/.test(s) && !/^[a-z]\w*(\.\w+)+$/.test(s.trim())
 
 /**
  * Scans the source. Returns every message passed to t()/msg(), calls whose message
