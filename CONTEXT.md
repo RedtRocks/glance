@@ -9,8 +9,12 @@ One opened file, shown in its own tab. It is a *PDF document*, an *image documen
 _Avoid_: File (on-disk only), tab (UI only)
 
 **Page**:
-One page of a PDF document.
+One page of a PDF document or of a multi-page TIFF. Pages can be reordered, rotated, deleted, and dragged between documents.
 _Avoid_: Slide, sheet
+
+**Frame**:
+One still image of an animated GIF. Frames are shown for inspection and export but can't be reordered or edited.
+_Avoid_: Page (for animations)
 
 **Sidebar**:
 The panel beside a document listing its pages, table of contents, highlights and notes, or bookmarks.
@@ -59,6 +63,10 @@ The GPS part of an image's metadata.
 _Avoid_: Geotag, EXIF GPS
 
 ## Workflow
+
+**Version**:
+A saved earlier state of a document, kept each time Glance autosaves, which the user can browse and restore.
+_Avoid_: Backup, snapshot
 
 **Batch**:
 Applying one set of operations to many files at once.
