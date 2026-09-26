@@ -3,6 +3,7 @@ import { COLORS, fontStack, type Color, type Markup } from '../../core/markup'
 import { activeDoc, ImageDoc, PdfDoc, type MarkupHost } from '../../state/documents'
 import { adjustColorOpen, adjustSizeOpen } from '../../state/imageState'
 import { copySubject, cropToSelection, removeBackground } from '../../state/imageActions'
+import { runCommand } from '../../state/commands'
 import {
   activeSignature,
   css,
@@ -354,6 +355,7 @@ export function MarkupToolbar() {
         <>
           <span class="tb-sep" />
           <ActionButton icon="crop" label={tip('Crop to selection', 'tools.crop')} onClick={() => void cropToSelection(image)} />
+          <ActionButton icon="straighten" label={tip('Straighten', 'tools.straighten')} onClick={() => void runCommand('tools.straighten')} />
           <ActionButton icon="adjustColor" label={tip('Adjust color', 'tools.adjustColor')} onClick={() => (adjustColorOpen.value = true)} />
           <ActionButton icon="adjustSize" label={tip('Adjust size', 'tools.adjustSize')} onClick={() => (adjustSizeOpen.value = true)} />
           <ActionButton icon="removeBg" label={tip('Remove background', 'tools.removeBackground')} onClick={() => void removeBackground(image)} />
