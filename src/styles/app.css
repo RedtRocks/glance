@@ -2206,6 +2206,85 @@ input[type='range'] {
   color: #c42b1c;
 }
 
+/* ---------- Straighten ---------- */
+.image-stage.straightening {
+  overflow: hidden;
+}
+.image-stage > * {
+  grid-area: 1 / 1;
+}
+.straighten-catcher {
+  align-self: stretch;
+  justify-self: stretch;
+  display: grid;
+  place-items: center;
+  z-index: 5;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+}
+.straighten-catcher:active {
+  cursor: grabbing;
+}
+.straighten-frame {
+  --grid: rgba(255, 255, 255, 0.7);
+  pointer-events: none;
+  outline: 1px solid rgba(255, 255, 255, 0.95);
+  /* Dim everything outside the result. */
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 0 0 200vmax rgba(0, 0, 0, 0.45);
+  background:
+    linear-gradient(to right, transparent calc(33.333% - 0.5px), var(--grid) calc(33.333% - 0.5px), var(--grid) calc(33.333% + 0.5px), transparent calc(33.333% + 0.5px), transparent calc(66.667% - 0.5px), var(--grid) calc(66.667% - 0.5px), var(--grid) calc(66.667% + 0.5px), transparent calc(66.667% + 0.5px)),
+    linear-gradient(to bottom, transparent calc(33.333% - 0.5px), var(--grid) calc(33.333% - 0.5px), var(--grid) calc(33.333% + 0.5px), transparent calc(33.333% + 0.5px), transparent calc(66.667% - 0.5px), var(--grid) calc(66.667% - 0.5px), var(--grid) calc(66.667% + 0.5px), transparent calc(66.667% + 0.5px));
+}
+/* While turning, a finer grid to line up horizons and edges against. */
+.straighten-frame.fine {
+  --grid: rgba(255, 255, 255, 0.45);
+  background:
+    repeating-linear-gradient(to right, transparent 0 calc(100% / 9 - 1px), var(--grid) calc(100% / 9 - 1px) calc(100% / 9)),
+    repeating-linear-gradient(to bottom, transparent 0 calc(100% / 9 - 1px), var(--grid) calc(100% / 9 - 1px) calc(100% / 9));
+}
+.straighten-bar {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100% - 32px);
+  padding: 8px 12px;
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: var(--shadow-flyout);
+  white-space: nowrap;
+}
+.straighten-bar input[type='range'] {
+  width: 220px;
+  min-width: 80px;
+  flex: 1 1 220px;
+  accent-color: var(--accent);
+}
+.straighten-angle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.straighten-angle input {
+  width: 64px;
+  text-align: right;
+}
+.straighten-bar .toggle-switch {
+  gap: 8px;
+}
+@media (max-width: 720px) {
+  .straighten-bar {
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+}
+
 /* ---------- Hand and Zoom tools (H, Space, Z) ---------- */
 .view-hand,
 .view-hand * {
