@@ -28,6 +28,25 @@ fn window_material() -> &'static str {
     if MICA.load(Ordering::Relaxed) { "mica" } else { "solid" }
 }
 
+/// Whether Glance runs from its MSIX package (the Microsoft Store build). The Store keeps
+/// that build up to date, so the UI skips its own GitHub update checks.
+#[tauri::command]
+fn store_package() -> bool {
+    #[cfg(windows)]
+    {
+        use windows::Win32::Foundation::ERROR_INSUFFICIENT_BUFFER;
+        use windows::Win32::Storage::Packaging::Appx::GetCurrentPackageFullName;
+        // With an empty buffer this reports the size needed when packaged, and
+        // APPMODEL_ERROR_NO_PACKAGE otherwise.
+        let mut len = 0u32;
+        unsafe { GetCurrentPackageFullName(&mut len, None) == ERROR_INSUFFICIENT_BUFFER }
+    }
+    #[cfg(not(windows))]
+    {
+        false
+    }
+}
+
 fn apply_backdrop(window: &tauri::WebviewWindow) {
     #[cfg(windows)]
     {
@@ -87,6 +106,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             window_material,
+            store_package,
             commands::probe,
             commands::write_file,
             commands::write_temp,

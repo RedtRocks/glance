@@ -62,7 +62,7 @@ Glance deliberately has no quick-look popup: pair it with [PowerToys Peek](https
 
 ## Privacy
 
-No telemetry and no accounts. The only network request is an optional daily check for a newer release on GitHub (turn it off in Settings). Background removal and text recognition run on your PC.
+No telemetry and no accounts. The only network request is an optional daily check for a newer release on GitHub (turn it off in Settings; the Microsoft Store version leaves updates to the Store). Background removal and text recognition run on your PC.
 
 ## Building from source
 
@@ -91,6 +91,7 @@ src/                 Preact UI
 src-tauri/           Rust backend
   src/decode/        Image decoding: WIC, JPEG 2000, JPEG XL, PSD, ICNS, RAW previews, EPS, CBZ
   src/protocol.rs    glance:// scheme serving files and decoded images to the UI
+packaging/           winget manifests and the Microsoft Store (MSIX) package and listing
 docs/adr/            Architecture decision records
 CONTEXT.md           Domain glossary
 ```

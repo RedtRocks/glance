@@ -313,6 +313,7 @@ export const COMMANDS: Command[] = [
       if (r === 'current') toast(t('Glance is up to date'))
       else if (r === 'error') toast(t('Couldn’t reach GitHub to check for updates'), 'error')
       else if (r === 'off') toast(t('Update checks are available in the Windows app'))
+      else if (r === 'store') toast(t('The Microsoft Store keeps Glance up to date'))
     }
   },
   { id: 'help.about', label: msg('About Glance'), run: actions.showAbout },

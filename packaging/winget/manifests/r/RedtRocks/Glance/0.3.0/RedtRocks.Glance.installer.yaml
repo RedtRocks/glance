@@ -1,0 +1,111 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.10.0.schema.json
+
+PackageIdentifier: RedtRocks.Glance
+PackageVersion: "0.3.0"
+InstallerLocale: en-US
+InstallerType: nullsoft
+Scope: user
+InstallModes:
+- interactive
+- silent
+UpgradeBehavior: install
+ProductCode: Glance
+ReleaseDate: 2026-09-26
+AppsAndFeaturesEntries:
+- DisplayName: Glance
+  Publisher: Glance contributors
+  ProductCode: Glance
+FileExtensions:
+- pdf
+- ai
+- ps
+- eps
+- epsf
+- xps
+- oxps
+- cbz
+- jpg
+- jpeg
+- jfif
+- png
+- apng
+- gif
+- webp
+- bmp
+- dib
+- ico
+- svg
+- avif
+- tif
+- tiff
+- heic
+- heif
+- hif
+- jp2
+- j2k
+- jpf
+- jpx
+- jxl
+- jxr
+- wdp
+- hdp
+- exr
+- hdr
+- tga
+- dds
+- qoi
+- ppm
+- pgm
+- pbm
+- pam
+- pnm
+- icns
+- psd
+- cr2
+- cr3
+- crw
+- nef
+- nrw
+- arw
+- srf
+- sr2
+- raf
+- orf
+- rw2
+- raw
+- dng
+- pef
+- srw
+- x3f
+- erf
+- mef
+- mos
+- mrw
+- kdc
+- dcr
+- 3fr
+- fff
+- iiq
+- rwl
+- gpr
+- glb
+- gltf
+- obj
+- stl
+- ply
+- fbx
+- usdz
+- usda
+- usdc
+- dae
+- 3mf
+- 3ds
+Installers:
+- Architecture: x64
+  InstallerUrl: https://github.com/RedtRocks/glance/releases/download/v0.3.0/Glance-v0.3.0-windows-x64-setup.exe
+  InstallerSha256: 752637BE8BA228166D49FF1A1735B7FC0ABADE161E9B2B9879105C1C1935E175
+- Architecture: arm64
+  InstallerUrl: https://github.com/RedtRocks/glance/releases/download/v0.3.0/Glance-v0.3.0-windows-arm64-setup.exe
+  InstallerSha256: 39BBE6CCA8D1848B22AF6AF8E75852562487ABEFEB079B5D9A0DD7083FAAC0FE
+ManifestType: installer
+ManifestVersion: 1.10.0
