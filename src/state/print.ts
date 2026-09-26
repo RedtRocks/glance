@@ -6,11 +6,15 @@
 import type { Doc } from './documents'
 import { imageUrl } from '../platform'
 import { withBusy } from './ui'
+import { openPdf } from '../pdf/engine'
+import { serialize } from './actions'
 
 const PRINT_SCALE = 150 / 72 // 150 DPI keeps memory reasonable for long documents
 
 async function pdfPages(doc: Extract<Doc, { kind: 'pdf' }>, root: HTMLElement): Promise<void> {
-  const proxy = doc.proxy.value
+  // Print what would be saved: markup and filled-in form fields included.
+  const needsSerialize = doc.markup.peek().length > 0 || doc.formsEdited
+  const proxy = needsSerialize ? await openPdf(await serialize(doc)) : doc.proxy.value
   if (!proxy) return
   for (let i = 1; i <= proxy.numPages; i++) {
     const page = await proxy.getPage(i)
@@ -18,7 +22,7 @@ async function pdfPages(doc: Extract<Doc, { kind: 'pdf' }>, root: HTMLElement): 
     const canvas = document.createElement('canvas')
     canvas.width = Math.floor(viewport.width)
     canvas.height = Math.floor(viewport.height)
-    await page.render({ canvas, viewport, annotationMode: 2 /* ENABLE_FORMS */ }).promise
+    await page.render({ canvas, viewport, annotationMode: 1 /* ENABLE: draw annotations and form values */ }).promise
     const img = document.createElement('img')
     img.src = canvas.toDataURL('image/jpeg', 0.92)
     img.className = 'print-page'

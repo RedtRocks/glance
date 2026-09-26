@@ -2,10 +2,9 @@
 import * as platform from '../platform'
 import type { Probe } from '../platform'
 import type * as PageOps from '../core/pageOps'
-
-/** pdf-lib is ~250 KB gzipped; load it only when a page is first edited (ADR 0002). */
-let opsModule: Promise<typeof PageOps> | null = null
-const pageOps = (): Promise<typeof PageOps> => (opsModule ??= import('../core/pageOps'))
+import { MARKER_KEY, pageMaps, type Rect } from '../core/markup'
+import { annotations, pageOps, redact } from './pdfModules'
+import { openPdf } from '../pdf/engine'
 import { PasswordRequired } from '../pdf/engine'
 import {
   activeDoc,
@@ -59,6 +58,31 @@ async function loadPdfDoc(doc: PdfDoc, bytes: Uint8Array): Promise<boolean> {
   }
 }
 
+/** Makes markup Glance saved earlier editable again (only loads pdf-lib when present). */
+async function importMarkup(doc: PdfDoc): Promise<void> {
+  const proxy = doc.proxy.peek()
+  if (!proxy || doc.encrypted) return
+  const meta = await proxy.getMetadata().catch(() => null)
+  // PDF.js returns custom Info entries as a Map (older versions: a plain object).
+  const custom = (meta?.info as { Custom?: Map<string, unknown> | Record<string, unknown> } | undefined)?.Custom
+  const marked = custom instanceof Map ? custom.get(MARKER_KEY) : custom?.[MARKER_KEY]
+  if (!marked) return
+  const { extractMarkup } = await annotations()
+  const { bytes, markup } = await extractMarkup(doc.bytes)
+  await doc.load(bytes)
+  doc.markup.value = markup
+}
+
+/** The document as it should be written: form values and markup included. */
+export async function serialize(doc: PdfDoc): Promise<Uint8Array> {
+  return doc.exclusive(async () => {
+    const bytes = await doc.currentBytes()
+    const markup = doc.markup.peek()
+    if (!markup.length) return bytes
+    return (await annotations()).writeMarkup(bytes, markup)
+  })
+}
+
 async function openOne(path: string): Promise<Doc | null> {
   const existing = findByPath(path)
   if (existing) {
@@ -70,6 +94,7 @@ async function openOne(path: string): Promise<Doc | null> {
     case 'pdf': {
       const doc = new PdfDoc(probe.name, probe.path)
       if (!(await loadPdfDoc(doc, await platform.readFile(path)))) return null
+      await importMarkup(doc)
       addDoc(doc)
       return doc
     }
@@ -141,11 +166,29 @@ export async function openWithDialog(): Promise<void> {
 // ---------------------------------------------------------------------------
 // Saving (explicit; autosave arrives with the Versions milestone, ADR 0004)
 
+/** Pending redactions are never written silently: apply them, or keep them out. */
+async function resolvePendingRedactions(doc: PdfDoc): Promise<boolean> {
+  const n = doc.redactions.peek().length
+  if (!n) return true
+  const choice = await showDialog<'apply' | 'skip' | 'cancel'>({
+    title: 'Apply redactions before saving?',
+    body: `${n} marked ${n === 1 ? 'area is' : 'areas are'} not redacted yet. Until you apply redactions, the content underneath is still in the file.`,
+    buttons: [
+      { label: 'Cancel', value: 'cancel' },
+      { label: 'Save without applying', value: 'skip' },
+      { label: 'Apply and save', value: 'apply', primary: true }
+    ]
+  })
+  if (choice === 'apply') return applyRedactions(doc, false)
+  return choice === 'skip'
+}
+
 export async function save(doc: Doc | null = activeDoc.value): Promise<void> {
   if (!doc || doc.kind !== 'pdf') return
   const path = doc.path.value
   if (!path) return saveAs(doc)
-  await withBusy('Saving…', () => platform.writeFile(path, doc.bytes))
+  if (!(await resolvePendingRedactions(doc))) return
+  await withBusy('Saving…', async () => platform.writeFile(path, await serialize(doc)))
   doc.dirty.value = false
   toast('Saved')
 }
@@ -155,7 +198,8 @@ export async function saveAs(doc: Doc | null = activeDoc.value): Promise<void> {
   const base = doc.name.value.replace(/\.[^.]+$/, '')
   const target = await platform.saveDialog(`${base}.pdf`, [{ name: 'PDF document', extensions: ['pdf'] }])
   if (!target) return
-  await withBusy('Saving…', () => platform.writeFile(target, doc.bytes))
+  if (!(await resolvePendingRedactions(doc))) return
+  await withBusy('Saving…', async () => platform.writeFile(target, await serialize(doc)))
   doc.path.value = target
   doc.name.value = platform.baseName(target)
   doc.dirty.value = false
@@ -191,9 +235,9 @@ function selectedOrCurrent(doc: PdfDoc): number[] {
   return sel.length ? [...sel].sort((a, b) => a - b) : [doc.current.value]
 }
 
-async function run(doc: PdfDoc, label: string, op: (b: Uint8Array) => Promise<Uint8Array>): Promise<boolean> {
+async function run(doc: PdfDoc, label: string, op: Parameters<PdfDoc['apply']>[1], pages?: Parameters<PdfDoc['apply']>[2]): Promise<boolean> {
   try {
-    await withBusy(`${label}…`, () => doc.apply(label, op))
+    await withBusy(`${label}…`, () => doc.apply(label, op, pages))
     return true
   } catch (e) {
     toast((e as Error).message ?? String(e), 'error')
@@ -214,7 +258,7 @@ export async function rotatePages(delta: 90 | -90, doc = activeDoc.value): Promi
 export async function deletePages(doc = activeDoc.value): Promise<void> {
   if (doc?.kind !== 'pdf') return
   const pages = selectedOrCurrent(doc)
-  if (await run(doc, pages.length > 1 ? 'Delete Pages' : 'Delete Page', async (b) => (await pageOps()).deletePages(b, pages))) {
+  if (await run(doc, pages.length > 1 ? 'Delete Pages' : 'Delete Page', async (b) => (await pageOps()).deletePages(b, pages), pageMaps.delete(pages))) {
     doc.selection.value = []
   }
 }
@@ -222,7 +266,7 @@ export async function deletePages(doc = activeDoc.value): Promise<void> {
 export async function insertBlankPage(doc = activeDoc.value): Promise<void> {
   if (doc?.kind !== 'pdf') return
   const at = Math.max(...selectedOrCurrent(doc)) + 1
-  if (await run(doc, 'Insert Blank Page', async (b) => (await pageOps()).insertBlankPage(b, at))) {
+  if (await run(doc, 'Insert Blank Page', async (b) => (await pageOps()).insertBlankPage(b, at), pageMaps.insert(at, 1))) {
     doc.selection.value = [at]
     doc.goTo(at)
   }
@@ -231,7 +275,7 @@ export async function insertBlankPage(doc = activeDoc.value): Promise<void> {
 export async function movePages(doc: PdfDoc, pages: number[], to: number): Promise<void> {
   const order = (await pageOps()).computeMoveOrder(doc.pageCount.value, pages, to)
   if (order.every((v, i) => v === i)) return
-  if (await run(doc, 'Move Pages', async (b) => (await pageOps()).reorderPages(b, order))) {
+  if (await run(doc, 'Move Pages', async (b) => (await pageOps()).reorderPages(b, order), pageMaps.reorder(order))) {
     const moved = new Set(pages)
     doc.selection.value = order.flatMap((src, i) => (moved.has(src) ? [i] : []))
   }
@@ -269,7 +313,9 @@ export async function insertFiles(doc: PdfDoc, paths: string[], at: number): Pro
         throw new Error(`${probe.name} can’t be inserted into a PDF.`)
       }
     }
-    return out
+    // Inserted PDFs may carry Glance markup; keep it editable.
+    const extracted = await (await annotations()).extractMarkup(out)
+    return { bytes: extracted.bytes, markup: extracted.markup, pages: pageMaps.insert(at, pos - at) }
   })
 }
 
@@ -282,14 +328,19 @@ export async function insertFromFileDialog(doc = activeDoc.value): Promise<void>
 /** Copies (or moves, with Shift) pages from one PDF into another. */
 export async function transferPages(src: PdfDoc, pages: number[], dst: PdfDoc, at: number, move: boolean): Promise<void> {
   const sorted = [...pages].sort((a, b) => a - b)
-  const bytes = src.bytes
-  const ok = await run(dst, move ? 'Move Pages' : 'Copy Pages', async (b) => (await pageOps()).insertPdfPages(b, bytes, at, sorted))
+  // Serialize so the pages' markup travels with them (and becomes editable in dst).
+  const bytes = await serialize(src)
+  const ok = await run(dst, move ? 'Move Pages' : 'Copy Pages', async (b) => {
+    const merged = await (await pageOps()).insertPdfPages(b, bytes, at, sorted)
+    const extracted = await (await annotations()).extractMarkup(merged)
+    return { bytes: extracted.bytes, markup: extracted.markup, pages: pageMaps.insert(at, sorted.length) }
+  })
   if (ok && move && src !== dst) {
     if (sorted.length >= src.pageCount.value) {
       toast('Pages copied. The source keeps its last page because a PDF needs at least one.')
       return
     }
-    await run(src, 'Move Pages', async (b) => (await pageOps()).deletePages(b, sorted))
+    await run(src, 'Move Pages', async (b) => (await pageOps()).deletePages(b, sorted), pageMaps.delete(sorted))
     src.selection.value = []
   }
 }
@@ -301,7 +352,7 @@ function pagesLabel(pages: number[]): string {
 
 /** Drag Out: writes the pages to a temporary PDF and hands it to the OS drag loop. */
 export async function dragOutPages(doc: PdfDoc, pages: number[], icon: HTMLCanvasElement | null): Promise<void> {
-  const bytes = await (await pageOps()).extractPages(doc.bytes, [...pages].sort((a, b) => a - b))
+  const bytes = await (await pageOps()).extractPages(await serialize(doc), [...pages].sort((a, b) => a - b))
   const base = doc.name.value.replace(/\.[^.]+$/, '')
   const file = await platform.writeTemp(`${base} (${pagesLabel(pages)}).pdf`, bytes)
   let iconPath = file
@@ -318,7 +369,7 @@ export async function exportSelectedPages(doc = activeDoc.value): Promise<void> 
   const base = doc.name.value.replace(/\.[^.]+$/, '')
   const target = await platform.saveDialog(`${base} (${pagesLabel(pages)}).pdf`, [{ name: 'PDF document', extensions: ['pdf'] }])
   if (!target) return
-  const bytes = await withBusy('Exporting…', async () => (await pageOps()).extractPages(doc.bytes, pages))
+  const bytes = await withBusy('Exporting…', async () => (await pageOps()).extractPages(await serialize(doc), pages))
   await platform.writeFile(target, bytes)
   toast(`Exported ${pagesLabel(pages)}`)
 }
@@ -340,4 +391,68 @@ export async function showAbout(): Promise<void> {
 
 export function allDocs(): Doc[] {
   return docs.value
+}
+
+// ---------------------------------------------------------------------------
+// Redaction (ADR 0005)
+
+const REDACT_DPI = 300
+const MAX_RASTER_PIXELS = 36_000_000
+
+async function makeRasterizer(bytes: Uint8Array): Promise<import('../core/redact').Rasterize> {
+  const proxy = await openPdf(bytes)
+  return async (pageIndex: number, rects: Rect[]) => {
+    const page = await proxy.getPage(pageIndex + 1)
+    const base = page.getViewport({ scale: 1, rotation: 0 })
+    let scale = REDACT_DPI / 72
+    if (base.width * base.height * scale * scale > MAX_RASTER_PIXELS) scale = Math.sqrt(MAX_RASTER_PIXELS / (base.width * base.height))
+    const vp = page.getViewport({ scale, rotation: 0 })
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.ceil(vp.width)
+    canvas.height = Math.ceil(vp.height)
+    await page.render({ canvas, viewport: vp, annotationMode: 1 /* ENABLE: keep other apps' annotations visible */, background: 'white' }).promise
+    const g = canvas.getContext('2d')!
+    g.fillStyle = '#000'
+    for (const r of rects) {
+      const [ax, ay] = vp.convertToViewportPoint(r[0], r[1])
+      const [bx, by] = vp.convertToViewportPoint(r[2], r[3])
+      g.fillRect(Math.min(ax, bx) - 1, Math.min(ay, by) - 1, Math.abs(bx - ax) + 2, Math.abs(by - ay) + 2)
+    }
+    const blob = await new Promise<Blob>((res, rej) => canvas.toBlob((b) => (b ? res(b) : rej(new Error('encode failed'))), 'image/jpeg', 0.92))
+    canvas.width = canvas.height = 0
+    page.cleanup()
+    return { bytes: new Uint8Array(await blob.arrayBuffer()), type: 'jpg' as const }
+  }
+}
+
+/** Applies pending redactions after confirmation. Returns false if cancelled or failed. */
+export async function applyRedactions(doc: Doc | null = activeDoc.value, confirm = true): Promise<boolean> {
+  if (doc?.kind !== 'pdf') return false
+  const reds = doc.redactions.peek()
+  if (!reds.length) return true
+  const pages = new Set(reds.map((r) => r.page)).size
+  if (confirm) {
+    const ok = await showDialog<boolean>({
+      title: 'Apply redactions?',
+      body: `The content under ${reds.length} marked ${reds.length === 1 ? 'area' : 'areas'} will be permanently removed. ${pages === 1 ? 'The affected page becomes an image' : `The ${pages} affected pages become images`}: its text can no longer be selected or searched, and its links, comments and form fields are removed.`,
+      buttons: [
+        { label: 'Cancel', value: false },
+        { label: 'Apply redactions', value: true, primary: true }
+      ]
+    })
+    if (!ok) return false
+  }
+  const done = await run(doc, 'Apply Redactions', async (b) => {
+    const rasterize = await makeRasterizer(b)
+    return (await redact()).applyRedactions(b, reds, rasterize)
+  })
+  if (done) {
+    doc.redactions.value = []
+    toast(`Redacted ${reds.length} ${reds.length === 1 ? 'area' : 'areas'}`)
+  }
+  return done
+}
+
+export function discardRedactions(doc: Doc | null = activeDoc.value): void {
+  if (doc?.kind === 'pdf' && doc.redactions.peek().length) doc.edit('Discard Redactions', { redactions: [] })
 }

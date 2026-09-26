@@ -1,6 +1,7 @@
 mod commands;
 mod decode;
 mod protocol;
+mod signatures;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{Emitter, Manager};
@@ -65,6 +66,9 @@ pub fn run() {
             commands::convert_postscript,
             commands::initial_files,
             commands::log_frontend,
+            signatures::signatures_list,
+            signatures::signature_save,
+            signatures::signature_delete,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Glance");

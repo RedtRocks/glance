@@ -42,6 +42,9 @@ export type Markup =
 
 export type MarkupType = Markup['type']
 
+/** Info-dictionary key marking files that contain Glance markup (see core/annotations). */
+export const MARKER_KEY = 'GlanceMarkup'
+
 export interface Redaction {
   id: string
   page: number

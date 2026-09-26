@@ -31,6 +31,7 @@ jxl-oxide = { version = "0.12", features = ["image"] }
 hayro-jpeg2000 = "0.4"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 which = "7"
+base64 = "0.22"
 
 [target.'cfg(windows)'.dependencies]
 window-vibrancy = "0.6"
@@ -40,6 +41,8 @@ windows = { version = "0.62", features = [
   "Win32_Graphics_Imaging",
   "Win32_System_Com_StructuredStorage",
   "Win32_System_Variant",
+  "Win32_Security",
+  "Win32_Security_Cryptography",
 ] }
 
 [profile.release]

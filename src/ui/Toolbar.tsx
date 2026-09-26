@@ -7,6 +7,7 @@ import { parsePageInput, showPageButtons, showPageNumberField } from '../core/pa
 import { findOpen, findQuery, menuOpen, sidebarVisible } from '../state/ui'
 import { hits, hitIndex, runSearch, searching, stepHit } from '../pdf/search'
 import { MenuItems } from './MenuBar'
+import { markupBar, tool } from '../state/markupState'
 import { Icon } from './Icon'
 import type { IconName } from './icons'
 
@@ -179,6 +180,18 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
         <Icon name="rotateLeft" />
       </button>
     )
+  },
+  {
+    id: 'markup',
+    label: 'Markup',
+    applies: isPdf,
+    render: () => <Btn icon="markup" label="Show Markup Toolbar" command="tools.markup" pressed={markupBar.value} />
+  },
+  {
+    id: 'highlight',
+    label: 'Highlight',
+    applies: isPdf,
+    render: () => <Btn icon="highlight" label="Highlight" command="tools.highlight" pressed={tool.value === 'highlight'} />
   },
   {
     id: 'contactSheet',

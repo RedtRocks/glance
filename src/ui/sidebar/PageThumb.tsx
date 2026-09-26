@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import type { PdfDoc } from '../../state/documents'
-import { thumbnail } from '../../pdf/thumbs'
+import { thumbnail, thumbViewport } from '../../pdf/thumbs'
+import type { PageViewport } from 'pdfjs-dist'
+import { MarkupLayer } from '../markup/MarkupLayer'
 import { settings, isDark } from '../../state/settings'
 
 /** One lazily rendered page thumbnail. Renders only once scrolled into view. */
@@ -8,7 +10,18 @@ export function PageThumb({ doc, index, width }: { doc: PdfDoc; index: number; w
   const holder = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
   const [aspect, setAspect] = useState(1.294)
+  const [vp, setVp] = useState<PageViewport | null>(null)
   const revision = doc.revision.value
+  const hasMarkup = doc.markup.value.some((m) => m.page === index) || doc.redactions.value.some((r) => r.page === index)
+
+  useEffect(() => {
+    if (!visible || !hasMarkup) return
+    let cancelled = false
+    void thumbViewport(doc, index, width).then((v) => !cancelled && setVp(v))
+    return () => {
+      cancelled = true
+    }
+  }, [visible, hasMarkup, revision, index, width])
 
   useEffect(() => {
     const el = holder.current
@@ -41,5 +54,10 @@ export function PageThumb({ doc, index, width }: { doc: PdfDoc; index: number; w
   }, [visible, revision, index, width])
 
   const dark = settings.value.darkPdf && isDark()
-  return <div ref={holder} class={`thumb-canvas ${dark ? 'dark-pdf' : ''}`} style={{ width, height: Math.round(width * aspect) }} />
+  return (
+    <div class="thumb-frame" style={{ width, height: Math.round(width * aspect) }}>
+      <div ref={holder} class={`thumb-canvas ${dark ? 'dark-pdf' : ''}`} style={{ width, height: Math.round(width * aspect) }} />
+      {hasMarkup && vp && <MarkupLayer doc={doc} index={index} vp={vp} interactive={false} />}
+    </div>
+  )
 }

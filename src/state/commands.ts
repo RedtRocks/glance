@@ -10,6 +10,9 @@ import { settings, updateSettings } from './settings'
 import { customizeOpen, findOpen, promptText, settingsOpen, sidebarVisible, slideshow } from './ui'
 import { parsePageInput } from '../core/pageControls'
 import { printDoc } from './print'
+import { applyRedactions } from './actions'
+import { markupBar, selectedId, setTool, signatureDialog, tool } from './markupState'
+import { bookmarksFor, setBookmarks } from './bookmarks'
 
 export interface Command {
   id: string
@@ -68,7 +71,7 @@ function setView(mode: ViewMode): void {
   d.viewMode.value = mode
 }
 
-function showSidebar(mode: 'thumbnails' | 'toc' | 'none'): void {
+function showSidebar(mode: 'thumbnails' | 'toc' | 'notes' | 'bookmarks' | 'none'): void {
   const d = activeDoc.value
   if (!d) return
   if (d.kind === 'pdf') d.contactSheet.value = false
@@ -100,11 +103,31 @@ export const COMMANDS: Command[] = [
   { id: 'edit.find', label: 'Find…', keys: ['Ctrl+F'], run: () => void (findOpen.value = true), enabled: isPdf },
   { id: 'edit.insertBlank', label: 'Insert Blank Page', run: () => actions.insertBlankPage(), enabled: isPdf },
   { id: 'edit.insertFile', label: 'Insert Page from File…', run: () => actions.insertFromFileDialog(), enabled: isPdf },
-  { id: 'edit.deletePages', label: 'Delete Selected Pages', keys: ['Delete'], run: () => actions.deletePages(), enabled: isPdf },
+  {
+    id: 'edit.delete',
+    label: 'Delete',
+    keys: ['Delete', 'Backspace'],
+    // Selected markup first; otherwise the selected pages.
+    run: () => {
+      const d = pdf()
+      const id = selectedId.peek()
+      if (d && id && d.markup.peek().some((m) => m.id === id)) {
+        d.edit('Delete Markup', { markup: d.markup.peek().filter((m) => m.id !== id) })
+        selectedId.value = null
+        return
+      }
+      if (d && d.selection.peek().length) return actions.deletePages()
+    },
+    enabled: isPdf
+  },
+  { id: 'edit.deletePages', label: 'Delete Selected Pages', run: () => actions.deletePages(), enabled: isPdf },
+  { id: 'edit.addBookmark', label: 'Add Bookmark', keys: ['Ctrl+D'], run: () => addBookmark(), enabled: isPdf },
   // View
   { id: 'view.hideSidebar', label: 'Hide Sidebar', keys: ['Ctrl+Shift+1'], run: () => showSidebar('none'), enabled: hasDoc },
   { id: 'view.thumbnails', label: 'Thumbnails', keys: ['Ctrl+Shift+2'], run: () => showSidebar('thumbnails'), enabled: multiPage, checked: () => sidebarVisible.value && activeDoc.value?.sidebar.value === 'thumbnails' },
   { id: 'view.toc', label: 'Table of Contents', keys: ['Ctrl+Shift+3'], run: () => showSidebar('toc'), enabled: isPdf, checked: () => sidebarVisible.value && activeDoc.value?.sidebar.value === 'toc' },
+  { id: 'view.notes', label: 'Highlights and Notes', keys: ['Ctrl+Shift+4'], run: () => showSidebar('notes'), enabled: isPdf, checked: () => sidebarVisible.value && activeDoc.value?.sidebar.value === 'notes' },
+  { id: 'view.bookmarks', label: 'Bookmarks', keys: ['Ctrl+Shift+5'], run: () => showSidebar('bookmarks'), enabled: isPdf, checked: () => sidebarVisible.value && activeDoc.value?.sidebar.value === 'bookmarks' },
   {
     id: 'view.contactSheet',
     label: 'Contact Sheet',
@@ -141,6 +164,27 @@ export const COMMANDS: Command[] = [
   { id: 'go.nextTab', label: 'Next Tab', keys: ['Ctrl+Tab'], run: () => cycleTab(1) },
   { id: 'go.previousTab', label: 'Previous Tab', keys: ['Ctrl+Shift+Tab'], run: () => cycleTab(-1) },
   // Tools
+  {
+    id: 'tools.markup',
+    label: 'Show Markup Toolbar',
+    keys: ['Ctrl+Shift+A'],
+    run: () => {
+      if (markupBar.value) {
+        setTool('select') // also re-shows the bar, so hide it after
+        markupBar.value = false
+      } else {
+        markupBar.value = true
+      }
+    },
+    enabled: isPdf,
+    checked: () => markupBar.value
+  },
+  { id: 'tools.highlight', label: 'Highlight', keys: ['Ctrl+Shift+H'], run: () => toggleTool('highlight'), enabled: isPdf, checked: () => tool.value === 'highlight' },
+  { id: 'tools.text', label: 'Add Text Box', keys: ['Ctrl+Shift+T'], run: () => toggleTool('text'), enabled: isPdf },
+  { id: 'tools.note', label: 'Add Note', keys: ['Ctrl+Shift+O'], run: () => toggleTool('note'), enabled: isPdf },
+  { id: 'tools.signature', label: 'Signature…', keys: ['Ctrl+Shift+J'], run: () => void (signatureDialog.value = true), enabled: isPdf },
+  { id: 'tools.redact', label: 'Redact', keys: ['Ctrl+Shift+R'], run: () => toggleTool('redact'), enabled: isPdf, checked: () => tool.value === 'redact' },
+  { id: 'tools.applyRedactions', label: 'Apply Redactions…', run: () => void applyRedactions(), enabled: () => !!pdf()?.redactions.value.length },
   { id: 'tools.rotateLeft', label: 'Rotate Left', keys: ['Ctrl+L'], run: () => actions.rotatePages(-90), enabled: hasDoc },
   { id: 'tools.rotateRight', label: 'Rotate Right', keys: ['Ctrl+R'], run: () => actions.rotatePages(90), enabled: hasDoc },
   // Help
@@ -166,6 +210,21 @@ export function bindings(): Record<string, string[]> {
 
 export function keysFor(id: string): string[] {
   return bindings()[id] ?? []
+}
+
+function toggleTool(t: Parameters<typeof setTool>[0]): void {
+  setTool(tool.peek() === t ? 'select' : t)
+}
+
+async function addBookmark(): Promise<void> {
+  const d = pdf()
+  if (!d) return
+  const path = d.path.peek()
+  if (!path) return
+  const page = d.current.peek()
+  const label = await promptText('Add Bookmark', 'Name', { initial: `Page ${page + 1}`, ok: 'Add' })
+  if (label === null) return
+  setBookmarks(path, [...bookmarksFor(path).filter((b) => b.page !== page), { page, label: label || `Page ${page + 1}`, created: Date.now() }])
 }
 
 async function goToPagePrompt(): Promise<void> {

@@ -9,6 +9,7 @@
 import {
   LineCapStyle,
   LineJoinStyle,
+  PDFBool,
   PDFDict,
   PDFDocument,
   PDFHexString,
@@ -36,7 +37,7 @@ import {
   type PDFOperator
 } from '@cantoo/pdf-lib'
 import { collectGarbage } from './gc'
-import { NOTE_SIZE, headPath, outlinePath, paintBounds, type Color, type Markup, type Rect } from './markup'
+import { MARKER_KEY, NOTE_SIZE, headPath, outlinePath, paintBounds, type Color, type Markup, type Rect } from './markup'
 
 const FLIP: [number, number, number, number, number, number] = [1, 0, 0, -1, 0, 0]
 const rgbOf = (c: Color) => rgb(c[0], c[1], c[2])
@@ -264,9 +265,22 @@ export async function writeMarkup(bytes: Uint8Array, markup: Markup[], options: 
     const annot = doc.context.register(doc.context.obj(data as never))
     page.node.addAnnot(annot)
   }
+  // Lets Glance skip loading pdf-lib on open when a file has no Glance markup:
+  // PDF.js exposes custom Info entries through getMetadata().
+  const info = infoDict(doc)
+  if (markup.length) info.set(MARKER, PDFBool.True)
+  else info.delete(MARKER)
   collectGarbage(doc)
   return doc.save({ useObjectStreams: options.objectStreams ?? true, updateFieldAppearances: false })
 }
+
+/** pdf-lib's Info accessor is typed private but is the supported way to reach the dict. */
+function infoDict(doc: PDFDocument): PDFDict {
+  return (doc as unknown as { getInfoDict(): PDFDict }).getInfoDict()
+}
+
+export { MARKER_KEY }
+const MARKER = PDFName.of(MARKER_KEY)
 
 function streamBytes(obj: unknown): Uint8Array | null {
   if (obj instanceof PDFRawStream) {
@@ -312,6 +326,7 @@ export async function extractMarkup(bytes: Uint8Array): Promise<{ bytes: Uint8Ar
     if (annots.size() === 0) page.node.delete(PDFName.of('Annots'))
   })
   if (!removed) return { bytes, markup }
+  infoDict(doc).delete(MARKER)
   collectGarbage(doc)
   return { bytes: await doc.save({ useObjectStreams: true, updateFieldAppearances: false }), markup }
 }

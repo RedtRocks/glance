@@ -4,6 +4,8 @@ import { stepZoom } from '../../state/commands'
 import { isDark, settings } from '../../state/settings'
 import { PdfPage } from './PdfPage'
 import { ContactSheet } from './ContactSheet'
+import { markSelection } from '../markup/textSelection'
+import { tool } from '../../state/markupState'
 
 const PAD = 24
 const GAP = 16
@@ -140,8 +142,16 @@ function PdfScroller({ doc }: { doc: PdfDoc }) {
 
   const dark = settings.value.darkPdf && isDark()
 
+  // With a text-markup tool active, releasing a text selection marks it.
+  const onPointerUp = (): void => {
+    const t = tool.peek()
+    if ((t === 'highlight' || t === 'underline' || t === 'strike' || t === 'redact') && scroller.current) {
+      markSelection(doc, scroller.current, t)
+    }
+  }
+
   return (
-    <div class="pdf-scroller" ref={scroller} onScroll={onScroll} onWheel={onWheel} tabIndex={-1}>
+    <div class={`pdf-scroller tool-${tool.value}`} ref={scroller} onScroll={onScroll} onWheel={onWheel} onPointerUp={onPointerUp} tabIndex={-1}>
       <div class="pdf-pages" style={{ padding: PAD, gap: GAP }}>
         {shownRows.map((row) => (
           <div class="pdf-row" key={row[0]} style={{ gap: GAP }}>

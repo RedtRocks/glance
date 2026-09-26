@@ -276,3 +276,37 @@ export async function readClipboardImage(): Promise<{ rgba: Uint8Array; width: n
     return null
   }
 }
+
+// ---------------------------------------------------------------------------
+// Saved signatures (encrypted with Windows DPAPI in the backend)
+
+export interface SavedSignature {
+  id: string
+  name: string
+  created: number
+  /** Base64 PNG. */
+  png: string
+}
+
+const BROWSER_SIGS = 'glance.dev.signatures'
+
+export async function listSignatures(): Promise<SavedSignature[]> {
+  if (isTauri) return invoke<SavedSignature[]>('signatures_list')
+  try {
+    return JSON.parse(sessionStorage.getItem(BROWSER_SIGS) ?? '[]')
+  } catch {
+    return []
+  }
+}
+
+export async function saveSignature(name: string, pngBase64: string): Promise<SavedSignature> {
+  if (isTauri) return invoke<SavedSignature>('signature_save', { name, png: pngBase64 })
+  const sig = { id: `sig-${Date.now().toString(16)}`, name, created: Date.now(), png: pngBase64 }
+  sessionStorage.setItem(BROWSER_SIGS, JSON.stringify([...(await listSignatures()), sig]))
+  return sig
+}
+
+export async function deleteSignature(id: string): Promise<void> {
+  if (isTauri) return invoke('signature_delete', { id })
+  sessionStorage.setItem(BROWSER_SIGS, JSON.stringify((await listSignatures()).filter((s) => s.id !== id)))
+}

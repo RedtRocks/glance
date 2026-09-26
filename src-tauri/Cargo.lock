@@ -1519,6 +1519,7 @@ dependencies = [
 name = "glance"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "hayro-jpeg2000 0.4.0",
  "icns",
  "image",

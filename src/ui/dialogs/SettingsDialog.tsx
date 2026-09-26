@@ -4,6 +4,35 @@ import { settingsOpen } from '../../state/ui'
 import { COMMANDS, bindings } from '../../state/commands'
 import { comboFromEvent, displayCombo, findConflicts } from '../../core/shortcuts'
 import { Modal } from './Dialog'
+import { Icon } from '../Icon'
+import type { IconName } from '../icons'
+import type { ComponentChildren } from 'preact'
+
+/** Windows 11 Settings-style row: icon, title and description, control on the right. */
+function SettingsCard({ icon, title, description, children }: { icon: IconName; title: string; description: string; children: ComponentChildren }) {
+  return (
+    <div class="settings-card">
+      <span class="settings-card-icon" aria-hidden="true">
+        <Icon name={icon} />
+      </span>
+      <div class="settings-card-text">
+        <span class="settings-card-title">{title}</span>
+        <span class="settings-card-desc">{description}</span>
+      </div>
+      <div class="settings-card-control">{children}</div>
+    </div>
+  )
+}
+
+/** WinUI ToggleSwitch. */
+export function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <label class="toggle-switch">
+      <span class="toggle-state">{checked ? 'On' : 'Off'}</span>
+      <input type="checkbox" role="switch" aria-label={label} checked={checked} onChange={(e) => onChange((e.target as HTMLInputElement).checked)} />
+    </label>
+  )
+}
 
 function ShortcutEditor() {
   const [recording, setRecording] = useState<string | null>(null)
@@ -65,36 +94,28 @@ export function SettingsDialog() {
         <button role="tab" aria-selected={tab === 'shortcuts'} onClick={() => setTab('shortcuts')}>Keyboard shortcuts</button>
       </div>
       {tab === 'general' ? (
-        <div class="settings-grid">
-          <label class="field">
-            <span>App theme</span>
+        <div class="settings-cards">
+          <SettingsCard icon="moon" title="App theme" description="Follow Windows, or always use light or dark.">
             <select value={s.theme} onChange={(e) => updateSettings({ theme: (e.target as HTMLSelectElement).value as ThemePref })}>
               <option value="system">Use Windows setting</option>
               <option value="light">Light</option>
               <option value="dark">Dark</option>
             </select>
-          </label>
-          <label class="toggle">
-            <input type="checkbox" checked={s.darkPdf} onChange={(e) => updateSettings({ darkPdf: (e.target as HTMLInputElement).checked })} />
-            <span>
-              Dark appearance for PDFs
-              <small>Inverts page colors while Glance is in dark mode. Images inside PDFs are inverted too.</small>
-            </span>
-          </label>
-          <label class="field">
-            <span>Show the page number field for documents longer than</span>
-            <div class="inline">
-              <input
-                type="number"
-                min={1}
-                max={999}
-                value={s.pageNumberThreshold}
-                onChange={(e) => updateSettings({ pageNumberThreshold: Math.max(1, Number((e.target as HTMLInputElement).value) || 1) })}
-              />
-              <span>pages</span>
-            </div>
-            <small>Previous/next page buttons appear for any document with more than one page.</small>
-          </label>
+          </SettingsCard>
+          <SettingsCard icon="document" title="Dark appearance for PDFs" description="Invert page colors while Glance is dark. Images inside PDFs are inverted too.">
+            <Toggle checked={s.darkPdf} label="Dark appearance for PDFs" onChange={(v) => updateSettings({ darkPdf: v })} />
+          </SettingsCard>
+          <SettingsCard icon="grid" title="Page number field" description="Show it in the toolbar for documents longer than this many pages. Previous/next buttons appear for any multi-page document.">
+            <input
+              class="number-box"
+              type="number"
+              min={1}
+              max={999}
+              aria-label="Pages"
+              value={s.pageNumberThreshold}
+              onChange={(e) => updateSettings({ pageNumberThreshold: Math.max(1, Number((e.target as HTMLInputElement).value) || 1) })}
+            />
+          </SettingsCard>
         </div>
       ) : (
         <ShortcutEditor />
