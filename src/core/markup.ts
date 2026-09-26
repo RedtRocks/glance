@@ -5,6 +5,8 @@
  * and page rotation, and maps 1:1 onto the PDF annotations it is saved as (ADR 0003).
  */
 
+import { applyAffine, type Affine } from './image/transform'
+
 export type Pt = [number, number]
 /** [x1, y1, x2, y2], normalized so x1 <= x2 and y1 <= y2. */
 export type Rect = [number, number, number, number]
@@ -466,4 +468,98 @@ export function recognizeSketch(stroke: Pt[]): Recognized {
   if (nearEdge > 0.85 && corners > 0.08) return { type: 'rect', rect: b }
   if (ellipseErr < 0.12) return { type: 'oval', rect: b }
   return null
+}
+
+// ---------------------------------------------------------------------------
+// Image transforms (rotate, flip, straighten, crop, resize) carry markup along
+
+/**
+ * Converts an image pixel-space map (y down, see core/image/transform) into the
+ * equivalent map on markup space (y up), given the image heights before and after.
+ */
+export function markupAffine([a, b, c, d, e, f]: Affine, hIn: number, hOut: number): Affine {
+  return [a, -b, -c, d, c * hIn + e, hOut - d * hIn - f]
+}
+
+const EPS = 1e-9
+
+/** True when the map keeps axis-aligned rectangles axis-aligned (90° turns, flips, scaling). */
+function axisAligned([a, b, c, d]: Affine): boolean {
+  return (Math.abs(b) < EPS && Math.abs(c) < EPS) || (Math.abs(a) < EPS && Math.abs(d) < EPS)
+}
+
+function mapRect(t: Affine, r: Rect): Rect {
+  const corners: Pt[] = [
+    [r[0], r[1]],
+    [r[2], r[1]],
+    [r[0], r[3]],
+    [r[2], r[3]]
+  ]
+  return rectUnion(corners.map(([x, y]) => applyAffine(t, x, y)).map(([x, y]) => [x, y, x, y] as Rect))
+}
+
+/**
+ * Moves one markup through an image transform (in markup space). Points map exactly.
+ * Boxes map exactly under 90° turns, flips and scaling; under any other angle a box
+ * can't tilt, so it follows its center and stays upright. Text boxes and signatures
+ * always stay upright and keep their proportions, so text stays readable.
+ */
+export function transformMarkup(m: Markup, t: Affine): Markup {
+  const p = ([x, y]: Pt): Pt => applyAffine(t, x, y)
+  const s = Math.sqrt(Math.abs(t[0] * t[3] - t[1] * t[2]))
+  const style = { ...m.style, width: m.style.width * s }
+  const upright = (r: Rect): Rect => {
+    const [cx, cy] = p([(r[0] + r[2]) / 2, (r[1] + r[3]) / 2])
+    const hw = ((r[2] - r[0]) * s) / 2
+    const hh = ((r[3] - r[1]) * s) / 2
+    return [cx - hw, cy - hh, cx + hw, cy + hh]
+  }
+  switch (m.type) {
+    case 'line':
+    case 'arrow':
+      return { ...m, style, from: p(m.from), to: p(m.to) }
+    case 'polygon':
+      return { ...m, style, points: m.points.map(p) }
+    case 'ink':
+      return { ...m, style, strokes: m.strokes.map((st) => st.map(p)) }
+    case 'note':
+      return { ...m, at: p(m.at) }
+    case 'highlight':
+    case 'underline':
+    case 'squiggly':
+    case 'strike':
+      return { ...m, style, quads: m.quads.map((q) => q.flatMap((_, i) => (i % 2 ? [] : p([q[i], q[i + 1]])))) }
+    case 'text':
+      return { ...m, style, rect: upright(m.rect), fontSize: m.fontSize * s }
+    case 'signature':
+      return { ...m, style, rect: upright(m.rect) }
+    default:
+      return { ...m, style, rect: axisAligned(t) ? mapRect(t, m.rect) : upright(m.rect) }
+  }
+}
+
+/**
+ * Carries markup and redactions through an image transform given in pixel space.
+ * Redactions always grow to cover their whole rotated area, so nothing they hid
+ * becomes visible; items that end up entirely outside the new image are dropped.
+ */
+export function transformForImage(
+  markup: Markup[],
+  redactions: Redaction[],
+  pixelMap: Affine,
+  before: { width: number; height: number },
+  after: { width: number; height: number }
+): { markup: Markup[]; redactions: Redaction[] } {
+  const t = markupAffine(pixelMap, before.height, after.height)
+  const inside = (r: Rect): boolean => r[2] > 0 && r[3] > 0 && r[0] < after.width && r[1] < after.height
+  const pad = axisAligned(t) ? 0 : 1
+  return {
+    markup: markup.map((m) => transformMarkup(m, t)).filter((m) => inside(paintBounds(m))),
+    redactions: redactions
+      .map((r) => {
+        const b = mapRect(t, r.rect)
+        return { ...r, rect: [b[0] - pad, b[1] - pad, b[2] + pad, b[3] + pad] as Rect }
+      })
+      .filter((r) => inside(r.rect))
+  }
 }
