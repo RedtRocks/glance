@@ -91,3 +91,6 @@ export const inspectorOpen = signal(false)
 
 /** File → Clean Up PDF. */
 export const cleanupOpen = signal(false)
+
+/** File → Create Collage. */
+export const collageOpen = signal(false)

@@ -1,7 +1,7 @@
 import { useEffect } from 'preact/hooks'
 import { activeDoc, activeId, docs, findByPath } from '../state/documents'
 import { isDark, settings } from '../state/settings'
-import { cleanupOpen, customizeOpen, inspectorOpen, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
+import { cleanupOpen, collageOpen, customizeOpen, inspectorOpen, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
 import { confirmCloseWindow, openFiles } from '../state/actions'
 import { startAutosave } from '../state/autosave'
 import { checkForUpdates } from '../state/updates'
@@ -23,6 +23,7 @@ import { CustomizeToolbar } from './dialogs/CustomizeToolbar'
 import { Toasts } from './Toasts'
 import { ContextMenu } from './ContextMenu'
 import { BatchDialog } from './dialogs/BatchDialog'
+import { CollageDialog } from './dialogs/CollageDialog'
 import { VersionsDialog } from './dialogs/VersionsDialog'
 import { versionsOpen } from '../state/versions'
 import { batchOpen } from '../state/batch'
@@ -147,6 +148,7 @@ export function App() {
       <Toasts />
       <ContextMenu />
       {batchOpen.value && <BatchDialog />}
+      {collageOpen.value && <CollageDialog />}
       {versionsOpen.value && activeDoc.value && <VersionsDialog key={activeDoc.value.id} doc={activeDoc.value} />}
     </div>
   )
