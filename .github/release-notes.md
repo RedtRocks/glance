@@ -10,6 +10,7 @@ Glance is a free, open-source, lightweight viewer and editor for PDFs, images an
 - **XPS and OpenXPS** documents, rendered by Windows.
 - **Clean Up PDF** removes comments, links, metadata, attached files and scripts for real, and PDFs are compacted when saving.
 - **Create Collage** from photos (rows or grid).
+- **Password-protect PDFs** when exporting (AES-256, with printing/copying/editing permissions), **Reduce File Size** for image-heavy PDFs, **New from Clipboard** (Ctrl+N) and **Import from Scanner** (flatbed or feeder, straight into a PDF).
 - **Share** through the Windows share sheet, **Send to → Glance** in Explorer, and **update notifications** you can skip or turn off.
 
 ## Download
