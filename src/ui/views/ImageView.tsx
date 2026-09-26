@@ -7,6 +7,7 @@ import { MarkupLayer } from '../markup/MarkupLayer'
 import { imageViewport } from '../../image/viewport'
 import { SelectionOverlay } from '../image/SelectionOverlay'
 import { InfoBar } from '../InfoBar'
+import { dragPan, usePanZoom } from '../usePanZoom'
 
 /** Draws the magnified content of loupe markup (the ring itself is SVG in the markup layer). */
 function LoupeLayer({ doc, source, scale }: { doc: ImageDoc; source: HTMLCanvasElement | HTMLImageElement | null; scale: number }) {
@@ -91,22 +92,9 @@ export function ImageView({ doc }: { doc: ImageDoc }) {
     const el = box.current
     if (!el || e.button !== 0 || tool.peek() !== 'select' || e.defaultPrevented) return
     if ((e.target as HTMLElement).closest('.text-box.editing, .note-editor')) return
-    const sx = e.clientX
-    const sy = e.clientY
-    const { scrollLeft, scrollTop } = el
-    el.classList.add('panning')
-    const move = (ev: PointerEvent): void => {
-      el.scrollLeft = scrollLeft - (ev.clientX - sx)
-      el.scrollTop = scrollTop - (ev.clientY - sy)
-    }
-    const up = (): void => {
-      el.classList.remove('panning')
-      window.removeEventListener('pointermove', move)
-      window.removeEventListener('pointerup', up)
-    }
-    window.addEventListener('pointermove', move)
-    window.addEventListener('pointerup', up)
+    dragPan(el, e)
   }
+  const panZoom = usePanZoom(box, doc)
 
   const w = natural ? natural.width * scale : 0
   const h = natural ? natural.height * scale : 0
@@ -118,7 +106,7 @@ export function ImageView({ doc }: { doc: ImageDoc }) {
     <div class="image-view-wrap">
       {doc.notice && <InfoBar title="Preview only">{doc.notice}</InfoBar>}
       <div
-        class="image-view"
+        class={`image-view ${panZoom}`}
         ref={box}
         onPointerDown={onPointerDown}
         onWheel={(e) => {
