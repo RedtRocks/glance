@@ -34,7 +34,7 @@ Glance brings Preview's everyday superpowers to Windows: rearranging and merging
 | Markup saved as standard, editable PDF annotations (reopen in Glance to keep editing) | ✅ |
 | Signatures: draw with mouse/pen (pressure), capture with the camera, or import a photo; stored encrypted with Windows DPAPI | ✅ |
 | Fill in PDF forms | ✅ |
-| Certificate signatures (Adobe, DocuSign and others): a banner says whether each is valid, who signed and when, and whether the document changed since; trust comes from the Windows certificate store | ✅ |
+| Certificate signatures (Adobe, DocuSign and others): a banner says whether each is valid, who signed and when, and whether the document changed since; trust comes from the Windows certificate store. Sign with your own certificate or smart card (Markup → Sign with Certificate) | ✅ |
 | Redaction that truly removes content (pages rasterized; form data, thumbnails, tags and orphaned objects purged); Remove Sensitive Text finds names, emails, phone, card and ID numbers | ✅ |
 | Text recognition (Windows OCR): scanned PDFs become searchable and selectable; copy text from images | ✅ |
 | Highlights & Notes sidebar, bookmarks | ✅ |

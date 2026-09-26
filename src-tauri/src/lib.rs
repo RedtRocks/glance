@@ -101,6 +101,8 @@ pub fn run() {
             signatures::signature_delete,
             certsig::verify_pdf_signature,
             certsig::show_certificate,
+            certsig::pick_signing_certificate,
+            certsig::sign_with_certificate,
             subject::subject_mask,
             encode::save_image,
             fonts::fonts_list,

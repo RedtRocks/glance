@@ -114,6 +114,53 @@ pub async fn show_certificate(app: tauri::AppHandle, window: tauri::WebviewWindo
     }
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SigningCertificate {
+    /// SHA-1 thumbprint, hex; identifies the certificate in the user's store.
+    pub thumbprint: String,
+    pub name: String,
+}
+
+/// Lets the user pick one of their certificates (Personal store) in the Windows dialog.
+/// Ok(None) when they cancel.
+#[tauri::command]
+pub async fn pick_signing_certificate(app: tauri::AppHandle, window: tauri::WebviewWindow) -> Result<Option<SigningCertificate>, String> {
+    #[cfg(windows)]
+    {
+        let hwnd = window.hwnd().map_err(|e| e.to_string())?.0 as isize;
+        let (tx, rx) = std::sync::mpsc::channel();
+        app.run_on_main_thread(move || {
+            let _ = tx.send(win::pick_certificate(hwnd));
+        })
+        .map_err(|e| e.to_string())?;
+        tauri::async_runtime::spawn_blocking(move || rx.recv().map_err(|e| e.to_string())?).await.map_err(|e| e.to_string())?
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = (app, window);
+        Err("Signing with a certificate is only available on Windows.".into())
+    }
+}
+
+/// Signs the body with the certificate `x-thumbprint`: a detached CMS (SHA-256) with the
+/// signing time and the signer's certificate. Windows may ask for a PIN or smart card.
+#[tauri::command]
+pub async fn sign_with_certificate(request: Request<'_>) -> Result<tauri::ipc::Response, String> {
+    let thumbprint = header(&request, "x-thumbprint")?;
+    let data = raw_body(&request)?;
+    #[cfg(windows)]
+    {
+        let cms = tauri::async_runtime::spawn_blocking(move || win::sign(&thumbprint, &data)).await.map_err(|e| e.to_string())??;
+        Ok(tauri::ipc::Response::new(cms))
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = (thumbprint, data);
+        Err("Signing with a certificate is only available on Windows.".into())
+    }
+}
+
 /// FILETIME ticks (100 ns since 1601) to ms since 1970, and back.
 const EPOCH_DIFF: i64 = 116_444_736_000_000_000;
 #[cfg_attr(not(windows), allow(dead_code))]
@@ -158,7 +205,7 @@ mod win {
     use super::*;
     use base64::Engine;
     use windows::Win32::Foundation::{CRYPT_E_HASH_VALUE, FILETIME, HWND, NTE_BAD_SIGNATURE};
-    use windows::Win32::Security::Cryptography::UI::CryptUIDlgViewContext;
+    use windows::Win32::Security::Cryptography::UI::{CryptUIDlgSelectCertificateFromStore, CryptUIDlgViewContext};
     use windows::Win32::Security::Cryptography::*;
 
     const ENCODING: u32 = X509_ASN_ENCODING.0 | PKCS_7_ASN_ENCODING.0;
@@ -166,7 +213,7 @@ mod win {
     const TIMESTAMP_TOKEN: &[u8] = b"1.2.840.113549.1.9.16.2.14";
 
     /// Owned CERT_CONTEXT.
-    struct Cert(*mut CERT_CONTEXT);
+    pub(super) struct Cert(pub(super) *mut CERT_CONTEXT);
     impl Drop for Cert {
         fn drop(&mut self) {
             if !self.0.is_null() {
@@ -456,6 +503,92 @@ mod win {
         }
     }
 
+    fn personal_store() -> Result<Store, String> {
+        unsafe { CertOpenSystemStoreW(None, windows::core::w!("MY")).map(Store).map_err(|e| e.message()) }
+    }
+
+    unsafe fn has_private_key(cert: *const CERT_CONTEXT) -> bool {
+        let mut len = 0u32;
+        CertGetCertificateContextProperty(cert, CERT_KEY_PROV_INFO_PROP_ID, None, &mut len).is_ok()
+    }
+
+    pub fn pick_certificate(hwnd: isize) -> Result<Option<SigningCertificate>, String> {
+        let store = personal_store()?;
+        unsafe {
+            let c = CryptUIDlgSelectCertificateFromStore(
+                store.0,
+                Some(HWND(hwnd as _)),
+                windows::core::w!("Sign with a Certificate"),
+                windows::core::w!("Choose the certificate to sign this document with."),
+                0,
+                0,
+                std::ptr::null(),
+            );
+            if c.is_null() {
+                return Ok(None);
+            }
+            let cert = Cert(c);
+            if !has_private_key(cert.0) {
+                return Err("This certificate can’t sign: Windows doesn’t have its private key.".into());
+            }
+            let mut hash = [0u8; 20];
+            let mut len = hash.len() as u32;
+            CertGetCertificateContextProperty(cert.0, CERT_HASH_PROP_ID, Some(hash.as_mut_ptr().cast()), &mut len).map_err(|e| e.message())?;
+            let thumbprint = hash[..len as usize].iter().map(|b| format!("{b:02x}")).collect();
+            Ok(Some(SigningCertificate { thumbprint, name: name(cert.0, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0) }))
+        }
+    }
+
+    pub fn sign(thumbprint: &str, data: &[u8]) -> Result<Vec<u8>, String> {
+        let hash: Vec<u8> = (0..thumbprint.len() / 2).filter_map(|i| u8::from_str_radix(thumbprint.get(i * 2..i * 2 + 2)?, 16).ok()).collect();
+        if hash.len() != 20 {
+            return Err("bad certificate thumbprint".into());
+        }
+        let store = personal_store()?;
+        unsafe {
+            let blob = CRYPT_INTEGER_BLOB { cbData: 20, pbData: hash.as_ptr() as *mut u8 };
+            let c = CertFindCertificateInStore(store.0, CERT_QUERY_ENCODING_TYPE(ENCODING), 0, CERT_FIND_SHA1_HASH, Some((&blob as *const CRYPT_INTEGER_BLOB).cast()), None);
+            if c.is_null() {
+                return Err("The certificate is no longer in your certificate store.".into());
+            }
+            sign_with(&Cert(c), data)
+        }
+    }
+
+    pub(super) fn sign_with(cert: &Cert, data: &[u8]) -> Result<Vec<u8>, String> {
+        unsafe {
+            // Signed attribute: signing time, now.
+            let now = ms_to_filetime(std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_err(|e| e.to_string())?.as_millis() as i64);
+            let ft = FILETIME { dwLowDateTime: now as u32, dwHighDateTime: (now >> 32) as u32 };
+            let mut len = 0u32;
+            CryptEncodeObject(CERT_QUERY_ENCODING_TYPE(ENCODING), PKCS_UTC_TIME, (&ft as *const FILETIME).cast(), None, &mut len).map_err(|e| e.message())?;
+            let mut time = vec![0u8; len as usize];
+            CryptEncodeObject(CERT_QUERY_ENCODING_TYPE(ENCODING), PKCS_UTC_TIME, (&ft as *const FILETIME).cast(), Some(time.as_mut_ptr()), &mut len).map_err(|e| e.message())?;
+            let mut value = CRYPT_INTEGER_BLOB { cbData: len, pbData: time.as_mut_ptr() };
+            let mut attr = CRYPT_ATTRIBUTE { pszObjId: windows::core::PSTR(szOID_RSA_signingTime.0 as *mut u8), cValue: 1, rgValue: &mut value };
+            let mut certs = [cert.0];
+            let para = CRYPT_SIGN_MESSAGE_PARA {
+                cbSize: std::mem::size_of::<CRYPT_SIGN_MESSAGE_PARA>() as u32,
+                dwMsgEncodingType: ENCODING,
+                pSigningCert: cert.0,
+                HashAlgorithm: CRYPT_ALGORITHM_IDENTIFIER { pszObjId: windows::core::PSTR(szOID_NIST_sha256.0 as *mut u8), ..Default::default() },
+                cMsgCert: 1,
+                rgpMsgCert: certs.as_mut_ptr(),
+                cAuthAttr: 1,
+                rgAuthAttr: &mut attr,
+                ..Default::default()
+            };
+            let ptrs = [data.as_ptr()];
+            let lens = [data.len() as u32];
+            let mut size = 0u32;
+            CryptSignMessage(&para, true, 1, Some(ptrs.as_ptr()), lens.as_ptr(), None, &mut size).map_err(|e| e.message())?;
+            let mut out = vec![0u8; size as usize];
+            CryptSignMessage(&para, true, 1, Some(ptrs.as_ptr()), lens.as_ptr(), Some(out.as_mut_ptr()), &mut size).map_err(|e| e.message())?;
+            out.truncate(size as usize);
+            Ok(out)
+        }
+    }
+
     pub fn show_certificate(hwnd: isize, der: &[u8]) -> Result<(), String> {
         unsafe {
             let c = CertCreateCertificateContext(CERT_QUERY_ENCODING_TYPE(ENCODING), der);
@@ -540,6 +673,26 @@ mod windows_tests {
         digest[0] ^= 1;
         let r = win::verify(Kind::EmbeddedDigest, EMBEDDED_SHA1, &digest, None).unwrap();
         assert_eq!(r.integrity, "modified", "{r:?}");
+    }
+
+    #[test]
+    fn signs_and_verifies_round_trip() {
+        use windows::Win32::Security::Cryptography::*;
+        unsafe {
+            let mut len = 0u32;
+            let enc = CERT_QUERY_ENCODING_TYPE(X509_ASN_ENCODING.0);
+            CertStrToNameW(enc, windows::core::w!("CN=Glance Round Trip"), CERT_X500_NAME_STR, None, None, &mut len, None).unwrap();
+            let mut name = vec![0u8; len as usize];
+            CertStrToNameW(enc, windows::core::w!("CN=Glance Round Trip"), CERT_X500_NAME_STR, None, Some(name.as_mut_ptr()), &mut len, None).unwrap();
+            let blob = CRYPT_INTEGER_BLOB { cbData: len, pbData: name.as_mut_ptr() };
+            let c = CertCreateSelfSignCertificate(None, &blob, CERT_CREATE_SELFSIGN_FLAGS(0), None, None, None, None, None);
+            assert!(!c.is_null(), "{}", windows::core::Error::from_thread().message());
+            let cms = win::sign_with(&win::Cert(c), DATA).unwrap();
+            let r = win::verify(Kind::Detached, &cms, DATA, None).unwrap();
+            assert_eq!(r.integrity, "intact", "{r:?}");
+            assert_eq!(r.signer, "Glance Round Trip");
+            assert!(r.signing_time.is_some());
+        }
     }
 
     #[test]

@@ -65,7 +65,8 @@ async function loadPdfDoc(doc: PdfDoc, bytes: Uint8Array): Promise<boolean> {
 /** Makes markup Glance saved earlier editable again (only loads pdf-lib when present). */
 async function importMarkup(doc: PdfDoc): Promise<void> {
   const proxy = doc.proxy.peek()
-  if (!proxy || doc.encrypted) return
+  // Pulling markup out rewrites the file, which would break its signatures.
+  if (!proxy || doc.encrypted || mayHaveSignatures(doc.bytes)) return
   const meta = await proxy.getMetadata().catch(() => null)
   // PDF.js returns custom Info entries as a Map (older versions: a plain object).
   const custom = (meta?.info as { Custom?: Map<string, unknown> | Record<string, unknown> } | undefined)?.Custom

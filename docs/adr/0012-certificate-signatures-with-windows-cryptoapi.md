@@ -6,4 +6,6 @@ The UI finds signature fields with pdf-lib and hands each CMS blob, with the byt
 
 Glance also checks that each `/ByteRange` leaves out exactly the signature value, so a signature can't vouch for part of a file while other content hides in the gap. It reports changes appended after a signature separately from later signatures.
 
+Signing uses the same APIs in reverse: the user picks a certificate from their Personal store in the Windows dialog (so smart cards and hardware tokens work, and Windows asks for any PIN), and `CryptSignMessage` makes a detached SHA-256 CMS with the signing time. Glance appends the signature field as an incremental update (`adbe.pkcs7.detached`), so earlier signatures stay valid. Signatures are invisible and carry no timestamp from a timestamp authority yet.
+
 Compacting a PDF (dropping earlier revisions) would break every signature, so signed PDFs are never compacted on save. Saving markup still rewrites the file; the banner warns about that before saving.

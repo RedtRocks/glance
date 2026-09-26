@@ -2294,3 +2294,7 @@ input[type='range'] {
   align-items: center;
   gap: 6px;
 }
+.signature-card dd {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

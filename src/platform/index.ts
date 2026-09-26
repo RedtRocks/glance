@@ -658,3 +658,18 @@ export async function verifyPdfSignature(kind: 'detached' | 'sha1' | 'timestamp'
 export async function showCertificate(der: string): Promise<void> {
   await invoke('show_certificate', { der })
 }
+
+export interface SigningCertificate {
+  thumbprint: string
+  name: string
+}
+
+/** The Windows certificate picker (Personal store); null when cancelled. */
+export async function pickSigningCertificate(): Promise<SigningCertificate | null> {
+  return invoke<SigningCertificate | null>('pick_signing_certificate')
+}
+
+/** A detached CMS signature over `data` with the chosen certificate. */
+export async function signWithCertificate(thumbprint: string, data: Uint8Array): Promise<Uint8Array> {
+  return new Uint8Array(await invoke<ArrayBuffer>('sign_with_certificate', data, { headers: { 'x-thumbprint': thumbprint } }))
+}

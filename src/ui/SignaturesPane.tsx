@@ -12,7 +12,7 @@ const BADGE: Record<Verdict, { icon: 'successFilled' | 'warningFilled' | 'errorF
   unknown: { icon: 'infoFilled', label: 'Not checked' }
 }
 
-const when = (ms: number | null | undefined): string => (ms == null ? '' : new Date(ms).toLocaleString())
+const when = (ms: number | null | undefined): string => (ms == null ? '' : new Date(ms).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }))
 
 function SignatureCard({ doc, c, index }: { doc: PdfDoc; c: CheckedSignature; index: number }) {
   const v = verdict(c)

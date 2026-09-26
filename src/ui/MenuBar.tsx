@@ -32,7 +32,7 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'notice', Record
       'tools.rotateLeft', 'tools.rotateRight', '-', 'file.exportPages', 'file.split'
     ],
     Markup: [
-      'tools.markup', 'tools.highlight', 'tools.text', 'tools.note', 'tools.signature', '-',
+      'tools.markup', 'tools.highlight', 'tools.text', 'tools.note', 'tools.signature', 'tools.certSign', '-',
       'tools.redact', 'tools.redactText', 'tools.applyRedactions'
     ],
     Help: HELP
