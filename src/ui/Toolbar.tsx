@@ -7,6 +7,7 @@ import { parsePageInput, showPageButtons, showPageNumberField } from '../core/pa
 import { findOpen, findQuery, menuOpen, sidebarVisible } from '../state/ui'
 import { hits, hitIndex, runSearch, searching, stepHit } from '../pdf/search'
 import { MenuItems } from './MenuBar'
+import { OVERFLOW_ITEMS, OVERFLOW_MENU } from '../core/menus'
 import { markupBar, tool } from '../state/markupState'
 import { Icon } from './Icon'
 import type { IconName } from './icons'
@@ -124,23 +125,30 @@ function SearchField({ doc }: { doc: Doc }) {
 }
 
 function Overflow() {
-  const open = menuOpen.value === '__overflow'
+  const open = menuOpen.value === OVERFLOW_MENU
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!open) return
     const close = (e: PointerEvent): void => {
       if (!ref.current?.contains(e.target as Node)) menuOpen.value = null
     }
+    const esc = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') menuOpen.value = null
+    }
     window.addEventListener('pointerdown', close)
-    return () => window.removeEventListener('pointerdown', close)
+    window.addEventListener('keydown', esc)
+    return () => {
+      window.removeEventListener('pointerdown', close)
+      window.removeEventListener('keydown', esc)
+    }
   }, [open])
   return (
     <div class="overflow" ref={ref}>
-      <Btn icon="more" label="More options" onClick={() => (menuOpen.value = open ? null : '__overflow')} pressed={open} />
+      <Btn icon="more" label="More options" onClick={() => (menuOpen.value = open ? null : OVERFLOW_MENU)} pressed={open} />
       {open && (
         <div class="overflow-menu">
           <MenuItems
-            items={['file.share', 'file.print', 'file.export', 'file.openWith', '-', 'image.setWallpaper', 'image.setLockScreen', '-', 'view.slideshow', 'view.darkPdf', '-', 'view.customizeToolbar', 'file.settings']}
+            items={OVERFLOW_ITEMS}
             onDone={() => (menuOpen.value = null)}
           />
         </div>
