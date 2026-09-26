@@ -575,3 +575,9 @@ export async function fileStamp(path: string): Promise<FileStamp | null> {
   if (!isTauri) return null
   return invoke<FileStamp>('file_stamp', { path }).catch(() => null)
 }
+
+/** Opens the Windows share sheet for these files. */
+export async function shareFiles(paths: string[], title: string): Promise<void> {
+  if (!isTauri) throw new Error('Sharing uses the Windows share sheet, available in the Windows app.')
+  await invoke('share_files', { paths, title })
+}

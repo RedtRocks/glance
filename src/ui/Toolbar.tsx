@@ -140,7 +140,7 @@ function Overflow() {
       {open && (
         <div class="overflow-menu">
           <MenuItems
-            items={['file.print', 'file.export', 'file.openWith', '-', 'image.setWallpaper', 'image.setLockScreen', '-', 'view.slideshow', 'view.darkPdf', '-', 'view.customizeToolbar', 'file.settings']}
+            items={['file.share', 'file.print', 'file.export', 'file.openWith', '-', 'image.setWallpaper', 'image.setLockScreen', '-', 'view.slideshow', 'view.darkPdf', '-', 'view.customizeToolbar', 'file.settings']}
             onDone={() => (menuOpen.value = null)}
           />
         </div>

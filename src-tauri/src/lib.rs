@@ -106,6 +106,7 @@ pub fn run() {
             history::history_delete,
             history::history_rename,
             shell::set_wallpaper,
+            shell::share_files,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Glance");

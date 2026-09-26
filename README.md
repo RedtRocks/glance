@@ -45,9 +45,10 @@ Glance brings Preview's everyday superpowers to Windows: rearranging and merging
 | Inspector (Ctrl+I): EXIF, color profile, PDF properties; Remove Location | ✅ |
 | Batch Edit Images: rotate, flip, resize, convert, remove location | ✅ |
 | Set an image as the desktop background or lock screen | ✅ |
-| Autosave and version history, annotation/link cleanup | Milestone 4 |
+| Autosave and version history (File → Browse Versions); Clean Up PDF (annotations, links, metadata, attachments, scripts) | ✅ |
+| Share (Windows share sheet), Send to, update notifications you can skip or turn off | ✅ |
 | 3D models, collage | Milestone 5 |
-| Windows 11 context menu, Share, installer polish, update notifications | Milestone 6 |
+| Windows 11 context menu (needs a signed build) | Milestone 6 |
 
 Signing on an iPhone or iPad (Preview's Continuity feature) isn't possible on Windows; use the camera or a photo of your signature instead.
 
@@ -55,7 +56,7 @@ Glance deliberately has no quick-look popup: pair it with [PowerToys Peek](https
 
 ## Privacy
 
-No telemetry, no accounts, no network access except an optional update check (coming in Milestone 6). Background removal and text recognition run on your PC.
+No telemetry and no accounts. The only network request is an optional daily check for a newer release on GitHub (turn it off in Settings). Background removal and text recognition run on your PC.
 
 ## Building from source
 

@@ -15,6 +15,8 @@ export interface Settings {
   shortcuts: Record<string, string[]>
   sidebarWidth: number
   checkForUpdates: boolean
+  /** Release tag the user chose to skip ("v0.3.0"). */
+  skippedVersion?: string
   /** Save edits automatically a few seconds after they stop (earlier versions stay in the history). */
   autosave: boolean
 }

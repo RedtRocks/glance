@@ -4,6 +4,8 @@ import { isDark, settings } from '../state/settings'
 import { cleanupOpen, customizeOpen, inspectorOpen, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
 import { confirmCloseWindow, openFiles } from '../state/actions'
 import { startAutosave } from '../state/autosave'
+import { checkForUpdates } from '../state/updates'
+import { UpdateBar } from './UpdateBar'
 import * as platform from '../platform'
 import { MenuBar } from './MenuBar'
 import { TabStrip } from './TabStrip'
@@ -84,6 +86,8 @@ export function App() {
     void platform.onOpenFiles((paths) => void openFiles(paths)).then((d) => (dispose = d))
     void platform.showWindow()
     const stopAutosave = startAutosave()
+    // A few seconds after start, so it never competes with opening files.
+    const updateTimer = window.setTimeout(() => void checkForUpdates(), 5000)
     // Another window asked us to show a file this window already has open.
     let unactivate: (() => void) | undefined
     void platform
@@ -101,6 +105,7 @@ export function App() {
       unguard?.()
       stopAutosave()
       unactivate?.()
+      clearTimeout(updateTimer)
     }
   }, [])
 
@@ -124,6 +129,7 @@ export function App() {
           <Toolbar />
         </div>
         <MarkupToolbar />
+        <UpdateBar />
       </header>
       <Viewer />
       {slideshow.value && <Slideshow />}

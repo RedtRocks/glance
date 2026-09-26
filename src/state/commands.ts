@@ -8,10 +8,11 @@ import * as actions from './actions'
 import * as shell from './shellActions'
 import * as ocr from './ocrActions'
 import { batchOpen } from './batch'
+import { checkForUpdates } from './updates'
 import { versionsOpen } from './versions'
 import { activeDoc, activeId, docs, type Doc, type ViewMode } from './documents'
 import { settings, updateSettings } from './settings'
-import { cleanupOpen, customizeOpen, findOpen, inspectorOpen, promptText, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from './ui'
+import { cleanupOpen, customizeOpen, findOpen, inspectorOpen, promptText, redactTextOpen, toast, settingsOpen, sidebarVisible, slideshow } from './ui'
 import { parsePageInput } from '../core/pageControls'
 import { printDoc } from './print'
 import { applyRedactions } from './actions'
@@ -127,6 +128,7 @@ export const COMMANDS: Command[] = [
   { id: 'file.versions', label: 'Browse Versions…', run: () => void (versionsOpen.value = true), enabled: () => !!activeDoc.value?.path.value },
   { id: 'file.cleanup', label: 'Clean Up PDF…', run: () => void (cleanupOpen.value = true), enabled: isPdf },
   { id: 'file.batch', label: 'Batch Edit Images…', run: () => void (batchOpen.value = true) },
+  { id: 'file.share', label: 'Share…', run: () => shell.shareDoc(), enabled: () => platform.isTauri },
   { id: 'file.openWith', label: 'Open With Another App…', run: () => shell.openWithOtherApp(), enabled: () => shell.canOpenWith() },
   { id: 'image.setWallpaper', label: 'Set as Desktop Background', run: () => shell.setAsWallpaper('desktop'), enabled: anyImage },
   { id: 'image.setLockScreen', label: 'Set as Lock Screen', run: () => shell.setAsWallpaper('lock'), enabled: anyImage },
@@ -246,6 +248,16 @@ export const COMMANDS: Command[] = [
   { id: 'tools.rotateLeft', label: 'Rotate Left', keys: ['Ctrl+L'], run: () => actions.rotatePages(-90), enabled: hasDoc },
   { id: 'tools.rotateRight', label: 'Rotate Right', keys: ['Ctrl+R'], run: () => actions.rotatePages(90), enabled: hasDoc },
   // Help
+  {
+    id: 'help.updates',
+    label: 'Check for Updates…',
+    run: async () => {
+      const r = await checkForUpdates({ force: true })
+      if (r === 'current') toast('Glance is up to date')
+      else if (r === 'error') toast('Couldn’t reach GitHub to check for updates', 'error')
+      else if (r === 'off') toast('Update checks are available in the Windows app')
+    }
+  },
   { id: 'help.about', label: 'About Glance', run: actions.showAbout },
   { id: 'help.github', label: 'Glance on GitHub', run: () => platform.openUrl('https://github.com/RedtRocks/viewer') }
 ]
@@ -259,6 +271,7 @@ const ifMarkup = () => ifPdf() || isImage()
 const ifPaged = () => ifPdf() || multiPage()
 const VISIBILITY: [(() => boolean), string[]][] = [
   [hasDoc, ['file.close', 'file.openWith', 'view.customizeToolbar']],
+  [() => ifPdf() || anyImage(), ['file.share']],
   [ifViewable, ['view.inspector']],
   [() => ifPdf() || anyImage(), ['file.versions']],
   [ifViewable, [

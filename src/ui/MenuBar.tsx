@@ -8,7 +8,7 @@ import { Icon } from './Icon'
 /** A command id, '-' for a separator, or '#Heading' for a group heading. */
 type Entry = string
 
-const HELP: Entry[] = ['help.github', 'help.about']
+const HELP: Entry[] = ['help.github', 'help.updates', 'help.about']
 const ZOOM: Entry[] = ['view.zoomIn', 'view.zoomOut', 'view.actualSize', 'view.zoomToFit']
 
 /** Each kind of file gets its own menu bar, like separate apps would. */
@@ -18,7 +18,7 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'notice', Record<string, E
     Help: HELP
   },
   pdf: {
-    File: ['file.open', 'file.openWith', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.versions', 'file.export', 'file.split', 'file.cleanup', '-', 'file.print', '-', 'file.close', '-', 'file.settings'],
+    File: ['file.open', 'file.openWith', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.versions', 'file.export', 'file.split', 'file.cleanup', '-', 'file.share', 'file.print', '-', 'file.close', '-', 'file.settings'],
     Edit: ['edit.undo', 'edit.redo', '-', 'edit.delete', 'edit.selectAll', 'edit.find', '-', 'edit.addBookmark', '-', 'tools.ocr'],
     View: [
       '#Sidebar', 'view.hideSidebar', 'view.thumbnails', 'view.toc', 'view.notes', 'view.bookmarks', '-',
@@ -38,7 +38,7 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'notice', Record<string, E
     Help: HELP
   },
   image: {
-    File: ['file.open', 'file.openWith', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.versions', 'file.export', '-', 'image.setWallpaper', 'image.setLockScreen', '-', 'file.batch', '-', 'file.print', '-', 'file.close', '-', 'file.settings'],
+    File: ['file.open', 'file.openWith', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.versions', 'file.export', '-', 'image.setWallpaper', 'image.setLockScreen', '-', 'file.batch', '-', 'file.share', 'file.print', '-', 'file.close', '-', 'file.settings'],
     Edit: ['edit.undo', 'edit.redo', '-', 'edit.delete', 'edit.invertSelection', '-', 'tools.copyImageText'],
     // Multi-page images (TIFF, comic archives) also get the sidebar and Go menu.
     View: ['view.hideSidebar', 'view.thumbnails', '-', ...ZOOM, '-', 'view.fullscreen', 'view.slideshow', '-', 'view.inspector', 'view.customizeToolbar'],

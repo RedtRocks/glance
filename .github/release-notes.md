@@ -44,7 +44,7 @@ Requires Windows 10 (1809+) or Windows 11. The installer downloads the WebView2 
 
 ## Privacy
 
-No telemetry, no account, no network access. Background removal and text recognition run on your PC. Saved signatures are encrypted with your Windows account.
+No telemetry and no account. The only network request is an optional daily update check (Settings). Background removal and text recognition run on your PC. Saved signatures are encrypted with your Windows account.
 
 ## Verify your download
 

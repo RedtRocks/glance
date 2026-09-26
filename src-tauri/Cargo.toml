@@ -59,7 +59,10 @@ windows = { version = "0.62", features = [
   "Graphics_Imaging",
   "Globalization",
   "Security_Cryptography",
+  "ApplicationModel_DataTransfer",
+  "Foundation_Collections",
 ] }
+windows-collections = "0.3"
 
 [profile.release]
 codegen-units = 1
