@@ -5,6 +5,7 @@ import { menuOpen } from '../state/ui'
 import { activeDoc } from '../state/documents'
 import { Icon } from './Icon'
 import { msg, t } from '../i18n'
+import { isMenuBarMenu } from '../core/menus'
 
 /** A command id, '-' for a separator, or '#Heading' for a group heading. */
 type Entry = string
@@ -133,7 +134,7 @@ export function MenuBar() {
   const open = menuOpen.value
 
   useEffect(() => {
-    if (!open) return
+    if (!isMenuBarMenu(open)) return
     const close = (e: PointerEvent): void => {
       if (!ref.current?.contains(e.target as Node)) menuOpen.value = null
     }
