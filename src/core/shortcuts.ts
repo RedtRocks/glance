@@ -53,6 +53,8 @@ export function comboFromEvent(e: Pick<KeyboardEvent, 'key' | 'code' | 'ctrlKey'
   else if (e.code === 'Minus' || e.code === 'NumpadSubtract') key = '-'
   else if (e.code === 'Backquote') key = '`'
   else if (e.code === 'Backslash') key = '\\'
+  else if (e.code === 'BracketLeft') key = '['
+  else if (e.code === 'BracketRight') key = ']'
   else key = normalizeKey(e.key)
   const mods: string[] = []
   if (e.ctrlKey || e.metaKey) mods.push('Ctrl')
@@ -69,11 +71,38 @@ export function displayCombo(combo: Combo): string {
     .join('+')
 }
 
-/** Finds commands whose bindings collide, for the rebinding screen. */
-export function findConflicts(bindings: Record<string, Combo[]>): Array<[Combo, string[]]> {
+/**
+ * Finds commands whose bindings collide, for the rebinding screen. Commands in
+ * different scopes (say, a 3D-model toggle and a markup tool) never run for the same
+ * file, so they may share a single-key shortcut; the default scope collides with all.
+ */
+export function findConflicts(bindings: Record<string, Combo[]>, scopeOf: (id: string) => string = () => ''): Array<[Combo, string[]]> {
   const byCombo = new Map<Combo, string[]>()
   for (const [id, combos] of Object.entries(bindings)) {
     for (const c of combos) byCombo.set(c, [...(byCombo.get(c) ?? []), id])
   }
-  return [...byCombo.entries()].filter(([, ids]) => ids.length > 1)
+  const clash = (a: string, b: string): boolean => {
+    const sa = scopeOf(a)
+    const sb = scopeOf(b)
+    return !sa || !sb || sa === sb
+  }
+  return [...byCombo.entries()]
+    .map(([combo, ids]) => [combo, ids.filter((id) => ids.some((other) => other !== id && clash(id, other)))] as [Combo, string[]])
+    .filter(([, ids]) => ids.length > 1)
+}
+
+/**
+ * The tool a repeated tool key picks, like Photoshop: the first tool of the group,
+ * or the next one when a tool of the group is already active (M toggles rectangle
+ * and ellipse selection, U steps through the shapes).
+ */
+export function cycleTool<T>(group: readonly T[], current: T): T {
+  const i = group.indexOf(current)
+  return i < 0 ? group[0] : group[(i + 1) % group.length]
+}
+
+/** The next line width up or down the preset list, for the [ and ] keys. */
+export function stepWidth(widths: readonly number[], current: number, dir: 1 | -1): number {
+  if (dir > 0) return widths.find((w) => w > current + 1e-6) ?? widths[widths.length - 1]
+  return [...widths].reverse().find((w) => w < current - 1e-6) ?? widths[0]
 }
