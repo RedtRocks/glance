@@ -407,6 +407,51 @@ export async function exportSelectedPages(doc = activeDoc.value): Promise<void> 
   toast(`Exported ${pagesLabel(pages)}`)
 }
 
+export type PageImageFormat = 'png' | 'jpg' | 'tiff'
+
+/**
+ * Exports pages as images (PDF → PNG/JPEG/TIFF), markup and form values included.
+ * One page is written to the chosen name; more pages get " (page N)" names beside it.
+ */
+export async function exportPagesAsImages(
+  doc: PdfDoc,
+  opts: { format: PageImageFormat; dpi: number; quality: number; which: 'all' | 'selected' | 'current' }
+): Promise<void> {
+  const pages = opts.which === 'all' ? [...Array(doc.pageCount.value).keys()] : opts.which === 'current' ? [doc.current.value] : selectedOrCurrent(doc)
+  const ext = opts.format
+  let base = doc.name.value.replace(/\.[^.]+$/, '')
+  const name = (p: number) => (pages.length === 1 ? `${base}.${ext}` : `${base} (page ${p + 1}).${ext}`)
+  const first = await platform.saveDialog(name(pages[0]), [{ name: ext.toUpperCase(), extensions: [ext] }])
+  if (!first) return
+  // The chosen name sets the pattern for the other pages.
+  base = platform.baseName(first).replace(/\.[^.]+$/, '').replace(/ \(page \d+\)$/, '')
+  const dir = platform.dirName(first)
+  const sep = dir.includes('\\') ? '\\' : '/'
+  await withBusy('Exporting…', async () => {
+    const proxy = await openPdf(await serialize(doc))
+    try {
+      for (const [k, p] of pages.entries()) {
+        const page = await proxy.getPage(p + 1)
+        const base1 = page.getViewport({ scale: 1 })
+        let scale = opts.dpi / 72
+        if (base1.width * base1.height * scale * scale > MAX_RASTER_PIXELS) scale = Math.sqrt(MAX_RASTER_PIXELS / (base1.width * base1.height))
+        const vp = page.getViewport({ scale })
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.ceil(vp.width)
+        canvas.height = Math.ceil(vp.height)
+        await page.render({ canvas, viewport: vp, annotationMode: 1 /* ENABLE: annotations and form values */, background: 'white' }).promise
+        const img = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height)
+        const target = k === 0 ? first : dir ? `${dir}${sep}${name(p)}` : name(p)
+        await platform.saveImage(target, opts.format, canvas.width, canvas.height, img.data, opts.quality)
+        canvas.width = canvas.height = 0
+      }
+    } finally {
+      await proxy.loadingTask.destroy()
+    }
+  })
+  toast(pages.length === 1 ? 'Exported' : `Exported ${pages.length} images`)
+}
+
 /** Inserts copies of the selected pages right after the last of them. */
 export async function duplicatePages(doc = activeDoc.value): Promise<void> {
   if (doc?.kind !== 'pdf') return

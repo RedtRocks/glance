@@ -115,7 +115,7 @@ export const COMMANDS: Command[] = [
     id: 'file.export',
     label: 'Export…',
     keys: ['Ctrl+E'],
-    run: () => (isImage() ? void (exportOpen.value = true) : actions.exportSelectedPages()),
+    run: () => void (exportOpen.value = true),
     enabled: () => isPdf() || isImage()
   },
   { id: 'file.exportPages', label: 'Export Selected Pages…', run: () => actions.exportSelectedPages(), enabled: isPdf },
