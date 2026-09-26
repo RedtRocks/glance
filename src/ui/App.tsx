@@ -1,7 +1,7 @@
 import { useEffect } from 'preact/hooks'
 import { activeDoc, activeId, docs, findByPath } from '../state/documents'
 import { isDark, settings } from '../state/settings'
-import { cleanupOpen, collageOpen, reduceOpen, scanOpen, customizeOpen, inspectorOpen, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
+import { cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, inspectorOpen, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
 import { confirmCloseWindow, openFiles } from '../state/actions'
 import { startAutosave } from '../state/autosave'
 import { restoreSession } from '../state/session'
@@ -44,6 +44,7 @@ import { ImageDoc, PdfDoc } from '../state/documents'
 import { RedactTextDialog } from './dialogs/RedactTextDialog'
 import { CleanupDialog } from './dialogs/CleanupDialog'
 import { ReduceDialog } from './dialogs/ReduceDialog'
+import { StampDialog } from './dialogs/StampDialog'
 import { ScanDialog } from './dialogs/ScanDialog'
 import { PdfExportDialog } from './dialogs/PdfExportDialog'
 import { AdjustColorPanel } from './image/AdjustColorPanel'
@@ -160,6 +161,7 @@ export function App() {
       {activeDoc.value instanceof PdfDoc && redactTextOpen.value && <RedactTextDialog doc={activeDoc.value} />}
       {activeDoc.value instanceof PdfDoc && cleanupOpen.value && <CleanupDialog doc={activeDoc.value} />}
       {activeDoc.value instanceof PdfDoc && reduceOpen.value && <ReduceDialog doc={activeDoc.value} />}
+      {activeDoc.value instanceof PdfDoc && stampOpen.value && <StampDialog doc={activeDoc.value} />}
       {activeDoc.value instanceof ImageDoc && exportOpen.value && <ExportDialog doc={activeDoc.value} />}
       {activeDoc.value instanceof PdfDoc && exportOpen.value && <PdfExportDialog doc={activeDoc.value} />}
       <DialogHost />
