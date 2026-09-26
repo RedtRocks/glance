@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks'
 import type { PdfDoc } from '../../state/documents'
-import { stepZoom } from '../../state/commands'
+import { wheelZoom } from '../gestures'
 import { isDark, settings } from '../../state/settings'
 import { PdfPage } from './PdfPage'
 import { ContactSheet } from './ContactSheet'
@@ -127,9 +127,12 @@ function PdfScroller({ doc }: { doc: PdfDoc }) {
   }, [jump?.seq, rows.length])
 
   const onWheel = (e: WheelEvent): void => {
+    // Ctrl+wheel, or a touchpad pinch (which arrives as one).
     if (e.ctrlKey) {
       e.preventDefault()
-      doc.zoom.value = stepZoom(scale, e.deltaY < 0 ? 1 : -1)
+      // Several pinch events can land before a render: build on the latest zoom.
+      const z = doc.zoom.peek()
+      doc.zoom.value = wheelZoom(typeof z === 'number' ? z : scale, e)
       return
     }
     // Single-page mode: scrolling past the edge turns the page.
