@@ -2261,3 +2261,20 @@ input[type='range'] {
 .field-error {
   color: #c42b1c;
 }
+
+/* ---------- Hand and Zoom tools (H, Space, Z) ---------- */
+.view-hand,
+.view-hand * {
+  cursor: grab !important;
+}
+.view-hand.panning,
+.view-hand.panning * {
+  cursor: grabbing !important;
+}
+.view-hand .textLayer {
+  user-select: none;
+}
+.view-zoom,
+.view-zoom * {
+  cursor: zoom-in !important;
+}
