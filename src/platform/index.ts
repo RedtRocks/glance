@@ -154,8 +154,8 @@ export async function messageDialog(message: string, title = 'Glance'): Promise<
     window.alert(message)
     return
   }
-  const { message: msg } = await import('@tauri-apps/plugin-dialog')
-  await msg(message, { title })
+  const { message: show } = await import('@tauri-apps/plugin-dialog')
+  await show(message, { title })
 }
 
 export async function initialFiles(): Promise<string[]> {
