@@ -40,10 +40,10 @@ function exportTrimmed(canvas: HTMLCanvasElement): string | null {
  * Converts a photo of a signature on paper into ink on transparent background:
  * dark pixels become opaque ink, light paper becomes transparent.
  */
-function inkFromPhoto(img: HTMLImageElement, target: HTMLCanvasElement): void {
-  const scale = Math.min(1, (W * 2) / img.naturalWidth, (H * 2) / img.naturalHeight)
-  const w = Math.round(img.naturalWidth * scale)
-  const h = Math.round(img.naturalHeight * scale)
+function inkFromPhoto(img: CanvasImageSource & { width: number; height: number }, target: HTMLCanvasElement, srcW = img.width, srcH = img.height): void {
+  const scale = Math.min(1, (W * 2) / srcW, (H * 2) / srcH)
+  const w = Math.round(srcW * scale)
+  const h = Math.round(srcH * scale)
   const tmp = document.createElement('canvas')
   tmp.width = w
   tmp.height = h
@@ -127,13 +127,47 @@ export function SignatureDialog() {
       if (!file) return
       const img = new Image()
       img.onload = () => {
-        inkFromPhoto(img, canvas.current!)
+        inkFromPhoto(img, canvas.current!, img.naturalWidth, img.naturalHeight)
         setEmpty(false)
         URL.revokeObjectURL(img.src)
       }
       img.src = URL.createObjectURL(file)
     }
     input.click()
+  }
+
+  // Camera: hold a signature on white paper up to the webcam, like Preview.
+  const video = useRef<HTMLVideoElement>(null)
+  const [stream, setStream] = useState<MediaStream | null>(null)
+  const stopCamera = (): void => {
+    stream?.getTracks().forEach((t) => t.stop())
+    setStream(null)
+  }
+  useEffect(() => () => stream?.getTracks().forEach((t) => t.stop()), [stream])
+  useEffect(() => {
+    if (stream && video.current) video.current.srcObject = stream
+  }, [stream])
+  const startCamera = async (): Promise<void> => {
+    try {
+      setStream(await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false }))
+    } catch (e) {
+      toast(`Camera unavailable: ${(e as Error).message || e}`, 'error')
+    }
+  }
+  const capture = (): void => {
+    const v = video.current
+    if (!v || !v.videoWidth) return
+    // Only the band inside the guide, where the signature is held.
+    const bandH = Math.round(v.videoHeight * 0.45)
+    const frame = document.createElement('canvas')
+    frame.width = v.videoWidth
+    frame.height = bandH
+    frame.getContext('2d')!.drawImage(v, 0, (v.videoHeight - bandH) / 2, v.videoWidth, bandH, 0, 0, v.videoWidth, bandH)
+    stopCamera()
+    requestAnimationFrame(() => {
+      inkFromPhoto(frame, canvas.current!)
+      setEmpty(false)
+    })
   }
 
   const clear = (): void => {
@@ -164,11 +198,31 @@ export function SignatureDialog() {
         </>
       }
     >
-      <p class="muted">Sign with your mouse, touchpad or pen, or import a photo of your signature on white paper.</p>
-      <canvas ref={canvas} class="signature-pad" style={{ width: '100%', aspectRatio: `${W} / ${H}` }} onPointerDown={draw} />
+      <p class="muted">
+        {stream
+          ? 'Sign on white paper and hold it up to the camera so the signature sits on the line, then choose Capture.'
+          : 'Sign with your mouse, touchpad or pen, use your camera, or import a photo of your signature on white paper.'}
+      </p>
+      <canvas ref={canvas} class="signature-pad" hidden={!!stream} style={{ width: '100%', aspectRatio: `${W} / ${H}` }} onPointerDown={draw} />
+      {stream && (
+        <div class="camera-frame">
+          <video ref={video} autoPlay playsInline muted />
+          <div class="camera-guide" aria-hidden="true" />
+        </div>
+      )}
       <div class="inline-actions">
-        <button class="btn" onClick={clear}>Clear</button>
-        <button class="btn" onClick={fromImage}>Import from photo…</button>
+        {stream ? (
+          <>
+            <button class="btn primary" onClick={capture}>Capture</button>
+            <button class="btn" onClick={stopCamera}>Cancel camera</button>
+          </>
+        ) : (
+          <>
+            <button class="btn" onClick={clear}>Clear</button>
+            <button class="btn" onClick={() => void startCamera()}>Camera</button>
+            <button class="btn" onClick={fromImage}>Import from photo…</button>
+          </>
+        )}
         <label class="field grow">
           <span>Name</span>
           <input value={name} onInput={(e) => setName((e.target as HTMLInputElement).value)} />

@@ -1945,3 +1945,33 @@ input[type='range'] {
   font-size: 12px;
   margin: 0;
 }
+
+/* Signature from camera */
+.camera-frame {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #000;
+}
+.camera-frame video {
+  display: block;
+  width: 100%;
+}
+.camera-guide {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 27.5%;
+  bottom: 27.5%;
+  border: 2px dashed rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.35);
+}
+.camera-guide::after {
+  content: '';
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: 28%;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.9);
+}
