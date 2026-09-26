@@ -24,7 +24,7 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'notice', Record<string, E
       '#Sidebar', 'view.hideSidebar', 'view.thumbnails', 'view.toc', 'view.notes', 'view.bookmarks', '-',
       '#Page layout', 'view.continuous', 'view.single', 'view.two', 'view.contactSheet', '-',
       ...ZOOM, '-',
-      'view.darkPdf', 'view.fullscreen', 'view.slideshow', '-', 'view.customizeToolbar'
+      'view.darkPdf', 'view.fullscreen', 'view.slideshow', '-', 'view.inspector', 'view.customizeToolbar'
     ],
     Go: ['go.previous', 'go.next', 'go.first', 'go.last', 'go.page', '-', 'go.nextTab', 'go.previousTab'],
     Pages: [
@@ -41,7 +41,7 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'notice', Record<string, E
     File: ['file.open', 'file.openWith', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.export', '-', 'image.setWallpaper', 'image.setLockScreen', '-', 'file.print', '-', 'file.close', '-', 'file.settings'],
     Edit: ['edit.undo', 'edit.redo', '-', 'edit.delete', 'edit.invertSelection'],
     // Multi-page images (TIFF, comic archives) also get the sidebar and Go menu.
-    View: ['view.hideSidebar', 'view.thumbnails', '-', ...ZOOM, '-', 'view.fullscreen', 'view.slideshow', '-', 'view.customizeToolbar'],
+    View: ['view.hideSidebar', 'view.thumbnails', '-', ...ZOOM, '-', 'view.fullscreen', 'view.slideshow', '-', 'view.inspector', 'view.customizeToolbar'],
     Go: ['go.previous', 'go.next', 'go.first', 'go.last', 'go.page', '-', 'go.nextTab', 'go.previousTab'],
     Image: [
       'tools.adjustColor', 'tools.adjustSize', '-',

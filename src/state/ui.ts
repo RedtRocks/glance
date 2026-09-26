@@ -85,3 +85,6 @@ export const contextMenu = signal<{ x: number; y: number; items: (ContextMenuIte
 
 /** Tools → Remove Sensitive Text (search-and-redact). */
 export const redactTextOpen = signal(false)
+
+/** Tools → Show Inspector (Ctrl+I). */
+export const inspectorOpen = signal(false)

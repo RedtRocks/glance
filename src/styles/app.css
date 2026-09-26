@@ -1975,3 +1975,36 @@ input[type='range'] {
   bottom: 28%;
   border-bottom: 2px solid rgba(255, 255, 255, 0.9);
 }
+
+/* Inspector */
+.inspector-section h3 {
+  margin: 12px 0 6px;
+  font: 600 12px/16px var(--font);
+  color: var(--text-2);
+}
+.inspector-section dl {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.inspector-row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 8px;
+  font-size: 12px;
+}
+.inspector-row dt {
+  color: var(--text-2);
+}
+.inspector-row dd {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: text;
+}
+.inspector .coords {
+  margin: 0 0 8px;
+  font-size: 12px;
+}

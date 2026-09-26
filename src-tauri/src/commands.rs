@@ -60,13 +60,16 @@ pub(crate) fn header(request: &Request<'_>, name: &str) -> Result<String, String
 #[tauri::command]
 pub fn write_file(request: Request<'_>) -> Result<(), String> {
     let path = PathBuf::from(header(&request, "x-path")?);
-    let data = raw_body(&request)?;
+    write_atomic(&path, &raw_body(&request)?)
+}
+
+pub(crate) fn write_atomic(path: &std::path::Path, data: &[u8]) -> Result<(), String> {
     let tmp = path.with_extension(format!(
         "{}.glance-tmp",
         path.extension().and_then(|e| e.to_str()).unwrap_or("")
     ));
-    std::fs::write(&tmp, &data).map_err(|e| e.to_string())?;
-    std::fs::rename(&tmp, &path).map_err(|e| {
+    std::fs::write(&tmp, data).map_err(|e| e.to_string())?;
+    std::fs::rename(&tmp, path).map_err(|e| {
         let _ = std::fs::remove_file(&tmp);
         e.to_string()
     })

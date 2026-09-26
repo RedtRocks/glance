@@ -1,7 +1,7 @@
 import { useEffect } from 'preact/hooks'
 import { activeDoc, docs } from '../state/documents'
 import { isDark, settings } from '../state/settings'
-import { customizeOpen, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
+import { customizeOpen, inspectorOpen, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
 import { confirmCloseWindow, openFiles } from '../state/actions'
 import * as platform from '../platform'
 import { MenuBar } from './MenuBar'
@@ -25,6 +25,7 @@ import { MarkupToolbar } from './markup/MarkupToolbar'
 import { SignatureDialog } from './markup/SignatureDialog'
 import { RedactionBar } from './RedactionBar'
 import { ExternalAppBar } from './ExternalAppBar'
+import { InspectorPane } from './InspectorPane'
 import { signatureDialog } from '../state/markupState'
 import { adjustColorOpen, adjustSizeOpen, exportOpen, imageSelection } from '../state/imageState'
 import { ImageDoc, PdfDoc } from '../state/documents'
@@ -50,6 +51,7 @@ function Viewer() {
         </div>
       </main>
       {doc instanceof ImageDoc && doc.editable && adjustColorOpen.value && <AdjustColorPanel key={doc.id} doc={doc} />}
+      {inspectorOpen.value && doc.kind !== 'notice' && <InspectorPane key={doc.id} doc={doc} />}
     </div>
   )
 }

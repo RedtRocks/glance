@@ -409,3 +409,24 @@ export async function setWallpaper(bytes: Uint8Array, ext: string, target: 'desk
   if (!isTauri) throw new Error('Setting the background is available in the Windows app.')
   await invoke('set_wallpaper', bytes, { headers: { 'x-target': target, 'x-ext': ext } })
 }
+
+// ---------------------------------------------------------------------------
+// Image metadata (see src-tauri/src/metadata.rs)
+
+export interface ImageMetadata {
+  groups: { title: string; fields: { label: string; value: string }[] }[]
+  location: [number, number] | null
+  has_location: boolean
+  can_remove_location: boolean
+}
+
+export async function imageMetadata(path: string): Promise<ImageMetadata | null> {
+  if (!isTauri) return null
+  return invoke<ImageMetadata>('image_metadata', { path })
+}
+
+/** Rewrites each file without GPS data. Returns messages for files that failed. */
+export async function removeLocation(paths: string[]): Promise<string[]> {
+  if (!isTauri) throw new Error('Removing location is available in the Windows app.')
+  return invoke<string[]>('remove_location', { paths })
+}

@@ -2,6 +2,7 @@ mod commands;
 mod decode;
 mod encode;
 mod fonts;
+mod metadata;
 mod protocol;
 mod shell;
 mod signatures;
@@ -79,6 +80,8 @@ pub fn run() {
             fonts::fonts_list,
             fonts::font_bytes,
             shell::open_with,
+            metadata::image_metadata,
+            metadata::remove_location,
             shell::set_wallpaper,
         ])
         .run(tauri::generate_context!())
