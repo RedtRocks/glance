@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks'
 import { settings, updateSettings, type ThemePref } from '../../state/settings'
 import { settingsOpen } from '../../state/ui'
 import { storeInstall } from '../../state/updates'
-import { COMMANDS, bindings } from '../../state/commands'
+import { COMMANDS, bindings, keyScope } from '../../state/commands'
 import { comboFromEvent, displayCombo, findConflicts } from '../../core/shortcuts'
 import { Modal } from './Dialog'
 import { Icon } from '../Icon'
@@ -38,7 +38,7 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
 function ShortcutEditor() {
   const [recording, setRecording] = useState<string | null>(null)
   const current = bindings()
-  const conflicts = new Map(findConflicts(current).flatMap(([combo, ids]) => ids.map((id) => [id, combo] as const)))
+  const conflicts = new Map(findConflicts(current, keyScope).flatMap(([combo, ids]) => ids.map((id) => [id, combo] as const)))
   const setKeys = (id: string, keys: string[] | undefined): void => {
     const next = { ...settings.value.shortcuts }
     if (keys) next[id] = keys
