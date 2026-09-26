@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks'
 import { settings, updateSettings, type ThemePref } from '../../state/settings'
 import { settingsOpen } from '../../state/ui'
+import { storeInstall } from '../../state/updates'
 import { COMMANDS, bindings, keyScope } from '../../state/commands'
 import { comboFromEvent, displayCombo, findConflicts } from '../../core/shortcuts'
 import { Modal } from './Dialog'
@@ -123,10 +124,12 @@ export function SettingsDialog() {
             description={t('Open the files you had open when Glance last closed, on the same page and zoom. Files that were moved or deleted are skipped.')}>
             <Toggle checked={s.reopenTabs} label={t('Reopen tabs on launch')} onChange={(v) => updateSettings({ reopenTabs: v })} />
           </SettingsCard>
-          <SettingsCard icon="info" title={t('Check for updates')}
-            description={t('Once a day Glance asks GitHub whether a newer version exists and tells you. Nothing is downloaded or sent until you choose Download.')}>
-            <Toggle checked={s.checkForUpdates} label={t('Check for updates')} onChange={(v) => updateSettings({ checkForUpdates: v })} />
-          </SettingsCard>
+          {storeInstall.value ? null : (
+            <SettingsCard icon="info" title={t('Check for updates')}
+              description={t('Once a day Glance asks GitHub whether a newer version exists and tells you. Nothing is downloaded or sent until you choose Download.')}>
+              <Toggle checked={s.checkForUpdates} label={t('Check for updates')} onChange={(v) => updateSettings({ checkForUpdates: v })} />
+            </SettingsCard>
+          )}
           <SettingsCard icon="document" title={t('Dark appearance for PDFs')} description={t('Invert page colors while Glance is dark. Images inside PDFs are inverted too.')}>
             <Toggle checked={s.darkPdf} label={t('Dark appearance for PDFs')} onChange={(v) => updateSettings({ darkPdf: v })} />
           </SettingsCard>

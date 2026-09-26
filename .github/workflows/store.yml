@@ -1,0 +1,83 @@
+name: Microsoft Store package
+
+# Builds the MSIX bundle to upload in Partner Center (packaging/README.md). The Release
+# workflow runs this after publishing when the MSIX_* repository variables are set; it
+# can also be run from the Actions tab for the selected branch.
+on:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  MSIX_IDENTITY_NAME: ${{ vars.MSIX_IDENTITY_NAME }}
+  MSIX_PUBLISHER: ${{ vars.MSIX_PUBLISHER }}
+  MSIX_PUBLISHER_DISPLAY_NAME: ${{ vars.MSIX_PUBLISHER_DISPLAY_NAME }}
+
+jobs:
+  build:
+    name: MSIX ${{ matrix.arch }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            target: x86_64-pc-windows-msvc
+          - arch: arm64
+            target: aarch64-pc-windows-msvc
+    steps:
+      - name: Check Store identity
+        shell: bash
+        run: |
+          if [ -z "$MSIX_IDENTITY_NAME" ] || [ -z "$MSIX_PUBLISHER" ] || [ -z "$MSIX_PUBLISHER_DISPLAY_NAME" ]; then
+            echo "::error::Set the MSIX_IDENTITY_NAME, MSIX_PUBLISHER and MSIX_PUBLISHER_DISPLAY_NAME repository variables (Partner Center > Product identity). See packaging/README.md."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          key: release-${{ matrix.target }}
+      - run: npm ci
+      - name: Build Glance
+        run: npx tauri build --target ${{ matrix.target }} --no-bundle
+      - name: Pack MSIX
+        shell: pwsh
+        run: packaging/msix/pack.ps1 -Exe src-tauri/target/${{ matrix.target }}/release/glance.exe -Arch ${{ matrix.arch }} -Out msix/Glance-${{ matrix.arch }}.msix
+      - uses: actions/upload-artifact@v4
+        with:
+          name: msix-${{ matrix.arch }}
+          path: msix/*.msix
+          if-no-files-found: error
+
+  bundle:
+    name: MSIX bundle
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: msix-*
+          path: msix
+          merge-multiple: true
+      - name: Bundle
+        shell: pwsh
+        run: |
+          $version = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
+          packaging/msix/pack.ps1 -BundleFrom msix -Out "store/Glance-$version.msixbundle"
+          "VERSION=$version" >> $env:GITHUB_ENV
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Glance-${{ env.VERSION }}-store
+          path: store/*.msixbundle
+          if-no-files-found: error

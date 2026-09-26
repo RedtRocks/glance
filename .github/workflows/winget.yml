@@ -1,0 +1,59 @@
+name: winget
+
+# Generates the winget manifests for a published release from its SHA256SUMS.txt and,
+# when the WINGET_TOKEN secret is set, opens the pull request to microsoft/winget-pkgs
+# (packaging/README.md). The Release workflow runs this after publishing; run it from
+# the Actions tab to (re)submit an existing release.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Published release to submit, e.g. v0.3.0
+        required: true
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
+    secrets:
+      WINGET_TOKEN:
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  manifests:
+    name: Manifests for ${{ inputs.tag }}
+    runs-on: windows-latest
+    env:
+      TAG: ${{ inputs.tag }}
+      WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Generate manifests
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern SHA256SUMS.txt --dir release --clobber
+          date=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json publishedAt --jq '.publishedAt[0:10]')
+          node scripts/packaging.ts winget "$TAG" release/SHA256SUMS.txt "$date" "winget/${TAG#v}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: winget-manifests-${{ inputs.tag }}
+          path: winget/
+          if-no-files-found: error
+      - name: Submit to winget-pkgs
+        if: env.WINGET_TOKEN != ''
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+          ./wingetcreate.exe submit --token $env:WINGET_TOKEN "winget/$($env:TAG -replace '^v','')"
+          if ($LASTEXITCODE -ne 0) { throw "wingetcreate failed with exit code $LASTEXITCODE" }
+      - name: Not submitted
+        if: env.WINGET_TOKEN == ''
+        run: echo "::notice::WINGET_TOKEN is not set, so nothing was submitted. The manifests are in this run's artifacts; see packaging/README.md."
