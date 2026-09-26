@@ -1,5 +1,5 @@
 /** Image editing actions (Preview's Tools menu for images). */
-import { crop, flip, rotate90 } from '../core/image/transform'
+import { crop, flip, flipAffine, rotate90, rotate90Affine, straightenGeometry, type Affine } from '../core/image/transform'
 import { maskBounds } from '../core/image/alpha'
 import { selectionBounds } from '../core/image/select'
 import type { Raster } from '../core/image/raster'
@@ -18,11 +18,10 @@ export function editableImage(doc: Doc | null = activeDoc.value): ImageDoc | nul
   return doc instanceof ImageDoc && doc.editable ? doc : null
 }
 
-/** `label` names the edit in the undo history: English, marked with msg(). */
-async function pixels(doc: ImageDoc, label: string, op: (r: Raster) => Promise<Raster> | Raster): Promise<void> {
+async function pixels(doc: ImageDoc, label: string, op: (r: Raster) => Promise<Raster> | Raster, geometry?: (before: Raster, after: Raster) => Affine): Promise<void> {
   try {
     await engine.ensureRaster(doc)
-    await doc.applyPixels(label, op)
+    await doc.applyPixels(label, op, geometry)
   } catch (e) {
     toast(t('{action} failed: {error}', { action: t(label), error: String((e as Error).message ?? e) }), 'error')
   }
@@ -30,20 +29,24 @@ async function pixels(doc: ImageDoc, label: string, op: (r: Raster) => Promise<R
 
 export async function rotateImage(doc: ImageDoc, clockwise: boolean): Promise<void> {
   imageSelection.value = null
-  // Markup would need rotating too; flatten-free rotation is simpler: rotate markup-free images only.
-  if (doc.markup.peek().length) {
-    toast(t('Rotating images with markup isn’t supported yet. Save first to flatten the markup.'), 'error')
-    return
-  }
-  await pixels(doc, clockwise ? msg('Rotate Right') : msg('Rotate Left'), (r) => rotate90(r, clockwise))
+  await pixels(doc, clockwise ? msg('Rotate Right') : msg('Rotate Left'), (r) => rotate90(r, clockwise), (r) => rotate90Affine(r.width, r.height, clockwise))
 }
 
 export async function flipImage(doc: ImageDoc, axis: 'horizontal' | 'vertical'): Promise<void> {
-  if (doc.markup.peek().length) {
-    toast(t('Flipping images with markup isn’t supported yet. Save first to flatten the markup.'), 'error')
-    return
-  }
-  await pixels(doc, axis === 'horizontal' ? msg('Flip Horizontal') : msg('Flip Vertical'), (r) => flip(r, axis))
+  imageSelection.value = null
+  await pixels(doc, axis === 'horizontal' ? msg('Flip Horizontal') : msg('Flip Vertical'), (r) => flip(r, axis), (r) => flipAffine(r.width, r.height, axis))
+}
+
+/**
+ * Straighten (rotate by any angle). Markup and redactions turn with the pixels; with
+ * `cropToFill` the empty corners are cropped away, otherwise they stay transparent.
+ */
+export async function straightenImage(doc: ImageDoc, degrees: number, cropToFill: boolean): Promise<void> {
+  if (Math.abs(degrees) < 0.005) return
+  imageSelection.value = null
+  await withBusy(t('Straightening…'), () =>
+    pixels(doc, msg('Straighten'), (r) => engine.rotate(r, degrees, cropToFill), (r) => straightenGeometry(r.width, r.height, degrees, cropToFill).map)
+  )
 }
 
 async function selectionMask(r: Raster): Promise<Uint8Array | null> {
@@ -67,15 +70,16 @@ export async function cropToSelection(doc: ImageDoc): Promise<void> {
     toast(t('Select an area first (rectangle, ellipse or lasso selection), then crop.'))
     return
   }
-  if (doc.markup.peek().length) {
-    toast(t('Cropping images with markup isn’t supported yet. Save first to flatten the markup.'), 'error')
-    return
-  }
-  await pixels(doc, msg('Crop'), async (r) => {
-    let src = r
-    if (sel.kind !== 'rect') src = await engine.maskOut(r, (await selectionMask(r))!, 'keep')
-    return crop(src, b)
-  })
+  await pixels(
+    doc,
+    msg('Crop'),
+    async (r) => {
+      let src = r
+      if (sel.kind !== 'rect') src = await engine.maskOut(r, (await selectionMask(r))!, 'keep')
+      return crop(src, b)
+    },
+    () => [1, 0, 0, 1, -Math.max(0, Math.floor(b.x)), -Math.max(0, Math.floor(b.y))]
+  )
   imageSelection.value = null
 }
 
@@ -113,11 +117,9 @@ export async function copySubject(doc: ImageDoc): Promise<void> {
 }
 
 export async function adjustSize(doc: ImageDoc, width: number, height: number): Promise<void> {
-  if (doc.markup.peek().length) {
-    toast(t('Resizing images with markup isn’t supported yet. Save first to flatten the markup.'), 'error')
-    return
-  }
-  await withBusy(t('Resizing…'), () => pixels(doc, msg('Adjust Size'), (r) => engine.resize(r, width, height)))
+  await withBusy(t('Resizing…'), () =>
+    pixels(doc, msg('Adjust Size'), (r) => engine.resize(r, width, height), (before, after) => [after.width / before.width, 0, 0, after.height / before.height, 0, 0])
+  )
 }
 
 export async function applyColorAdjustments(doc: ImageDoc, params: AdjustParams): Promise<void> {

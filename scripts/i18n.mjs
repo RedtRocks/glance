@@ -21,7 +21,7 @@ export const LOCALES = join(SRC, 'i18n', 'locales')
 /** Props and dialog fields that hold text the user reads. */
 const TEXT_PROPS = new Set(['title', 'aria-label', 'placeholder', 'alt', 'label', 'description', 'heading', 'text', 'message', 'busyLabel'])
 /** Functions whose first argument is text the user reads. */
-const TEXT_CALLS = new Set(['toast', 'alertDialog', 'promptText', 'withBusy', 'confirm', 'alert'])
+const TEXT_CALLS = new Set(['toast', 'alertDialog', 'promptText', 'withBusy', 'confirm', 'alert', 'tip'])
 
 function files(dir) {
   return readdirSync(dir).flatMap((name) => {

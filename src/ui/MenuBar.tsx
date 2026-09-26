@@ -54,7 +54,7 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'notice', Record
     Image: [
       'tools.adjustColor', 'tools.adjustSize', '-',
       'tools.crop', 'tools.instantAlpha', 'tools.removeBackground', 'tools.copySubject', '-',
-      'tools.rotateLeft', 'tools.rotateRight', 'tools.flipHorizontal', 'tools.flipVertical'
+      'tools.rotateLeft', 'tools.rotateRight', 'tools.straighten', 'tools.flipHorizontal', 'tools.flipVertical'
     ],
     Markup: ['tools.markup', 'tools.text', 'tools.signature', '-', 'tools.redact'],
     Help: HELP

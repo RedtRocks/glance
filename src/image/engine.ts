@@ -45,6 +45,7 @@ export const flood = async (r: Raster, x: number, y: number, tolerance: number):
 export const selectionToMask = async (r: Raster, selection: Selection): Promise<Uint8Array> => (await call({ op: 'selectionMask', raster: r, selection })).mask!
 export const maskOut = async (r: Raster, mask: Uint8Array, mode: 'erase' | 'keep', opts: { feather?: number; invert?: boolean } = {}): Promise<Raster> =>
   (await call({ op: 'applyMask', raster: r, mask, mode, feather: opts.feather ?? 0, invert: !!opts.invert })).raster!
+export const rotate = async (r: Raster, degrees: number, crop: boolean): Promise<Raster> => (await call({ op: 'rotate', raster: r, degrees, crop })).raster!
 export const resize = async (r: Raster, width: number, height: number): Promise<Raster> => (await call({ op: 'resize', raster: r, width, height })).raster!
 
 // ---------------------------------------------------------------------------
