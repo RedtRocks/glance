@@ -1,5 +1,5 @@
 /** Image editing actions (Preview's Tools menu for images). */
-import { crop, flip, rotate90 } from '../core/image/transform'
+import { crop, flip, flipAffine, rotate90, rotate90Affine, straightenGeometry, type Affine } from '../core/image/transform'
 import { maskBounds } from '../core/image/alpha'
 import { selectionBounds } from '../core/image/select'
 import type { Raster } from '../core/image/raster'
@@ -12,36 +12,41 @@ import { showDialog, toast, withBusy } from './ui'
 import { pageOps } from './pdfModules'
 import { afterWrite, beforeOverwrite, checkDisk, redactedDocs, rememberStamp } from './versions'
 import { offerToDeleteRedactedVersions } from './actions'
+import { msg, t } from '../i18n'
 
 export function editableImage(doc: Doc | null = activeDoc.value): ImageDoc | null {
   return doc instanceof ImageDoc && doc.editable ? doc : null
 }
 
-async function pixels(doc: ImageDoc, label: string, op: (r: Raster) => Promise<Raster> | Raster): Promise<void> {
+async function pixels(doc: ImageDoc, label: string, op: (r: Raster) => Promise<Raster> | Raster, geometry?: (before: Raster, after: Raster) => Affine): Promise<void> {
   try {
     await engine.ensureRaster(doc)
-    await doc.applyPixels(label, op)
+    await doc.applyPixels(label, op, geometry)
   } catch (e) {
-    toast(`${label} failed: ${(e as Error).message ?? e}`, 'error')
+    toast(t('{action} failed: {error}', { action: t(label), error: String((e as Error).message ?? e) }), 'error')
   }
 }
 
 export async function rotateImage(doc: ImageDoc, clockwise: boolean): Promise<void> {
   imageSelection.value = null
-  // Markup would need rotating too; flatten-free rotation is simpler: rotate markup-free images only.
-  if (doc.markup.peek().length) {
-    toast('Rotating images with markup isn’t supported yet. Save first to flatten the markup.', 'error')
-    return
-  }
-  await pixels(doc, clockwise ? 'Rotate Right' : 'Rotate Left', (r) => rotate90(r, clockwise))
+  await pixels(doc, clockwise ? msg('Rotate Right') : msg('Rotate Left'), (r) => rotate90(r, clockwise), (r) => rotate90Affine(r.width, r.height, clockwise))
 }
 
 export async function flipImage(doc: ImageDoc, axis: 'horizontal' | 'vertical'): Promise<void> {
-  if (doc.markup.peek().length) {
-    toast('Flipping images with markup isn’t supported yet. Save first to flatten the markup.', 'error')
-    return
-  }
-  await pixels(doc, axis === 'horizontal' ? 'Flip Horizontal' : 'Flip Vertical', (r) => flip(r, axis))
+  imageSelection.value = null
+  await pixels(doc, axis === 'horizontal' ? msg('Flip Horizontal') : msg('Flip Vertical'), (r) => flip(r, axis), (r) => flipAffine(r.width, r.height, axis))
+}
+
+/**
+ * Straighten (rotate by any angle). Markup and redactions turn with the pixels; with
+ * `cropToFill` the empty corners are cropped away, otherwise they stay transparent.
+ */
+export async function straightenImage(doc: ImageDoc, degrees: number, cropToFill: boolean): Promise<void> {
+  if (Math.abs(degrees) < 0.005) return
+  imageSelection.value = null
+  await withBusy(t('Straightening…'), () =>
+    pixels(doc, msg('Straighten'), (r) => engine.rotate(r, degrees, cropToFill), (r) => straightenGeometry(r.width, r.height, degrees, cropToFill).map)
+  )
 }
 
 async function selectionMask(r: Raster): Promise<Uint8Array | null> {
@@ -62,18 +67,19 @@ export async function cropToSelection(doc: ImageDoc): Promise<void> {
   const sel = imageSelection.peek()
   const b = selBounds()
   if (!sel || !b || b.width < 1 || b.height < 1) {
-    toast('Select an area first (rectangle, ellipse or lasso selection), then crop.')
+    toast(t('Select an area first (rectangle, ellipse or lasso selection), then crop.'))
     return
   }
-  if (doc.markup.peek().length) {
-    toast('Cropping images with markup isn’t supported yet. Save first to flatten the markup.', 'error')
-    return
-  }
-  await pixels(doc, 'Crop', async (r) => {
-    let src = r
-    if (sel.kind !== 'rect') src = await engine.maskOut(r, (await selectionMask(r))!, 'keep')
-    return crop(src, b)
-  })
+  await pixels(
+    doc,
+    msg('Crop'),
+    async (r) => {
+      let src = r
+      if (sel.kind !== 'rect') src = await engine.maskOut(r, (await selectionMask(r))!, 'keep')
+      return crop(src, b)
+    },
+    () => [1, 0, 0, 1, -Math.max(0, Math.floor(b.x)), -Math.max(0, Math.floor(b.y))]
+  )
   imageSelection.value = null
 }
 
@@ -81,7 +87,7 @@ export async function cropToSelection(doc: ImageDoc): Promise<void> {
 export async function deleteSelection(doc: ImageDoc, invert = false): Promise<boolean> {
   const sel = imageSelection.peek()
   if (!sel) return false
-  await pixels(doc, invert ? 'Clear Outside Selection' : 'Delete', async (r) => engine.maskOut(r, (await selectionMask(r))!, 'erase', { invert }))
+  await pixels(doc, invert ? msg('Clear Outside Selection') : msg('Delete'), async (r) => engine.maskOut(r, (await selectionMask(r))!, 'erase', { invert }))
   imageSelection.value = null
   return true
 }
@@ -96,42 +102,41 @@ export async function invertSelection(doc: ImageDoc): Promise<void> {
 }
 
 export async function removeBackground(doc: ImageDoc): Promise<void> {
-  await withBusy('Removing background…', () => pixels(doc, 'Remove Background', (r) => engine.removeBackground(r)))
+  await withBusy(t('Removing background…'), () => pixels(doc, msg('Remove Background'), (r) => engine.removeBackground(r)))
 }
 
 export async function copySubject(doc: ImageDoc): Promise<void> {
   try {
     const r = await engine.ensureRaster(doc)
-    const png = await withBusy('Finding the subject…', () => engine.subjectPng(r))
+    const png = await withBusy(t('Finding the subject…'), () => engine.subjectPng(r))
     await platform.copyPngToClipboard(png)
-    toast('Subject copied. Paste it into any app.')
+    toast(t('Subject copied. Paste it into any app.'))
   } catch (e) {
-    toast(`Copy Subject failed: ${(e as Error).message ?? e}`, 'error')
+    toast(t('Copy Subject failed: {error}', { error: String((e as Error).message ?? e) }), 'error')
   }
 }
 
 export async function adjustSize(doc: ImageDoc, width: number, height: number): Promise<void> {
-  if (doc.markup.peek().length) {
-    toast('Resizing images with markup isn’t supported yet. Save first to flatten the markup.', 'error')
-    return
-  }
-  await withBusy('Resizing…', () => pixels(doc, 'Adjust Size', (r) => engine.resize(r, width, height)))
+  await withBusy(t('Resizing…'), () =>
+    pixels(doc, msg('Adjust Size'), (r) => engine.resize(r, width, height), (before, after) => [after.width / before.width, 0, 0, after.height / before.height, 0, 0])
+  )
 }
 
 export async function applyColorAdjustments(doc: ImageDoc, params: AdjustParams): Promise<void> {
-  await withBusy('Applying…', () => pixels(doc, 'Adjust Color', (r) => engine.adjust(r, params)))
+  await withBusy(t('Applying…'), () => pixels(doc, msg('Adjust Color'), (r) => engine.adjust(r, params)))
 }
 
 // ---------------------------------------------------------------------------
 // Save / export
 
+/** Labels are marked with msg(): show them with t(). */
 export const EXPORT_FORMATS = [
-  { id: 'png', label: 'PNG', exts: ['png'] },
-  { id: 'jpg', label: 'JPEG', exts: ['jpg', 'jpeg'] },
-  { id: 'webp', label: 'WebP (lossless)', exts: ['webp'] },
-  { id: 'tiff', label: 'TIFF', exts: ['tif', 'tiff'] },
-  { id: 'bmp', label: 'BMP', exts: ['bmp'] },
-  { id: 'pdf', label: 'PDF', exts: ['pdf'] }
+  { id: 'png', label: 'PNG', exts: ['png'] }, // i18n-ignore: format name
+  { id: 'jpg', label: 'JPEG', exts: ['jpg', 'jpeg'] }, // i18n-ignore: format name
+  { id: 'webp', label: msg('WebP (lossless)'), exts: ['webp'] },
+  { id: 'tiff', label: 'TIFF', exts: ['tif', 'tiff'] }, // i18n-ignore: format name
+  { id: 'bmp', label: 'BMP', exts: ['bmp'] }, // i18n-ignore: format name
+  { id: 'pdf', label: 'PDF', exts: ['pdf'] } // i18n-ignore: format name
 ] as const
 
 export type ExportFormat = (typeof EXPORT_FORMATS)[number]['id']
@@ -165,12 +170,12 @@ export async function saveImage(doc: ImageDoc, opts: { auto?: boolean } = {}): P
   const ext = extOf(path)
   if (['jpg', 'jpeg', 'jfif', 'bmp', 'dib'].includes(ext) && doc.raster.peek() && hasTransparency(doc.raster.peek()!)) {
     const choice = await showDialog<'png' | 'flatten' | 'cancel'>({
-      title: 'Keep the transparency?',
-      body: `${ext.toUpperCase()} files can’t store transparent areas. Save a PNG copy to keep them, or save as ${ext.toUpperCase()} with a white background.`,
+      title: t('Keep the transparency?'),
+      body: t('{format} files can’t store transparent areas. Save a PNG copy to keep them, or save as {format} with a white background.', { format: ext.toUpperCase() }),
       buttons: [
-        { label: 'Cancel', value: 'cancel' },
-        { label: `Save ${ext.toUpperCase()}`, value: 'flatten' },
-        { label: 'Save PNG copy', value: 'png', primary: true }
+        { label: t('Cancel'), value: 'cancel' },
+        { label: t('Save {format}', { format: ext.toUpperCase() }), value: 'flatten' },
+        { label: t('Save PNG copy'), value: 'png', primary: true }
       ]
     })
     if (choice === 'png') return saveImageAs(doc, 'png')
@@ -181,7 +186,7 @@ export async function saveImage(doc: ImageDoc, opts: { auto?: boolean } = {}): P
   if (disk === 'copy') return saveImageAs(doc)
   await beforeOverwrite(doc, path)
   if (opts.auto) await writeImage(doc, path, extOf(path), 92)
-  else await withBusy('Saving…', () => writeImage(doc, path, extOf(path), 92))
+  else await withBusy(t('Saving…'), () => writeImage(doc, path, extOf(path), 92))
   if (doc.redactions.peek().length) redactedDocs.add(doc)
   // Markup is now part of the pixels.
   if (doc.markup.peek().length || doc.redactions.peek().length) {
@@ -191,8 +196,8 @@ export async function saveImage(doc: ImageDoc, opts: { auto?: boolean } = {}): P
   }
   doc.dirty.value = false
   await rememberStamp(doc)
-  await afterWrite(path, opts.auto ? 'Autosaved' : 'Saved')
-  if (!opts.auto) toast('Saved')
+  await afterWrite(path, opts.auto ? msg('Autosaved') : msg('Saved'))
+  if (!opts.auto) toast(t('Saved'))
   await offerToDeleteRedactedVersions(doc, path)
 }
 
@@ -204,9 +209,9 @@ export async function saveImageAs(doc: ImageDoc, format: ExportFormat = 'png', q
   const target = await platform.saveDialog(`${base}.${fmt.exts[0]}`, [{ name: fmt.label, extensions: [...fmt.exts] }])
   if (!target) return
   const chosen = EXPORT_FORMATS.find((f) => (f.exts as readonly string[]).includes(extOf(target)))?.id ?? format
-  if (switchTo) await afterWrite(target, 'Before replacing')
-  await withBusy('Saving…', () => writeImage(doc, target, chosen, quality, profile))
-  if (switchTo) await afterWrite(target, 'Saved')
+  if (switchTo) await afterWrite(target, msg('Before replacing'))
+  await withBusy(t('Saving…'), () => writeImage(doc, target, chosen, quality, profile))
+  if (switchTo) await afterWrite(target, msg('Saved'))
   if (switchTo && chosen !== 'pdf') {
     const old = doc.path.value
     if (old) void platform.releaseFile(old)
@@ -216,7 +221,7 @@ export async function saveImageAs(doc: ImageDoc, format: ExportFormat = 'png', q
     doc.dirty.value = false
     await rememberStamp(doc)
   }
-  toast(switchTo ? 'Saved' : 'Exported')
+  toast(switchTo ? t('Saved') : t('Exported'))
 }
 
 /**
@@ -225,7 +230,7 @@ export async function saveImageAs(doc: ImageDoc, format: ExportFormat = 'png', q
  */
 export async function newFromClipboard(): Promise<void> {
   const img = await platform.readClipboardImage()
-  if (!img) return toast('There’s no image on the clipboard.')
+  if (!img) return toast(t('There’s no image on the clipboard.'))
   const png = await engine.encodePng({ width: img.width, height: img.height, data: new Uint8ClampedArray(img.rgba.buffer, img.rgba.byteOffset, img.rgba.byteLength) })
   const stamp = new Date().toISOString().slice(0, 19).replace('T', ' ').replace(/:/g, '.')
   const tmp = await platform.writeTemp(`Clipboard ${stamp}.png`, png)
@@ -234,7 +239,7 @@ export async function newFromClipboard(): Promise<void> {
   await openFiles([tmp])
   const doc = findByPath(tmp)
   if (doc instanceof ImageDoc) {
-    doc.name.value = 'Untitled.png'
+    doc.name.value = t('Untitled') + '.png'
     doc.path.value = null // Save → Save As
     doc.dirty.value = true
   }

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'preact/hooks'
 import { activeDoc } from '../../state/documents'
 import { imageUrl, toggleFullscreen } from '../../platform'
 import { slideshow } from '../../state/ui'
+import { t } from '../../i18n'
 
 /** Full-screen, one page at a time. Arrows/space advance, Esc exits. */
 export function Slideshow() {
@@ -56,7 +57,7 @@ export function Slideshow() {
   return (
     <div class="slideshow" onClick={() => (doc.current.value = Math.min(doc.pageCount.value - 1, doc.current.value + 1))}>
       {doc.kind === 'pdf' ? <canvas ref={canvas} /> : <img src={imageUrl(doc.probe, page)} alt="" />}
-      <div class="slideshow-hint">{page + 1} / {doc.pageCount.value} · Esc to exit</div>
+      <div class="slideshow-hint">{t('{page} / {count} · Esc to exit', { page: page + 1, count: doc.pageCount.value })}</div>
     </div>
   )
 }

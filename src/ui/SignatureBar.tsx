@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks'
+import { t } from '../i18n'
 import type { PdfDoc } from '../state/documents'
 import { summarize } from '../core/signatureStatus'
 import { signaturesOpen } from '../state/ui'
@@ -19,12 +20,12 @@ export function SignatureBar({ doc }: { doc: PdfDoc }) {
       title={summary.title}
       actions={
         <button class="btn" onClick={() => void (signaturesOpen.value = true)}>
-          Signature Details
+          {t('Signature Details')}
         </button>
       }
       onClose={() => setClosed(true)}
     >
-      {dirty ? 'You’ve made changes. Once saved, the signatures will no longer cover the whole document.' : summary.message}
+      {dirty ? t('You’ve made changes. Once saved, the signatures will no longer cover the whole document.') : summary.message}
     </InfoBar>
   )
 }

@@ -29,6 +29,7 @@ import {
   type Tool
 } from '../../state/markupState'
 import { RedactionMark, Shape, cssBox } from './Shape'
+import { t } from '../../i18n'
 
 interface Props {
   doc: MarkupHost
@@ -431,7 +432,7 @@ function TextBox({ doc, m, vp, editing }: { doc: MarkupHost; m: Extract<Markup, 
         class="text-box editing"
         autoFocus
         style={boxStyle}
-        placeholder="Type here"
+        placeholder={t('Type here')}
         defaultValue={m.text}
         onPointerDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
@@ -464,7 +465,7 @@ function NoteEditor({ doc, m, vp }: { doc: MarkupHost; m: Extract<Markup, { type
       <textarea
         ref={ref}
         autoFocus
-        placeholder="Add a note"
+        placeholder={t('Add a note')}
         defaultValue={m.text}
         onKeyDown={(e) => {
           if (e.key === 'Escape') (e.target as HTMLTextAreaElement).blur()

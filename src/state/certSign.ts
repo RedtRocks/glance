@@ -1,4 +1,5 @@
 /** File → Sign with Certificate: a certificate signature from the user's Windows certificate store. */
+import { t } from '../i18n'
 import * as platform from '../platform'
 import { activeDoc, PdfDoc } from './documents'
 import { save, serialize } from './actions'
@@ -8,15 +9,15 @@ import * as versions from './versions'
 
 export async function signWithCertificate(doc = activeDoc.value): Promise<void> {
   if (!(doc instanceof PdfDoc)) return
-  if (!platform.signatureCheckAvailable) return toast('Signing with a certificate needs the Glance app for Windows.', 'error')
-  if (doc.encrypted) return alertDialog('Can’t sign a password-protected PDF', 'Remove the password protection first, then sign the document.')
+  if (!platform.signatureCheckAvailable) return toast(t('Signing with a certificate needs the Glance app for Windows.'), 'error')
+  if (doc.encrypted) return alertDialog(t('Can’t sign a password-protected PDF'), t('Remove the password protection first, then sign the document.'))
   // The signature covers the file as saved, so everything must be saved first.
   if (!doc.path.peek() || doc.dirty.peek()) {
     await save(doc)
     if (!doc.path.peek() || doc.dirty.peek()) return
   }
   const path = doc.path.peek()!
-  const reason = await promptText('Sign with a Certificate', 'Reason for signing (optional)', { ok: 'Choose Certificate…' })
+  const reason = await promptText(t('Sign with a Certificate'), t('Reason for signing (optional)'), { ok: t('Choose Certificate…') })
   if (reason === null) return
   const cert = await platform.pickSigningCertificate().catch((e) => {
     toast(String(e), 'error')
@@ -25,7 +26,7 @@ export async function signWithCertificate(doc = activeDoc.value): Promise<void> 
   if (!cert) return
   if ((await versions.checkDisk(doc, path, false)) !== 'ok') return
   try {
-    const signed = await withBusy('Signing…', async () => {
+    const signed = await withBusy(t('Signing…'), async () => {
       const bytes = await serialize(doc)
       const { prepareSignature, embedSignature } = await pdfSign()
       const { signedBytes } = await pdfSignatures()
@@ -43,10 +44,10 @@ export async function signWithCertificate(doc = activeDoc.value): Promise<void> 
     })
     doc.dirty.value = false
     await versions.rememberStamp(doc)
-    await versions.afterWrite(path, 'Signed', signed)
+    await versions.afterWrite(path, t('Signed'), signed)
     signaturesOpen.value = true
-    toast(`Signed as ${cert.name}`)
+    toast(t('Signed as {name}', { name: cert.name }))
   } catch (e) {
-    toast(`Couldn’t sign: ${String(e)}`, 'error')
+    toast(t('Couldn’t sign: {error}', { error: String(e) }), 'error')
   }
 }

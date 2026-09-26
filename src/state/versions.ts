@@ -7,6 +7,7 @@ import { signal } from '@preact/signals'
 import * as platform from '../platform'
 import type { Doc } from './documents'
 import { showDialog } from './ui'
+import { msg, t } from '../i18n'
 
 /** Documents whose on-disk original has been recorded this session. */
 const originals = new WeakSet<Doc>()
@@ -20,13 +21,13 @@ export async function beforeOverwrite(doc: Doc, path: string): Promise<void> {
   if (originals.has(doc)) return
   originals.add(doc)
   try {
-    await platform.historyRecordFile(path, 'Before editing')
+    await platform.historyRecordFile(path, msg('Before editing'))
   } catch (e) {
     console.warn('history: could not record the original', e)
   }
 }
 
-/** Call after `path` was written. */
+/** Call after `path` was written. `label` is stored with the version: English, marked with msg(). */
 export async function afterWrite(path: string, label: string, bytes?: Uint8Array): Promise<void> {
   try {
     if (bytes) await platform.historyRecord(path, bytes, label)
@@ -62,16 +63,16 @@ export async function checkDisk(doc: Doc, path: string, auto: boolean): Promise<
     return 'cancel'
   }
   const choice = await showDialog<'replace' | 'copy' | 'cancel'>({
-    title: `“${doc.name.peek()}” was changed by another app`,
-    body: 'The file on disk is newer than the version you are editing. Replace it with your version, or save your version as a copy? If you replace it, the other version stays in File → Browse Versions.',
+    title: t('“{file}” was changed by another app', { file: doc.name.peek() }),
+    body: t('The file on disk is newer than the version you are editing. Replace it with your version, or save your version as a copy? If you replace it, the other version stays in File → Browse Versions.'),
     buttons: [
-      { label: 'Cancel', value: 'cancel' },
-      { label: 'Save as copy…', value: 'copy' },
-      { label: 'Replace', value: 'replace', primary: true }
+      { label: t('Cancel'), value: 'cancel' },
+      { label: t('Save as copy…'), value: 'copy' },
+      { label: t('Replace'), value: 'replace', primary: true }
     ]
   })
   if (choice === 'replace') {
-    await afterWrite(path, 'Changed by another app')
+    await afterWrite(path, msg('Changed by another app'))
     return 'ok'
   }
   return choice === 'copy' ? 'copy' : 'cancel'

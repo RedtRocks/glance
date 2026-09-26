@@ -6,6 +6,7 @@ import { openPdf } from '../pdf/engine'
 import { activeDoc, ImageDoc, PdfDoc } from './documents'
 import { serialize } from './actions'
 import { showDialog, toast, withBusy } from './ui'
+import { msg, t } from '../i18n'
 
 /** Pages with (almost) no extractable text: scans and photos of documents. */
 async function scannedPages(doc: PdfDoc): Promise<number[]> {
@@ -22,18 +23,18 @@ async function scannedPages(doc: PdfDoc): Promise<number[]> {
 
 export async function recognizePdfText(doc: PdfDoc | null = activeDoc.value?.kind === 'pdf' ? activeDoc.value : null): Promise<void> {
   if (!doc) return
-  if (!platform.ocrAvailable) return toast('Text recognition uses the Windows OCR engine, available in the Windows app.', 'error')
+  if (!platform.ocrAvailable) return toast(t('Text recognition uses the Windows OCR engine, available in the Windows app.'), 'error')
   const scanned = await scannedPages(doc)
   const all = [...Array(doc.pageCount.value).keys()]
   const choice = await showDialog<'scanned' | 'all' | null>({
-    title: 'Recognize text',
+    title: t('Recognize text'),
     body: scanned.length
-      ? `${scanned.length} of ${all.length} pages have no selectable text. Glance can recognize their text with Windows OCR so you can search, select and copy it. The pages look exactly the same.`
-      : 'Every page already has selectable text. Recognize all pages anyway? (Useful when the existing text is garbled.)',
+      ? t('{count} of {total, plural, one {# page has} other {# pages have}} no selectable text. Glance can recognize their text with Windows OCR so you can search, select and copy it. The pages look exactly the same.', { count: scanned.length, total: all.length })
+      : t('Every page already has selectable text. Recognize all pages anyway? (Useful when the existing text is garbled.)'),
     buttons: [
-      { label: 'Cancel', value: null },
-      ...(scanned.length && scanned.length < all.length ? [{ label: 'All pages', value: 'all' as const }] : []),
-      { label: scanned.length ? `Recognize ${scanned.length === all.length ? 'all pages' : `${scanned.length} pages`}` : 'Recognize all pages', value: scanned.length ? ('scanned' as const) : ('all' as const), primary: true }
+      { label: t('Cancel'), value: null },
+      ...(scanned.length && scanned.length < all.length ? [{ label: t('All pages'), value: 'all' as const }] : []),
+      { label: scanned.length && scanned.length < all.length ? t('{count, plural, one {Recognize # page} other {Recognize # pages}}', { count: scanned.length }) : t('Recognize all pages'), value: scanned.length ? ('scanned' as const) : ('all' as const), primary: true }
     ]
   })
   if (!choice) return
@@ -41,7 +42,7 @@ export async function recognizePdfText(doc: PdfDoc | null = activeDoc.value?.kin
   const max = Math.min(await platform.ocrMaxDimension(), 4000) || 2600
   let words = 0
   let language = ''
-  await withBusy('Recognizing text…', async () => {
+  await withBusy(t('Recognizing text…'), async () => {
     // Render with markup and form values so what's visible is what gets read.
     const proxy = await openPdf(await serialize(doc))
     const found: OcrPageWords[] = []
@@ -71,17 +72,23 @@ export async function recognizePdfText(doc: PdfDoc | null = activeDoc.value?.kin
     }
     if (!words) return
     const { addTextLayer } = await import('../core/ocrLayer')
-    await doc.apply('Recognize Text', async (bytes) => addTextLayer(bytes, found, { loadFont: platform.fontBytes, family: 'Arial' }))
+    await doc.apply(msg('Recognize Text'), async (bytes) => addTextLayer(bytes, found, { loadFont: platform.fontBytes, family: 'Arial' }))
   })
-  toast(words ? `Recognized ${words} words${language ? ` (${language})` : ''}. The text can now be searched and selected.` : 'No text was found on those pages.')
+  toast(
+    !words
+      ? t('No text was found on those pages.')
+      : language
+        ? t('{count, plural, one {Recognized # word} other {Recognized # words}} ({language}). The text can now be searched and selected.', { count: words, language })
+        : t('{count, plural, one {Recognized # word} other {Recognized # words}}. The text can now be searched and selected.', { count: words })
+  )
 }
 
 /** Images: recognize the text and put it on the clipboard (like Live Text). */
 export async function copyImageText(doc: ImageDoc | null = activeDoc.value instanceof ImageDoc ? activeDoc.value : null): Promise<void> {
   if (!doc) return
-  if (!platform.ocrAvailable) return toast('Text recognition uses the Windows OCR engine, available in the Windows app.', 'error')
+  if (!platform.ocrAvailable) return toast(t('Text recognition uses the Windows OCR engine, available in the Windows app.'), 'error')
   try {
-    const text = await withBusy('Recognizing text…', async () => {
+    const text = await withBusy(t('Recognizing text…'), async () => {
       let r = doc.editable ? await engine.flatten(doc) : await engine.loadRaster(doc)
       const max = Math.min(await platform.ocrMaxDimension(), 4000) || 2600
       const s = Math.min(1, max / Math.max(r.width, r.height))
@@ -89,9 +96,9 @@ export async function copyImageText(doc: ImageDoc | null = activeDoc.value insta
       const res = await platform.ocrImage(r.data as Uint8ClampedArray, r.width, r.height)
       return res.lines.map((l) => l.text).join('\n')
     })
-    if (!text.trim()) return toast('No text found in this image.')
+    if (!text.trim()) return toast(t('No text found in this image.'))
     await platform.copyText(text)
-    toast(`Copied ${text.split(/\s+/).filter(Boolean).length} words`)
+    toast(t('{count, plural, one {Copied # word} other {Copied # words}}', { count: text.split(/\s+/).filter(Boolean).length }))
   } catch (e) {
     toast(String((e as Error).message ?? e), 'error')
   }

@@ -3,6 +3,7 @@ import { customizeOpen } from '../../state/ui'
 import { TOOLBAR_ITEMS } from '../Toolbar'
 import { Modal } from './Dialog'
 import { Icon } from '../Icon'
+import { t } from '../../i18n'
 
 /** Add, remove and reorder toolbar items (Preview's View → Customize Toolbar). */
 export function CustomizeToolbar() {
@@ -17,41 +18,44 @@ export function CustomizeToolbar() {
     set(next)
   }
   const available = TOOLBAR_ITEMS.filter((it) => it.id === 'spacer' || !order.includes(it.id))
-  const label = (id: string) => TOOLBAR_ITEMS.find((t) => t.id === id)?.label ?? id
+  const label = (id: string): string => {
+    const item = TOOLBAR_ITEMS.find((it) => it.id === id)
+    return item ? t(item.label) : id
+  }
   return (
     <Modal
-      title="Customize toolbar"
+      title={t('Customize toolbar')}
       onClose={close}
       wide
       footer={
         <>
-          <button class="btn" onClick={resetToolbar}>Restore defaults</button>
-          <button class="btn primary" onClick={close}>Done</button>
+          <button class="btn" onClick={resetToolbar}>{t('Restore defaults')}</button>
+          <button class="btn primary" onClick={close}>{t('Done')}</button>
         </>
       }
     >
-      <p class="muted">Items that don’t apply to the open document (for example page controls on a single image) hide automatically.</p>
+      <p class="muted">{t('Items that don’t apply to the open document (for example page controls on a single image) hide automatically.')}</p>
       <div class="customize">
         <section>
-          <h3>In the toolbar</h3>
+          <h3>{t('In the toolbar')}</h3>
           <ol class="customize-list">
             {order.map((id, i) => (
               <li key={`${id}-${i}`}>
                 <span>{label(id)}</span>
-                <button class="icon-button" aria-label="Move up" onClick={() => move(i, -1)} disabled={i === 0}><Icon name="up" size={16} /></button>
-                <button class="icon-button" aria-label="Move down" onClick={() => move(i, 1)} disabled={i === order.length - 1}><Icon name="down" size={16} /></button>
-                <button class="icon-button" aria-label="Remove" onClick={() => set(order.filter((_, k) => k !== i))}><Icon name="close" size={16} /></button>
+                <button class="icon-button" aria-label={t('Move up')} onClick={() => move(i, -1)} disabled={i === 0}><Icon name="up" size={16} /></button>
+                <button class="icon-button" aria-label={t('Move down')} onClick={() => move(i, 1)} disabled={i === order.length - 1}><Icon name="down" size={16} /></button>
+                <button class="icon-button" aria-label={t('Remove')} onClick={() => set(order.filter((_, k) => k !== i))}><Icon name="close" size={16} /></button>
               </li>
             ))}
           </ol>
         </section>
         <section>
-          <h3>Available</h3>
+          <h3>{t('Available')}</h3>
           <ul class="customize-list">
             {available.map((it) => (
               <li key={it.id}>
-                <span>{it.label}</span>
-                <button class="icon-button" aria-label={`Add ${it.label}`} onClick={() => set([...order.slice(0, -1), it.id, ...order.slice(-1)])}>
+                <span>{t(it.label)}</span>
+                <button class="icon-button" aria-label={t('Add {item}', { item: t(it.label) })} onClick={() => set([...order.slice(0, -1), it.id, ...order.slice(-1)])}>
                   <Icon name="add" size={16} />
                 </button>
               </li>

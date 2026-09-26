@@ -4,6 +4,7 @@
  * the pixel work happens in state/batch.ts.
  */
 import { fitInto } from './size'
+import { msg } from '../../i18n'
 
 export type BatchFormat = 'keep' | 'png' | 'jpg' | 'webp' | 'tiff' | 'bmp'
 
@@ -27,7 +28,8 @@ export const DEFAULT_BATCH: BatchOptions = {
   quality: 90,
   removeLocation: false,
   output: 'suffix',
-  suffix: ' (edited)'
+  /** Marked with msg(): translate with t() when starting a batch. */
+  suffix: msg(' (edited)')
 }
 
 /** Formats Glance can write; others (HEIC, RAW, PSD…) become JPEG or PNG. */

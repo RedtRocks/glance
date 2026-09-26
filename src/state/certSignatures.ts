@@ -1,4 +1,5 @@
 /** Checking a PDF's certificate signatures (see core/pdfSignatures.ts and src-tauri/src/certsig.rs). */
+import { t } from '../i18n'
 import * as platform from '../platform'
 import { mayHaveSignatures, type CheckedSignature } from '../core/signatureStatus'
 import { pdfSignatures } from './pdfModules'
@@ -22,13 +23,13 @@ async function run(bytes: Uint8Array): Promise<CheckedSignature[]> {
   return Promise.all(
     found.map(async ({ contents, ...sig }): Promise<CheckedSignature> => {
       if (!sig.wellFormed) return { sig, check: null, error: null }
-      if (sig.kind === 'unsupported') return { sig, check: null, error: `Glance can’t check this kind of signature (${sig.subFilter || 'unknown format'}).` }
-      if (!platform.signatureCheckAvailable) return { sig, check: null, error: 'Signatures are checked with the Windows certificate store, in the Glance app for Windows.' }
+      if (sig.kind === 'unsupported') return { sig, check: null, error: t('Glance can’t check this kind of signature ({format}).', { format: sig.subFilter || t('unknown format') }) }
+      if (!platform.signatureCheckAvailable) return { sig, check: null, error: t('Signatures are checked with the Windows certificate store, in the Glance app for Windows.') }
       try {
         const data = await dataToVerify(bytes, { ...sig, contents })
         return { sig, check: await platform.verifyPdfSignature(sig.kind, contents, data, sig.claimedTime), error: null }
       } catch (e) {
-        return { sig, check: null, error: `The signature couldn’t be checked: ${String(e)}` }
+        return { sig, check: null, error: t('The signature couldn’t be checked: {error}', { error: String(e) }) }
       }
     })
   )

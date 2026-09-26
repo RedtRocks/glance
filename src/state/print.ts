@@ -8,6 +8,7 @@ import { imageUrl } from '../platform'
 import { withBusy } from './ui'
 import { openPdf } from '../pdf/engine'
 import { serialize } from './actions'
+import { t } from '../i18n'
 
 const PRINT_SCALE = 150 / 72 // 150 DPI keeps memory reasonable for long documents
 
@@ -36,7 +37,7 @@ export async function printDoc(doc: Doc | null): Promise<void> {
   const root = document.getElementById('print-root') ?? Object.assign(document.createElement('div'), { id: 'print-root' })
   document.body.appendChild(root)
   root.replaceChildren()
-  await withBusy('Preparing to print…', async () => {
+  await withBusy(t('Preparing to print…'), async () => {
     if (doc.kind === 'pdf') {
       await pdfPages(doc, root)
     } else {

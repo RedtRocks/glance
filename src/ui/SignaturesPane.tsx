@@ -1,4 +1,5 @@
 import type { PdfDoc } from '../state/documents'
+import { intlLocale, msg, t } from '../i18n'
 import { describe, isTimestamp, laterChanges, signerName, verdict, type CheckedSignature, type Verdict } from '../core/signatureStatus'
 import { signaturesOpen, toast } from '../state/ui'
 import * as platform from '../platform'
@@ -6,13 +7,13 @@ import { Icon } from './Icon'
 import { useSignatures } from './useSignatures'
 
 const BADGE: Record<Verdict, { icon: 'successFilled' | 'warningFilled' | 'errorFilled' | 'infoFilled'; label: string }> = {
-  valid: { icon: 'successFilled', label: 'Valid' },
-  untrusted: { icon: 'warningFilled', label: 'Signer not verified' },
-  invalid: { icon: 'errorFilled', label: 'Invalid' },
-  unknown: { icon: 'infoFilled', label: 'Not checked' }
+  valid: { icon: 'successFilled', label: msg('Valid') },
+  untrusted: { icon: 'warningFilled', label: msg('Signer not verified') },
+  invalid: { icon: 'errorFilled', label: msg('Invalid') },
+  unknown: { icon: 'infoFilled', label: msg('Not checked') }
 }
 
-const when = (ms: number | null | undefined): string => (ms == null ? '' : new Date(ms).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }))
+const when = (ms: number | null | undefined): string => (ms == null ? '' : new Date(ms).toLocaleString(intlLocale.value, { dateStyle: 'medium', timeStyle: 'short' }))
 
 function SignatureCard({ doc, c, index }: { doc: PdfDoc; c: CheckedSignature; index: number }) {
   const v = verdict(c)
@@ -20,14 +21,14 @@ function SignatureCard({ doc, c, index }: { doc: PdfDoc; c: CheckedSignature; in
   const trusted = check?.timestamp != null
   const signedAt = check?.timestamp ?? check?.signingTime ?? c.sig.claimedTime
   const rows: [string, string][] = [
-    [isTimestamp(c) ? 'Time' : 'Signed', signedAt == null ? '' : `${when(signedAt)}${trusted ? '' : ' (signer’s clock)'}`],
-    ['Timestamp by', isTimestamp(c) ? '' : (check?.timestampAuthority ?? '')],
-    ['Reason', c.sig.reason],
-    ['Location', c.sig.location],
-    ['Contact', c.sig.contact || check?.email || ''],
-    ['Issued by', check?.issuer ?? ''],
-    ['Revocation', check && check.trust !== 'unknown' && !check.revocationChecked ? 'Couldn’t be checked (offline?)' : ''],
-    ['Field', c.sig.field]
+    [isTimestamp(c) ? t('Time') : t('Signed'), signedAt == null ? '' : trusted ? when(signedAt) : t('{time} (signer’s clock)', { time: when(signedAt) })],
+    [t('Timestamp by'), isTimestamp(c) ? '' : (check?.timestampAuthority ?? '')],
+    [t('Reason'), c.sig.reason],
+    [t('Location'), c.sig.location],
+    [t('Contact'), c.sig.contact || check?.email || ''],
+    [t('Issued by'), check?.issuer ?? ''],
+    [t('Revocation'), check && check.trust !== 'unknown' && !check.revocationChecked ? t('Couldn’t be checked (offline?)') : ''],
+    [t('Field'), c.sig.field]
   ]
   const later = laterChanges(c)
   const certificate = check?.certificate
@@ -39,14 +40,14 @@ function SignatureCard({ doc, c, index }: { doc: PdfDoc; c: CheckedSignature; in
     }
   }
   return (
-    <section class={`signature-card ${v}`} aria-label={`Signature ${index + 1}`}>
+    <section class={`signature-card ${v}`} aria-label={t('Signature {n}', { n: index + 1 })}>
       <header>
         <span class="signature-badge" aria-hidden="true">
           <Icon name={BADGE[v].icon} size={16} />
         </span>
         <div>
-          <strong>{isTimestamp(c) ? 'Document timestamp' : signerName(c)}</strong>
-          <span class="signature-verdict">{BADGE[v].label}</span>
+          <strong>{isTimestamp(c) ? t('Document timestamp') : signerName(c)}</strong>
+          <span class="signature-verdict">{t(BADGE[v].label)}</span>
         </div>
       </header>
       <p>{describe(c)}</p>
@@ -65,12 +66,12 @@ function SignatureCard({ doc, c, index }: { doc: PdfDoc; c: CheckedSignature; in
         <div class="inline-actions">
           {certificate && platform.signatureCheckAvailable && (
             <button class="btn" onClick={() => void showCertificate()}>
-              <Icon name="certificate" size={16} /> Certificate
+              <Icon name="certificate" size={16} /> {t('Certificate')}
             </button>
           )}
           {c.sig.visible && c.sig.page !== null && (
             <button class="btn" onClick={() => doc.goTo(c.sig.page!)}>
-              Show on Page {c.sig.page + 1}
+              {t('Show on Page {page}', { page: c.sig.page + 1 })}
             </button>
           )}
         </div>
@@ -84,16 +85,16 @@ export function SignaturesPane({ doc }: { doc: PdfDoc }) {
   const list = useSignatures(doc)
   const close = (): void => void (signaturesOpen.value = false)
   return (
-    <aside class="side-pane signatures-pane" aria-label="Signatures">
+    <aside class="side-pane signatures-pane" aria-label={t('Signatures')}>
       <header class="side-pane-header">
-        <h2>Signatures</h2>
-        <button class="icon-button" aria-label="Close" onClick={close}>
+        <h2>{t('Signatures')}</h2>
+        <button class="icon-button" aria-label={t('Close')} onClick={close}>
           <Icon name="close" size={16} />
         </button>
       </header>
       <div class="side-pane-body">
-        {list === null && <p class="side-pane-hint">Checking signatures…</p>}
-        {list?.length === 0 && <p class="side-pane-hint">This document has no certificate signatures. Handwritten signatures placed as markup aren’t listed here.</p>}
+        {list === null && <p class="side-pane-hint">{t('Checking signatures…')}</p>}
+        {list?.length === 0 && <p class="side-pane-hint">{t('This document has no certificate signatures. Handwritten signatures placed as markup aren’t listed here.')}</p>}
         {list?.map((c, i) => <SignatureCard key={c.sig.field} doc={doc} c={c} index={i} />)}
       </div>
     </aside>

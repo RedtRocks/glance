@@ -3,8 +3,10 @@ import type { PDFDocumentProxy } from 'pdfjs-dist'
 import { History } from './history'
 import { openPdf, readOutline, PasswordRequired, type OutlineNode } from '../pdf/engine'
 import { releaseFile, type Probe } from '../platform'
-import { remapPages, type Markup, type PageMap, type Redaction } from '../core/markup'
+import { remapPages, transformForImage, type Markup, type PageMap, type Redaction } from '../core/markup'
 import type { Raster } from '../core/image/raster'
+import { t } from '../i18n'
+import type { Affine } from '../core/image/transform'
 
 let seq = 0
 const nextId = (): string => `doc${++seq}`
@@ -132,7 +134,7 @@ export class PdfDoc extends BaseDoc implements MarkupHost {
     op: (bytes: Uint8Array) => Promise<Uint8Array | { bytes: Uint8Array; markup?: Markup[]; pages?: PageMap }>,
     pages?: PageMap
   ): Promise<void> {
-    if (this.encrypted) throw new Error('Remove the password protection before editing pages of this PDF.')
+    if (this.encrypted) throw new Error(t('Remove the password protection before editing pages of this PDF.'))
     const before = this.snapshot()
     const result = await op(await this.currentBytes())
     const next = result instanceof Uint8Array ? { bytes: result } : result
@@ -249,13 +251,22 @@ export class ImageDoc extends BaseDoc implements MarkupHost {
     return { raster: this.raster.peek(), markup: this.markup.peek(), redactions: this.redactions.peek() }
   }
 
-  /** Replaces the pixels as one undoable step. `op` must not mutate its input. */
-  async applyPixels(label: string, op: (r: Raster) => Promise<Raster> | Raster): Promise<void> {
+  /**
+   * Replaces the pixels as one undoable step. `op` must not mutate its input. When the
+   * pixels move (rotate, crop, resize…), `geometry` gives the pixel-space map from old
+   * to new so markup and redactions move with them in the same step.
+   */
+  async applyPixels(label: string, op: (r: Raster) => Promise<Raster> | Raster, geometry?: (before: Raster, after: Raster) => Affine): Promise<void> {
     return this.exclusive(async () => {
       const current = this.raster.peek()
       if (!current) throw new Error('image not loaded')
       const next = await op(current)
       this.history.push(label, this.snapshot())
+      if (geometry && (this.markup.peek().length || this.redactions.peek().length)) {
+        const moved = transformForImage(this.markup.peek(), this.redactions.peek(), geometry(current, next), current, next)
+        this.markup.value = moved.markup
+        this.redactions.value = moved.redactions
+      }
       this.raster.value = next
       this.natural.value = { width: next.width, height: next.height }
       this.historyVersion.value++

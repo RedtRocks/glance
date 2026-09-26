@@ -1,5 +1,6 @@
 import type { ComponentChildren } from 'preact'
 import { Icon } from './Icon'
+import { t } from '../i18n'
 
 type Severity = 'informational' | 'success' | 'warning' | 'error'
 const ICON = { informational: 'infoFilled', success: 'successFilled', warning: 'warningFilled', error: 'errorFilled' } as const
@@ -24,7 +25,7 @@ export function InfoBar({ severity = 'informational', title, children, actions, 
       </div>
       {actions && <div class="infobar-actions">{actions}</div>}
       {onClose && (
-        <button class="icon-button infobar-close" aria-label="Close" onClick={onClose}>
+        <button class="icon-button infobar-close" aria-label={t('Close')} onClick={onClose}>
           <Icon name="close" size={16} />
         </button>
       )}

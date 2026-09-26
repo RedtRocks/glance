@@ -3,13 +3,13 @@ import { comboFromEvent } from '../core/shortcuts'
 import { commandForCombo, runCommand } from '../state/commands'
 import { dialog, settingsOpen, customizeOpen, slideshow } from '../state/ui'
 import { editingId, selectedId, setTool, signatureDialog, spaceHeld, tool } from '../state/markupState'
-import { adjustSizeOpen, exportOpen, imageSelection } from '../state/imageState'
+import { adjustSizeOpen, exportOpen, imageSelection, straighten } from '../state/imageState'
 
 /** Keys that must keep their text-editing meaning inside inputs. */
 const TEXT_KEYS = new Set(['Ctrl+A', 'Ctrl+Z', 'Ctrl+Y', 'Ctrl+Shift+Z', 'Home', 'End', 'Delete', 'Backspace', 'PageUp', 'PageDown', 'Ctrl+C', 'Ctrl+V', 'Ctrl+X'])
 
 function modalOpen(): boolean {
-  return !!dialog.peek() || settingsOpen.peek() || customizeOpen.peek() || slideshow.peek() || signatureDialog.peek() || !!editingId.peek() || adjustSizeOpen.peek() || exportOpen.peek()
+  return !!dialog.peek() || settingsOpen.peek() || customizeOpen.peek() || slideshow.peek() || signatureDialog.peek() || !!editingId.peek() || adjustSizeOpen.peek() || exportOpen.peek() || !!straighten.peek()
 }
 
 /** Fields that take typing, where single-key shortcuts must not fire. */

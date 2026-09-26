@@ -19,6 +19,8 @@ export interface Settings {
   skippedVersion?: string
   /** Save edits automatically a few seconds after they stop (earlier versions stay in the history). */
   autosave: boolean
+  /** UI language code, or 'system' to follow Windows. See i18n/index.ts. */
+  language: string
 }
 
 export const DEFAULT_TOOLBAR = ['sidebar', 'pageControls', 'spacer', 'zoomOut', 'zoomIn', 'rotate', 'highlight', 'markup', 'search', 'overflow']
@@ -31,7 +33,8 @@ const DEFAULTS: Settings = {
   shortcuts: {},
   sidebarWidth: 188,
   checkForUpdates: true,
-  autosave: true
+  autosave: true,
+  language: 'system'
 }
 
 const KEY = 'glance.settings.v1'

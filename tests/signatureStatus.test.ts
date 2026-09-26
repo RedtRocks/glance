@@ -51,7 +51,7 @@ describe('signature status', () => {
   it('warns when the signer can’t be confirmed', () => {
     const s = signed(100, 100, check({ trust: 'untrusted', detail: 'Not trusted.' }))
     expect(verdict(s)).toBe('untrusted')
-    expect(sentence(s)).toBe('Not trusted.')
+    expect(sentence(s)).toContain('Windows trusts')
     expect(summarize([s])?.severity).toBe('warning')
   })
 
