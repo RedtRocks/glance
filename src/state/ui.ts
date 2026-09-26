@@ -94,3 +94,6 @@ export const cleanupOpen = signal(false)
 
 /** File → Create Collage. */
 export const collageOpen = signal(false)
+
+/** File → Reduce File Size. */
+export const reduceOpen = signal(false)

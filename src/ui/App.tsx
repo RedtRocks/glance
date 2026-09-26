@@ -1,7 +1,7 @@
 import { useEffect } from 'preact/hooks'
 import { activeDoc, activeId, docs, findByPath } from '../state/documents'
 import { isDark, settings } from '../state/settings'
-import { cleanupOpen, collageOpen, customizeOpen, inspectorOpen, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
+import { cleanupOpen, collageOpen, reduceOpen, customizeOpen, inspectorOpen, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
 import { confirmCloseWindow, openFiles } from '../state/actions'
 import { startAutosave } from '../state/autosave'
 import { checkForUpdates } from '../state/updates'
@@ -41,6 +41,7 @@ import { adjustColorOpen, adjustSizeOpen, exportOpen, imageSelection } from '../
 import { ImageDoc, PdfDoc } from '../state/documents'
 import { RedactTextDialog } from './dialogs/RedactTextDialog'
 import { CleanupDialog } from './dialogs/CleanupDialog'
+import { ReduceDialog } from './dialogs/ReduceDialog'
 import { PdfExportDialog } from './dialogs/PdfExportDialog'
 import { AdjustColorPanel } from './image/AdjustColorPanel'
 import { AdjustSizeDialog } from './image/AdjustSizeDialog'
@@ -142,6 +143,7 @@ export function App() {
       {activeDoc.value instanceof ImageDoc && adjustSizeOpen.value && <AdjustSizeDialog doc={activeDoc.value} />}
       {activeDoc.value instanceof PdfDoc && redactTextOpen.value && <RedactTextDialog doc={activeDoc.value} />}
       {activeDoc.value instanceof PdfDoc && cleanupOpen.value && <CleanupDialog doc={activeDoc.value} />}
+      {activeDoc.value instanceof PdfDoc && reduceOpen.value && <ReduceDialog doc={activeDoc.value} />}
       {activeDoc.value instanceof ImageDoc && exportOpen.value && <ExportDialog doc={activeDoc.value} />}
       {activeDoc.value instanceof PdfDoc && exportOpen.value && <PdfExportDialog doc={activeDoc.value} />}
       <DialogHost />
