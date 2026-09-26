@@ -21,6 +21,8 @@ export interface Settings {
   autosave: boolean
   /** UI language code, or 'system' to follow Windows. See i18n/index.ts. */
   language: string
+  /** Reopen the files that were open when Glance last closed. */
+  reopenTabs: boolean
 }
 
 export const DEFAULT_TOOLBAR = ['sidebar', 'pageControls', 'spacer', 'zoomOut', 'zoomIn', 'rotate', 'highlight', 'markup', 'search', 'overflow']
@@ -34,7 +36,8 @@ const DEFAULTS: Settings = {
   sidebarWidth: 188,
   checkForUpdates: true,
   autosave: true,
-  language: 'system'
+  language: 'system',
+  reopenTabs: false
 }
 
 const KEY = 'glance.settings.v1'

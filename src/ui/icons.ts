@@ -39,6 +39,7 @@ import cube from '@fluentui/svg-icons/icons/cube_20_regular.svg?raw'
 import info from '@fluentui/svg-icons/icons/info_20_regular.svg?raw'
 import newWindow from '@fluentui/svg-icons/icons/window_new_20_regular.svg?raw'
 import document from '@fluentui/svg-icons/icons/document_20_regular.svg?raw'
+import tabs from '@fluentui/svg-icons/icons/tab_desktop_arrow_clockwise_20_regular.svg?raw'
 import pen from '@fluentui/svg-icons/icons/pen_20_regular.svg?raw'
 import markup from '@fluentui/svg-icons/icons/edit_20_regular.svg?raw'
 import cursor from '@fluentui/svg-icons/icons/cursor_20_regular.svg?raw'
@@ -88,5 +89,5 @@ const squiggly =
 import sparkle from '@fluentui/svg-icons/icons/sparkle_20_regular.svg?raw'
 import exportIcon from '@fluentui/svg-icons/icons/arrow_export_ltr_20_regular.svg?raw'
 
-export const ICONS = { sidebar, zoomIn, zoomOut, rotateRight, rotateLeft, highlight, search, print, share, more, up, down, left, right, open, close, settings, grid, toc, bookmark, moon, language, save, trash, add, addPage, fullscreen, slideshow, fitPage, zoomFit, undo, redo, edit, check, copy, image, cube, info, newWindow, document, pen, markup, cursor, draw, sketch, shapes, textBox, note, signature, redact, lineWidth, strokeColor, fillColor, textStyle, underline, strike, star, oval, square, roundRect, arrow, line, bubble, polygon, bookmarkAdd, bookmarks, notes, warningFilled, infoFilled, chevronSmall, crop, straighten, adjustColor, adjustSize, removeBg, copySubject, selectRect, selectEllipse, lasso, smartLasso, instantAlpha, flipH, flipV, exportIcon, squiggly, sparkle }
+export const ICONS = { sidebar, zoomIn, zoomOut, rotateRight, rotateLeft, highlight, search, print, share, more, up, down, left, right, open, close, settings, grid, toc, bookmark, moon, language, save, trash, add, addPage, fullscreen, slideshow, fitPage, zoomFit, undo, redo, edit, check, copy, image, cube, info, newWindow, document, tabs, pen, markup, cursor, draw, sketch, shapes, textBox, note, signature, redact, lineWidth, strokeColor, fillColor, textStyle, underline, strike, star, oval, square, roundRect, arrow, line, bubble, polygon, bookmarkAdd, bookmarks, notes, warningFilled, infoFilled, chevronSmall, crop, straighten, adjustColor, adjustSize, removeBg, copySubject, selectRect, selectEllipse, lasso, smartLasso, instantAlpha, flipH, flipV, exportIcon, squiggly, sparkle }
 export type IconName = keyof typeof ICONS
