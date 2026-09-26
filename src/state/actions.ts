@@ -179,13 +179,13 @@ async function openPostscript(probe: Probe): Promise<Doc | null> {
   }
 }
 
-export async function openFiles(paths: string[]): Promise<void> {
+export async function openFiles(paths: string[], opts: { quiet?: boolean } = {}): Promise<void> {
   for (const p of paths) {
     try {
       await openOne(p)
     } catch (e) {
       console.error(e)
-      toast(`Couldn’t open ${platform.baseName(p)}: ${(e as Error).message ?? e}`, 'error')
+      if (!opts.quiet) toast(`Couldn’t open ${platform.baseName(p)}: ${(e as Error).message ?? e}`, 'error')
     }
   }
 }

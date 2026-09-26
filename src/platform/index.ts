@@ -162,6 +162,13 @@ export async function initialFiles(): Promise<string[]> {
   return isTauri ? invoke<string[]>('initial_files') : []
 }
 
+/** "main" for the first window; windows opened later have their own labels. */
+export async function windowLabel(): Promise<string> {
+  if (!isTauri) return 'main'
+  const { getCurrentWindow } = await import('@tauri-apps/api/window')
+  return getCurrentWindow().label
+}
+
 export async function windowMaterial(): Promise<'mica' | 'solid'> {
   return isTauri ? invoke<'mica' | 'solid'>('window_material') : 'solid'
 }

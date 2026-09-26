@@ -4,6 +4,7 @@ import { isDark, settings } from '../state/settings'
 import { cleanupOpen, collageOpen, reduceOpen, scanOpen, customizeOpen, inspectorOpen, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
 import { confirmCloseWindow, openFiles } from '../state/actions'
 import { startAutosave } from '../state/autosave'
+import { restoreSession } from '../state/session'
 import { handleShellRequest } from '../state/shellActions'
 import { checkForUpdates } from '../state/updates'
 import { UpdateBar } from './UpdateBar'
@@ -87,7 +88,15 @@ export function App() {
     void platform.windowMaterial().then((m) => (document.documentElement.dataset.material = m))
     const fromHash = /open=([^&]+)/.exec(location.hash)
     const hashFiles: string[] = fromHash ? JSON.parse(decodeURIComponent(fromHash[1])) : []
-    void platform.initialFiles().then((files) => openFiles([...hashFiles, ...files]))
+    // Last session's tabs first, so a file Glance was launched with ends up in front.
+    let stopSession: (() => void) | undefined
+    void restoreSession()
+      .catch((e) => (console.error(e), () => {}))
+      .then((stop) => {
+        stopSession = stop
+        return platform.initialFiles()
+      })
+      .then((files) => openFiles([...hashFiles, ...files]))
     let dispose: (() => void) | undefined
     void platform.onOpenFiles((paths) => void openFiles(paths)).then((d) => (dispose = d))
     let unshell: (() => void) | undefined
@@ -113,6 +122,7 @@ export function App() {
       unshell?.()
       unguard?.()
       stopAutosave()
+      stopSession?.()
       unactivate?.()
       clearTimeout(updateTimer)
     }
