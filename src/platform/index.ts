@@ -166,6 +166,11 @@ export async function windowMaterial(): Promise<'mica' | 'solid'> {
   return isTauri ? invoke<'mica' | 'solid'>('window_material') : 'solid'
 }
 
+/** True in the Microsoft Store (MSIX) build, which the Store keeps up to date. */
+export async function isStorePackage(): Promise<boolean> {
+  return isTauri ? invoke<boolean>('store_package') : false
+}
+
 export async function showWindow(): Promise<void> {
   if (!isTauri) return
   const { getCurrentWindow } = await import('@tauri-apps/api/window')

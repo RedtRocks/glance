@@ -63,6 +63,7 @@ windows = { version = "0.62", features = [
   "Foundation_Collections",
   "Win32_Graphics_Printing",
   "Win32_Storage_Xps",
+  "Win32_Storage_Packaging_Appx",
   "Devices_Scanners",
   "Devices_Enumeration",
   "Storage_Search",
