@@ -317,7 +317,24 @@ export class NoticeDoc extends BaseDoc {
   }
 }
 
-export type Doc = PdfDoc | ImageDoc | NoticeDoc
+/** A 3D model (GLB, OBJ, STL, …), shown in the lazy-loaded three.js viewer. */
+export class ModelDoc extends BaseDoc {
+  readonly kind = 'model' as const
+  readonly probe: Probe
+  readonly pageCount = signal(1)
+  readonly current = signal(0)
+  readonly wireframe = signal(false)
+  readonly autoRotate = signal(false)
+  /** View requests from commands (zoom in/out, reset); the view consumes them. */
+  readonly viewRequest = signal<{ kind: 'zoom'; dir: 1 | -1 } | { kind: 'reset' } | { kind: 'snapshot' } | null>(null)
+  constructor(probe: Probe) {
+    super(probe.name, probe.path)
+    this.probe = probe
+    this.sidebar.value = 'none'
+  }
+}
+
+export type Doc = PdfDoc | ImageDoc | NoticeDoc | ModelDoc
 
 export const docs = signal<Doc[]>([])
 export const activeId = signal<string | null>(null)

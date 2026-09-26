@@ -44,6 +44,7 @@ export function stepZoom(current: number, dir: 1 | -1): number {
 }
 
 const pdf = () => (activeDoc.value?.kind === 'pdf' ? activeDoc.value : null)
+const model = () => (activeDoc.value?.kind === 'model' ? activeDoc.value : null)
 /** The sidebar pane actually on screen, or null when hidden. */
 const sidebarShown = () => {
   const pane = activeDoc.value?.sidebar.value
@@ -68,6 +69,7 @@ const multiPage = () => {
 function zoom(dir: 1 | -1): void {
   const d = activeDoc.value
   if (!d || d.kind === 'notice') return
+  if (d.kind === 'model') return void (d.viewRequest.value = { kind: 'zoom', dir })
   const next = stepZoom(d.effectiveScale.value, dir)
   if (d.kind === 'pdf') d.zoom.value = next
   else d.zoom.value = next
@@ -76,6 +78,7 @@ function zoom(dir: 1 | -1): void {
 function setZoom(mode: 'actual' | 'fit'): void {
   const d = activeDoc.value
   if (!d || d.kind === 'notice') return
+  if (d.kind === 'model') return void (d.viewRequest.value = { kind: 'reset' })
   if (d.kind === 'pdf') d.zoom.value = mode === 'actual' ? 1 : 'fit-page'
   else d.zoom.value = mode === 'actual' ? 1 : 'fit'
 }
@@ -121,8 +124,9 @@ export const COMMANDS: Command[] = [
     id: 'file.export',
     label: 'Export…',
     keys: ['Ctrl+E'],
-    run: () => void (exportOpen.value = true),
-    enabled: () => isPdf() || isImage()
+    // Models export a snapshot of the current view.
+    run: () => void (model() ? (model()!.viewRequest.value = { kind: 'snapshot' }) : (exportOpen.value = true)),
+    enabled: () => isPdf() || isImage() || !!model()
   },
   { id: 'file.exportPages', label: 'Export Selected Pages…', run: () => actions.exportSelectedPages(), enabled: isPdf },
   { id: 'file.versions', label: 'Browse Versions…', run: () => void (versionsOpen.value = true), enabled: () => !!activeDoc.value?.path.value },
@@ -202,6 +206,9 @@ export const COMMANDS: Command[] = [
   },
   { id: 'view.fullscreen', label: 'Full Screen', keys: ['F11'], run: () => platform.toggleFullscreen() },
   { id: 'view.slideshow', label: 'Slideshow', keys: ['Ctrl+Shift+F'], run: () => void (slideshow.value = true), enabled: hasDoc },
+  { id: 'model.resetView', label: 'Reset View', run: () => void (model() && (model()!.viewRequest.value = { kind: 'reset' })) },
+  { id: 'model.wireframe', label: 'Wireframe', keys: ['W'], run: () => void (model() && (model()!.wireframe.value = !model()!.wireframe.value)), checked: () => !!model()?.wireframe.value },
+  { id: 'model.autoRotate', label: 'Turntable', keys: ['T'], run: () => void (model() && (model()!.autoRotate.value = !model()!.autoRotate.value)), checked: () => !!model()?.autoRotate.value },
   { id: 'view.inspector', label: 'Inspector', keys: ['Ctrl+I'], run: () => void (inspectorOpen.value = !inspectorOpen.value), checked: () => inspectorOpen.value },
   { id: 'view.customizeToolbar', label: 'Customize Toolbar…', run: () => void (customizeOpen.value = true) },
   // Go
@@ -274,11 +281,11 @@ const VISIBILITY: [(() => boolean), string[]][] = [
   [() => ifPdf() || anyImage(), ['file.share']],
   [ifViewable, ['view.inspector']],
   [() => ifPdf() || anyImage(), ['file.versions']],
-  [ifViewable, [
-    'file.print', 'view.zoomIn', 'view.zoomOut', 'view.actualSize', 'view.zoomToFit', 'view.slideshow', 'view.fullscreen',
-    'tools.rotateLeft', 'tools.rotateRight'
-  ]],
-  [() => ifPdf() || isImage(), ['file.save', 'file.saveAs', 'file.export', 'edit.undo', 'edit.redo', 'edit.delete']],
+  [ifViewable, ['view.zoomIn', 'view.zoomOut', 'view.zoomToFit', 'view.fullscreen']],
+  [() => ifPdf() || anyImage(), ['file.print', 'view.actualSize', 'view.slideshow', 'tools.rotateLeft', 'tools.rotateRight']],
+  [() => activeDoc.value?.kind === 'model', ['model.wireframe', 'model.autoRotate', 'model.resetView']],
+  [() => ifPdf() || isImage(), ['file.save', 'file.saveAs', 'edit.undo', 'edit.redo', 'edit.delete']],
+  [() => ifPdf() || isImage() || !!model(), ['file.export']],
   [ifPdf, [
     'file.exportPages', 'file.split', 'edit.selectAll', 'edit.find', 'edit.insertBlank', 'edit.insertFile', 'edit.duplicatePages',
     'edit.deletePages', 'edit.addBookmark', 'file.cleanup', 'view.toc', 'view.notes', 'view.bookmarks', 'view.continuous', 'view.single', 'view.two',

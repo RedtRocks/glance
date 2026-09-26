@@ -12,7 +12,7 @@ const HELP: Entry[] = ['help.github', 'help.updates', 'help.about']
 const ZOOM: Entry[] = ['view.zoomIn', 'view.zoomOut', 'view.actualSize', 'view.zoomToFit']
 
 /** Each kind of file gets its own menu bar, like separate apps would. */
-export const MENUS: Record<'none' | 'pdf' | 'image' | 'notice', Record<string, Entry[]>> = {
+export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'notice', Record<string, Entry[]>> = {
   none: {
     File: ['file.open', 'file.newWindow', '-', 'file.batch', '-', 'file.settings'],
     Help: HELP
@@ -49,6 +49,12 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'notice', Record<string, E
       'tools.rotateLeft', 'tools.rotateRight', 'tools.flipHorizontal', 'tools.flipVertical'
     ],
     Markup: ['tools.markup', 'tools.text', 'tools.signature', '-', 'tools.redact'],
+    Help: HELP
+  },
+  model: {
+    File: ['file.open', 'file.openWith', 'file.newWindow', '-', 'file.export', '-', 'file.share', '-', 'file.close', '-', 'file.settings'],
+    View: [...ZOOM, 'model.resetView', '-', 'model.wireframe', 'model.autoRotate', '-', 'view.fullscreen', '-', 'view.inspector', 'view.customizeToolbar'],
+    Go: ['go.nextTab', 'go.previousTab'],
     Help: HELP
   },
   notice: {

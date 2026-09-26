@@ -14,6 +14,7 @@ import { Sidebar } from './sidebar/Sidebar'
 import { PdfView } from './views/PdfView'
 import { ImageView } from './views/ImageView'
 import { NoticeView } from './views/NoticeView'
+import { ModelView } from './views/ModelView'
 import { Welcome } from './views/Welcome'
 import { Slideshow } from './views/Slideshow'
 import { DialogHost } from './dialogs/Dialog'
@@ -58,6 +59,7 @@ function Viewer() {
           {doc.kind === 'pdf' && <PdfView key={doc.id} doc={doc} />}
           {doc.kind === 'image' && <ImageView key={doc.id} doc={doc} />}
           {doc.kind === 'notice' && <NoticeView doc={doc} />}
+          {doc.kind === 'model' && <ModelView key={doc.id} doc={doc} />}
         </div>
       </main>
       {doc instanceof ImageDoc && doc.editable && adjustColorOpen.value && <AdjustColorPanel key={doc.id} doc={doc} />}

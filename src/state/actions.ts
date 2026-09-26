@@ -13,6 +13,7 @@ import {
   docs,
   findByPath,
   ImageDoc,
+  ModelDoc,
   NoticeDoc,
   PdfDoc,
   removeDoc,
@@ -129,8 +130,11 @@ async function openFresh(path: string): Promise<Doc | null> {
     }
     case 'xps':
       return notice(probe, 'XPS documents are coming soon', 'Glance will render XPS and OpenXPS through the Windows XPS engine in an upcoming update.')
-    case 'model':
-      return notice(probe, '3D models are coming soon', 'The 3D viewer (GLB, OBJ, STL, USDZ and more) is part of an upcoming update.')
+    case 'model': {
+      const doc = new ModelDoc(probe)
+      addDoc(doc)
+      return doc
+    }
     default:
       return notice(probe, 'Glance can’t open this file', 'This file type isn’t supported. If you think it should be, please open an issue on GitHub.')
   }

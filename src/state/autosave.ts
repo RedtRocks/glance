@@ -40,7 +40,7 @@ export function startAutosave(): () => void {
   const dispose = effect(() => {
     if (!settings.value.autosave) return
     for (const d of docs.value) {
-      if (d.kind === 'notice') continue
+      if (d.kind === 'notice' || d.kind === 'model') continue
       void d.historyVersion.value // any edit
       if (!d.dirty.value) continue
       clearTimeout(timers.get(d.id))

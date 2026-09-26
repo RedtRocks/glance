@@ -81,7 +81,8 @@ export async function probe(path: string): Promise<Probe> {
   const ext = extOf(f.name)
   const head = new Uint8Array(await f.slice(0, 5).arrayBuffer())
   const isPdf = String.fromCharCode(...head) === '%PDF-'
-  const kind: Kind = isPdf || ext === 'pdf' ? 'pdf' : BROWSER_NATIVE.includes(ext) ? 'image' : 'unsupported'
+  const MODELS = ['glb', 'gltf', 'obj', 'stl', 'ply', '3mf', 'dae', 'fbx', 'usdz', '3ds']
+  const kind: Kind = isPdf || ext === 'pdf' ? 'pdf' : BROWSER_NATIVE.includes(ext) ? 'image' : MODELS.includes(ext) ? 'model' : 'unsupported'
   return { path, name: f.name, size: f.size, kind, browserNative: kind === 'image', pages: 1 }
 }
 
