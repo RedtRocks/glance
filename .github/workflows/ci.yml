@@ -71,9 +71,18 @@ jobs:
           reg query 'HKCR\.pdf' /s
           reg query 'HKCR\SystemFileAssociations\.pdf' /s 2>$null
           reg query 'HKCR\.tga' /s
+          # Explorer gets thumbnails from Glance's handler, through the shell's own lookup. COM
+          # ignores per-user registrations for out-of-process activation from elevated
+          # processes, and CI runs elevated, so the check runs with a normal user token.
           Push-Location src-tauri/thumbnailer
-          cargo test --locked -- --ignored installed_handler
-          if ($LASTEXITCODE -ne 0) { throw 'no PDF thumbnail from the installed handler' }
+          $built = cargo test --locked --no-run --message-format=json | ConvertFrom-Json | Where-Object { $_.reason -eq 'compiler-artifact' -and $_.executable -and $_.target.name -eq 'glance_thumbnailer' }
+          $test = $built.executable | Select-Object -Last 1
+          $out = Join-Path $env:RUNNER_TEMP 'thumb-check.txt'; $code = Join-Path $env:RUNNER_TEMP 'thumb-check.code'
+          Remove-Item $out, $code -ErrorAction SilentlyContinue
+          runas /trustlevel:0x20000 "cmd /c `"`"$test`" --ignored installed_handler > `"$out`" 2>&1 & call echo %errorlevel% > `"$code`"`""
+          for ($i = 0; $i -lt 120 -and -not (Test-Path $code); $i++) { Start-Sleep 1 }
+          Get-Content $out -ErrorAction SilentlyContinue
+          if ((Get-Content $code -ErrorAction SilentlyContinue).Trim() -ne '0') { throw 'no thumbnail from the installed handler' }
           Pop-Location
           $dir = Join-Path $env:LOCALAPPDATA Glance
           Start-Process (Join-Path $dir uninstall.exe) -ArgumentList '/S', "_?=$dir" -Wait
