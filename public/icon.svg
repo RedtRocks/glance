@@ -1,17 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <defs>
-    <linearGradient id="bg" x1="0.15" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#38C8FF"/>
-      <stop offset="0.55" stop-color="#3D6BFF"/>
-      <stop offset="1" stop-color="#6A3DF0"/>
+    <linearGradient id="ring" x1="0.1" y1="0.05" x2="0.9" y2="0.95">
+      <stop offset="0" stop-color="#2EE6C5"/>
+      <stop offset="0.5" stop-color="#2F7BFF"/>
+      <stop offset="1" stop-color="#8A4DFF"/>
     </linearGradient>
-    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fff" stop-opacity=".22"/>
-      <stop offset=".5" stop-color="#fff" stop-opacity="0"/>
+    <linearGradient id="core" x1="0.85" y1="0.9" x2="0.15" y2="0.1">
+      <stop offset="0" stop-color="#8A4DFF"/>
+      <stop offset="1" stop-color="#2F7BFF"/>
     </linearGradient>
+    <radialGradient id="shine" cx="0.35" cy="0.3" r="0.7">
+      <stop offset="0" stop-color="#fff" stop-opacity=".35"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <rect x="80" y="80" width="864" height="864" rx="240" fill="url(#bg)"/>
-  <rect x="80" y="80" width="864" height="864" rx="240" fill="url(#sheen)"/>
-  <circle cx="512" cy="512" r="236" fill="none" stroke="#fff" stroke-width="112"/>
-  <circle cx="584" cy="440" r="64" fill="#fff"/>
+  <circle cx="512" cy="512" r="360" fill="none" stroke="url(#ring)" stroke-width="150"/>
+  <circle cx="512" cy="512" r="196" fill="url(#core)"/>
+  <circle cx="512" cy="512" r="196" fill="url(#shine)"/>
+  <circle cx="584" cy="440" r="60" fill="#fff"/>
 </svg>
