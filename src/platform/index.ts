@@ -448,6 +448,21 @@ export async function openWith(path: string): Promise<void> {
   await invoke('open_with', { path })
 }
 
+/** Whether Windows opens PDFs, and JPEG and PNG images, with Glance. */
+export async function defaultAppStatus(): Promise<{ pdf: boolean; images: boolean }> {
+  return isTauri ? invoke('default_app_status') : { pdf: false, images: false }
+}
+
+/**
+ * Opens Glance's page in Windows Settings → Apps → Default apps. Windows doesn't let
+ * apps make themselves the default; the user confirms there (one "Set default" button
+ * on Windows 11).
+ */
+export async function openDefaultAppsSettings(): Promise<void> {
+  if (!isTauri) throw new Error(t('Default apps can be set in the Windows app.'))
+  await invoke('open_default_apps_settings')
+}
+
 /** Uses the image bytes (JPEG/PNG/BMP) as the desktop background or the lock screen. */
 export async function setWallpaper(bytes: Uint8Array, ext: string, target: 'desktop' | 'lock'): Promise<void> {
   if (!isTauri) throw new Error(t('Setting the background is available in the Windows app.'))

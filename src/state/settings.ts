@@ -23,6 +23,8 @@ export interface Settings {
   language: string
   /** Reopen the files that were open when Glance last closed. */
   reopenTabs: boolean
+  /** The "Make Glance your default viewer?" bar was shown and answered or closed. */
+  defaultAppAsked?: boolean
 }
 
 export const DEFAULT_TOOLBAR = ['sidebar', 'pageControls', 'spacer', 'zoomOut', 'zoomIn', 'rotate', 'highlight', 'markup', 'search', 'overflow']

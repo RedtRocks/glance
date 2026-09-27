@@ -171,3 +171,95 @@ mod win {
         run().map_err(|e| format!("Windows didn’t accept the lock screen image ({}). Your organization may manage the lock screen.", e.message()))
     }
 }
+
+/// Whether Windows opens PDFs and common images (JPEG, PNG) with Glance.
+#[derive(serde::Serialize)]
+pub struct DefaultAppStatus {
+    pdf: bool,
+    images: bool,
+}
+
+#[tauri::command]
+pub async fn default_app_status() -> DefaultAppStatus {
+    #[cfg(windows)]
+    {
+        tauri::async_runtime::spawn_blocking(|| DefaultAppStatus {
+            pdf: default_app::opens_with_glance(".pdf"),
+            images: default_app::opens_with_glance(".jpg") && default_app::opens_with_glance(".png"),
+        })
+        .await
+        .unwrap_or(DefaultAppStatus { pdf: false, images: false })
+    }
+    #[cfg(not(windows))]
+    {
+        DefaultAppStatus { pdf: false, images: false }
+    }
+}
+
+/// Opens Glance's page in Settings → Apps → Default apps. Windows doesn't let apps
+/// change defaults themselves; on Windows 11 that page has one "Set default" button.
+#[tauri::command]
+pub async fn open_default_apps_settings() -> Result<(), String> {
+    #[cfg(windows)]
+    {
+        tauri::async_runtime::spawn_blocking(default_app::open_settings).await.map_err(|e| e.to_string())?
+    }
+    #[cfg(not(windows))]
+    {
+        Err("Default apps are only available on Windows.".into())
+    }
+}
+
+#[cfg(windows)]
+mod default_app {
+    use windows::core::{w, HSTRING, PCWSTR, PWSTR};
+    use windows::Win32::Foundation::ERROR_INSUFFICIENT_BUFFER;
+    use windows::Win32::Storage::Packaging::Appx::GetCurrentApplicationUserModelId;
+    use windows::Win32::UI::Shell::{AssocQueryStringW, ShellExecuteW, ASSOCF_NONE, ASSOCSTR_EXECUTABLE};
+    use windows::Win32::UI::WindowsAndMessaging::SW_SHOWNORMAL;
+
+    /// Name of Glance's value under HKCU\Software\RegisteredApplications
+    /// (src-tauri/windows/default-apps.nsh).
+    const REGISTERED_APP: &str = "Glance";
+
+    /// Whether double-clicking a file with this extension starts glance.exe.
+    pub fn opens_with_glance(ext: &str) -> bool {
+        let ext = HSTRING::from(ext);
+        let mut buf = [0u16; 1024];
+        let mut len = buf.len() as u32;
+        let ok = unsafe { AssocQueryStringW(ASSOCF_NONE, ASSOCSTR_EXECUTABLE, &ext, w!("open"), Some(PWSTR(buf.as_mut_ptr())), &mut len) };
+        if ok.is_err() {
+            return false;
+        }
+        let exe = String::from_utf16_lossy(&buf[..buf.iter().position(|&c| c == 0).unwrap_or(buf.len())]);
+        let ours = std::env::current_exe().ok().and_then(|p| p.file_name().map(|n| n.to_string_lossy().into_owned()));
+        let theirs = std::path::Path::new(&exe).file_name().map(|n| n.to_string_lossy().into_owned());
+        matches!((ours, theirs), (Some(a), Some(b)) if a.eq_ignore_ascii_case(&b))
+    }
+
+    /// The Store build's app user model id, or None for the installer build.
+    fn package_app_id() -> Option<String> {
+        let mut len = 0u32;
+        if unsafe { GetCurrentApplicationUserModelId(&mut len, None) } != ERROR_INSUFFICIENT_BUFFER {
+            return None;
+        }
+        let mut buf = vec![0u16; len as usize];
+        unsafe { GetCurrentApplicationUserModelId(&mut len, Some(PWSTR(buf.as_mut_ptr()))) }.ok().ok()?;
+        Some(String::from_utf16_lossy(&buf[..len.saturating_sub(1) as usize]))
+    }
+
+    pub fn open_settings() -> Result<(), String> {
+        // Windows 11 opens the app's own page from these; Windows 10 shows Default apps.
+        let url = match package_app_id() {
+            Some(aumid) => format!("ms-settings:defaultapps?registeredAUMID={aumid}"),
+            None => format!("ms-settings:defaultapps?registeredAppUser={REGISTERED_APP}"),
+        };
+        let result = unsafe { ShellExecuteW(None, w!("open"), &HSTRING::from(url), PCWSTR::null(), PCWSTR::null(), SW_SHOWNORMAL) };
+        // ShellExecute returns a value above 32 on success.
+        if result.0 as isize > 32 {
+            Ok(())
+        } else {
+            Err("Windows Settings didn’t open.".into())
+        }
+    }
+}

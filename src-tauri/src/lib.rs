@@ -128,6 +128,8 @@ pub fn run() {
             fonts::fonts_list,
             fonts::font_bytes,
             shell::open_with,
+            shell::default_app_status,
+            shell::open_default_apps_settings,
             metadata::image_metadata,
             metadata::remove_location,
             ocr::ocr_image,

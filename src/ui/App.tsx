@@ -8,6 +8,8 @@ import { restoreSession } from '../state/session'
 import { handleShellRequest } from '../state/shellActions'
 import { checkForUpdates } from '../state/updates'
 import { UpdateBar } from './UpdateBar'
+import { DefaultAppBar } from './DefaultAppBar'
+import { offerDefaultApp } from '../state/defaultApp'
 import * as platform from '../platform'
 import { MenuBar } from './MenuBar'
 import { TabStrip } from './TabStrip'
@@ -110,6 +112,7 @@ export function App() {
     const stopAutosave = startAutosave()
     // A few seconds after start, so it never competes with opening files.
     const updateTimer = window.setTimeout(() => void checkForUpdates(), 5000)
+    const defaultAppTimer = window.setTimeout(() => void offerDefaultApp(), 3000)
     // Another window asked us to show a file this window already has open.
     let unactivate: (() => void) | undefined
     void platform
@@ -130,6 +133,7 @@ export function App() {
       stopSession?.()
       unactivate?.()
       clearTimeout(updateTimer)
+      clearTimeout(defaultAppTimer)
     }
   }, [])
 
@@ -155,6 +159,7 @@ export function App() {
         </div>
         <MarkupToolbar />
         <UpdateBar />
+        <DefaultAppBar />
       </header>
       <Viewer />
       {slideshow.value && <Slideshow />}
