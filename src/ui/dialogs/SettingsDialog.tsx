@@ -1,7 +1,9 @@
-import { useState } from 'preact/hooks'
+import { useEffect, useState } from 'preact/hooks'
 import { settings, updateSettings, type ThemePref } from '../../state/settings'
 import { settingsOpen } from '../../state/ui'
 import { storeInstall } from '../../state/updates'
+import { defaultApp, makeDefault, refreshDefaultApp } from '../../state/defaultApp'
+import { toast } from '../../state/ui'
 import { COMMANDS, bindings, keyScope } from '../../state/commands'
 import { comboFromEvent, displayCombo, findConflicts } from '../../core/shortcuts'
 import { Modal } from './Dialog'
@@ -23,6 +25,28 @@ function SettingsCard({ icon, title, description, children }: { icon: IconName; 
       </div>
       <div class="settings-card-control">{children}</div>
     </div>
+  )
+}
+
+/** "Default app": whether Windows opens PDFs and images with Glance, and a button to change it. */
+function DefaultAppCard() {
+  useEffect(() => void refreshDefaultApp(), [])
+  const s = defaultApp.value
+  const description = !s
+    ? t('Open PDFs and images with Glance when you double-click them.')
+    : s.pdf && s.images
+      ? t('Glance opens your PDFs and images.')
+      : s.pdf
+        ? t('Glance opens your PDFs. Images open in another app.')
+        : s.images
+          ? t('Glance opens your images. PDFs open in another app.')
+          : t('PDFs and images open in another app.')
+  return (
+    <SettingsCard icon="apps" title={t('Default app')} description={description}>
+      <button class="btn" onClick={() => void makeDefault().catch((e: Error) => toast(e.message))}>
+        {s?.pdf && s.images ? t('Change in Windows Settings') : t('Make default')}
+      </button>
+    </SettingsCard>
   )
 }
 
@@ -99,6 +123,7 @@ export function SettingsDialog() {
       </div>
       {tab === 'general' ? (
         <div class="settings-cards">
+          <DefaultAppCard />
           <SettingsCard icon="moon" title={t('App theme')} description={t('Follow Windows, or always use light or dark.')}>
             <select value={s.theme} onChange={(e) => updateSettings({ theme: (e.target as HTMLSelectElement).value as ThemePref })}>
               <option value="system">{t('Use Windows setting')}</option>

@@ -1,6 +1,17 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { DEV_IDENTITY, extensions, msixManifest, msixVersion, parseSha256Sums, readTauriConf, wingetManifests } from '../scripts/packaging'
+import {
+  DEFAULT_APPS_NSH,
+  DEV_IDENTITY,
+  extensions,
+  msixManifest,
+  msixVersion,
+  nsisDefaultApps,
+  parseSha256Sums,
+  progId,
+  readTauriConf,
+  wingetManifests,
+} from '../scripts/packaging'
 
 const conf = readTauriConf()
 const SUMS = `39bbe6cca8d1848b22af6af8e75852562487abefeb079b5d9a0dd7083faac0fe  Glance-v0.3.0-windows-arm64-setup.exe
@@ -51,5 +62,37 @@ describe('MSIX manifest', () => {
     const xml = msixManifest(conf, 'x64', { name: 'A.B', publisher: 'CN=A & "B"', publisherDisplayName: '<C>' })
     expect(xml).toContain('Publisher="CN=A &amp; &quot;B&quot;"')
     expect(xml).toContain('<PublisherDisplayName>&lt;C&gt;</PublisherDisplayName>')
+  })
+})
+
+describe('Default apps registration (installer)', () => {
+  const nsh = nsisDefaultApps(conf)
+
+  it('matches the committed default-apps.nsh (run `node scripts/packaging.ts nsis`)', () => {
+    expect(readFileSync(DEFAULT_APPS_NSH, 'utf8').replace(/\r\n/g, '\n')).toBe(nsh)
+  })
+
+  it('offers Glance for every file type', () => {
+    expect(nsh).toContain('WriteRegStr HKCU "Software\\RegisteredApplications" "Glance" "${GLANCE_CAPABILITIES}"')
+    for (const a of conf.bundle.fileAssociations) {
+      const id = progId(a.name)
+      expect(id).toMatch(/^Glance\.[A-Za-z0-9]+$/)
+      expect(nsh).toContain(`"Software\\Classes\\${id}\\shell\\open\\command" "" '"$INSTDIR\\\${MAINBINARYNAME}.exe" "%1"'`)
+      for (const ext of a.ext) {
+        expect(nsh).toContain(`"\${GLANCE_CAPABILITIES}\\FileAssociations" ".${ext}" "${id}"`)
+        expect(nsh).toContain(`"Software\\Classes\\.${ext}\\OpenWithProgids" "${id}" ""`)
+        expect(nsh).toContain(`DeleteRegValue HKCU "Software\\Classes\\.${ext}\\OpenWithProgids" "${id}"`)
+        // Thumbnails and the Preview pane keep working with Glance as the default.
+        expect(nsh).toMatch(new RegExp(`GLANCE_KEEP_HANDLERS "${ext}" "${a.name}" "(image)?"`))
+        expect(nsh).toContain(`GLANCE_DROP_HANDLERS "${ext}"`)
+      }
+    }
+  })
+
+  it('is registered on install and removed on uninstall', () => {
+    const hooks = readFileSync('src-tauri/windows/hooks.nsh', 'utf8')
+    expect(hooks).toContain('!include "${__FILEDIR__}\\default-apps.nsh"')
+    expect(hooks).toMatch(/NSIS_HOOK_POSTINSTALL[\s\S]*GLANCE_DEFAULT_APPS_REGISTER[\s\S]*!macroend/)
+    expect(hooks).toMatch(/NSIS_HOOK_PREUNINSTALL[\s\S]*GLANCE_DEFAULT_APPS_UNREGISTER[\s\S]*!macroend/)
   })
 })
