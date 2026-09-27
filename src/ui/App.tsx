@@ -60,7 +60,7 @@ function Viewer() {
     <div class="workspace">
       {sidebarVisible.value && <Sidebar key={doc.id} doc={doc} />}
       <main class="viewer" aria-label={doc.name.value}>
-        {doc.kind === 'pdf' && <RedactionBar doc={doc} />}
+        {(doc.kind === 'pdf' || doc.kind === 'image') && <RedactionBar doc={doc} />}
         <ExternalAppBar key={doc.id} doc={doc} />
         <ConflictBar doc={doc} />
         {doc.kind === 'pdf' && <SignatureBar key={doc.id} doc={doc} />}

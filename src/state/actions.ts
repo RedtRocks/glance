@@ -20,7 +20,7 @@ import {
   type Doc
 } from './documents'
 import { alertDialog, promptText, showDialog, toast, withBusy } from './ui'
-import { editableImage, rotateImage, saveImage, saveImageAs } from './imageActions'
+import { applyImageRedactions, editableImage, rotateImage, saveImage, saveImageAs } from './imageActions'
 import * as versions from './versions'
 import { msg, t } from '../i18n'
 import { mayHaveSignatures } from '../core/signatureStatus'
@@ -298,7 +298,7 @@ export async function saveAs(doc: Doc | null = activeDoc.value): Promise<void> {
 async function confirmDiscard(doc: Doc): Promise<boolean> {
   if (!doc.dirty.peek()) return true
   activeId.value = doc.id
-  const pending = doc.kind === 'pdf' ? doc.redactions.peek().length : 0
+  const pending = doc.kind === 'pdf' || doc.kind === 'image' ? doc.redactions.peek().length : 0
   const choice = await showDialog<'save' | 'discard' | 'cancel'>({
     title: t('Save changes to “{file}”?', { file: doc.name.value }),
     body: pending
@@ -702,6 +702,24 @@ async function makeRasterizer(bytes: Uint8Array): Promise<import('../core/redact
 
 /** Applies pending redactions after confirmation. Returns false if cancelled or failed. */
 export async function applyRedactions(doc: Doc | null = activeDoc.value, confirm = true): Promise<boolean> {
+  if (doc instanceof ImageDoc) {
+    const n = doc.redactions.peek().length
+    if (!n) return true
+    if (confirm) {
+      const ok = await showDialog<boolean>({
+        title: t('Apply redactions?'),
+        body: t('{count, plural, one {The marked area is painted solid black in the image.} other {The # marked areas are painted solid black in the image.}} When you save, the original pixels underneath are gone from the file.', { count: n }),
+        buttons: [
+          { label: t('Cancel'), value: false },
+          { label: t('Apply redactions'), value: true, primary: true }
+        ]
+      })
+      if (!ok) return false
+    }
+    const done = await applyImageRedactions(doc)
+    if (done) toast(t('{count, plural, one {Redacted # area} other {Redacted # areas}}', { count: n }))
+    return done
+  }
   if (doc?.kind !== 'pdf') return false
   const reds = doc.redactions.peek()
   if (!reds.length) return true
@@ -733,5 +751,5 @@ export async function applyRedactions(doc: Doc | null = activeDoc.value, confirm
 }
 
 export function discardRedactions(doc: Doc | null = activeDoc.value): void {
-  if (doc?.kind === 'pdf' && doc.redactions.peek().length) doc.edit(msg('Discard Redactions'), { redactions: [] })
+  if ((doc?.kind === 'pdf' || doc?.kind === 'image') && doc.redactions.peek().length) doc.edit(msg('Discard Redactions'), { redactions: [] })
 }

@@ -4,7 +4,7 @@ import { applyMask, featherMask, floodMask, maskBounds, refineMatte, resizeMask 
 import { polygonMask, selectionMask, smartLassoMask } from '../src/core/image/select'
 import { crop, flip, rotate90 } from '../src/core/image/transform'
 import { fitInto, fromPixels, proportional, toPixels } from '../src/core/image/size'
-import { raster, type Raster } from '../src/core/image/raster'
+import { burnRedactions, raster, redactionBox, type Raster } from '../src/core/image/raster'
 
 function fill(w: number, h: number, f: (x: number, y: number) => [number, number, number, number]): Raster {
   const r = raster(w, h)
@@ -181,5 +181,27 @@ describe('definition', () => {
     applyAdjust(img, { ...DEFAULT_ADJUST, definition: -1 })
     expect(at(img, 97)).toBeGreaterThan(100)
     expect(at(img, 102)).toBeLessThan(150)
+  })
+})
+
+describe('image redaction', () => {
+  it('paints the area opaque black in a copy, leaving the rest alone', () => {
+    const img = fill(6, 4, (x, y) => [200, x * 10, y * 10, 128])
+    // y-up markup space: rows 1..2 from the bottom are image rows 1..2 from the top of a 4-high image.
+    const out = burnRedactions(img, [[1, 1, 3, 3]])
+    expect(px(out, 1, 1)).toEqual([0, 0, 0, 255])
+    expect(px(out, 2, 2)).toEqual([0, 0, 0, 255])
+    expect(px(out, 0, 1)).toEqual([200, 0, 10, 128])
+    expect(px(out, 3, 1)).toEqual([200, 30, 10, 128])
+    expect(px(out, 1, 0)).toEqual([200, 10, 0, 128])
+    expect(px(out, 1, 3)).toEqual([200, 10, 30, 128])
+    expect(px(img, 1, 1)).toEqual([200, 10, 10, 128])
+  })
+
+  it('covers partly covered edge pixels and clips to the image', () => {
+    expect(redactionBox([0.5, 0.5, 2.2, 1.1], 10, 10)).toEqual({ x: 0, y: 8, width: 3, height: 2 })
+    expect(redactionBox([-5, -5, 20, 20], 4, 4)).toEqual({ x: 0, y: 0, width: 4, height: 4 })
+    expect(redactionBox([3, 1, 1, 3], 4, 4)).toEqual({ x: 1, y: 1, width: 2, height: 2 })
+    expect(redactionBox([10, 10, 12, 12], 4, 4)).toBeNull()
   })
 })

@@ -1,10 +1,10 @@
-import type { PdfDoc } from '../state/documents'
+import type { ImageDoc, PdfDoc } from '../state/documents'
 import { applyRedactions, discardRedactions } from '../state/actions'
 import { InfoBar } from './InfoBar'
 import { t } from '../i18n'
 
 /** Pending redactions are loud: the content is still in the file until applied. Not closable. */
-export function RedactionBar({ doc }: { doc: PdfDoc }) {
+export function RedactionBar({ doc }: { doc: PdfDoc | ImageDoc }) {
   const n = doc.redactions.value.length
   if (!n) return null
   return (

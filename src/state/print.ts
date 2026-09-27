@@ -3,7 +3,8 @@
  * handed to WebView2's print dialog (which offers every installed printer and
  * "Microsoft Print to PDF").
  */
-import type { Doc } from './documents'
+import { ImageDoc, type Doc } from './documents'
+import * as engine from '../image/engine'
 import { imageUrl } from '../platform'
 import { withBusy } from './ui'
 import { openPdf } from '../pdf/engine'
@@ -40,6 +41,14 @@ export async function printDoc(doc: Doc | null): Promise<void> {
   await withBusy(t('Preparing to print…'), async () => {
     if (doc.kind === 'pdf') {
       await pdfPages(doc, root)
+    } else if (doc instanceof ImageDoc && doc.editable && (doc.raster.peek() || doc.markup.peek().length || doc.redactions.peek().length)) {
+      // Print what would be saved: edits, markup and redactions burned in.
+      const png = await engine.encodePng(await engine.flatten(doc))
+      const img = document.createElement('img')
+      img.className = 'print-page'
+      img.src = URL.createObjectURL(new Blob([png as Uint8Array<ArrayBuffer>], { type: 'image/png' }))
+      await img.decode().catch(() => undefined)
+      root.appendChild(img)
     } else {
       for (let p = 0; p < doc.pageCount.value; p++) {
         const img = document.createElement('img')
@@ -51,5 +60,6 @@ export async function printDoc(doc: Doc | null): Promise<void> {
     }
   })
   window.print()
+  for (const img of root.querySelectorAll('img')) if (img.src.startsWith('blob:')) URL.revokeObjectURL(img.src)
   root.replaceChildren()
 }

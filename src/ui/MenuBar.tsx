@@ -56,7 +56,7 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'notice', Record
       'tools.crop', 'tools.instantAlpha', 'tools.removeBackground', 'tools.copySubject', '-',
       'tools.rotateLeft', 'tools.rotateRight', 'tools.straighten', 'tools.flipHorizontal', 'tools.flipVertical'
     ],
-    Markup: ['tools.markup', 'tools.text', 'tools.signature', '-', 'tools.redact'],
+    Markup: ['tools.markup', 'tools.text', 'tools.signature', '-', 'tools.redact', 'tools.applyRedactions'],
     Help: HELP
   },
   model: {

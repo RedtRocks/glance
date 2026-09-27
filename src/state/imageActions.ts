@@ -2,7 +2,7 @@
 import { crop, flip, flipAffine, rotate90, rotate90Affine, straightenGeometry, type Affine } from '../core/image/transform'
 import { maskBounds } from '../core/image/alpha'
 import { selectionBounds } from '../core/image/select'
-import type { Raster } from '../core/image/raster'
+import { burnRedactions, type Raster } from '../core/image/raster'
 import type { AdjustParams } from '../core/image/adjust'
 import * as engine from '../image/engine'
 import * as platform from '../platform'
@@ -81,6 +81,21 @@ export async function cropToSelection(doc: ImageDoc): Promise<void> {
     () => [1, 0, 0, 1, -Math.max(0, Math.floor(b.x)), -Math.max(0, Math.floor(b.y))]
   )
   imageSelection.value = null
+}
+
+/**
+ * Burns pending redactions into the pixels as solid black, one undoable step. The
+ * original stays on disk until the next save, like Apply Redactions for PDFs.
+ */
+export async function applyImageRedactions(doc: ImageDoc): Promise<boolean> {
+  const reds = doc.redactions.peek()
+  if (!reds.length) return true
+  const before = doc.historyVersion.peek()
+  await pixels(doc, msg('Apply Redactions'), (r) => burnRedactions(r, reds.map((x) => x.rect)))
+  if (doc.historyVersion.peek() === before) return false
+  doc.redactions.value = []
+  redactedDocs.add(doc)
+  return true
 }
 
 /** Delete: selected pixels become transparent (Preview's Edit → Delete for images). */
