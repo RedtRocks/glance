@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isTouchpad } from '../src/core/touchpad'
+import { isTouchpad, pinchScale } from '../src/core/touchpad'
 
 const wheel = (deltaX: number, deltaY: number, timeStamp: number, deltaMode = 0) => ({ deltaX, deltaY, timeStamp, deltaMode })
 
@@ -18,5 +18,20 @@ describe('touchpad detection', () => {
     expect(isTouchpad(wheel(0, 8, 10000))).toBe(true)
     expect(isTouchpad(wheel(0, 120, 10016))).toBe(true)
     expect(isTouchpad(wheel(0, 120, 20000))).toBe(false)
+  })
+})
+
+describe('pinch zoom', () => {
+  it('zooms in on a pinch out and out on a pinch in, about 2x for a full pinch', () => {
+    expect(pinchScale(-10)).toBeLessThan(1)
+    expect(pinchScale(10)).toBeGreaterThan(1)
+    let s = 1
+    for (let i = 0; i < 23; i++) s *= pinchScale(-3)
+    expect(s).toBeCloseTo(0.5, 1)
+  })
+
+  it('caps a single event', () => {
+    expect(pinchScale(-1000)).toBe(0.5)
+    expect(pinchScale(1000)).toBe(2)
   })
 })

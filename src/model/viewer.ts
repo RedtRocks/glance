@@ -7,7 +7,7 @@ import * as THREE from 'three'
 import { t } from '../i18n'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
-import { isTouchpad } from '../core/touchpad'
+import { isTouchpad, pinchScale } from '../core/touchpad'
 
 export interface ModelStats {
   meshes: number
@@ -307,14 +307,20 @@ export async function createViewer(canvas: HTMLCanvasElement, bytes: ArrayBuffer
   redraw = () => void (dirty = true)
 
   // Touchpad: two-finger drag orbits, Shift + two-finger drag pans, and pinch
-  // (a Ctrl+wheel) zooms through OrbitControls. A mouse wheel still zooms.
+  // zooms. A mouse wheel (with or without Ctrl) still zooms through OrbitControls.
+  // Pinch is handled here because Windows delivers it as Ctrl+wheel with tiny
+  // deltas, often with a synthetic Ctrl keydown; OrbitControls then takes it for a
+  // held Ctrl key and scales it down to almost nothing.
   const onWheel = (e: WheelEvent) => {
-    if (e.ctrlKey || !isTouchpad(e)) return
+    if (!isTouchpad(e)) return
     e.preventDefault()
     e.stopImmediatePropagation()
     const h = canvas.clientHeight || 1
     const offset = camera.position.clone().sub(controls.target)
-    if (e.shiftKey) {
+    if (e.ctrlKey) {
+      const d = THREE.MathUtils.clamp(offset.length() * pinchScale(e.deltaY), radius * 0.05, radius * 50)
+      camera.position.copy(controls.target).add(offset.setLength(d))
+    } else if (e.shiftKey) {
       const perPixel = (2 * offset.length() * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / h
       const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0)
       const up = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1)
