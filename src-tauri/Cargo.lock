@@ -1689,6 +1689,7 @@ dependencies = [
  "jxl-oxide",
  "kamadak-exif",
  "little_exif",
+ "memmap2",
  "percent-encoding",
  "serde",
  "serde_json",

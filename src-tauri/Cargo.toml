@@ -36,6 +36,7 @@ kamadak-exif = "0.6"
 fastcdc = "3"
 blake3 = { version = "1", default-features = false, features = ["std", "pure"] }
 little_exif = "0.6"
+memmap2 = "0.9"
 ttf-parser = { version = "0.25", default-features = false, features = ["std", "opentype-layout"] }
 tract-onnx = "0.23"
 # Matches tract-onnx's linalg; enables multithreaded matrix multiply (~1.7x faster).

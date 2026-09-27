@@ -3,8 +3,11 @@ import type { ComponentChildren } from 'preact'
 import { Icon } from '../Icon'
 import type { IconName } from '../icons'
 
-/** Toolbar button with a Fluent flyout underneath. */
-export function Popover({ icon, label, pressed, children, swatch }: { icon: IconName; label: string; pressed?: boolean; children: (close: () => void) => ComponentChildren; swatch?: string }) {
+/**
+ * Toolbar button with a Fluent flyout underneath. Without an icon it is just the chevron,
+ * the dropdown half of a split button placed right after the main button.
+ */
+export function Popover({ icon, label, pressed, children, swatch }: { icon?: IconName; label: string; pressed?: boolean; children: (close: () => void) => ComponentChildren; swatch?: string }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -24,8 +27,8 @@ export function Popover({ icon, label, pressed, children, swatch }: { icon: Icon
   }, [open])
   return (
     <div class="popover" ref={ref}>
-      <button class={`tb-button with-chevron ${pressed || open ? 'pressed' : ''}`} title={label} aria-label={label} aria-expanded={open} onClick={() => setOpen(!open)}>
-        <Icon name={icon} />
+      <button class={`tb-button with-chevron ${icon ? '' : 'split-chevron'} ${pressed || open ? 'pressed' : ''}`} title={label} aria-label={label} aria-expanded={open} onClick={() => setOpen(!open)}>
+        {icon && <Icon name={icon} />}
         {swatch && <span class="swatch-bar" style={{ background: swatch }} />}
         <span class="chevron" aria-hidden="true">
           <Icon name="chevronSmall" size={12} />

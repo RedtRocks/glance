@@ -8,7 +8,8 @@ import { findOpen, findQuery, menuOpen, sidebarVisible } from '../state/ui'
 import { hits, hitIndex, runSearch, searching, stepHit } from '../pdf/search'
 import { MenuItems } from './MenuBar'
 import { OVERFLOW_ITEMS, OVERFLOW_MENU } from '../core/menus'
-import { markupBar, tool } from '../state/markupState'
+import { markupBar } from '../state/markupState'
+import { HighlightButton } from './markup/MarkupToolbar'
 import { Icon } from './Icon'
 import type { IconName } from './icons'
 import { msg, t } from '../i18n'
@@ -207,7 +208,7 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     id: 'highlight',
     label: msg('Highlight'),
     applies: isPdf,
-    render: () => <Btn icon="highlight" label={t('Highlight')} command="tools.highlight" pressed={tool.value === 'highlight'} />
+    render: (c) => (c.doc?.kind === 'pdf' ? <HighlightButton doc={c.doc} /> : null)
   },
   {
     id: 'contactSheet',
