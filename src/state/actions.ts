@@ -22,6 +22,7 @@ import {
 import { alertDialog, promptText, showDialog, toast, withBusy } from './ui'
 import { applyImageRedactions, editableImage, rotateImage, saveImage, saveImageAs } from './imageActions'
 import * as versions from './versions'
+import { flushAutosave } from './autosave'
 import { msg, t } from '../i18n'
 import { mayHaveSignatures } from '../core/signatureStatus'
 
@@ -325,11 +326,13 @@ async function confirmDiscard(doc: Doc): Promise<boolean> {
 
 export async function closeDoc(doc: Doc | null = activeDoc.value): Promise<void> {
   if (!doc) return
+  await flushAutosave(doc)
   if (await confirmDiscard(doc)) removeDoc(doc.id)
 }
 
 /** Before the window closes: every edited document is saved or discarded first. */
 export async function confirmCloseWindow(): Promise<boolean> {
+  await flushAutosave()
   for (const doc of docs.peek().filter((d) => d.dirty.peek())) {
     if (!(await confirmDiscard(doc))) return false
   }

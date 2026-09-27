@@ -189,4 +189,50 @@ describe('Autosaver', () => {
     await advance(QUIET_MS)
     expect(d.writes).toHaveLength(0)
   })
+  it('saves at once when flushed, even mid-countdown or mid-gesture', async () => {
+    const { saver, advance, edit, pending } = setup()
+    const d = new FakeDoc()
+    saver.clean(d)
+    edit(d)
+    d.typing = true
+    await saver.flush(d)
+    expect(d.writes).toEqual([d.content])
+    expect(d.dirty).toBe(false)
+    expect(pending()).toBe(0)
+    await advance(MIN_INTERVAL_MS)
+    expect(d.writes).toHaveLength(1)
+  })
+
+  it('flushing waits for a save in flight, then writes newer edits', async () => {
+    const { saver, advance, edit } = setup()
+    const d = new FakeDoc()
+    d.saveDelay = 500
+    saver.clean(d)
+    edit(d)
+    const first = d.content
+    const timer = advance(QUIET_MS + 100) // save in flight
+    await Promise.resolve()
+    edit(d)
+    const flushed = saver.flush(d)
+    await timer
+    await advance(1000)
+    await flushed
+    expect(d.writes[0]).toBe(first)
+    expect(d.writes.at(-1)).toBe(d.content)
+    expect(d.dirty).toBe(false)
+  })
+
+  it('flushing a clean or unchanged document writes nothing', async () => {
+    const { saver, edit } = setup()
+    const d = new FakeDoc()
+    saver.clean(d)
+    await saver.flush(d)
+    const original = d.content
+    edit(d)
+    d.content = original
+    d.dirty = true
+    await saver.flush(d)
+    expect(d.writes).toHaveLength(0)
+    expect(d.dirty).toBe(false)
+  })
 })

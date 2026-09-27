@@ -6,7 +6,7 @@
  * path), and for pending redactions (save() checks).
  */
 import { effect } from '@preact/signals'
-import { docs, ImageDoc, type Doc } from './documents'
+import { activeId, docs, ImageDoc, type Doc } from './documents'
 import { settings } from './settings'
 import { dialog, toast } from './ui'
 import { editingId } from './markupState'
@@ -27,6 +27,22 @@ function fingerprint(d: Editable): Fingerprint {
 /** Typing into a fillable PDF field: saving now would write half a word. */
 function typingInForm(): boolean {
   return !!(document.activeElement as HTMLElement | null)?.closest?.('.annotationLayer')
+}
+
+let running: Autosaver<Editable> | null = null
+
+const editable = (d: Doc): d is Editable => d.kind === 'pdf' || d.kind === 'image'
+
+/**
+ * Saves edited documents now rather than when their countdown ends (all of them,
+ * or just `doc`). Used when the window loses focus, the tab changes, and before
+ * closing, so only what autosave never writes is left to ask about.
+ */
+export async function flushAutosave(doc?: Doc): Promise<void> {
+  const saver = running
+  if (!saver) return
+  const targets = (doc ? [doc] : docs.peek()).filter(editable).filter((d) => d.dirty.peek())
+  await Promise.all(targets.map((d) => saver.flush(d)))
 }
 
 export function startAutosave(): () => void {
@@ -60,7 +76,7 @@ export function startAutosave(): () => void {
     const open = new Set<Editable>()
     if (settings.value.autosave) {
       for (const d of docs.value) {
-        if (d.kind === 'notice' || d.kind === 'model') continue
+        if (!editable(d)) continue
         open.add(d)
         const version = d.historyVersion.value
         const dirty = d.dirty.value
@@ -79,8 +95,24 @@ export function startAutosave(): () => void {
       saver.forget(d)
     }
   })
+  running = saver
+
+  // Like Preview: switching to another app or another tab saves what you left.
+  const onBlur = (): void => void flushAutosave()
+  window.addEventListener('blur', onBlur)
+  let previous = activeId.peek()
+  const disposeTabs = effect(() => {
+    const id = activeId.value
+    const left = previous && previous !== id ? docs.peek().find((d) => d.id === previous) : undefined
+    previous = id
+    if (left) void flushAutosave(left)
+  })
+
   return () => {
     dispose()
+    disposeTabs()
+    window.removeEventListener('blur', onBlur)
     saver.dispose()
+    if (running === saver) running = null
   }
 }
