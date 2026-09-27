@@ -1,27 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#4cc2ff"/>
-      <stop offset="1" stop-color="#0067c0"/>
+    <linearGradient id="bg" x1="0.15" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#38C8FF"/>
+      <stop offset="0.55" stop-color="#3D6BFF"/>
+      <stop offset="1" stop-color="#6A3DF0"/>
     </linearGradient>
-    <linearGradient id="page" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffffff"/>
-      <stop offset="1" stop-color="#e8f1fb"/>
-    </linearGradient>
-    <linearGradient id="lens" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#9be3ff" stop-opacity=".95"/>
-      <stop offset="1" stop-color="#1a8fe3" stop-opacity=".85"/>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".22"/>
+      <stop offset=".5" stop-color="#fff" stop-opacity="0"/>
     </linearGradient>
   </defs>
-  <rect x="64" y="64" width="896" height="896" rx="200" fill="url(#bg)"/>
-  <!-- document -->
-  <path d="M300 200h300l140 140v440a44 44 0 0 1-44 44H300a44 44 0 0 1-44-44V244a44 44 0 0 1 44-44z" fill="url(#page)"/>
-  <path d="M600 200v96a44 44 0 0 0 44 44h96z" fill="#bcd6f0"/>
-  <rect x="320" y="420" width="260" height="28" rx="14" fill="#b5cde6"/>
-  <rect x="320" y="480" width="200" height="28" rx="14" fill="#b5cde6"/>
-  <rect x="320" y="540" width="230" height="28" rx="14" fill="#b5cde6"/>
-  <!-- lens -->
-  <circle cx="610" cy="620" r="150" fill="url(#lens)" stroke="#003e73" stroke-width="44"/>
-  <path d="M560 560a80 80 0 0 1 70-40" stroke="#fff" stroke-width="26" stroke-linecap="round" fill="none" opacity=".8"/>
-  <path d="M722 732l120 120" stroke="#003e73" stroke-width="72" stroke-linecap="round"/>
+  <rect x="80" y="80" width="864" height="864" rx="240" fill="url(#bg)"/>
+  <rect x="80" y="80" width="864" height="864" rx="240" fill="url(#sheen)"/>
+  <circle cx="512" cy="512" r="236" fill="none" stroke="#fff" stroke-width="112"/>
+  <circle cx="584" cy="440" r="64" fill="#fff"/>
 </svg>
