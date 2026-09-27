@@ -280,7 +280,7 @@ export const COMMANDS: Command[] = [
   { id: 'tools.copyImageText', label: msg('Copy Text from Image'), run: () => ocr.copyImageText() },
   { id: 'tools.redactText', label: msg('Remove Sensitive Text…'), run: () => void (redactTextOpen.value = true), enabled: isPdf },
   { id: 'tools.redact', label: msg('Redact'), keys: ['Ctrl+Shift+R'], run: () => toggleTool('redact'), enabled: () => isPdf() || isImage(), checked: () => tool.value === 'redact' },
-  { id: 'tools.applyRedactions', label: msg('Apply Redactions…'), run: () => void applyRedactions(), enabled: () => !!pdf()?.redactions.value.length },
+  { id: 'tools.applyRedactions', label: msg('Apply Redactions…'), run: () => void applyRedactions(), enabled: () => !!markupHost()?.redactions.value.length },
   { id: 'tools.crop', label: msg('Crop to Selection'), keys: ['C', 'Ctrl+K'], run: () => void img.cropToSelection(image()!), enabled: isImage },
   { id: 'tools.instantAlpha', label: msg('Instant Alpha'), keys: ['W'], run: () => toggleTool('instantAlpha'), enabled: isImage, checked: () => tool.value === 'instantAlpha' },
   { id: 'tools.removeBackground', label: msg('Remove Background'), keys: ['Ctrl+Shift+K'], run: () => void img.removeBackground(image()!), enabled: isImage },
@@ -340,10 +340,10 @@ const VISIBILITY: [(() => boolean), string[]][] = [
   [ifPdf, [
     'file.exportPages', 'file.split', 'edit.selectAll', 'edit.find', 'edit.insertBlank', 'edit.insertFile', 'edit.duplicatePages', 'edit.stamps',
     'edit.deletePages', 'edit.addBookmark', 'view.signatures', 'tools.certSign', 'file.cleanup', 'file.reduce', 'view.toc', 'view.notes', 'view.bookmarks', 'view.continuous', 'view.single', 'view.two',
-    'view.contactSheet', 'view.darkPdf', 'tools.highlight', 'tools.note', 'tools.redactText', 'tools.applyRedactions', 'tools.ocr'
+    'view.contactSheet', 'view.darkPdf', 'tools.highlight', 'tools.note', 'tools.redactText', 'tools.ocr'
   ]],
   [ifPaged, ['view.hideSidebar', 'view.thumbnails', 'go.previous', 'go.next', 'go.first', 'go.last', 'go.page']],
-  [ifMarkup, ['tools.markup', 'tools.text', 'tools.signature', 'tools.redact', 'tools.brush', 'tools.shapes', 'tools.rectangle', 'tools.oval', 'tools.thinner', 'tools.thicker']],
+  [ifMarkup, ['tools.markup', 'tools.text', 'tools.signature', 'tools.redact', 'tools.applyRedactions', 'tools.brush', 'tools.shapes', 'tools.rectangle', 'tools.oval', 'tools.thinner', 'tools.thicker']],
   [() => ifPdf() || anyImage(), ['tools.select', 'tools.hand', 'tools.zoom']],
   [anyImage, ['image.setWallpaper', 'image.setLockScreen', 'tools.copyImageText']],
   [isImage, [

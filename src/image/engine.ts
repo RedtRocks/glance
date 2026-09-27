@@ -1,10 +1,10 @@
 /** Image editing engine: loading pixels, worker calls, subject detection, flattening. */
-import { clone, raster as makeRaster, type Raster } from '../core/image/raster'
+import { burnRedactions, clone, raster as makeRaster, type Raster } from '../core/image/raster'
 import { alphaMask, floodMask, maskBounds, refineMatte, resizeMask } from '../core/image/alpha'
 import { crop } from '../core/image/transform'
 import type { AdjustParams } from '../core/image/adjust'
 import type { Selection } from '../core/image/select'
-import { NOTE_SIZE, fontStack, outlinePath, type Markup, type Redaction } from '../core/markup'
+import { NOTE_SIZE, fontStack, outlinePath, type Markup } from '../core/markup'
 import type { ImageDoc } from '../state/documents'
 import * as platform from '../platform'
 import type { WorkerRequest, WorkerResponse } from './worker'
@@ -162,7 +162,7 @@ const rgbCss = (c: [number, number, number] | null, a = 1): string =>
   c ? `rgba(${Math.round(c[0] * 255)},${Math.round(c[1] * 255)},${Math.round(c[2] * 255)},${a})` : 'transparent'
 
 /** Draws markup (in y-up image space) onto a canvas holding `base`. */
-export async function drawMarkup(g: OffscreenCanvasRenderingContext2D, markup: Markup[], redactions: Redaction[], base: OffscreenCanvas, H: number): Promise<void> {
+export async function drawMarkup(g: OffscreenCanvasRenderingContext2D, markup: Markup[], base: OffscreenCanvas, H: number): Promise<void> {
   for (const m of markup) {
     const s = m.style
     g.save()
@@ -243,10 +243,6 @@ export async function drawMarkup(g: OffscreenCanvasRenderingContext2D, markup: M
     }
     g.restore()
   }
-  g.save()
-  g.fillStyle = '#000'
-  for (const r of redactions) g.fillRect(r.rect[0], H - r.rect[3], r.rect[2] - r.rect[0], r.rect[3] - r.rect[1])
-  g.restore()
   void NOTE_SIZE
 }
 
@@ -256,8 +252,12 @@ export async function flatten(doc: ImageDoc): Promise<Raster> {
   const markup = doc.markup.peek()
   const reds = doc.redactions.peek()
   if (!markup.length && !reds.length) return r
-  const base = toCanvas(r)
-  const out = toCanvas(r)
-  await drawMarkup(out.getContext('2d')!, markup, reds, base, r.height)
-  return fromCanvas(out)
+  let out = r
+  if (markup.length) {
+    const canvas = toCanvas(r)
+    await drawMarkup(canvas.getContext('2d')!, markup, toCanvas(r), r.height)
+    out = fromCanvas(canvas)
+  }
+  // Redactions last, whole pixels, fully opaque: nothing under them survives.
+  return reds.length ? burnRedactions(out, reds.map((x) => x.rect)) : out
 }
