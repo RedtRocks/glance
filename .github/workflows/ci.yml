@@ -71,18 +71,17 @@ jobs:
           reg query 'HKCR\.pdf' /s
           reg query 'HKCR\SystemFileAssociations\.pdf' /s 2>$null
           reg query 'HKCR\.tga' /s
-          # Explorer gets thumbnails from Glance's handler, through the shell's own lookup. COM
-          # ignores per-user registrations for out-of-process activation from elevated
-          # processes, and CI runs elevated, so the check runs with a normal user token.
+          # Explorer gets thumbnails from Glance's handler, through the shell's own lookup. That
+          # lookup activates the handler in a surrogate process, and COM ignores per-user classes
+          # for elevated callers; CI can only run elevated, so the check mirrors the classes into
+          # HKLM for its duration. Normal (non-elevated) users get the per-user classes as installed.
+          $classes = '{4d578e19-3f31-49d8-8d05-706466000000}', '{4d578e19-3f31-49d8-8d05-746761000000}'
+          foreach ($c in $classes) { reg copy "HKCU\Software\Classes\CLSID\$c" "HKLM\Software\Classes\CLSID\$c" /s /f /reg:64 | Out-Null }
           Push-Location src-tauri/thumbnailer
-          $built = cargo test --locked --no-run --message-format=json | ConvertFrom-Json | Where-Object { $_.reason -eq 'compiler-artifact' -and $_.executable -and $_.target.name -eq 'glance_thumbnailer' }
-          $test = $built.executable | Select-Object -Last 1
-          $out = Join-Path $env:RUNNER_TEMP 'thumb-check.txt'; $code = Join-Path $env:RUNNER_TEMP 'thumb-check.code'
-          Remove-Item $out, $code -ErrorAction SilentlyContinue
-          runas /trustlevel:0x20000 "cmd /c `"`"$test`" --ignored installed_handler > `"$out`" 2>&1 & call echo %errorlevel% > `"$code`"`""
-          for ($i = 0; $i -lt 120 -and -not (Test-Path $code); $i++) { Start-Sleep 1 }
-          Get-Content $out -ErrorAction SilentlyContinue
-          if ((Get-Content $code -ErrorAction SilentlyContinue).Trim() -ne '0') { throw 'no thumbnail from the installed handler' }
+          cargo test --locked -- --ignored installed_handler
+          $failed = $LASTEXITCODE
+          foreach ($c in $classes) { reg delete "HKLM\Software\Classes\CLSID\$c" /f /reg:64 | Out-Null }
+          if ($failed -ne 0) { throw 'no thumbnail from the installed handler' }
           Pop-Location
           $dir = Join-Path $env:LOCALAPPDATA Glance
           Start-Process (Join-Path $dir uninstall.exe) -ArgumentList '/S', "_?=$dir" -Wait
