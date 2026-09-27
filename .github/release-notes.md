@@ -14,6 +14,7 @@ Glance is a free, open-source, lightweight viewer and editor for PDFs, images an
 - **Pick Glance in Settings → Default apps.** Glance now registers with Windows as a default app for PDFs, images, camera RAW, XPS, PostScript, comics and 3D models, so it's listed in **Settings → Apps → Default apps** and under **Open with** for each of those types. **Make default** (offered once at startup, and in Glance's Settings) opens Glance's page there; on Windows 11 one **Set default** click makes it the default for everything. Windows requires that confirmation: apps can't make themselves the default.
 - **File Explorer shows previews again.** With Glance as the default, photos and PDFs showed Glance's icon instead of a thumbnail of their content. Explorer thumbnails and the Preview pane now keep working (PDF thumbnails come from whichever PDF app provides them, such as Acrobat).
 - **System fonts load faster for text boxes.** The font list (Aa in the markup bar) reads only what it needs from each installed font and starts loading when the markup bar opens, so your Windows fonts show up right away.
+- **A new app icon.** A layered page-and-photo icon in ocean blues with a frosted-glass look replaces the old page-and-magnifier icon, and stays clear at small sizes in the taskbar, Start and Explorer.
 
 ## New in 0.4.0
 
