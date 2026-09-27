@@ -8,6 +8,7 @@ Glance is a free, open-source, lightweight viewer and editor for PDFs, images an
 - **Redaction on images works.** Mark areas, then Apply Redactions: the areas are painted solid black into the pixels, as one step you can undo. Discard and the warning bar work on images like they do on PDFs, and Print uses the edited image.
 - **Instant Alpha: hold Shift to add, Alt to subtract.** Like Preview, Shift-drag grows the current selection (of any kind) and Alt-drag takes a region away, with a live preview. Escape keeps the old selection.
 - **Pinch to zoom works.** Pinching on a touchpad now zooms images, PDFs and 3D models; before, only Ctrl+scroll did, and 3D models barely moved. The window itself no longer zooms with Ctrl+scroll or Ctrl+plus/minus.
+- **Autosave saves when you leave.** Like Preview, edits are saved right away when you switch to another app or tab, or close a tab or the window, so closing only asks about JPEGs and unapplied redactions. Also fixes autosave stopping for every open file after editing a text box or note.
 - **The More options (⋯) menu works.** Share, Print, Export and the other items in it did nothing when clicked. The menu also closes with Escape.
 
 ## New in 0.4.0

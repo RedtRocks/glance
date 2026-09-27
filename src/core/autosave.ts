@@ -36,8 +36,12 @@ export interface AutosaveHooks<D> {
   fingerprint(d: D): Fingerprint
   /** False when autosave is off, the document was closed, or its file is in conflict. */
   canSave(d: D): boolean
-  /** True while the user is mid-gesture (a dialog, typing into a text box or form field). */
-  mustWait(d: D): boolean
+  /**
+   * True while saving now would be premature (typing into a form field) or unsafe
+   * (a markup text box is open). `urgent` is set when the user is leaving the
+   * window or tab: only unsafe moments should hold the save back then.
+   */
+  mustWait(d: D, urgent: boolean): boolean
   save(d: D): Promise<void>
   onError(d: D, e: unknown): void
 }
@@ -47,7 +51,8 @@ export class Autosaver<D> {
   private readonly lastEdit = new Map<D, number>()
   private readonly lastSave = new Map<D, number>()
   private readonly saved = new Map<D, Fingerprint>()
-  private readonly saving = new Set<D>()
+  /** Saves in flight, settled either way. */
+  private readonly saving = new Map<D, Promise<void>>()
 
   constructor(private readonly hooks: AutosaveHooks<D>) {}
 
@@ -68,6 +73,17 @@ export class Autosaver<D> {
     }
     this.lastEdit.set(d, h.now())
     this.schedule(d)
+  }
+
+  /**
+   * Saves now instead of waiting for the countdown: the user switched away from the
+   * window or tab, or is closing it. Doesn't wait for typing to finish, since the
+   * user has left; save() still declines what autosave never writes.
+   */
+  async flush(d: D): Promise<void> {
+    this.cancel(d)
+    await this.saving.get(d)
+    return this.attempt(d, true)
   }
 
   forget(d: D): void {
@@ -93,15 +109,16 @@ export class Autosaver<D> {
     this.timers.set(d, this.hooks.setTimer(() => void this.attempt(d), Math.max(0, at - this.hooks.now())))
   }
 
-  private async attempt(d: D): Promise<void> {
+  private async attempt(d: D, now = false): Promise<void> {
     const h = this.hooks
     this.timers.delete(d)
     if (!h.isDirty(d) || !h.canSave(d)) return
     // Mid-gesture or already writing: try again once things are quiet.
-    if (this.saving.has(d) || h.mustWait(d)) return this.schedule(d, h.now() + QUIET_MS)
+    if (this.saving.has(d) || h.mustWait(d, now)) return this.schedule(d, h.now() + QUIET_MS)
     if (sameContent(h.fingerprint(d), this.saved.get(d))) return h.setDirty(d, false)
     const before = h.editCount(d)
-    this.saving.add(d)
+    let settled!: () => void
+    this.saving.set(d, new Promise<void>((resolve) => (settled = resolve)))
     try {
       await h.save(d)
     } catch (e) {
@@ -109,6 +126,7 @@ export class Autosaver<D> {
       return
     } finally {
       this.saving.delete(d)
+      settled()
     }
     // Still dirty: save() chose not to write (pending redactions, lossy format,
     // changed on disk). The next edit tries again.
