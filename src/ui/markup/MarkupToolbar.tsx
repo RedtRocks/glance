@@ -112,11 +112,11 @@ function Swatches({ value, onPick, allowNone, colors = PALETTE }: { value: Color
 
 /** Installed font families; the first entry is Helvetica, the PDF standard font. */
 function FontPicker({ value, onPick }: { value?: string; onPick: (font: string | undefined) => void }) {
-  const [fonts, setFonts] = useState<string[]>([])
+  const [fonts, setFonts] = useState<string[] | null>(null)
   useEffect(() => {
     void listFonts().then(setFonts)
   }, [])
-  const list = value && !fonts.includes(value) ? [value, ...fonts] : fonts
+  const list = value && !fonts?.includes(value) ? [value, ...(fonts ?? [])] : (fonts ?? [])
   return (
     <label class="field">
       <span>{t('Font')}</span>
@@ -135,18 +135,73 @@ function FontPicker({ value, onPick }: { value?: string; onPick: (font: string |
             {f}
           </option>
         ))}
+        {fonts === null && <option disabled>{t('Loading fonts…')}</option>}
       </select>
     </label>
   )
 }
 
-/** Picks the highlight color; a selected highlight/underline is recolored too. */
+/**
+ * Picks the highlight color. A selected highlight or underline is recolored; otherwise the
+ * highlighter is switched on in the new color, as Preview does.
+ */
 function pickMarkColor(doc: MarkupHost | null, c: Color): void {
   const sel = selectedMarkup(doc)
-  if (!sel || sel.type === 'highlight') highlightColor.value = c
-  if (doc && sel && TEXT_MARKS.includes(sel.type)) {
-    doc.edit('Change Color', { markup: doc.markup.peek().map((m) => (m.id === sel.id ? { ...m, style: { ...m.style, stroke: c } } : m)) })
+  const mark = sel && TEXT_MARKS.includes(sel.type) ? sel : undefined
+  if (!mark || mark.type === 'highlight') highlightColor.value = c
+  if (doc && mark) {
+    doc.edit('Change Color', { markup: doc.markup.peek().map((m) => (m.id === mark.id ? { ...m, style: { ...m.style, stroke: c } } : m)) })
+  } else if (doc instanceof PdfDoc) {
+    const root = document.querySelector<HTMLElement>('.pdf-scroller')
+    if (!(root && markSelection(doc, root, 'highlight')) && tool.peek() !== 'highlight') setTool('highlight')
   }
+}
+
+/** The color a new highlight gets, or the selected text mark's own color. */
+function currentMarkColor(doc: MarkupHost | null): Color {
+  const sel = selectedMarkup(doc)
+  return sel && TEXT_MARKS.includes(sel.type) && sel.style.stroke ? sel.style.stroke : highlightColor.value
+}
+
+/** Highlight button and its dropdown of colors and text styles (Preview's highlight split button). */
+export function HighlightButton({ doc }: { doc: MarkupHost }) {
+  const color = currentMarkColor(doc)
+  return (
+    <>
+      <button class={`tb-button ${tool.value === 'highlight' ? 'pressed' : ''}`} title={tip(t('Highlight selected text'), 'tools.highlight')} aria-label={t('Highlight')} aria-pressed={tool.value === 'highlight'} onClick={() => textMarkup(doc, 'highlight')}>
+        <Icon name="highlight" />
+        <span class="swatch-bar" style={{ background: css(color) }} />
+      </button>
+      <Popover label={t('Highlight color, underline, strikethrough and squiggly underline')} pressed={TEXT_MARKS.includes(tool.value) && tool.value !== 'highlight'}>
+        {(close) => (
+          <div class="flyout-col">
+            <span class="flyout-label">{t('Highlight color')}</span>
+            <Swatches
+              colors={HIGHLIGHT_COLORS}
+              value={color}
+              onPick={(c) => {
+                if (!c) return
+                pickMarkColor(doc, c)
+                close()
+              }}
+            />
+            <span class="menu-sep" />
+            {(
+              [
+                ['underline', 'underline', msg('Underline')],
+                ['strike', 'strike', msg('Strikethrough')],
+                ['squiggly', 'squiggly', msg('Squiggly underline')]
+              ] as [TextMarkupKind, IconName, string][]
+            ).map(([k, icon, label]) => (
+              <button key={k} class={`menu-item ${tool.value === k ? 'checked' : ''}`} onClick={() => (textMarkup(doc, k), close())}>
+                <Icon name={icon} size={16} /> <span>{t(label)}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </Popover>
+    </>
+  )
 }
 
 function selectedMarkup(doc: MarkupHost | null): Markup | undefined {
@@ -220,13 +275,16 @@ export function MarkupToolbar() {
   const active = activeDoc.value
   const image = active instanceof ImageDoc && active.editable ? active : null
   const doc = active?.kind === 'pdf' ? active : image
+  // Scanning the installed fonts takes a moment; start before the text style menu opens.
+  useEffect(() => {
+    if (markupBar.value) void listFonts()
+  }, [markupBar.value])
   if (!markupBar.value || !doc) return null
   const selectTool = IMAGE_SELECT.find(([id]) => id === tool.value)
   const sel = selectedMarkup(doc)
   const st = sel?.style ?? style.value
   const ts: TextStyle = sel?.type === 'text' ? { fontSize: sel.fontSize, color: sel.color, font: sel.font } : textStyle.value
   const shapeTool = SHAPES.find(([id]) => id === tool.value)
-  const markColor = sel && TEXT_MARKS.includes(sel.type) && sel.style.stroke ? sel.style.stroke : highlightColor.value
   return (
     <div class="markup-toolbar" role="toolbar" aria-label={t('Markup')}>
       <ToolButton t="select" icon="cursor" label={t('Select and move markup')} />
@@ -280,32 +338,7 @@ export function MarkupToolbar() {
       <ToolButton t="text" icon="textBox" label={t('Text box')} />
       {!image && <ToolButton t="note" icon="note" label={t('Note')} />}
       <span class="tb-sep" />
-      {!image && <button class={`tb-button ${tool.value === 'highlight' ? 'pressed' : ''}`} title={tip(t('Highlight selected text'), 'tools.highlight')} aria-label={t('Highlight')} onClick={() => textMarkup(doc, 'highlight')}>
-        <Icon name="highlight" />
-        <span class="swatch-bar" style={{ background: css(markColor) }} />
-      </button>}
-      {!image && (
-        <Popover icon="underline" label={t('Highlight color, underline, strikethrough and squiggly underline')}>
-          {(close) => (
-            <div class="flyout-col">
-              <span class="flyout-label">{t('Highlight color')}</span>
-              <Swatches colors={HIGHLIGHT_COLORS} value={markColor} onPick={(c) => c && pickMarkColor(doc, c)} />
-              <span class="menu-sep" />
-              {(
-                [
-                  ['underline', 'underline', msg('Underline')],
-                  ['strike', 'strike', msg('Strikethrough')],
-                  ['squiggly', 'squiggly', msg('Squiggly underline')]
-                ] as [TextMarkupKind, IconName, string][]
-              ).map(([k, icon, label]) => (
-                <button key={k} class={`menu-item ${tool.value === k ? 'checked' : ''}`} onClick={() => (textMarkup(doc, k), close())}>
-                  <Icon name={icon} size={16} /> <span>{t(label)}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </Popover>
-      )}
+      {!image && <HighlightButton doc={doc} />}
       <Popover icon="signature" label={t('Sign')} pressed={tool.value === 'signature'}>
         {(close) => <Signatures close={close} />}
       </Popover>

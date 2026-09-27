@@ -1235,6 +1235,15 @@ select {
 .tb-button {
   position: relative;
 }
+/* Dropdown half of a split button: hugs the button before it. */
+.tb-button.with-chevron.split-chevron {
+  min-width: 0;
+  padding: 0 2px;
+  margin-left: -2px;
+}
+.split-chevron .chevron {
+  margin-left: 0;
+}
 .chevron {
   display: inline-grid;
   place-items: center;

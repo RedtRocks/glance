@@ -10,6 +10,8 @@ Glance is a free, open-source, lightweight viewer and editor for PDFs, images an
 - **Pinch to zoom works.** Pinching on a touchpad now zooms images, PDFs and 3D models; before, only Ctrl+scroll did, and 3D models barely moved. The window itself no longer zooms with Ctrl+scroll or Ctrl+plus/minus.
 - **Autosave saves when you leave.** Like Preview, edits are saved right away when you switch to another app or tab, or close a tab or the window, so closing only asks about JPEGs and unapplied redactions. Also fixes autosave stopping for every open file after editing a text box or note.
 - **The More options (⋯) menu works.** Share, Print, Export and the other items in it did nothing when clicked. The menu also closes with Escape.
+- **Pick the highlighter color.** The Highlight button in the main toolbar and in the markup bar now has a dropdown with highlight colors (or any color), underline, strikethrough and squiggly underline. Picking a color recolors the selected highlight or highlights the selected text.
+- **System fonts load faster for text boxes.** The font list (Aa in the markup bar) reads only what it needs from each installed font and starts loading when the markup bar opens, so your Windows fonts show up right away.
 
 ## New in 0.4.0
 
