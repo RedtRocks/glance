@@ -39,7 +39,7 @@ Glance brings Preview's everyday superpowers to Windows: rearranging and merging
 | Text recognition (Windows OCR): scanned PDFs become searchable and selectable; copy text from images | ✅ |
 | Highlights & Notes sidebar, bookmarks | ✅ |
 | Remove Background and Copy Subject with a bundled AI model (U²-Net-p, runs locally in Rust) | ✅ |
-| Instant Alpha; rectangular, elliptical, lasso and smart-lasso selection; crop, delete, invert selection | ✅ |
+| Instant Alpha (Shift adds, Alt subtracts); rectangular, elliptical, lasso and smart-lasso selection; crop, delete, invert selection | ✅ |
 | Adjust Color (exposure, contrast, highlights, shadows, saturation, temperature, tint, sepia, definition, sharpness, gamma, levels with histogram, Auto Levels) with live preview | ✅ |
 | Adjust Size (fit-into presets, units, resolution), rotate and flip | ✅ |
 | Straighten: rotate by any angle with a slider or by dragging, grid overlay, crop to fill | ✅ |

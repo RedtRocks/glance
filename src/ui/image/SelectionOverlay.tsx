@@ -3,7 +3,7 @@ import type { ImageDoc } from '../../state/documents'
 import { imageSelection } from '../../state/imageState'
 import { tool, IMAGE_SELECT_TOOLS } from '../../state/markupState'
 import * as engine from '../../image/engine'
-import { InstantAlphaGesture } from '../../image/instantAlpha'
+import { InstantAlphaGesture, alphaMode } from '../../image/instantAlpha'
 import type { Pt } from '../../core/image/select'
 import type { Raster } from '../../core/image/raster'
 import { toast } from '../../state/ui'
@@ -48,13 +48,16 @@ export function SelectionOverlay({ doc, scale }: { doc: ImageDoc; scale: number 
     g.putImageData(img, 0, 0)
   }
 
-  useEffect(() => {
-    if (sel?.kind === 'mask') drawMask(sel.mask, sel.width, sel.height)
+  const drawSelection = (): void => {
+    const s = imageSelection.peek()
+    if (s?.kind === 'mask') drawMask(s.mask, s.width, s.height)
     else drawMask(null, 1, 1)
-  }, [sel])
+  }
+
+  useEffect(drawSelection, [sel])
 
   // Switching tools or documents (or unmounting) abandons a drag in progress.
-  useEffect(() => () => gesture.current?.cancel(), [t, doc])
+  useEffect(() => () => gesture.current?.cancel(), [cur, doc])
 
   const onPointerDown = (e: PointerEvent): void => {
     if (!active || e.button !== 0) return
@@ -63,7 +66,10 @@ export function SelectionOverlay({ doc, scale }: { doc: ImageDoc; scale: number 
     const el = e.currentTarget as HTMLElement
     el.setPointerCapture(e.pointerId)
     const start = toImage(e)
-    imageSelection.value = null
+    // Shift-drag adds to the selection and Alt-drag subtracts from it, like Preview.
+    const mode = cur === 'instantAlpha' ? alphaMode(e) : 'replace'
+    const base = mode === 'replace' ? null : imageSelection.peek()
+    if (mode === 'replace') imageSelection.value = null
 
     if (cur === 'instantAlpha') {
       gesture.current?.cancel()
@@ -72,18 +78,22 @@ export function SelectionOverlay({ doc, scale }: { doc: ImageDoc; scale: number 
         prepare: async () => {
           const full = await engine.ensureRaster(doc)
           preview.current ??= await engine.previewCopy(full, 1200)
-          return { full, preview: preview.current }
+          let baseMask: Uint8Array | null = null
+          if (base?.kind === 'mask') baseMask = base.width === full.width && base.height === full.height ? base.mask : null
+          else if (base) baseMask = await engine.selectionToMask(full, base)
+          return { full, preview: preview.current, base: baseMask }
         },
         flood: engine.flood,
-        show: drawMask,
+        show: (mask, w, h) => (mask ? drawMask(mask, w, h) : drawSelection()),
         commit: (selection) => {
           imageSelection.value = selection
+          if (!selection) return
           if (!hinted) {
             hinted = true
-            toast(t('Press Delete to remove the selected area, or Crop to keep it.'))
+            toast(t('Press Delete to remove the selected area, or Crop to keep it. Hold Shift to add more, or Alt to take some away.'))
           }
         }
-      })
+      }, mode)
       gesture.current = g
       const move = (ev: PointerEvent): void => {
         const p = toImage(ev)
