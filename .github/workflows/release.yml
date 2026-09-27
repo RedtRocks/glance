@@ -29,6 +29,16 @@ jobs:
             target: aarch64-pc-windows-msvc
     steps:
       - uses: actions/checkout@v4
+      - name: Check the tag matches the app version
+        shell: bash
+        run: |
+          tag="${{ github.event.inputs.tag || github.ref_name }}"
+          app=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          if [ "${tag#v}" != "$app" ]; then
+            echo "::error::Tag $tag doesn't match version $app in src-tauri/tauri.conf.json. Bump the version (package.json, tauri.conf.json, Cargo.toml) before releasing, or the app offers its own release as an update."
+            exit 1
+          fi
+          tr -d '\r' < .github/release-notes.md | grep -qxF "## New in ${tag#v}" || { echo "::error::.github/release-notes.md has no '## New in ${tag#v}' section."; exit 1; }
       - uses: actions/setup-node@v4
         with:
           node-version: 22
