@@ -10,6 +10,7 @@ import * as shell from './shellActions'
 import * as ocr from './ocrActions'
 import { batchOpen } from './batch'
 import { checkForUpdates } from './updates'
+import { makeDefault } from './defaultApp'
 import { versionsOpen } from './versions'
 import { activeDoc, activeId, docs, type Doc, type ViewMode } from './documents'
 import { settings, updateSettings } from './settings'
@@ -143,6 +144,12 @@ export const COMMANDS: Command[] = [
   { id: 'image.setLockScreen', label: msg('Set as Lock Screen'), run: () => shell.setAsWallpaper('lock'), enabled: anyImage },
   { id: 'file.print', label: msg('Print…'), keys: ['Ctrl+P'], run: () => printDoc(activeDoc.value), enabled: hasDoc },
   { id: 'file.close', label: msg('Close Tab'), keys: ['Ctrl+W', 'Ctrl+F4'], run: () => actions.closeDoc(), enabled: hasDoc },
+  {
+    id: 'file.makeDefault',
+    label: msg('Make Glance the Default App…'),
+    run: () => void makeDefault().catch((e: Error) => toast(e.message)),
+    enabled: () => platform.isTauri
+  },
   { id: 'file.settings', label: msg('Settings'), keys: ['Ctrl+,'], run: () => void (settingsOpen.value = true) },
   // Edit
   { id: 'edit.undo', label: msg('Undo'), keys: ['Ctrl+Z'], run: () => actions.undo(), enabled: () => !!(pdf() ?? image())?.history.canUndo },

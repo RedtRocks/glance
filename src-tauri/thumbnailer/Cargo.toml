@@ -1,0 +1,34 @@
+[package]
+name = "glance-thumbnailer"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Explorer thumbnail handler that shows a PDF's first page (see src/lib.rs)"
+publish = false
+
+[lib]
+name = "glance_thumbnailer"
+crate-type = ["cdylib", "rlib"]
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.62", features = [
+  "Data_Pdf",
+  "Foundation",
+  "Storage_Streams",
+  "Win32_Foundation",
+  "Win32_Graphics_Gdi",
+  "Win32_Graphics_Imaging",
+  "Win32_System_Com",
+  "Win32_System_Com_StructuredStorage",
+  "Win32_System_WinRT",
+  "Win32_UI_Shell",
+  "Win32_UI_Shell_PropertiesSystem",
+] }
+windows-core = "0.62"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
+panic = "abort"

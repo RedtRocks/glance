@@ -132,6 +132,60 @@
 
 !include "${__FILEDIR__}\default-apps.nsh"
 
+; Glance's PDF thumbnail handler (src-tauri/thumbnailer, built by scripts/thumbnailer.mjs):
+; Explorer shows a PDF's first page instead of Glance's icon. Windows has no PDF
+; thumbnailer of its own. Registered on Glance's PDF ProgIDs, and on .pdf and .ai when
+; nothing else provides thumbnails for them (recorded so uninstall removes only that).
+!define GLANCE_THUMB_DLL "glance_thumbnailer.dll"
+; Macros expand where they are inserted, so capture this file's folder now.
+!define GLANCE_HOOKS_DIR "${__FILEDIR__}"
+!define GLANCE_THUMB_CLSID "{4d578e19-3f31-49d8-8d05-8efaa193a022}"
+
+!macro GLANCE_THUMB_ON_CLASS CLASS
+  WriteRegStr HKCU "Software\Classes\${CLASS}\ShellEx\${GLANCE_THUMBNAIL}" "" "${GLANCE_THUMB_CLSID}"
+!macroend
+
+!macro GLANCE_THUMB_ON_EXT EXT
+  Push $0
+  ReadRegStr $0 HKCR ".${EXT}\ShellEx\${GLANCE_THUMBNAIL}" ""
+  ${If} $0 == ""
+    WriteRegStr HKCU "Software\Classes\.${EXT}\ShellEx\${GLANCE_THUMBNAIL}" "" "${GLANCE_THUMB_CLSID}"
+    WriteRegStr HKCU "${GLANCE_HANDLERS}" ".${EXT} ${GLANCE_THUMBNAIL}" "${GLANCE_THUMB_CLSID}"
+  ${EndIf}
+  Pop $0
+!macroend
+
+!macro GLANCE_THUMBNAILER_INSTALL
+  ; A DLL Explorer has loaded can be renamed but not overwritten.
+  Delete "$INSTDIR\${GLANCE_THUMB_DLL}.old"
+  Rename "$INSTDIR\${GLANCE_THUMB_DLL}" "$INSTDIR\${GLANCE_THUMB_DLL}.old"
+  SetOutPath "$INSTDIR"
+  File "${GLANCE_HOOKS_DIR}\..\target\thumbnailer\${GLANCE_THUMB_DLL}"
+  Delete /REBOOTOK "$INSTDIR\${GLANCE_THUMB_DLL}.old"
+  ; The installer is 32-bit, and CLSID is one of the keys WOW64 redirects; Explorer reads
+  ; the native view.
+  SetRegView 64
+  WriteRegStr HKCU "Software\Classes\CLSID\${GLANCE_THUMB_CLSID}" "" "Glance PDF Thumbnails"
+  WriteRegStr HKCU "Software\Classes\CLSID\${GLANCE_THUMB_CLSID}\InprocServer32" "" "$INSTDIR\${GLANCE_THUMB_DLL}"
+  WriteRegStr HKCU "Software\Classes\CLSID\${GLANCE_THUMB_CLSID}\InprocServer32" "ThreadingModel" "Apartment"
+  SetRegView default
+  !insertmacro GLANCE_THUMB_ON_CLASS "Glance.PDFDocument"
+  !insertmacro GLANCE_THUMB_ON_CLASS "Glance.IllustratorDocument"
+  !insertmacro GLANCE_THUMB_ON_CLASS "PDF Document"
+  !insertmacro GLANCE_THUMB_ON_CLASS "Illustrator Document"
+  !insertmacro GLANCE_THUMB_ON_EXT "pdf"
+  !insertmacro GLANCE_THUMB_ON_EXT "ai"
+  System::Call "shell32::SHChangeNotify(i 0x08000000, i 0x1000, p 0, p 0)"
+!macroend
+
+!macro GLANCE_THUMBNAILER_UNINSTALL
+  SetRegView 64
+  DeleteRegKey HKCU "Software\Classes\CLSID\${GLANCE_THUMB_CLSID}"
+  SetRegView default
+  Delete /REBOOTOK "$INSTDIR\${GLANCE_THUMB_DLL}"
+  Delete /REBOOTOK "$INSTDIR\${GLANCE_THUMB_DLL}.old"
+!macroend
+
 !define GLANCE_SFA "Software\Classes\SystemFileAssociations"
 
 ; Adds verb ${ID} labelled ${LABEL} to ${TYPE} (".pdf", or "image" for every image type
@@ -172,6 +226,7 @@
 !macro NSIS_HOOK_POSTINSTALL
   CreateShortCut "$APPDATA\Microsoft\Windows\SendTo\Glance.lnk" "$INSTDIR\${MAINBINARYNAME}.exe" "" "$INSTDIR\${MAINBINARYNAME}.exe" 0
   !insertmacro GLANCE_DEFAULT_APPS_REGISTER
+  !insertmacro GLANCE_THUMBNAILER_INSTALL
 
   !insertmacro GLANCE_VERB ".pdf" "Glance.Open" "Open in Glance" ""
   !insertmacro GLANCE_VERB "image" "Glance.Open" "Open in Glance" ""
@@ -186,6 +241,7 @@
   ; default app choices pointing at Glance's ProgIDs.
   ${If} $UpdateMode <> 1
     !insertmacro GLANCE_DEFAULT_APPS_UNREGISTER
+    !insertmacro GLANCE_THUMBNAILER_UNINSTALL
   ${EndIf}
 
   !insertmacro GLANCE_UNVERB ".pdf" "Glance.Open"

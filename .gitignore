@@ -8,3 +8,4 @@ Thumbs.db
 public/pdfjs/
 src-tauri/target/
 src-tauri/gen/
+src-tauri/thumbnailer/target/
