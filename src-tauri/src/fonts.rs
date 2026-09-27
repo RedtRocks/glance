@@ -4,6 +4,10 @@
 //! saved, the regular face's file is embedded (subset) so the text looks the same in
 //! every viewer. Faces inside collections (.ttc) are cut out into standalone fonts,
 //! since PDF embedding needs a single sfnt.
+//!
+//! Files are memory-mapped while scanning: Windows ships hundreds of megabytes of fonts
+//! (CJK collections alone are tens of MB each), and only a few small tables per face are
+//! needed to name it, so reading them whole made the font list take seconds to appear.
 
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -73,6 +77,12 @@ fn regular_score(face: &ttf_parser::Face) -> u32 {
     (w - 400).unsigned_abs() + if face.is_italic() || face.is_oblique() { 1000 } else { 0 }
 }
 
+fn map(path: &Path) -> Option<memmap2::Mmap> {
+    let file = std::fs::File::open(path).ok()?;
+    // SAFETY: font files aren't rewritten while installed; the map only lives for this scan.
+    unsafe { memmap2::Mmap::map(&file) }.ok()
+}
+
 fn scan() -> Vec<FontFamily> {
     let mut files = Vec::new();
     for d in font_dirs() {
@@ -80,10 +90,11 @@ fn scan() -> Vec<FontFamily> {
     }
     let mut best: BTreeMap<String, (u32, FontFamily)> = BTreeMap::new();
     for path in files {
-        let Ok(data) = std::fs::read(&path) else { continue };
-        let count = ttf_parser::fonts_in_collection(&data).unwrap_or(1);
+        let Some(data) = map(&path) else { continue };
+        let data = &data[..];
+        let count = ttf_parser::fonts_in_collection(data).unwrap_or(1);
         for index in 0..count {
-            let Ok(face) = ttf_parser::Face::parse(&data, index) else { continue };
+            let Ok(face) = ttf_parser::Face::parse(data, index) else { continue };
             let Some(family) = family_name(&face) else { continue };
             // Symbol-only and hidden (dot-prefixed) fonts aren't useful for typing text.
             if family.starts_with('.') || face.glyph_index('a').is_none() {
@@ -162,6 +173,15 @@ mod tests {
         let face = extract_face(&data, ttc.index).unwrap();
         let parsed = ttf_parser::Face::parse(&face, 0).unwrap();
         assert_eq!(family_name(&parsed).as_deref(), Some(ttc.family.as_str()));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn lists_the_standard_windows_fonts() {
+        let all = families();
+        for want in ["Arial", "Times New Roman", "Segoe UI"] {
+            assert!(all.iter().any(|f| f.family == want), "{want} missing from {} families", all.len());
+        }
     }
 
     #[test]
