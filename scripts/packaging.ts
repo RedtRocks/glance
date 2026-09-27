@@ -250,7 +250,8 @@ function nsisString(s: string): string {
 /**
  * NSIS macros that register Glance with Windows as a candidate default app: a ProgID
  * per file association group, the extensions under OpenWithProgids ("Open with") and
- * Applications\glance.exe, and Capabilities listed under RegisteredApplications, which
+ * Applications\glance.exe, the previous default app's thumbnail and preview handlers
+ * (GLANCE_KEEP_HANDLERS in hooks.nsh), and Capabilities listed under RegisteredApplications, which
  * is what Settings → Apps → Default apps reads. Tauri's own association code writes
  * none of the last two. Everything goes under HKCU, matching the per-user install.
  */
@@ -260,10 +261,15 @@ export function nsisDefaultApps(conf: TauriConf): string {
   const app = `${classes}\\Applications\\\${MAINBINARYNAME}.exe`
   const progIds = new Map<string, string>()
   const types = new Map<string, string>()
+  const tauriClass = new Map<string, string>()
+  const imageTypes = new Set<string>()
   for (const a of conf.bundle.fileAssociations) {
     const id = progId(a.name)
     if (!progIds.has(id)) progIds.set(id, a.description ?? a.name)
     for (const e of a.ext) if (!types.has(e.toLowerCase())) types.set(e.toLowerCase(), id)
+    // Tauri's own association (FileAssociation.nsh) names its class after the group.
+    for (const e of a.ext) if (!tauriClass.has(e.toLowerCase())) tauriClass.set(e.toLowerCase(), a.name)
+    if (/image/i.test(a.name)) for (const e of a.ext) imageTypes.add(e.toLowerCase())
   }
   const register: string[] = []
   const unregister: string[] = []
@@ -283,13 +289,17 @@ export function nsisDefaultApps(conf: TauriConf): string {
     `  WriteRegStr HKCU "\${GLANCE_CAPABILITIES}" "ApplicationDescription" "${nsisString(conf.bundle.shortDescription)}"`,
     `  WriteRegStr HKCU "\${GLANCE_CAPABILITIES}" "ApplicationIcon" "${exe},0"`
   )
+  for (const [ext, cls] of tauriClass) {
+    const perceived = imageTypes.has(ext) ? 'image' : ''
+    register.push(`  !insertmacro GLANCE_KEEP_HANDLERS "${ext}" "${nsisString(cls)}" "${perceived}"`)
+  }
   for (const [ext, id] of types) {
     register.push(
       `  WriteRegStr HKCU "${classes}\\.${ext}\\OpenWithProgids" "${id}" ""`,
       `  WriteRegStr HKCU "${app}\\SupportedTypes" ".${ext}" ""`,
       `  WriteRegStr HKCU "\${GLANCE_CAPABILITIES}\\FileAssociations" ".${ext}" "${id}"`
     )
-    unregister.push(`  DeleteRegValue HKCU "${classes}\\.${ext}\\OpenWithProgids" "${id}"`)
+    unregister.push(`  DeleteRegValue HKCU "${classes}\\.${ext}\\OpenWithProgids" "${id}"`, `  !insertmacro GLANCE_DROP_HANDLERS "${ext}"`)
   }
   register.push(
     `  WriteRegStr HKCU "Software\\RegisteredApplications" "${nsisString(conf.productName)}" "\${GLANCE_CAPABILITIES}"`,
@@ -299,6 +309,7 @@ export function nsisDefaultApps(conf: TauriConf): string {
     `  DeleteRegKey HKCU "${app}"`,
     `  DeleteRegValue HKCU "Software\\RegisteredApplications" "${nsisString(conf.productName)}"`,
     `  DeleteRegKey HKCU "\${GLANCE_CAPABILITIES}"`,
+    `  DeleteRegKey HKCU "\${GLANCE_HANDLERS}"`,
     `  DeleteRegKey /ifempty HKCU "Software\\Glance"`,
     `  System::Call "shell32::SHChangeNotify(i 0x08000000, i 0x1000, p 0, p 0)"`
   )

@@ -11,6 +11,7 @@ Glance is a free, open-source, lightweight viewer and editor for PDFs, images an
 - **The More options (⋯) menu works.** Share, Print, Export and the other items in it did nothing when clicked. The menu also closes with Escape.
 - **Pick the highlighter color.** The Highlight button in the main toolbar and in the markup bar now has a dropdown with highlight colors (or any color), underline, strikethrough and squiggly underline. Picking a color recolors the selected highlight or highlights the selected text.
 - **Pick Glance in Settings → Default apps.** Glance now registers with Windows as a default app for PDFs, images, camera RAW, XPS, PostScript, comics and 3D models, so it's listed in **Settings → Apps → Default apps** and under **Open with** for each of those types. **Make default** (offered once at startup, and in Glance's Settings) opens Glance's page there; on Windows 11 one **Set default** click makes it the default for everything. Windows requires that confirmation: apps can't make themselves the default.
+- **File Explorer shows previews again.** With Glance as the default, photos and PDFs showed Glance's icon instead of a thumbnail of their content. Explorer thumbnails and the Preview pane now keep working (PDF thumbnails come from whichever PDF app provides them, such as Acrobat).
 - **System fonts load faster for text boxes.** The font list (Aa in the markup bar) reads only what it needs from each installed font and starts loading when the markup bar opens, so your Windows fonts show up right away.
 
 ## New in 0.4.0

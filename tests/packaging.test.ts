@@ -82,6 +82,9 @@ describe('Default apps registration (installer)', () => {
         expect(nsh).toContain(`"\${GLANCE_CAPABILITIES}\\FileAssociations" ".${ext}" "${id}"`)
         expect(nsh).toContain(`"Software\\Classes\\.${ext}\\OpenWithProgids" "${id}" ""`)
         expect(nsh).toContain(`DeleteRegValue HKCU "Software\\Classes\\.${ext}\\OpenWithProgids" "${id}"`)
+        // Thumbnails and the Preview pane keep working with Glance as the default.
+        expect(nsh).toMatch(new RegExp(`GLANCE_KEEP_HANDLERS "${ext}" "${a.name}" "(image)?"`))
+        expect(nsh).toContain(`GLANCE_DROP_HANDLERS "${ext}"`)
       }
     }
   })
