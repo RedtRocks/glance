@@ -20,3 +20,11 @@ export function isTouchpad(e: Wheel): boolean {
   }
   return false
 }
+
+/**
+ * How much a touchpad pinch (a Ctrl+wheel event) scales the view distance: below 1
+ * zooms in. Matches Chromium's pinch deltas, where a 2x pinch sums to about -69.
+ */
+export function pinchScale(deltaY: number): number {
+  return Math.min(2, Math.max(0.5, Math.exp(deltaY * 0.01)))
+}
