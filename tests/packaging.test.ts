@@ -9,6 +9,8 @@ import {
   nsisDefaultApps,
   parseSha256Sums,
   progId,
+  thumbnailClsid,
+  thumbnailExtensions,
   readTauriConf,
   wingetManifests,
 } from '../scripts/packaging'
@@ -86,6 +88,19 @@ describe('Default apps registration (installer)', () => {
         expect(nsh).toMatch(new RegExp(`GLANCE_KEEP_HANDLERS "${ext}" "${a.name}" "(image)?"`))
         expect(nsh).toContain(`GLANCE_DROP_HANDLERS "${ext}"`)
       }
+    }
+  })
+
+  it('gives Explorer thumbnails for the types Windows can’t preview', () => {
+    // Must match clsid_for in src-tauri/thumbnailer/src/lib.rs.
+    expect(thumbnailClsid('pdf')).toBe('{4d578e19-3f31-49d8-8d05-706466000000}')
+    expect(thumbnailClsid('cr2')).toBe('{4d578e19-3f31-49d8-8d05-637232000000}')
+    const exts = thumbnailExtensions(conf)
+    for (const e of ['pdf', 'ai', 'xps', 'cbz', 'eps', 'psd', 'jxl', 'tga', 'exr', 'cr2', 'dng']) expect(exts).toContain(e)
+    for (const e of ['jpg', 'png', 'heic', 'glb', 'svg']) expect(exts).not.toContain(e)
+    for (const e of exts) {
+      expect(nsh).toContain(`GLANCE_THUMBNAILER_FOR "${e}" "${thumbnailClsid(e)}"`)
+      expect(nsh).toContain(`GLANCE_THUMBNAILER_NOT_FOR "${e}" "${thumbnailClsid(e)}"`)
     }
   })
 

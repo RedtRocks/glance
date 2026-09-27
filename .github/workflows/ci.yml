@@ -37,12 +37,17 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: src-tauri
+          workspaces: |
+            src-tauri
+            src-tauri/thumbnailer
       - run: npm ci
       - name: Build frontend
         run: npm run build
       - name: Rust tests
         working-directory: src-tauri
+        run: cargo test --locked
+      - name: PDF thumbnailer tests
+        working-directory: src-tauri/thumbnailer
         run: cargo test --locked
       - name: Build installer
         run: npx tauri build --bundles nsis
@@ -62,10 +67,27 @@ jobs:
           # Tauri's per-user .jpg key hides the system's PerceivedType; without it photos lose their thumbnails.
           $perceived = Get-ItemPropertyValue 'Registry::HKEY_CLASSES_ROOT\.jpg' -Name PerceivedType
           if ($perceived -ne 'image') { throw ".jpg PerceivedType is '$perceived'" }
+          # Explorer gets a PDF's first page from Glance's thumbnailer, through the shell's own lookup.
+          reg query 'HKCR\.pdf' /s
+          reg query 'HKCR\SystemFileAssociations\.pdf' /s 2>$null
+          reg query 'HKCR\.tga' /s
+          # Explorer gets thumbnails from Glance's handler, through the shell's own lookup. That
+          # lookup activates the handler in a surrogate process, and COM ignores per-user classes
+          # for elevated callers; CI can only run elevated, so the check mirrors the classes into
+          # HKLM for its duration. Normal (non-elevated) users get the per-user classes as installed.
+          $classes = '{4d578e19-3f31-49d8-8d05-706466000000}', '{4d578e19-3f31-49d8-8d05-746761000000}'
+          foreach ($c in $classes) { reg copy "HKCU\Software\Classes\CLSID\$c" "HKLM\Software\Classes\CLSID\$c" /s /f /reg:64 | Out-Null }
+          Push-Location src-tauri/thumbnailer
+          cargo test --locked -- --ignored installed_handler
+          $failed = $LASTEXITCODE
+          foreach ($c in $classes) { reg delete "HKLM\Software\Classes\CLSID\$c" /f /reg:64 | Out-Null }
+          if ($failed -ne 0) { throw 'no thumbnail from the installed handler' }
+          Pop-Location
           $dir = Join-Path $env:LOCALAPPDATA Glance
           Start-Process (Join-Path $dir uninstall.exe) -ArgumentList '/S', "_?=$dir" -Wait
           if (Get-ItemProperty 'HKCU:\Software\RegisteredApplications' -Name Glance -ErrorAction SilentlyContinue) { throw 'still registered after uninstall' }
           if (Test-Path 'HKCU:\Software\Glance\Capabilities') { throw 'Capabilities left after uninstall' }
+          if (Test-Path 'HKCU:\Software\Classes\CLSID\{4d578e19-3f31-49d8-8d05-706466000000}') { throw 'thumbnailer left after uninstall' }
       - uses: actions/upload-artifact@v4
         with:
           name: glance-windows-x64-installer
@@ -97,6 +119,9 @@ jobs:
         run: mkdir -p dist && echo '<!doctype html>' > dist/index.html
       - name: Check (runs build scripts, e.g. tract's ARM64 kernels via clang)
         working-directory: src-tauri
+        run: cargo check --locked --target aarch64-pc-windows-msvc
+      - name: Check PDF thumbnailer
+        working-directory: src-tauri/thumbnailer
         run: cargo check --locked --target aarch64-pc-windows-msvc
 
   linux-rust:

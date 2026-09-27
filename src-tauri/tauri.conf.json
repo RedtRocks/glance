@@ -1,12 +1,13 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Glance",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "identifier": "io.github.redtrocks.glance",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "npm run build",
+    "beforeBundleCommand": "node scripts/thumbnailer.mjs",
     "frontendDist": "../dist"
   },
   "app": {

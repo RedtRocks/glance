@@ -22,11 +22,11 @@ const ZOOM: Entry[] = ['view.zoomIn', 'view.zoomOut', 'view.actualSize', 'view.z
 /** Each kind of file gets its own menu bar, like separate apps would. */
 export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'notice', Record<string, Entry[]>> = {
   none: {
-    File: ['file.open', 'file.newFromClipboard', 'file.scan', 'file.newWindow', '-', 'file.batch', 'file.collage', '-', 'file.settings'],
+    File: ['file.open', 'file.newFromClipboard', 'file.scan', 'file.newWindow', '-', 'file.batch', 'file.collage', '-', 'file.makeDefault', 'file.settings'],
     Help: HELP
   },
   pdf: {
-    File: ['file.open', 'file.openWith', 'file.newFromClipboard', 'file.scan', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.versions', 'file.export', 'file.split', 'file.cleanup', 'file.reduce', '-', 'file.share', 'file.print', '-', 'file.close', '-', 'file.settings'],
+    File: ['file.open', 'file.openWith', 'file.newFromClipboard', 'file.scan', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.versions', 'file.export', 'file.split', 'file.cleanup', 'file.reduce', '-', 'file.share', 'file.print', '-', 'file.close', '-', 'file.makeDefault', 'file.settings'],
     Edit: ['edit.undo', 'edit.redo', '-', 'edit.delete', 'edit.selectAll', 'edit.find', '-', 'edit.addBookmark', '-', 'tools.ocr'],
     View: [
       '#Sidebar', 'view.hideSidebar', 'view.thumbnails', 'view.toc', 'view.notes', 'view.bookmarks', '-',
@@ -46,7 +46,7 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'notice', Record
     Help: HELP
   },
   image: {
-    File: ['file.open', 'file.openWith', 'file.newFromClipboard', 'file.scan', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.versions', 'file.export', '-', 'image.setWallpaper', 'image.setLockScreen', '-', 'file.batch', 'file.collage', '-', 'file.share', 'file.print', '-', 'file.close', '-', 'file.settings'],
+    File: ['file.open', 'file.openWith', 'file.newFromClipboard', 'file.scan', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.versions', 'file.export', '-', 'image.setWallpaper', 'image.setLockScreen', '-', 'file.batch', 'file.collage', '-', 'file.share', 'file.print', '-', 'file.close', '-', 'file.makeDefault', 'file.settings'],
     Edit: ['edit.undo', 'edit.redo', '-', 'edit.delete', 'edit.invertSelection', '-', 'tools.copyImageText'],
     // Multi-page images (TIFF, comic archives) also get the sidebar and Go menu.
     View: ['view.hideSidebar', 'view.thumbnails', '-', ...ZOOM, '-', 'view.fullscreen', 'view.slideshow', '-', 'view.inspector', 'view.customizeToolbar'],
@@ -60,13 +60,13 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'notice', Record
     Help: HELP
   },
   model: {
-    File: ['file.open', 'file.openWith', 'file.newFromClipboard', 'file.scan', 'file.newWindow', '-', 'file.export', '-', 'file.share', '-', 'file.close', '-', 'file.settings'],
+    File: ['file.open', 'file.openWith', 'file.newFromClipboard', 'file.scan', 'file.newWindow', '-', 'file.export', '-', 'file.share', '-', 'file.close', '-', 'file.makeDefault', 'file.settings'],
     View: [...ZOOM, 'model.resetView', '-', 'model.view.front', 'model.view.back', 'model.view.left', 'model.view.right', 'model.view.top', 'model.view.bottom', '-', 'model.wireframe', 'model.autoRotate', 'model.shadow', 'model.grid', '-', 'view.fullscreen', '-', 'view.inspector', 'view.customizeToolbar'],
     Go: ['go.nextTab', 'go.previousTab'],
     Help: HELP
   },
   notice: {
-    File: ['file.open', 'file.openWith', 'file.newFromClipboard', 'file.scan', 'file.newWindow', '-', 'file.close', '-', 'file.settings'],
+    File: ['file.open', 'file.openWith', 'file.newFromClipboard', 'file.scan', 'file.newWindow', '-', 'file.close', '-', 'file.makeDefault', 'file.settings'],
     Go: ['go.nextTab', 'go.previousTab'],
     Help: HELP
   }

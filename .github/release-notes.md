@@ -2,6 +2,11 @@ Glance is a free, open-source, lightweight viewer and editor for PDFs, images an
 
 > **Early preview.** Most of Preview's everyday features work, plus version history, 3D models, certificate signatures and more. Glance's entries in Explorer's right-click menu are under **Show more options** on Windows 11; the top-level entry comes once releases are code-signed. See the [README](https://github.com/RedtRocks/glance#features) for the full list.
 
+## New in 0.4.2
+
+- **File Explorer shows what's inside your files.** Windows can't preview PDFs, camera RAW (without the RAW extension), XPS, EPS, comic books (CBZ), Photoshop, JPEG XL, JPEG 2000, OpenEXR, HDR, TGA, DDS, QOI, Netpbm and Mac icon files, so with Glance as the default app they showed Glance's icon. Glance now includes its own thumbnail handler, so Explorer shows a PDF's first page, a photo or the cover. Types Windows already previews keep Windows' own thumbnails. If old icons stick around, restart Explorer or clear Thumbnails in Disk Cleanup.
+- **Make Glance the Default App…** is now in the File menu, next to Settings.
+
 ## New in 0.4.1
 
 - **Fixes the endless update notice in 0.4.0.** The 0.4.0 installer still called itself 0.3.0 inside, so it kept offering 0.4.0 as an update. Installing 0.4.1 stops that.
