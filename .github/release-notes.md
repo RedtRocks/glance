@@ -10,6 +10,7 @@ Glance is a free, open-source, lightweight viewer and editor for PDFs, images an
 - **Autosave saves when you leave.** Like Preview, edits are saved right away when you switch to another app or tab, or close a tab or the window, so closing only asks about JPEGs and unapplied redactions. Also fixes autosave stopping for every open file after editing a text box or note.
 - **The More options (⋯) menu works.** Share, Print, Export and the other items in it did nothing when clicked. The menu also closes with Escape.
 - **Pick the highlighter color.** The Highlight button in the main toolbar and in the markup bar now has a dropdown with highlight colors (or any color), underline, strikethrough and squiggly underline. Picking a color recolors the selected highlight or highlights the selected text.
+- **Pick Glance in Settings → Default apps.** Glance now registers with Windows as a default app for PDFs, images, camera RAW, XPS, PostScript, comics and 3D models, so it's listed in **Settings → Apps → Default apps** and under **Open with** for each of those types.
 - **System fonts load faster for text boxes.** The font list (Aa in the markup bar) reads only what it needs from each installed font and starts loading when the markup bar opens, so your Windows fonts show up right away.
 
 ## New in 0.4.0
@@ -38,7 +39,7 @@ Not sure? Open **Settings → System → About** and look at **System type**.
 
 1. Download the installer and run it. It installs for your account only; no administrator rights are needed.
 2. **Windows SmartScreen will warn** that the app is from an unknown publisher, because releases aren't code-signed yet. Click **More info → Run anyway**.
-3. To make Glance your PDF or image viewer: right-click a file → **Open with → Choose another app → Glance**, and tick **Always use this app**.
+3. To make Glance your PDF or image viewer: open **Settings → Apps → Default apps → Glance** and pick the file types, or right-click a file → **Open with → Choose another app → Glance** and choose **Always**.
 
 Requires Windows 10 (1809+) or Windows 11. The installer downloads the WebView2 runtime if it's missing (it's preinstalled on Windows 11).
 

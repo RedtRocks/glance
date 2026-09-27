@@ -2,7 +2,7 @@
 
 The maintainer wants the most native, Fluent experience possible, so Glance integrates with every Windows entry point from the first release. The Dock drag-and-drop from macOS doesn't exist on Windows: dropping onto a taskbar button only focuses the window.
 
-- "Open with Glance" file associations (installer)
+- "Open with Glance" file associations, and Glance listed in Settings → Apps → Default apps (installer, `src-tauri/windows/default-apps.nsh`)
 - Dropping files onto the Glance desktop shortcut or `.exe`
 - **Send to → Glance**; several files sent together open together
 - **Windows 11 top-level context menu**: Open in Glance, Combine into PDF, Remove Location Info

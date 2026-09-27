@@ -5,7 +5,11 @@
 ;   Info. On Windows 11 they appear under "Show more options"; the top-level menu needs a
 ;   signed package (ADR 0009). Explorer runs a verb once per selected file; Glance gathers
 ;   the launches into one request (src-tauri/src/explorer.rs).
+; - Registers Glance for Settings > Apps > Default apps and "Open with"
+;   (default-apps.nsh, generated from tauri.conf.json).
 ; Everything goes under HKCU, matching the per-user install.
+
+!include "${__FILEDIR__}\default-apps.nsh"
 
 !define GLANCE_SFA "Software\Classes\SystemFileAssociations"
 
@@ -46,6 +50,7 @@
 
 !macro NSIS_HOOK_POSTINSTALL
   CreateShortCut "$APPDATA\Microsoft\Windows\SendTo\Glance.lnk" "$INSTDIR\${MAINBINARYNAME}.exe" "" "$INSTDIR\${MAINBINARYNAME}.exe" 0
+  !insertmacro GLANCE_DEFAULT_APPS_REGISTER
 
   !insertmacro GLANCE_VERB ".pdf" "Glance.Open" "Open in Glance" ""
   !insertmacro GLANCE_VERB "image" "Glance.Open" "Open in Glance" ""
@@ -56,6 +61,11 @@
 
 !macro NSIS_HOOK_PREUNINSTALL
   Delete "$APPDATA\Microsoft\Windows\SendTo\Glance.lnk"
+  ; An update reinstalls straight after, so keep the registration and the user's
+  ; default app choices pointing at Glance's ProgIDs.
+  ${If} $UpdateMode <> 1
+    !insertmacro GLANCE_DEFAULT_APPS_UNREGISTER
+  ${EndIf}
 
   !insertmacro GLANCE_UNVERB ".pdf" "Glance.Open"
   !insertmacro GLANCE_UNVERB "image" "Glance.Open"
