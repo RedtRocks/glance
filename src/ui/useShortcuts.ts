@@ -1,5 +1,6 @@
 import { useEffect } from 'preact/hooks'
 import { comboFromEvent } from '../core/shortcuts'
+import { isPageZoomKey } from '../core/pageZoom'
 import { commandForCombo, runCommand } from '../state/commands'
 import { dialog, settingsOpen, customizeOpen, slideshow } from '../state/ui'
 import { editingId, selectedId, setTool, signatureDialog, spaceHeld, tool } from '../state/markupState'
@@ -51,10 +52,22 @@ export function useShortcuts(): void {
     const release = (e: KeyboardEvent | FocusEvent): void => {
       if (e.type === 'blur' || (e as KeyboardEvent).code === 'Space') spaceHeld.value = false
     }
+    // Touchpad pinch needs WebView2's zoom controls on (see core/pageZoom); keep them
+    // from zooming the whole window. Views that zoom handle Ctrl+wheel before this.
+    const noPageZoomKey = (e: KeyboardEvent): void => {
+      if (isPageZoomKey(e)) e.preventDefault()
+    }
+    const noPageZoomWheel = (e: WheelEvent): void => {
+      if (e.ctrlKey) e.preventDefault()
+    }
+    window.addEventListener('keydown', noPageZoomKey, true)
+    window.addEventListener('wheel', noPageZoomWheel, { passive: false })
     window.addEventListener('keydown', onKey)
     window.addEventListener('keyup', release)
     window.addEventListener('blur', release)
     return () => {
+      window.removeEventListener('keydown', noPageZoomKey, true)
+      window.removeEventListener('wheel', noPageZoomWheel)
       window.removeEventListener('keydown', onKey)
       window.removeEventListener('keyup', release)
       window.removeEventListener('blur', release)

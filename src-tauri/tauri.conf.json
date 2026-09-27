@@ -22,7 +22,8 @@
         "center": true,
         "transparent": true,
         "visible": false,
-        "dragDropEnabled": true
+        "dragDropEnabled": true,
+        "zoomHotkeysEnabled": true
       }
     ],
     "security": {

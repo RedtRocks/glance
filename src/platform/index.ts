@@ -216,8 +216,9 @@ export async function openNewWindow(paths: string[]): Promise<void> {
   if (!isTauri) return
   const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow')
   const label = `doc-${Date.now()}`
+  // zoomHotkeysEnabled also turns on touchpad pinch in WebView2; see core/pageZoom.
   const url = `index.html#open=${encodeURIComponent(JSON.stringify(paths))}`
-  new WebviewWindow(label, { url, title: 'Glance' /* i18n-ignore: product name */, width: 1100, height: 800, transparent: false })
+  new WebviewWindow(label, { url, title: 'Glance' /* i18n-ignore: product name */, width: 1100, height: 800, transparent: false, zoomHotkeysEnabled: true })
 }
 
 /** Second launches (Open with, Send to) forward their files here. */
