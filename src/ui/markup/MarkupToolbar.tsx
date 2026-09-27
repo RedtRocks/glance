@@ -251,7 +251,7 @@ export function MarkupToolbar() {
               </div>
             )}
           </Popover>
-          <ToolButton t="instantAlpha" icon="instantAlpha" label={t('Instant Alpha: drag over a color to select it')} />
+          <ToolButton t="instantAlpha" icon="instantAlpha" label={t('Instant Alpha: drag over a color to select it. Shift adds to the selection, Alt subtracts')} />
         </>
       )}
       <span class="tb-sep" />
