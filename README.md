@@ -35,7 +35,7 @@ Glance brings Preview's everyday superpowers to Windows: rearranging and merging
 | Signatures: draw with mouse/pen (pressure), capture with the camera, or import a photo; stored encrypted with Windows DPAPI | ✅ |
 | Fill in PDF forms | ✅ |
 | Certificate signatures (Adobe, DocuSign and others): a banner says whether each is valid, who signed and when, and whether the document changed since; trust comes from the Windows certificate store. Sign with your own certificate or smart card (Markup → Sign with Certificate) | ✅ |
-| Redaction that truly removes content (pages rasterized; form data, thumbnails, tags and orphaned objects purged); Remove Sensitive Text finds names, emails, phone, card and ID numbers | ✅ |
+| Redaction that truly removes content (PDF pages rasterized, image areas burned in black; form data, thumbnails, tags and orphaned objects purged); Remove Sensitive Text finds names, emails, phone, card and ID numbers | ✅ |
 | Text recognition (Windows OCR): scanned PDFs become searchable and selectable; copy text from images | ✅ |
 | Highlights & Notes sidebar, bookmarks | ✅ |
 | Remove Background and Copy Subject with a bundled AI model (U²-Net-p, runs locally in Rust) | ✅ |
@@ -53,6 +53,8 @@ Glance brings Preview's everyday superpowers to Windows: rearranging and merging
 | Create Collage (justified rows or grid) | ✅ |
 | Password-protected PDF export (AES-256, permissions), Reduce File Size, New from Clipboard, Import from Scanner | ✅ |
 | Page numbers, headers, footers and text or image watermarks on PDFs (Pages → Header, Footer & Watermark, with live preview) | ✅ |
+| Touchpad gestures: pinch to zoom smoothly; two-finger orbit and Shift + two-finger pan for 3D models | ✅ |
+| Interface follows the Windows display language, with a Language setting (English only so far; translations welcome) | ✅ |
 | Explorer right-click menu: Open in Glance, Combine into PDF, Remove Location Info (on Windows 11 under "Show more options") | ✅ |
 | Windows 11 top-level context menu (needs a signed build) | Milestone 6 |
 
