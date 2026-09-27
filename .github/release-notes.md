@@ -4,7 +4,7 @@ Glance is a free, open-source, lightweight viewer and editor for PDFs, images an
 
 ## New in 0.4.2
 
-- **PDFs show their first page in File Explorer.** Windows has no PDF thumbnails of its own, so with Glance as the default app PDFs showed Glance's icon. Glance now includes a thumbnail handler, so Explorer shows each PDF's first page (and Illustrator files' artwork). If old icons stick around, restart Explorer or clear Thumbnails in Disk Cleanup.
+- **File Explorer shows what's inside your files.** Windows can't preview PDFs, camera RAW (without the RAW extension), XPS, EPS, comic books (CBZ), Photoshop, JPEG XL, JPEG 2000, OpenEXR, HDR, TGA, DDS, QOI, Netpbm and Mac icon files, so with Glance as the default app they showed Glance's icon. Glance now includes its own thumbnail handler, so Explorer shows a PDF's first page, a photo or the cover. Types Windows already previews keep Windows' own thumbnails. If old icons stick around, restart Explorer or clear Thumbnails in Disk Cleanup.
 - **Make Glance the Default App…** is now in the File menu, next to Settings.
 
 ## New in 0.4.1

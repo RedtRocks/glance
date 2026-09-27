@@ -76,7 +76,7 @@ jobs:
           Start-Process (Join-Path $dir uninstall.exe) -ArgumentList '/S', "_?=$dir" -Wait
           if (Get-ItemProperty 'HKCU:\Software\RegisteredApplications' -Name Glance -ErrorAction SilentlyContinue) { throw 'still registered after uninstall' }
           if (Test-Path 'HKCU:\Software\Glance\Capabilities') { throw 'Capabilities left after uninstall' }
-          if (Test-Path 'HKCU:\Software\Classes\CLSID\{4d578e19-3f31-49d8-8d05-8efaa193a022}') { throw 'thumbnailer left after uninstall' }
+          if (Test-Path 'HKCU:\Software\Classes\CLSID\{4d578e19-3f31-49d8-8d05-706466000000}') { throw 'thumbnailer left after uninstall' }
       - uses: actions/upload-artifact@v4
         with:
           name: glance-windows-x64-installer
