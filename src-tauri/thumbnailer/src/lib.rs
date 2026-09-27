@@ -277,11 +277,25 @@ mod tests {
         let tga = std::env::temp_dir().join("glance-thumbnail-check.tga");
         image::RgbaImage::from_pixel(40, 30, image::Rgba([200, 30, 30, 255])).save(&tga).unwrap();
         unsafe { windows::Win32::System::Com::CoInitializeEx(None, windows::Win32::System::Com::COINIT_APARTMENTTHREADED).ok().unwrap() };
-        for path in [pdf, tga] {
+        for (path, ext) in [(pdf, "pdf"), (tga, "tga")] {
             let path = path.to_string_lossy().trim_start_matches(r"\\?\").to_string();
+            // The registered COM class itself, as the thumbnail host creates it.
+            unsafe {
+                use windows::Win32::System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER};
+                use windows::Win32::UI::Shell::SHCreateStreamOnFileEx;
+                let provider: IThumbnailProvider =
+                    CoCreateInstance(&clsid_for(ext), None, CLSCTX_INPROC_SERVER).unwrap_or_else(|e| panic!("CLSID for .{ext} not registered: {e}"));
+                let stream = SHCreateStreamOnFileEx(&HSTRING::from(&path), 0, 0, false, None).unwrap();
+                provider.cast::<IInitializeWithStream>().unwrap().Initialize(&stream, 0).unwrap();
+                let (mut bitmap, mut alpha) = (HBITMAP::default(), WTS_ALPHATYPE::default());
+                provider.GetThumbnail(256, &mut bitmap, &mut alpha).unwrap_or_else(|e| panic!("handler failed on .{ext}: {e}"));
+            }
+            // And through the shell's own lookup, as Explorer does.
             let item: IShellItemImageFactory = unsafe { SHCreateItemFromParsingName(&HSTRING::from(&path), None) }.unwrap();
             let bitmap = unsafe { item.GetImage(SIZE { cx: 256, cy: 256 }, SIIGBF_THUMBNAILONLY) };
-            assert!(bitmap.is_ok_and(|b| !b.is_invalid()), "no thumbnail for {path}");
+            if let Err(e) = &bitmap {
+                panic!("the shell gave no thumbnail for {path}: {e}");
+            }
         }
     }
 

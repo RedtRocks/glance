@@ -68,6 +68,9 @@ jobs:
           $perceived = Get-ItemPropertyValue 'Registry::HKEY_CLASSES_ROOT\.jpg' -Name PerceivedType
           if ($perceived -ne 'image') { throw ".jpg PerceivedType is '$perceived'" }
           # Explorer gets a PDF's first page from Glance's thumbnailer, through the shell's own lookup.
+          reg query 'HKCR\.pdf' /s
+          reg query 'HKCR\SystemFileAssociations\.pdf' /s 2>$null
+          reg query 'HKCR\.tga' /s
           Push-Location src-tauri/thumbnailer
           cargo test --locked -- --ignored installed_handler
           if ($LASTEXITCODE -ne 0) { throw 'no PDF thumbnail from the installed handler' }
