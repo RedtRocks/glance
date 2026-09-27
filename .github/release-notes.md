@@ -1,18 +1,26 @@
-Glance is a free, open-source, lightweight viewer and editor for PDFs, images and camera RAW on Windows, inspired by macOS Preview.
+Glance is a free, open-source, lightweight viewer and editor for PDFs, images and camera RAW and 3D models on Windows, inspired by macOS Preview.
 
-> **Early preview.** Most of Preview's everyday features work, plus version history, 3D models and more. Glance's entries in Explorer's right-click menu are under **Show more options** on Windows 11; the top-level entry comes once releases are code-signed. See the [README](https://github.com/RedtRocks/glance#features) for the full list.
+> **Early preview.** Most of Preview's everyday features work, plus version history, 3D models, certificate signatures and more. Glance's entries in Explorer's right-click menu are under **Show more options** on Windows 11; the top-level entry comes once releases are code-signed. See the [README](https://github.com/RedtRocks/glance#features) for the full list.
 
-## New in 0.3.0
+## New in 0.4.1
 
-- **Version history and autosave.** Every save keeps a version (File → Browse Versions: preview, restore or open a copy). Edits save automatically a few seconds after you stop (turn it off in Settings). Versions share unchanged data, so they take little space.
-- **Safe with other apps and windows.** A file opens in one window only; if another app changes it, Glance pauses autosave and asks before replacing anything.
-- **3D models.** GLB/glTF, OBJ, STL, PLY, 3MF, Collada, FBX, USDZ and 3DS: orbit, zoom, wireframe, turntable, animations and PNG snapshots.
-- **XPS and OpenXPS** documents, rendered by Windows.
-- **Clean Up PDF** removes comments, links, metadata, attached files and scripts for real, and PDFs are compacted when saving.
-- **Create Collage** from photos (rows or grid).
-- **Password-protect PDFs** when exporting (AES-256, with printing/copying/editing permissions), **Reduce File Size** for image-heavy PDFs, **New from Clipboard** (Ctrl+N) and **Import from Scanner** (flatbed or feeder, straight into a PDF).
-- **Explorer right-click menu:** Open in Glance, Combine into PDF (selected PDFs and images, in name order, as a new PDF next to them) and Remove Location Info. On Windows 11 they're under Show more options.
-- **Share** through the Windows share sheet, **Send to → Glance** in Explorer, and **update notifications** you can skip or turn off.
+- **Fixes the endless update notice in 0.4.0.** The 0.4.0 installer still called itself 0.3.0 inside, so it kept offering 0.4.0 as an update. Installing 0.4.1 stops that.
+- **Redaction on images works.** Mark areas, then Apply Redactions: the areas are painted solid black into the pixels, as one step you can undo. Discard and the warning bar work on images like they do on PDFs, and Print uses the edited image.
+- **Instant Alpha: hold Shift to add, Alt to subtract.** Like Preview, Shift-drag grows the current selection (of any kind) and Alt-drag takes a region away, with a live preview. Escape keeps the old selection.
+- **The More options (⋯) menu works.** Share, Print, Export and the other items in it did nothing when clicked. The menu also closes with Escape.
+
+## New in 0.4.0
+
+- **Certificate signatures in PDFs.** A banner above signed PDFs (Adobe, DocuSign and others) says whether each signature is valid, who signed and when, and whether the document changed since; View → Signatures has the details. Trust comes from the Windows certificate store. **Markup → Sign with Certificate** signs with your own certificate or smart card.
+- **Header, footer and watermark** (Pages → Header, Footer & Watermark): page numbers, header and footer text with page, date and file-name fields, and text or image watermarks on all pages or a range, with a live preview.
+- **Straighten images** (Image → Straighten, Ctrl+Shift+L): rotate by any angle with a slider, an exact value or by dragging, over a grid, with optional crop to fill. Rotate, flip, crop and resize now work on images with markup, which moves with the pixels.
+- **Single-key tools** like Photoshop and Figma: V select, H hand, Z zoom, M marquee, L lasso, W Instant Alpha, B draw, U shapes, R rectangle, O oval, T text, S note, C crop, [ and ] for line width, and Space to pan. Every key can be changed in Settings.
+- **Reopen tabs on launch** with each tab's page and zoom (off by default; turn it on in Settings).
+- **3D viewer:** lighting presets, backgrounds, clay, normals and X-ray materials, ground shadow, floor grid and camera views. Models keep their true colors, and textures show up without having to move the view.
+- **Touchpad gestures:** two-finger drag orbits a 3D model (Shift pans), and pinch zooms images and PDFs smoothly.
+- **Autosave is calmer:** it saves after 10 seconds without edits, at most once a minute, never while you're typing in a form field, and not at all when nothing changed.
+- **Instant Alpha fix:** a quick click no longer leaves a blue tint that Delete can't remove.
+- **Ready for translation:** all text now goes through a translation layer, and Glance follows the Windows display language (Settings → Language) as translations are added.
 
 ## Download
 
