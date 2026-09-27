@@ -131,3 +131,10 @@ export function resizeMask(mask: Uint8Array, mw: number, mh: number, w: number, 
 export function refineMatte(mask: Uint8Array, low = 40, high = 215): Uint8Array {
   return mask.map((v) => (v <= low ? 0 : v >= high ? 255 : Math.round(((v - low) / (high - low)) * 255)))
 }
+
+/** Shift adds a new region to a selection (union); Alt takes it away (difference). */
+export function combineMasks(base: Uint8Array, next: Uint8Array, mode: 'add' | 'subtract'): Uint8Array {
+  const out = new Uint8Array(base.length)
+  for (let i = 0; i < base.length; i++) out[i] = mode === 'add' ? Math.max(base[i], next[i]) : Math.min(base[i], 255 - next[i])
+  return out
+}
