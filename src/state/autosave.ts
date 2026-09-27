@@ -1,20 +1,19 @@
 /**
  * Autosave (ADR 0004): once edits stop, edited documents are saved in place, at
  * most once a minute each (timing in core/autosave). Every save becomes a version,
- * so nothing is lost. Skipped while a dialog is open, while text is being typed
- * into a markup box or form field, for files that must be saved as (no writable
+ * so nothing is lost. Skipped while a dialog is open, while a markup text box is
+ * open or text is being typed into a form field, for files that must be saved as (no writable
  * path), and for pending redactions (save() checks).
  */
 import { effect } from '@preact/signals'
 import { activeId, docs, ImageDoc, type Doc } from './documents'
 import { settings } from './settings'
 import { dialog, toast } from './ui'
-import { editingId } from './markupState'
 import { save } from './actions'
 import { conflicts } from './versions'
 import { isTauri } from '../platform'
 import { t } from '../i18n'
-import { Autosaver, type Fingerprint } from '../core/autosave'
+import { Autosaver, QUIET_MS, type Fingerprint } from '../core/autosave'
 
 type Editable = Extract<Doc, { historyVersion: unknown }>
 
@@ -24,10 +23,25 @@ function fingerprint(d: Editable): Fingerprint {
   return d.formsEdited ? null : [d.bytes, d.markup.peek(), d.redactions.peek()]
 }
 
-/** Typing into a fillable PDF field: saving now would write half a word. */
+/** When a PDF form field last received input. */
+let lastFormInput = 0
+
+const focused = (selector: string): boolean => !!(document.activeElement as HTMLElement | null)?.closest?.(selector)
+
+/**
+ * Typing into a fillable PDF field: saving now would write half a word. Only while
+ * input is recent, so a field left focused doesn't hold autosave back forever.
+ */
 function typingInForm(): boolean {
-  return !!(document.activeElement as HTMLElement | null)?.closest?.('.annotationLayer')
+  return Date.now() - lastFormInput < QUIET_MS && focused('.annotationLayer')
 }
+
+/**
+ * A markup text box or note is open. Its text is committed when it closes, and an
+ * image save flattens markup into the pixels, which would drop the box being typed.
+ * Checked by focus rather than editingId, which can outlive an editor that unmounted.
+ */
+const editorOpen = (): boolean => focused('.text-box.editing, .note-editor')
 
 let running: Autosaver<Editable> | null = null
 
@@ -57,7 +71,7 @@ export function startAutosave(): () => void {
     fingerprint,
     // (The browser build can only "save" as downloads, so it never autosaves.)
     canSave: (d) => isTauri && settings.peek().autosave && docs.peek().includes(d) && !conflicts.peek().has(d),
-    mustWait: () => !!dialog.peek() || !!editingId.peek() || typingInForm(),
+    mustWait: (_d, urgent) => editorOpen() || (!urgent && (!!dialog.peek() || typingInForm())),
     save: async (d) => {
       await save(d, { auto: true })
       failed.delete(d.id)
@@ -100,6 +114,10 @@ export function startAutosave(): () => void {
   // Like Preview: switching to another app or another tab saves what you left.
   const onBlur = (): void => void flushAutosave()
   window.addEventListener('blur', onBlur)
+  const onInput = (e: Event): void => {
+    if ((e.target as HTMLElement | null)?.closest?.('.annotationLayer')) lastFormInput = Date.now()
+  }
+  document.addEventListener('input', onInput, true)
   let previous = activeId.peek()
   const disposeTabs = effect(() => {
     const id = activeId.value
@@ -112,6 +130,7 @@ export function startAutosave(): () => void {
     dispose()
     disposeTabs()
     window.removeEventListener('blur', onBlur)
+    document.removeEventListener('input', onInput, true)
     saver.dispose()
     if (running === saver) running = null
   }

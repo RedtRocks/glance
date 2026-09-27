@@ -8,6 +8,7 @@ class FakeDoc {
   content: object = {}
   forms = false
   typing = false
+  editorOpen = false
   writes: object[] = []
   saveDelay = 0
   declines = false
@@ -29,7 +30,7 @@ function setup() {
     editCount: (d) => d.edits,
     fingerprint: (d): Fingerprint => (d.forms ? null : [d.content]),
     canSave: () => true,
-    mustWait: (d) => d.typing,
+    mustWait: (d, urgent) => d.editorOpen || (!urgent && d.typing),
     save: async (d) => {
       if (d.declines) return
       const written = d.content
@@ -220,6 +221,20 @@ describe('Autosaver', () => {
     expect(d.writes[0]).toBe(first)
     expect(d.writes.at(-1)).toBe(d.content)
     expect(d.dirty).toBe(false)
+  })
+
+  it('never saves, even when flushed, while a text box is open', async () => {
+    const { saver, advance, edit } = setup()
+    const d = new FakeDoc()
+    saver.clean(d)
+    edit(d)
+    d.editorOpen = true
+    await saver.flush(d)
+    await advance(QUIET_MS * 3)
+    expect(d.writes).toHaveLength(0)
+    d.editorOpen = false
+    await advance(QUIET_MS)
+    expect(d.writes).toHaveLength(1)
   })
 
   it('flushing a clean or unchanged document writes nothing', async () => {

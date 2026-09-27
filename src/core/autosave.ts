@@ -36,8 +36,12 @@ export interface AutosaveHooks<D> {
   fingerprint(d: D): Fingerprint
   /** False when autosave is off, the document was closed, or its file is in conflict. */
   canSave(d: D): boolean
-  /** True while the user is mid-gesture (a dialog, typing into a text box or form field). */
-  mustWait(d: D): boolean
+  /**
+   * True while saving now would be premature (typing into a form field) or unsafe
+   * (a markup text box is open). `urgent` is set when the user is leaving the
+   * window or tab: only unsafe moments should hold the save back then.
+   */
+  mustWait(d: D, urgent: boolean): boolean
   save(d: D): Promise<void>
   onError(d: D, e: unknown): void
 }
@@ -73,8 +77,8 @@ export class Autosaver<D> {
 
   /**
    * Saves now instead of waiting for the countdown: the user switched away from the
-   * window or tab, or is closing it. Doesn't wait for a gesture to finish, since
-   * the user has left it; save() still declines what autosave never writes.
+   * window or tab, or is closing it. Doesn't wait for typing to finish, since the
+   * user has left; save() still declines what autosave never writes.
    */
   async flush(d: D): Promise<void> {
     this.cancel(d)
@@ -110,7 +114,7 @@ export class Autosaver<D> {
     this.timers.delete(d)
     if (!h.isDirty(d) || !h.canSave(d)) return
     // Mid-gesture or already writing: try again once things are quiet.
-    if (this.saving.has(d) || (!now && h.mustWait(d))) return this.schedule(d, h.now() + QUIET_MS)
+    if (this.saving.has(d) || h.mustWait(d, now)) return this.schedule(d, h.now() + QUIET_MS)
     if (sameContent(h.fingerprint(d), this.saved.get(d))) return h.setDirty(d, false)
     const before = h.editCount(d)
     let settled!: () => void
