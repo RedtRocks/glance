@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/icon.svg" width="96" alt=""></p>
+<p align="center"><img src="assets/banner.jpg" alt="Glance: Preview's best tricks, built for Windows 11"></p>
 
 # Glance
 
