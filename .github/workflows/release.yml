@@ -98,5 +98,7 @@ jobs:
   store:
     name: Microsoft Store
     needs: publish
-    if: vars.MSIX_IDENTITY_NAME != ''
     uses: ./.github/workflows/store.yml
+    with:
+      optional: true
+    secrets: inherit
