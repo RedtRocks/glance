@@ -90,3 +90,4 @@ _Avoid_: Bulk edit
 
 **Drag Out**:
 Dragging pages or an image out of Glance to create a new file wherever they are dropped.
+
