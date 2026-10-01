@@ -65,6 +65,13 @@ describe('MSIX manifest', () => {
     expect(xml).toContain('Publisher="CN=A &amp; &quot;B&quot;"')
     expect(xml).toContain('<PublisherDisplayName>&lt;C&gt;</PublisherDisplayName>')
   })
+
+  it('uses the reserved Store name when given', () => {
+    expect(msixManifest(conf, 'x64', DEV_IDENTITY)).toContain(`<DisplayName>${conf.productName}</DisplayName>`)
+    const xml = msixManifest(conf, 'x64', { ...DEV_IDENTITY, displayName: 'Glance: PDF & images' })
+    expect(xml).toContain('<DisplayName>Glance: PDF &amp; images</DisplayName>')
+    expect(xml).toContain('DisplayName="Glance: PDF &amp; images"')
+  })
 })
 
 describe('Default apps registration (installer)', () => {
