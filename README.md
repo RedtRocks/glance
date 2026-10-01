@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <b>A free, open-source, lightweight viewer and editor for PDFs, images, camera RAW and 3D models on Windows, inspired by macOS Preview.</b>
+  <b>A free, open-source Apple Preview alternative for Windows: a lightweight PDF viewer and editor, image viewer, camera RAW viewer and 3D model viewer.</b>
 </p>
 
 <p align="center">
@@ -30,7 +30,7 @@
 </picture>
 </p>
 
-Glance brings Preview's everyday superpowers to Windows: rearranging and merging PDF pages by dragging, dragging pages out to create new files, real redaction, markup and signatures, background removal, metadata scrubbing, batch processing, and more. It's built to feel native on Windows 11 (Fluent design, Mica, Explorer integration) while staying small and fast.
+**Glance is a free, open-source alternative to Apple's macOS Preview app for Windows 10 and 11.** It opens PDFs, images (including HEIC and camera RAW) and 3D models in one small app, and brings Preview's everyday superpowers to Windows: rearranging and merging PDF pages by dragging, dragging pages out to create new files, real redaction, markup and signatures, background removal, metadata scrubbing, batch processing, and more. It's built to feel native on Windows 11 (Fluent design, Mica, Explorer integration) while staying small and fast.
 
 > **Status: early preview.** Viewing, PDF page management, markup, signatures, forms, redaction, OCR, image editing, batch editing and metadata tools work today. Everything else is on the roadmap below and in [`docs/adr`](docs/adr).
 
@@ -132,6 +132,23 @@ Glance deliberately has no quick-look popup: pair it with [PowerToys Peek](https
 ## Privacy
 
 No telemetry and no accounts. The only network request is an optional daily check for a newer release on GitHub (turn it off in Settings; the Microsoft Store version leaves updates to the Store). Background removal and text recognition run on your PC.
+
+## FAQ
+
+**Is there a macOS Preview app for Windows?**
+Apple doesn't make one. Glance is a free, open-source app that does the same jobs on Windows 10 and 11: viewing PDFs and images, rearranging and merging PDF pages, markup, signatures, redaction, Instant Alpha and Adjust Color.
+
+**Is Glance free?**
+Yes. It's free and open source under the Apache-2.0 license, with no ads, account or paid tier. [Download the latest release](https://github.com/RedtRocks/glance/releases/latest).
+
+**Can Glance edit PDFs?**
+It can reorder, rotate, delete, split and merge pages, fill forms, add text, shapes, highlights, notes and signatures, sign with a certificate, and permanently redact text. It doesn't rewrite a PDF's existing body text like a word processor.
+
+**Does Glance send my files anywhere?**
+No. There's no telemetry and no account. Text recognition and background removal run on your PC, and the only network request is an optional update check. See [PRIVACY.md](PRIVACY.md).
+
+**What file types does it open?**
+PDF, XPS, EPS and AI files, JPEG, PNG, WebP, AVIF, HEIC, JPEG XL, TIFF, PSD, OpenEXR, SVG, camera RAW, comic book archives, and 3D models such as GLB, OBJ, STL and USDZ. The full list is in [docs/FORMATS.md](docs/FORMATS.md).
 
 ## Building from source
 
