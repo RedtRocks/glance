@@ -8,7 +8,9 @@
 <meta name="google-site-verification" content="96tj_FfX9T69s-mFBi2QReEL31gh2kPeXZ-IXur5zYQ">
 <link rel="canonical" href="https://redtrocks.github.io/glance/">
 <meta name="robots" content="index, follow, max-image-preview:large">
-<meta name="theme-color" content="#4408b1">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e0d12" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="sitemap" type="application/xml" href="sitemap.xml">
 <meta property="og:type" content="website">
@@ -68,6 +70,7 @@
  }
 }</script>
 <link rel="preload" href="assets/urbanist-latin.woff2" as="font" type="font/woff2" crossorigin>
+<script>(function(){try{var t=localStorage.getItem('glance-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}})();</script>
 <style>/* latin */
 @font-face {
   font-family: 'Urbanist';
@@ -78,12 +81,28 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-body{margin:0;background:#ffffff}
-a{color:#0a0a0a;text-underline-offset:4px}a:hover{color:#6312f6}
-.w{font-family:Urbanist,"Helvetica Neue",Arial,sans-serif;font-weight:400;color:#0a0a0a;background:#ffffff;overflow-x:clip;font-variant-numeric:tabular-nums}
+
+/* Wollo design system tokens, plus a dark theme derived from them. Brand blocks keep their colours in both themes. */
+:root{
+--surface:#ffffff;--surface-subtle:#f9f9f9;--backdrop:#dcdde2;--divider:var(--divider);
+--ink:#0a0a0a;--ink-muted:#6b6b6b;--ink-hover:#262626;--on-ink:#ffffff;--accent:#6312f6;
+--header-bg:rgba(255,255,255,.9);--night:#0a0a0a;
+--violet:#6312f6;--violet-deep:#4408b1;--periwinkle:#7182e7;--pink:#f258a8;--orange:#f47933;--yellow:#f8d32c;--on-block:#0a0a0a;--white:#ffffff;
+color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+--surface:#0e0d12;--surface-subtle:#1a1920;--backdrop:#24232b;--divider:#34323d;
+--ink:#f4f3f7;--ink-muted:#a9a6b3;--ink-hover:#dcdae2;--on-ink:#0e0d12;--accent:#b49bff;
+--header-bg:rgba(14,13,18,.85);--night:#1f1d27;color-scheme:dark}}
+:root[data-theme="dark"]{
+--surface:#0e0d12;--surface-subtle:#1a1920;--backdrop:#24232b;--divider:#34323d;
+--ink:#f4f3f7;--ink-muted:#a9a6b3;--ink-hover:#dcdae2;--on-ink:#0e0d12;--accent:#b49bff;
+--header-bg:rgba(14,13,18,.85);--night:#1f1d27;color-scheme:dark}
+html,body{margin:0;background:var(--surface)}
+a{color:var(--ink);text-underline-offset:4px}a:hover{color:var(--accent)}
+.w{font-family:Urbanist,"Helvetica Neue",Arial,sans-serif;font-weight:400;color:var(--ink);background:var(--surface);overflow-x:clip;font-variant-numeric:tabular-nums}
 .w *{box-sizing:border-box;font-weight:400}
-.w ::selection{background:#f8d32c;color:#0a0a0a}
-.w a:focus-visible,.w button:focus-visible{outline:2px solid #6312f6;outline-offset:2px}
+.w ::selection{background:var(--yellow);color:var(--on-block)}
+.w a:focus-visible,.w button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .wrap{max-width:1280px;margin:0 auto;padding:0 80px}
 .h1{font-size:64px;line-height:64px;letter-spacing:-1px;margin:0;text-align:center;text-wrap:balance}
 .h2{font-size:52px;line-height:58px;letter-spacing:-.5px;margin:0;text-align:center;text-wrap:balance}
@@ -94,9 +113,9 @@ a{color:#0a0a0a;text-underline-offset:4px}a:hover{color:#6312f6}
 .stat-hero{font-size:200px;line-height:1;letter-spacing:-4px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:0 24px;border-radius:10px;font:inherit;font-size:15px;line-height:20px;text-decoration:none;cursor:pointer;border:0;transition:transform 150ms cubic-bezier(.16,1,.3,1),background-color 150ms}
 .btn:hover{transform:translateY(-1px)}.btn:active{transform:scale(.96);transition-duration:100ms}
-.btn-ink{background:#0a0a0a;color:#ffffff}.btn-ink:hover{color:#ffffff;background:#262626}
+.btn-ink{background:var(--ink);color:var(--on-ink)}.btn-ink:hover{color:var(--on-ink);background:var(--ink-hover)}
 .btn-violet{background:#6312f6;color:#ffffff}.btn-violet:hover{color:#ffffff;background:#5410d6}
-.btn-sec{background:#ffffff;color:#0a0a0a;box-shadow:inset 0 0 0 1px #dcdcdc}.btn-sec:hover{color:#0a0a0a;box-shadow:inset 0 0 0 1px #0a0a0a}
+.btn-sec{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--divider)}.btn-sec:hover{color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
 .btn-ghost{background:transparent;color:#ffffff;box-shadow:inset 0 0 0 1px #ffffff}.btn-ghost:hover{color:#ffffff;background:rgba(255,255,255,.12)}
 .navlink{text-decoration:none;font-size:15px;line-height:20px;padding:12px 4px}
 .chip{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;width:136px;height:68px;border-radius:9999px;overflow:hidden;margin:0 8px;position:relative;top:-6px}
@@ -105,15 +124,15 @@ a{color:#0a0a0a;text-underline-offset:4px}a:hover{color:#6312f6}
 .card-shot{border-radius:20px;overflow:hidden;aspect-ratio:16/10}
 .card-shot img{width:100%;height:100%;object-fit:cover;object-position:left top;display:block}
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
-.seg{display:inline-flex;gap:4px;padding:4px;border-radius:9999px;box-shadow:inset 0 0 0 1px #0a0a0a}
-.seg button{font:inherit;font-size:15px;min-height:44px;padding:0 22px;border-radius:9999px;border:0;cursor:pointer;background:transparent;color:#0a0a0a;transition:background-color 200ms cubic-bezier(.16,1,.3,1),color 200ms}
-.seg button.on{background:#0a0a0a;color:#ffffff}
-.viewer{position:relative;aspect-ratio:16/10;border-radius:20px;overflow:hidden;background:#dcdde2}
+.seg{display:inline-flex;gap:4px;padding:4px;border-radius:9999px;box-shadow:inset 0 0 0 1px var(--ink)}
+.seg button{font:inherit;font-size:15px;min-height:44px;padding:0 22px;border-radius:9999px;border:0;cursor:pointer;background:transparent;color:var(--ink);transition:background-color 200ms cubic-bezier(.16,1,.3,1),color 200ms}
+.seg button.on{background:var(--ink);color:var(--on-ink)}
+.viewer{position:relative;aspect-ratio:16/10;border-radius:20px;overflow:hidden;background:var(--backdrop)}
 .viewer img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:left top;opacity:0;transform:scale(1.02);transition:opacity 380ms cubic-bezier(.16,1,.3,1),transform 500ms cubic-bezier(.16,1,.3,1)}
 .viewer img.on{opacity:1;transform:none}
 .dots{display:inline-grid;grid-template-columns:4px 4px;gap:2px}
 .dots i{width:4px;height:4px;border-radius:9999px;background:currentColor;display:block}
-.fchip{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:9999px;background:#f9f9f9;font-size:17px;line-height:20px}
+.fchip{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:9999px;background:var(--surface-subtle);font-size:17px;line-height:20px}
 .duo{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px}
 .copy{background:transparent;border:0;color:#ffffff;font:inherit;font-size:15px;cursor:pointer;min-height:44px;padding:0 18px;border-radius:9999px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5);transition:background-color 150ms}
 .copy:hover{background:rgba(255,255,255,.12)}
@@ -146,6 +165,7 @@ a{color:#0a0a0a;text-underline-offset:4px}a:hover{color:#6312f6}
 .motion .chip[data-reveal].pre{opacity:0;transform:scale(.3) rotate(-14deg)}
 .motion .fchip[data-reveal].pre{opacity:0;transform:translateY(16px) scale(.9)}
 [data-hero],[data-py],[data-px]{will-change:transform}
+.theme-toggle .i-sun{display:none}.dark .theme-toggle .i-sun{display:inline}.dark .theme-toggle .i-moon{display:none}
 @media (prefers-reduced-motion:reduce){
 .w [class*="deal-"],.w .rise-shot,.w .tag-in,.w [class*="px-"],.w .stag-up,.w .stag-down,.w .tag-spin{animation:none !important}
 .btn:hover,.btn:active{transform:none !important}
@@ -165,9 +185,9 @@ a{color:#0a0a0a;text-underline-offset:4px}a:hover{color:#6312f6}
 <div class="w motion">
 
 <!-- NAV -->
-<header style="position: sticky; top: 0; z-index: 50; padding: 16px 0 8px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px)">
+<header style="position: sticky; top: 0; z-index: 50; padding: 16px 0 8px; background: var(--header-bg); backdrop-filter: blur(12px)">
 <div class="wrap">
-<nav aria-label="Main" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; background: #f9f9f9; border-radius: 10px; padding: 8px 8px 8px 16px">
+<nav aria-label="Main" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; background: var(--surface-subtle); border-radius: 10px; padding: 8px 8px 8px 16px">
 <a href="#top" style="display: flex; align-items: center; gap: 10px; text-decoration: none; font-size: 26px; letter-spacing: -0.5px">
 <img src="assets/icon.svg" alt="Glance logo" style="width: 30px; height: 30px">
 <span>glance</span>
@@ -179,6 +199,7 @@ a{color:#0a0a0a;text-underline-offset:4px}a:hover{color:#6312f6}
 <a class="navlink" href="#privacy">Privacy</a>
 </div>
 <div style="display: flex; gap: 8px">
+<button type="button" class="btn btn-sec theme-toggle" id="theme-toggle" aria-label="Switch to dark mode" title="Switch theme" style="min-height: 44px; width: 44px; padding: 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="i-moon" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path><g class="i-sun"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></g></svg></button>
 <a class="btn btn-sec hide-sm" href="https://github.com/RedtRocks/glance" style="min-height: 44px; padding: 0 18px">GitHub</a>
 <a class="btn btn-ink" href="https://github.com/RedtRocks/glance/releases/latest" style="min-height: 44px; padding: 0 18px">Download</a>
 </div>
@@ -190,7 +211,7 @@ a{color:#0a0a0a;text-underline-offset:4px}a:hover{color:#6312f6}
 <section id="top" style="padding-top: 64px">
 <div class="wrap" style="display: flex; flex-direction: column; align-items: center; gap: 24px">
 <h1 class="h1" style="max-width: 880px">Preview's Best Tricks, Built for Windows 11</h1>
-<p class="body" style="max-width: 600px; text-align: center; color: #6b6b6b">A free, open-source viewer and editor for PDFs, images, camera RAW and 3D models. Drag pages between files, redact for real and fix photos, in an installer under 20 MB.</p>
+<p class="body" style="max-width: 600px; text-align: center; color: var(--ink-muted)">A free, open-source viewer and editor for PDFs, images, camera RAW and 3D models. Drag pages between files, redact for real and fix photos, in an installer under 20 MB.</p>
 <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center">
 <a class="btn btn-ink" href="https://github.com/RedtRocks/glance/releases/latest">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M6 11l6 6 6-6M4 21h16"></path></svg>
@@ -198,7 +219,7 @@ Download for Windows
 </a>
 <a class="btn btn-sec" href="https://github.com/RedtRocks/glance">View Source on GitHub</a>
 </div>
-<p style="margin: 0; font-size: 13px; line-height: 18px; color: #6b6b6b">Windows 10 and 11 · x64 and ARM64 · Apache-2.0</p>
+<p style="margin: 0; font-size: 13px; line-height: 18px; color: var(--ink-muted)">Windows 10 and 11 · x64 and ARM64 · Apache-2.0</p>
 </div>
 
 <div class="wrap" style="margin-top: 64px">
@@ -212,13 +233,13 @@ Download for Windows
 <div style="position: absolute; inset: 0; background: #4408b1; border-radius: 48px; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; padding: 64px 48px 0">
 <div data-hero="-70" style="width: 100%; max-width: 1000px">
 <div class="rise-shot" style="border-radius: 20px 20px 0 0; overflow: hidden; background: #ffffff">
-<img src="assets/pdf.webp" alt="Glance with a four-page PDF catalogue open and page thumbnails in the sidebar" style="display: block; width: 100%; height: auto">
+<picture><source srcset="assets/dark.webp" media="(prefers-color-scheme: dark)" data-dark-src><img src="assets/pdf.webp" alt="Glance with a four-page PDF catalogue open and page thumbnails in the sidebar" style="display: block; width: 100%; height: auto"></picture>
 </div>
 </div>
 </div>
 <div class="hide-sm" data-hero="-170" data-hero-rot="-10" style="position: absolute; left: -28px; top: 132px; z-index: 3">
 <div class="tag-in" style="transform: rotate(-8deg)">
-<div style="background: #f8d32c; color: #0a0a0a; border-radius: 6px; padding: 14px 18px; display: flex; flex-direction: column; gap: 4px">
+<div style="background: #f8d32c; color: var(--on-block); border-radius: 6px; padding: 14px 18px; display: flex; flex-direction: column; gap: 4px">
 <span style="font-size: 52px; line-height: 1">~18MB</span>
 <span style="font-size: 13px; line-height: 18px">Installer Size</span>
 </div>
@@ -226,7 +247,7 @@ Download for Windows
 </div>
 <div class="hide-sm" data-hero="-95" data-hero-rot="8" style="position: absolute; right: -32px; top: 300px; z-index: 3">
 <div class="tag-in" style="transform: rotate(8deg)">
-<div style="background: #f47933; color: #0a0a0a; border-radius: 6px; padding: 14px 18px; display: flex; flex-direction: column; gap: 4px">
+<div style="background: #f47933; color: var(--on-block); border-radius: 6px; padding: 14px 18px; display: flex; flex-direction: column; gap: 4px">
 <span style="font-size: 52px; line-height: 1">0</span>
 <span style="font-size: 13px; line-height: 18px">Accounts or Telemetry</span>
 </div>
@@ -249,14 +270,14 @@ Download for Windows
 <h2 class="h2" style="max-width: 760px; margin: 0 auto">Everything Preview Does, Now on Windows</h2>
 <div class="cards">
 <div class="stagger" data-py="-50" style="margin-top: 72px">
-<div data-reveal="0" style="background: #f47933; color: #0a0a0a; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<div data-reveal="0" style="background: #f47933; color: var(--on-block); border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
 <p class="title">Rearrange PDFs by Dragging</p>
 <p class="body">Reorder, rotate, split and merge. Drop pages into another tab, or drag them out of the window to make a new PDF.</p>
 <div class="card-shot"><img src="assets/pages.webp" alt="Glance contact sheet showing four PDF pages to drag and reorder" loading="lazy"></div>
 </div>
 </div>
 <div class="stagger" data-py="90" style="margin-top: 0">
-<div data-reveal="100" style="background: #f258a8; color: #0a0a0a; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<div data-reveal="100" style="background: #f258a8; color: var(--on-block); border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
 <p class="title">Mark Up, Sign and Redact</p>
 <p class="body">Annotations save as standard PDF markup. Redaction removes what's underneath, not just a black box on top.</p>
 <div class="card-shot"><img src="assets/markup.webp" alt="Glance markup toolbar above a PDF page" loading="lazy"></div>
@@ -276,7 +297,7 @@ Download for Windows
 <!-- TOUR: segmented control swaps real screenshots -->
 <section id="tour" style="padding-top: 160px">
 <div class="wrap">
-<div style="background: #f9f9f9; border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 24px">
+<div style="background: var(--surface-subtle); border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 24px">
 <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; padding: 8px 8px 0">
 <h3 class="h3">One Window for Every File</h3>
 <div class="seg" role="group" aria-label="Choose a file type">
@@ -292,7 +313,7 @@ Download for Windows
 <img class="" data-shot="image" src="assets/image.webp" alt="Glance editing a photo with the Adjust Color pane" loading="lazy">
 <img class="" data-shot="model" src="assets/model.webp" alt="Glance showing a 3D model with the 3D toolbar" loading="lazy">
 </div>
-<p class="body" id="tour-caption" style="padding: 0 8px 8px; color: #6b6b6b; max-width: 720px">Thumbnails, table of contents, search and two-page view. Page controls show up only for documents that have pages.</p>
+<p class="body" id="tour-caption" style="padding: 0 8px 8px; color: var(--ink-muted); max-width: 720px">Thumbnails, table of contents, search and two-page view. Page controls show up only for documents that have pages.</p>
 </div>
 </div>
 </section>
@@ -306,26 +327,26 @@ Download for Windows
 <div class="hide-sm" style="position: absolute; left: 50%; top: -8px; margin-left: 250px">
 <div data-py="70" data-rot="-14">
 <div style="transform: rotate(-8deg)">
-<span style="display: inline-block; background: #f258a8; color: #0a0a0a; border-radius: 6px; padding: 10px 14px; font-size: 13px; line-height: 18px">Installer, No Bundled Browser</span>
+<span style="display: inline-block; background: #f258a8; color: var(--on-block); border-radius: 6px; padding: 10px 14px; font-size: 13px; line-height: 18px">Installer, No Bundled Browser</span>
 </div>
 </div>
 </div>
 </div>
-<div class="stats" style="border-top: 1px solid #dcdcdc">
+<div class="stats" style="border-top: 1px solid var(--divider)">
 <div data-reveal="0" style="padding: 32px 24px 0 0; display: flex; flex-direction: column; gap: 12px">
 <span style="font-size: 52px; line-height: 1">~35KB</span>
 <span class="title">Startup Bundle</span>
-<span class="body" style="color: #6b6b6b">Gzipped. PDF.js loads with your first PDF, pdf-lib with your first edit.</span>
+<span class="body" style="color: var(--ink-muted)">Gzipped. PDF.js loads with your first PDF, pdf-lib with your first edit.</span>
 </div>
-<div data-reveal="120" style="padding: 32px 24px 0; display: flex; flex-direction: column; gap: 12px; border-left: 1px solid #dcdcdc">
+<div data-reveal="120" style="padding: 32px 24px 0; display: flex; flex-direction: column; gap: 12px; border-left: 1px solid var(--divider)">
 <span style="font-size: 52px; line-height: 1">0</span>
 <span class="title">Bundled Browser Engines</span>
-<span class="body" style="color: #6b6b6b">The UI runs in WebView2 through Tauri 2, so nothing extra ships.</span>
+<span class="body" style="color: var(--ink-muted)">The UI runs in WebView2 through Tauri 2, so nothing extra ships.</span>
 </div>
-<div data-reveal="240" style="padding: 32px 0 0 24px; display: flex; flex-direction: column; gap: 12px; border-left: 1px solid #dcdcdc">
+<div data-reveal="240" style="padding: 32px 0 0 24px; display: flex; flex-direction: column; gap: 12px; border-left: 1px solid var(--divider)">
 <span style="font-size: 52px; line-height: 1">30+</span>
 <span class="title">Formats, Native First</span>
-<span class="body" style="color: #6b6b6b">A Rust backend decodes through Windows' own codecs, so HEIC and camera RAW just open.</span>
+<span class="body" style="color: var(--ink-muted)">A Rust backend decodes through Windows' own codecs, so HEIC and camera RAW just open.</span>
 </div>
 </div>
 </div>
@@ -374,11 +395,11 @@ Download for Windows
 <section id="privacy" style="padding-top: 160px">
 <div class="wrap">
 <div class="duo">
-<div style="background: #f8d32c; color: #0a0a0a; border-radius: 28px; padding: 40px; display: flex; flex-direction: column; gap: 20px; min-height: 380px; justify-content: flex-end">
+<div style="background: #f8d32c; color: var(--on-block); border-radius: 28px; padding: 40px; display: flex; flex-direction: column; gap: 20px; min-height: 380px; justify-content: flex-end">
 <p class="h2" style="text-align: left; max-width: 640px">No Telemetry. No Accounts. Your Files Stay on Your PC.</p>
 <p class="body" style="max-width: 560px">The only network request is an optional daily check for a newer release, and you can turn it off. Background removal and text recognition run locally.</p>
 </div>
-<div style="background: #0a0a0a; color: #ffffff; border-radius: 28px; padding: 40px; display: flex; flex-direction: column; gap: 16px; justify-content: flex-end">
+<div style="background: var(--night); color: #ffffff; border-radius: 28px; padding: 40px; display: flex; flex-direction: column; gap: 16px; justify-content: flex-end">
 <p class="h3">Signatures Encrypted With Windows DPAPI</p>
 <p class="body" style="color: #d4d4d4">Draw with a pen, capture with the camera, or import a photo.</p>
 <a href="https://github.com/RedtRocks/glance/blob/main/PRIVACY.md" style="color: #ffffff; font-size: 17px">Read the Privacy Policy</a>
@@ -409,7 +430,7 @@ Download for Windows
 </section>
 
 <!-- FOOTER -->
-<footer style="border-top: 1px solid #dcdcdc">
+<footer style="border-top: 1px solid var(--divider)">
 <div class="wrap" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 24px; padding-top: 40px; padding-bottom: 48px">
 <a href="#top" style="display: flex; align-items: center; gap: 10px; text-decoration: none; font-size: 26px">
 <img src="assets/icon.svg" alt="" style="width: 28px; height: 28px">
@@ -427,6 +448,22 @@ Download for Windows
 </div>
 <script>
 (function () {
+  // Theme: follows Windows unless the visitor picks one; the choice is remembered
+  var root = document.documentElement, mq = window.matchMedia('(prefers-color-scheme: dark)');
+  var tbtn = document.getElementById('theme-toggle'), heroSrc = document.querySelector('source[data-dark-src]');
+  var isDark = function () { var t = root.getAttribute('data-theme'); return t ? t === 'dark' : mq.matches; };
+  var sync = function () {
+    var d = isDark(); root.classList.toggle('dark', d);
+    tbtn.setAttribute('aria-label', d ? 'Switch to light mode' : 'Switch to dark mode');
+    heroSrc.media = d ? 'all' : 'not all';
+  };
+  tbtn.addEventListener('click', function () {
+    var next = isDark() ? 'light' : 'dark'; root.setAttribute('data-theme', next);
+    try { localStorage.setItem('glance-theme', next); } catch (e) {}
+    sync();
+  });
+  if (mq.addEventListener) mq.addEventListener('change', sync);
+  sync();
   // Tour: segmented control swaps the screenshots
   var seg = document.querySelector('.seg'), cap = document.getElementById('tour-caption');
   seg.addEventListener('click', function (e) {
