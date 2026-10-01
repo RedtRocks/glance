@@ -70,7 +70,6 @@
  }
 }</script>
 <link rel="preload" href="assets/urbanist-latin.woff2" as="font" type="font/woff2" crossorigin>
-<script>(function(){try{var t=localStorage.getItem('glance-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}})();</script>
 <style>/* latin */
 @font-face {
   font-family: 'Urbanist';
@@ -448,7 +447,7 @@ Download for Windows
 </div>
 <script>
 (function () {
-  // Theme: follows Windows unless the visitor picks one; the choice is remembered
+  // Theme: every visit starts on the system setting; the toggle switches it for this visit only
   var root = document.documentElement, mq = window.matchMedia('(prefers-color-scheme: dark)');
   var tbtn = document.getElementById('theme-toggle'), heroSrc = document.querySelector('source[data-dark-src]');
   var isDark = function () { var t = root.getAttribute('data-theme'); return t ? t === 'dark' : mq.matches; };
@@ -459,7 +458,6 @@ Download for Windows
   };
   tbtn.addEventListener('click', function () {
     var next = isDark() ? 'light' : 'dark'; root.setAttribute('data-theme', next);
-    try { localStorage.setItem('glance-theme', next); } catch (e) {}
     sync();
   });
   if (mq.addEventListener) mq.addEventListener('change', sync);
