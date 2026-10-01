@@ -40,6 +40,8 @@ The Store takes MSIX packages and signs them itself, so this route works without
    - `MSIX_IDENTITY_NAME` = Package/Identity/Name, e.g. `12345RedtRocks.Glance`
    - `MSIX_PUBLISHER` = Package/Identity/Publisher, e.g. `CN=ABCDEF12-3456-…`
    - `MSIX_PUBLISHER_DISPLAY_NAME` = Package/Properties/PublisherDisplayName
+
+   The package's display name must be the reserved name exactly (Package/Properties/DisplayName). It's set in `STORE_DISPLAY_NAME` in `scripts/packaging.ts`; to use another without a code change, add it as `MSIX_DISPLAY_NAME`.
 4. Actions → **Microsoft Store package** → Run workflow on `main`. Download the `Glance-<version>-store` artifact and unzip it to get the `.msixbundle`.
 5. In Partner Center, start a submission:
    - **Packages:** upload the `.msixbundle`.

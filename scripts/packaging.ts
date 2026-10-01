@@ -9,7 +9,8 @@
  *
  * The MSIX identity comes from the MSIX_IDENTITY_NAME, MSIX_PUBLISHER and
  * MSIX_PUBLISHER_DISPLAY_NAME environment variables (Partner Center → Product
- * identity). Without them a local test identity is used, which the Store rejects.
+ * identity), and the display name from MSIX_DISPLAY_NAME (default STORE_DISPLAY_NAME).
+ * Without them a local test identity is used, which the Store rejects.
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -145,7 +146,12 @@ export interface MsixIdentity {
   name: string
   publisher: string
   publisherDisplayName: string
+  /** The app name reserved in Partner Center; the Store rejects any other. Defaults to productName. */
+  displayName?: string
 }
+
+/** The name reserved for Glance in Partner Center (Product identity → Package/Properties/DisplayName). */
+export const STORE_DISPLAY_NAME = 'Glance: PDF viewer and editor, image viewer, camera RAW viewer and 3D model viewer'
 
 /** Test identity for local and CI builds; the Store only accepts the reserved one. */
 export const DEV_IDENTITY: MsixIdentity = { name: 'Glance.Dev', publisher: 'CN=Glance Dev', publisherDisplayName: 'Glance contributors' }
@@ -175,6 +181,7 @@ function ftaNames(conf: TauriConf): string[] {
 /** AppxManifest.xml for the Store package. The layout holds Glance.exe and Assets\. */
 export function msixManifest(conf: TauriConf, arch: 'x64' | 'arm64', identity: MsixIdentity): string {
   const names = ftaNames(conf)
+  const displayName = identity.displayName ?? conf.productName
   const ftas = conf.bundle.fileAssociations
     .map(
       (a, i) => `        <uap:Extension Category="windows.fileTypeAssociation">
@@ -199,7 +206,7 @@ ${a.ext.map((e) => `              <uap:FileType>.${xml(e.toLowerCase())}</uap:Fi
   IgnorableNamespaces="uap uap3 desktop rescap">
   <Identity Name="${xml(identity.name)}" Publisher="${xml(identity.publisher)}" Version="${msixVersion(conf.version)}" ProcessorArchitecture="${arch}" />
   <Properties>
-    <DisplayName>${xml(conf.productName)}</DisplayName>
+    <DisplayName>${xml(displayName)}</DisplayName>
     <PublisherDisplayName>${xml(identity.publisherDisplayName)}</PublisherDisplayName>
     <Logo>Assets\\StoreLogo.png</Logo>
   </Properties>
@@ -212,7 +219,7 @@ ${a.ext.map((e) => `              <uap:FileType>.${xml(e.toLowerCase())}</uap:Fi
   <Applications>
     <Application Id="Glance" Executable="Glance.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
-        DisplayName="${xml(conf.productName)}"
+        DisplayName="${xml(displayName)}"
         Description="${xml(conf.bundle.shortDescription)}"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\\Square150x150Logo.png"
@@ -371,7 +378,12 @@ function main(args: string[]): void {
     const env = process.env
     const identity =
       env.MSIX_IDENTITY_NAME && env.MSIX_PUBLISHER && env.MSIX_PUBLISHER_DISPLAY_NAME
-        ? { name: env.MSIX_IDENTITY_NAME, publisher: env.MSIX_PUBLISHER, publisherDisplayName: env.MSIX_PUBLISHER_DISPLAY_NAME }
+        ? {
+            name: env.MSIX_IDENTITY_NAME,
+            publisher: env.MSIX_PUBLISHER,
+            publisherDisplayName: env.MSIX_PUBLISHER_DISPLAY_NAME,
+            displayName: env.MSIX_DISPLAY_NAME || STORE_DISPLAY_NAME
+          }
         : DEV_IDENTITY
     if (identity === DEV_IDENTITY) console.warn('MSIX_* identity not set: using a test identity the Store will reject')
     writeFileSync(rest[1], msixManifest(conf, rest[0], identity))
