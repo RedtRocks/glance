@@ -11,8 +11,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Changes that only touch docs (Markdown, README images under assets/, the landing page
+  # under site/) can't break the app, so the build and test jobs below skip for them. A
+  # skipped job counts as passed, so pull requests stay mergeable. Running CI by hand
+  # always runs everything.
+  changes:
+    name: Detect code changes
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.code == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+        if: github.event_name == 'push'
+      - uses: dorny/paths-filter@v3
+        id: filter
+        if: github.event_name != 'workflow_dispatch'
+        with:
+          predicate-quantifier: every
+          filters: |
+            code:
+              - '**'
+              - '!**/*.md'
+              - '!assets/**'
+              - '!site/**'
+              - '!LICENSE'
+
   frontend:
     name: Frontend (typecheck, tests, build)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,6 +54,8 @@ jobs:
 
   windows:
     name: Windows (Rust tests incl. WIC, NSIS installer)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -104,6 +133,8 @@ jobs:
 
   windows-arm64:
     name: Windows ARM64 (build check)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -126,6 +157,8 @@ jobs:
 
   linux-rust:
     name: Rust tests (Linux)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
