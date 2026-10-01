@@ -14,6 +14,8 @@
 <p align="center">
   <a href="https://github.com/RedtRocks/glance/releases/latest"><b>⬇&nbsp; Download for Windows</b></a>
   &nbsp;·&nbsp;
+  <a href="https://redtrocks.github.io/glance/">Website</a>
+  &nbsp;·&nbsp;
   <a href="#features">Features</a>
   &nbsp;·&nbsp;
   <a href="docs/FORMATS.md">80+ formats</a>
