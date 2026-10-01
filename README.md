@@ -1,22 +1,87 @@
 <p align="center"><img src="assets/banner.jpg" alt="Glance: Preview's best tricks, built for Windows 11"></p>
 
-# Glance
+<p align="center">
+  <a href="https://github.com/RedtRocks/glance/releases/latest"><img src="https://img.shields.io/github/v/release/RedtRocks/glance?style=flat-square&label=release&color=0f6cbd" alt="Latest release"></a>
+  <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078d4?style=flat-square" alt="Windows 10 and 11">
+  <img src="https://img.shields.io/badge/x64%20%2B%20ARM64-under%2020%20MB-0e7490?style=flat-square" alt="x64 and ARM64, under 20 MB">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/RedtRocks/glance?style=flat-square&color=6b7280" alt="Apache-2.0 license"></a>
+</p>
 
-**A free, open-source, lightweight viewer and editor for PDFs, images, camera RAW and 3D models on Windows, inspired by macOS Preview.**
+<p align="center">
+  <b>A free, open-source, lightweight viewer and editor for PDFs, images, camera RAW and 3D models on Windows, inspired by macOS Preview.</b>
+</p>
+
+<p align="center">
+  <a href="https://github.com/RedtRocks/glance/releases/latest"><b>⬇&nbsp; Download for Windows</b></a>
+  &nbsp;·&nbsp;
+  <a href="#features">Features</a>
+  &nbsp;·&nbsp;
+  <a href="docs/FORMATS.md">80+ formats</a>
+  &nbsp;·&nbsp;
+  <a href="#building-from-source">Build from source</a>
+</p>
+
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/markup-dark.webp">
+  <img src="assets/screenshots/markup-light.webp" alt="Glance with a lease agreement open: thumbnails on the left, the markup toolbar on top, a highlighted address and a hand-drawn circle around the date">
+</picture>
+</p>
 
 Glance brings Preview's everyday superpowers to Windows: rearranging and merging PDF pages by dragging, dragging pages out to create new files, real redaction, markup and signatures, background removal, metadata scrubbing, batch processing, and more. It's built to feel native on Windows 11 (Fluent design, Mica, Explorer integration) while staying small and fast.
 
 > **Status: early preview.** Viewing, PDF page management, markup, signatures, forms, redaction, OCR, image editing, batch editing and metadata tools work today. Everything else is on the roadmap below and in [`docs/adr`](docs/adr).
->
-> **[Download the latest release](https://github.com/RedtRocks/glance/releases/latest)** (Windows 10/11, x64 and ARM64).
+
+## A quick tour
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/pages-dark.webp">
+  <img src="assets/screenshots/pages-light.webp" alt="Contact sheet of a 12-page travel PDF with two pages selected">
+</picture>
+      <h3>Pages you can grab</h3>
+      Reorder, rotate, merge and split by dragging thumbnails. Drag pages into another tab to combine documents, or out of the window to make a new PDF.
+    </td>
+    <td width="50%" valign="top">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/redact-dark.webp">
+  <img src="assets/screenshots/redact-light.webp" alt="Remove Sensitive Text dialog listing a name, an email address and an ID number to redact">
+</picture>
+      <h3>Redaction that really removes</h3>
+      Remove Sensitive Text finds names, emails, phone, card and ID numbers. Applying it deletes the text underneath, not just covers it.
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/alpha-dark.webp">
+  <img src="assets/screenshots/alpha-light.webp" alt="A mug photo with its background removed by Instant Alpha, shown on a transparency checkerboard">
+</picture>
+      <h3>Instant Alpha and Remove Background</h3>
+      Click to cut a background away (Shift adds, Alt subtracts), or let the bundled AI model find the subject. Everything runs on your PC.
+    </td>
+    <td width="50%" valign="top">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/model-dark.webp">
+  <img src="assets/screenshots/model-light.webp" alt="A blue torus knot 3D model in the model viewer">
+</picture>
+      <h3>3D models too</h3>
+      GLB, glTF, OBJ, STL, FBX, USDZ and more: orbit, wireframe, turntable, lighting and materials, with a snapshot when you need a still.
+    </td>
+  </tr>
+</table>
 
 ## Why it's light
 
-- **Tauri 2 + WebView2**: the UI runs in the Edge engine already built into Windows 10/11, so Glance doesn't ship its own browser. The installer is about 10 MB.
+- **Tauri 2 + WebView2**: the UI runs in the Edge engine already built into Windows 10/11, so Glance doesn't ship its own browser. The installer is under 20 MB (about 18 MB for x64).
 - **Rust backend**: file access and image decoding run natively. Windows' own codecs come first ([WIC](docs/adr/0010-native-first-decoding.md)), so camera RAW and HEIC work whenever Windows supports them.
 - **Lazy engines**: the startup bundle is ~35 KB gzipped. PDF.js loads only when you open a PDF, pdf-lib only when you first edit one, and the 3D engine only for models.
 
 ## Features
+
+<sub>Everything below works today unless it says otherwise.</sub>
 
 | | Status |
 |---|---|
