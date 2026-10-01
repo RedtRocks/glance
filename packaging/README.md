@@ -7,7 +7,7 @@ Both are generated from `src-tauri/tauri.conf.json` by `scripts/packaging.ts` (N
 | What ships | The NSIS installers from the GitHub release | An MSIX bundle (x64 + ARM64) |
 | Signing | Not needed | The Store signs it |
 | Workflow | `.github/workflows/winget.yml` | `.github/workflows/store.yml` |
-| Runs after each release when | always (submits only if `WINGET_TOKEN` is set) | the `MSIX_*` variables are set |
+| Runs after each release when | always (submits only if `WINGET_TOKEN` is set) | the `MSIX_*` identity is set |
 | Updates | `winget upgrade`, or Glance's own update notice | The Store; the in-app GitHub check is off in this build |
 
 ## winget
@@ -36,7 +36,7 @@ The Store takes MSIX packages and signs them itself, so this route works without
 
 1. Register at [Partner Center](https://partner.microsoft.com/dashboard/registration) as an individual developer (free).
 2. Apps and games → **New product → MSIX or PWA app**, and reserve the name **Glance** (or another if taken).
-3. Open the product → Product management → **Product identity**. Add three repository **variables** (Settings → Secrets and variables → Actions → Variables tab; not secrets, they're public in every package):
+3. Open the product → Product management → **Product identity**. Add these three as repository variables or secrets (Settings → Secrets and variables → Actions; they end up in every package, so they needn't be secret):
    - `MSIX_IDENTITY_NAME` = Package/Identity/Name, e.g. `12345RedtRocks.Glance`
    - `MSIX_PUBLISHER` = Package/Identity/Publisher, e.g. `CN=ABCDEF12-3456-…`
    - `MSIX_PUBLISHER_DISPLAY_NAME` = Package/Properties/PublisherDisplayName
@@ -51,7 +51,7 @@ The Store takes MSIX packages and signs them itself, so this route works without
 
 ### Later releases
 
-When the three variables are set, the Release workflow also builds the Store bundle. Download the artifact from that run and upload it as a new submission in Partner Center (Update → Packages). Automated upload needs an Azure AD app linked to Partner Center; it's left out until the manual flow is proven.
+When the three values are set, the Release workflow also builds the Store bundle. Download the artifact from that run and upload it as a new submission in Partner Center (Update → Packages). Automated upload needs an Azure AD app linked to Partner Center; it's left out until the manual flow is proven.
 
 ### What differs in the Store build
 

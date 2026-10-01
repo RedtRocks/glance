@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Published release to submit, e.g. v0.3.0
+        description: Published release to submit, e.g. v0.4.2
         required: true
   workflow_call:
     inputs:
@@ -27,7 +27,8 @@ jobs:
     name: Manifests for ${{ inputs.tag }}
     runs-on: windows-latest
     env:
-      TAG: ${{ inputs.tag }}
+      # Accept 0.4.2 as well as v0.4.2: releases are tagged with the v.
+      TAG: ${{ startsWith(inputs.tag, 'v') && inputs.tag || format('v{0}', inputs.tag) }}
       WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
     steps:
       - uses: actions/checkout@v4
@@ -44,7 +45,7 @@ jobs:
           node scripts/packaging.ts winget "$TAG" release/SHA256SUMS.txt "$date" "winget/${TAG#v}"
       - uses: actions/upload-artifact@v4
         with:
-          name: winget-manifests-${{ inputs.tag }}
+          name: winget-manifests-${{ env.TAG }}
           path: winget/
           if-no-files-found: error
       - name: Submit to winget-pkgs
