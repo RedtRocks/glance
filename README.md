@@ -3,7 +3,7 @@
 <p align="center">
   <a href="https://github.com/RedtRocks/glance/releases/latest"><img src="https://img.shields.io/github/v/release/RedtRocks/glance?style=flat-square&label=release&color=0f6cbd" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078d4?style=flat-square" alt="Windows 10 and 11">
-  <img src="https://img.shields.io/badge/x64%20%2B%20ARM64-~10%20MB-0e7490?style=flat-square" alt="x64 and ARM64, about 10 MB">
+  <img src="https://img.shields.io/badge/x64%20%2B%20ARM64-under%2020%20MB-0e7490?style=flat-square" alt="x64 and ARM64, under 20 MB">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/RedtRocks/glance?style=flat-square&color=6b7280" alt="Apache-2.0 license"></a>
 </p>
 
@@ -75,7 +75,7 @@ Glance brings Preview's everyday superpowers to Windows: rearranging and merging
 
 ## Why it's light
 
-- **Tauri 2 + WebView2**: the UI runs in the Edge engine already built into Windows 10/11, so Glance doesn't ship its own browser. The installer is about 10 MB.
+- **Tauri 2 + WebView2**: the UI runs in the Edge engine already built into Windows 10/11, so Glance doesn't ship its own browser. The installer is under 20 MB (about 18 MB for x64).
 - **Rust backend**: file access and image decoding run natively. Windows' own codecs come first ([WIC](docs/adr/0010-native-first-decoding.md)), so camera RAW and HEIC work whenever Windows supports them.
 - **Lazy engines**: the startup bundle is ~35 KB gzipped. PDF.js loads only when you open a PDF, pdf-lib only when you first edit one, and the 3D engine only for models.
 
