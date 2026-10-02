@@ -4,7 +4,7 @@ Copy each field into Partner Center → Store listings. Limits are Partner Cente
 
 ## Product name
 
-Glance
+Glance Viewer (must match the name reserved in Partner Center and STORE_DISPLAY_NAME in scripts/packaging.ts)
 
 ## Short description (for the listing header)
 

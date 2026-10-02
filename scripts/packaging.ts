@@ -151,7 +151,7 @@ export interface MsixIdentity {
 }
 
 /** The name reserved for Glance in Partner Center (Product identity → Package/Properties/DisplayName). */
-export const STORE_DISPLAY_NAME = 'Glance: PDF viewer and editor, image viewer, camera RAW viewer and 3D model viewer'
+export const STORE_DISPLAY_NAME = 'Glance Viewer'
 
 /** Test identity for local and CI builds; the Store only accepts the reserved one. */
 export const DEV_IDENTITY: MsixIdentity = { name: 'Glance.Dev', publisher: 'CN=Glance Dev', publisherDisplayName: 'Glance contributors' }
