@@ -543,6 +543,13 @@ select {
   overflow: auto;
   outline: none;
 }
+/* A finger scrolls; pinches zoom the document, not the whole app (ui/touchGestures.ts). */
+body,
+.pdf-scroller,
+.image-view,
+.office-scroller {
+  touch-action: pan-x pan-y;
+}
 .pdf-pages {
   display: flex;
   flex-direction: column;
@@ -1133,6 +1140,8 @@ select {
 }
 .markup-layer.drawing {
   cursor: crosshair;
+  /* A finger draws instead of scrolling. */
+  touch-action: none;
 }
 .markup-layer.tool-text {
   cursor: text;
