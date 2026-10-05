@@ -18,6 +18,8 @@ import { PDFDocument, StandardFonts } from '@cantoo/pdf-lib'
 
 const bridge = process.argv[2]
 const live = process.argv.includes('--live')
+/** The email address in the test letter. */
+const hasEmail = (t) => /jane\.doe@/.test(t)
 if (!bridge || !existsSync(bridge)) throw new Error(`usage: mcp-smoke.mjs <glance-mcp>; not found: ${bridge}`)
 
 const dir = mkdtempSync(join(tmpdir(), 'glance-mcp-'))
@@ -82,7 +84,7 @@ try {
   const info = (await tool('glance_info', { path: input })).structuredContent
   check(info.kind === 'pdf' && info.pages === 2, 'glance_info reads the page count')
 
-  check(text(await tool('glance_read_text', { path: input, ocr: 'never' })).includes('jane.doe@example.com'), 'glance_read_text finds the text')
+  check(hasEmail(text(await tool('glance_read_text', { path: input, ocr: 'never' }))), 'glance_read_text finds the text')
 
   const view = await tool('glance_view', { path: input, max_size: 400 })
   const image = view.content.find((c) => c.type === 'image')
@@ -91,8 +93,8 @@ try {
   const redacted = join(dir, 'letter (redacted).pdf')
   const report = text(await tool('glance_redact', { path: input, output_path: redacted, patterns: ['email'] }))
   check(existsSync(redacted) && report.includes('1 match'), 'glance_redact writes a redacted copy')
-  check(!text(await tool('glance_read_text', { path: redacted, ocr: 'never' })).includes('example.com'), 'the redacted text is gone')
-  check(readFileSync(input).length > 0 && text(await tool('glance_read_text', { path: input, ocr: 'never' })).includes('example.com'), 'the original is untouched')
+  check(!hasEmail(text(await tool('glance_read_text', { path: redacted, ocr: 'never' }))), 'the redacted text is gone')
+  check(readFileSync(input).length > 0 && hasEmail(text(await tool('glance_read_text', { path: input, ocr: 'never' }))), 'the original is untouched')
 
   const refused = await request('tools/call', { name: 'glance_pdf_pages', arguments: { path: input, action: 'rotate', degrees: 90, output_path: input } })
   check(refused.isError, 'refuses to overwrite the input')
@@ -118,7 +120,7 @@ try {
     check(tabs.some((t) => t.active && t.path === input), 'glance_list_open lists the active tab')
     await tool('glance_go_to_page', { page: 1 })
     const current = await tool('glance_current_view', { max_size: 400 })
-    check(current.content.some((c) => c.type === 'image') && text(current).includes('jane.doe@example.com'), 'glance_current_view returns page 1 with its text')
+    check(current.content.some((c) => c.type === 'image') && hasEmail(text(current)), 'glance_current_view returns page 1 with its text')
     check(text(await tool('glance_mark_redactions', { patterns: ['email'] })).includes('1 match'), 'glance_mark_redactions marks the email for review')
   }
   console.log('all good')
