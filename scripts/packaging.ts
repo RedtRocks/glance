@@ -232,6 +232,12 @@ ${a.ext.map((e) => `              <uap:FileType>.${xml(e.toLowerCase())}</uap:Fi
             <desktop:ExecutionAlias Alias="glance.exe" />
           </uap3:AppExecutionAlias>
         </uap3:Extension>
+        <!-- AI apps run glance-mcp.exe (src-tauri/mcp-bridge) through this alias, which stays put across updates. -->
+        <uap3:Extension Category="windows.appExecutionAlias" Executable="glance-mcp.exe" EntryPoint="Windows.FullTrustApplication">
+          <uap3:AppExecutionAlias>
+            <desktop:ExecutionAlias Alias="glance-mcp.exe" />
+          </uap3:AppExecutionAlias>
+        </uap3:Extension>
 ${ftas}
       </Extensions>
     </Application>

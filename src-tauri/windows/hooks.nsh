@@ -7,6 +7,7 @@
 ;   the launches into one request (src-tauri/src/explorer.rs).
 ; - Registers Glance for Settings > Apps > Default apps and "Open with"
 ;   (default-apps.nsh, generated from tauri.conf.json), keeping Explorer's thumbnails.
+; - Installs glance-mcp.exe, which lets AI apps use Glance.
 ; Everything goes under HKCU, matching the per-user install.
 
 !define GLANCE_HANDLERS "Software\Glance\Handlers"
@@ -192,6 +193,24 @@
   Delete /REBOOTOK "$INSTDIR\${GLANCE_THUMB_DLL}.old"
 !macroend
 
+; glance-mcp.exe (src-tauri/mcp-bridge, built by scripts/mcp-bridge.mjs): the program AI
+; apps start to use Glance (Settings > AI apps adds it to their MCP settings). An AI app
+; may be running it, and a running program can be renamed but not overwritten.
+!define GLANCE_MCP_EXE "glance-mcp.exe"
+
+!macro GLANCE_MCP_INSTALL
+  Delete "$INSTDIR\${GLANCE_MCP_EXE}.old"
+  Rename "$INSTDIR\${GLANCE_MCP_EXE}" "$INSTDIR\${GLANCE_MCP_EXE}.old"
+  SetOutPath "$INSTDIR"
+  File "${GLANCE_HOOKS_DIR}\..\target\mcp-bridge\${GLANCE_MCP_EXE}"
+  Delete /REBOOTOK "$INSTDIR\${GLANCE_MCP_EXE}.old"
+!macroend
+
+!macro GLANCE_MCP_UNINSTALL
+  Delete /REBOOTOK "$INSTDIR\${GLANCE_MCP_EXE}"
+  Delete /REBOOTOK "$INSTDIR\${GLANCE_MCP_EXE}.old"
+!macroend
+
 !define GLANCE_SFA "Software\Classes\SystemFileAssociations"
 
 ; Adds verb ${ID} labelled ${LABEL} to ${TYPE} (".pdf", or "image" for every image type
@@ -233,6 +252,7 @@
   CreateShortCut "$APPDATA\Microsoft\Windows\SendTo\Glance.lnk" "$INSTDIR\${MAINBINARYNAME}.exe" "" "$INSTDIR\${MAINBINARYNAME}.exe" 0
   !insertmacro GLANCE_DEFAULT_APPS_REGISTER
   !insertmacro GLANCE_THUMBNAILER_INSTALL
+  !insertmacro GLANCE_MCP_INSTALL
 
   !insertmacro GLANCE_VERB ".pdf" "Glance.Open" "Open in Glance" ""
   !insertmacro GLANCE_VERB "image" "Glance.Open" "Open in Glance" ""
@@ -248,6 +268,7 @@
   ${If} $UpdateMode <> 1
     !insertmacro GLANCE_DEFAULT_APPS_UNREGISTER
     !insertmacro GLANCE_THUMBNAILER_UNINSTALL
+    !insertmacro GLANCE_MCP_UNINSTALL
   ${EndIf}
 
   !insertmacro GLANCE_UNVERB ".pdf" "Glance.Open"

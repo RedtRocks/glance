@@ -7,7 +7,7 @@
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "npm run build",
-    "beforeBundleCommand": "node scripts/thumbnailer.mjs",
+    "beforeBundleCommand": "node scripts/thumbnailer.mjs && node scripts/mcp-bridge.mjs",
     "frontendDist": "../dist"
   },
   "app": {

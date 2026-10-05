@@ -709,3 +709,59 @@ export async function pickSigningCertificate(): Promise<SigningCertificate | nul
 export async function signWithCertificate(thumbprint: string, data: Uint8Array): Promise<Uint8Array> {
   return new Uint8Array(await invoke<ArrayBuffer>('sign_with_certificate', data, { headers: { 'x-thumbprint': thumbprint } }))
 }
+
+// ---------------------------------------------------------------------------
+// AI apps (MCP through glance-mcp, see src-tauri/src/mcp)
+
+export type McpEvent = { type: 'message'; conn: number; message: string } | { type: 'closed'; conn: number }
+
+/** Messages from AI apps; those that arrived before the listener are delivered right after. */
+export async function onMcp(cb: (e: McpEvent) => void): Promise<() => void> {
+  if (!isTauri) return () => {}
+  const { listen } = await import('@tauri-apps/api/event')
+  const unlisten = await listen<McpEvent>('mcp', (e) => cb(e.payload))
+  for (const e of await invoke<McpEvent[]>('mcp_take')) cb(e)
+  return unlisten
+}
+
+export async function mcpSend(conn: number, message: string): Promise<void> {
+  await invoke('mcp_send', { conn, message })
+}
+
+/** Started by an AI app: the window stays hidden until a tool shows it. */
+export async function launchedForAi(): Promise<boolean> {
+  return isTauri ? invoke<boolean>('mcp_launched_hidden') : false
+}
+
+/** Shows and focuses the main window for good (a tool opened something for the user). */
+export async function showForAi(): Promise<void> {
+  if (isTauri) await invoke('mcp_show')
+}
+
+export interface AiApp {
+  id: string
+  name: string
+  installed: boolean
+  connected: boolean
+  files: string[]
+}
+
+export interface AiApps {
+  apps: AiApp[]
+  /** The command AI apps run (glance-mcp.exe); empty when it's missing. */
+  command: string
+  problem: string | null
+}
+
+export async function aiApps(): Promise<AiApps> {
+  if (!isTauri) return { apps: [], command: '', problem: t('Connecting AI apps is available in the Windows app.') }
+  return invoke<AiApps>('ai_apps')
+}
+
+export async function aiAppConnect(id: string): Promise<void> {
+  await invoke('ai_app_connect', { id })
+}
+
+export async function aiAppDisconnect(id: string): Promise<void> {
+  await invoke('ai_app_disconnect', { id })
+}

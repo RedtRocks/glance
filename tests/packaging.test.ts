@@ -60,6 +60,12 @@ describe('MSIX manifest', () => {
     for (const n of names) expect(n).toMatch(/^[a-z0-9][a-z0-9.-]*$/)
   })
 
+  it('gives AI apps a stable path to glance-mcp.exe', () => {
+    const xml = msixManifest(conf, 'x64', DEV_IDENTITY)
+    expect(xml).toContain('<uap3:Extension Category="windows.appExecutionAlias" Executable="glance-mcp.exe"')
+    expect(xml).toContain('<desktop:ExecutionAlias Alias="glance-mcp.exe" />')
+  })
+
   it('escapes the identity', () => {
     const xml = msixManifest(conf, 'x64', { name: 'A.B', publisher: 'CN=A & "B"', publisherDisplayName: '<C>' })
     expect(xml).toContain('Publisher="CN=A &amp; &quot;B&quot;"')

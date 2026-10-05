@@ -42,6 +42,12 @@ Remove-Item -Recurse -Force $work -ErrorAction SilentlyContinue
 $layout = Join-Path $work 'layout'
 New-Item -ItemType Directory -Force $layout | Out-Null
 Copy-Item $Exe (Join-Path $layout 'Glance.exe')
+# glance-mcp.exe lets AI apps use Glance (src-tauri/mcp-bridge); small and std-only.
+$triple = @{ x64 = 'x86_64-pc-windows-msvc'; arm64 = 'aarch64-pc-windows-msvc' }[$Arch]
+& cargo build --release --locked --target $triple --manifest-path (Join-Path $root 'src-tauri/mcp-bridge/Cargo.toml')
+if ($LASTEXITCODE -ne 0) { throw 'building glance-mcp failed' }
+$bridge = Join-Path $root "src-tauri/mcp-bridge/target/$triple/release/glance-mcp.exe"
+Copy-Item $bridge (Join-Path $layout 'glance-mcp.exe')
 Copy-Item -Recurse (Join-Path $PSScriptRoot 'Assets') (Join-Path $layout 'Assets')
 
 Push-Location $root

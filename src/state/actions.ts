@@ -677,7 +677,7 @@ export function allDocs(): Doc[] {
 const REDACT_DPI = 300
 const MAX_RASTER_PIXELS = 36_000_000
 
-async function makeRasterizer(bytes: Uint8Array): Promise<import('../core/redact').Rasterize> {
+export async function makeRasterizer(bytes: Uint8Array): Promise<import('../core/redact').Rasterize> {
   const proxy = await openPdf(bytes)
   return async (pageIndex: number, rects: Rect[]) => {
     const page = await proxy.getPage(pageIndex + 1)

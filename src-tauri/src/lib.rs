@@ -7,6 +7,7 @@ mod explorer;
 mod files;
 mod fonts;
 mod history;
+mod mcp;
 mod metadata;
 mod ocr;
 mod scan;
@@ -32,6 +33,10 @@ fn window_material() -> &'static str {
 /// that build up to date, so the UI skips its own GitHub update checks.
 #[tauri::command]
 fn store_package() -> bool {
+    store_package_now()
+}
+
+pub(crate) fn store_package_now() -> bool {
     #[cfg(windows)]
     {
         use windows::Win32::Foundation::ERROR_INSUFFICIENT_BUFFER;
@@ -63,6 +68,10 @@ pub fn run() {
     tauri::Builder::default()
         // Must be first: a second launch forwards its files here and exits.
         .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
+            // glance-mcp starting Glance while it already runs: nothing to show or open.
+            if mcp::launched_for_ai(&argv) {
+                return;
+            }
             let action = explorer::action_from_args(&argv);
             let files = commands::files_from_args(argv.into_iter().skip(1).map(|a| {
                 let p = std::path::Path::new(&a);
@@ -88,6 +97,7 @@ pub fn run() {
         })
         .manage(files::OpenFiles::default())
         .manage(explorer::Queue::default())
+        .manage(mcp::Hub::default())
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {
                 files::release_window(window.app_handle(), window.label());
@@ -98,6 +108,7 @@ pub fn run() {
                 apply_backdrop(&win);
             }
             let args: Vec<String> = std::env::args().skip(1).collect();
+            mcp::start(app.handle(), mcp::launched_for_ai(&args));
             if let Some(action) = explorer::action_from_args(&args) {
                 explorer::enqueue(app.handle(), action, commands::files_from_args(args.into_iter()));
             }
@@ -148,6 +159,13 @@ pub fn run() {
             history::history_rename,
             shell::set_wallpaper,
             shell::share_files,
+            mcp::mcp_take,
+            mcp::mcp_send,
+            mcp::mcp_launched_hidden,
+            mcp::mcp_show,
+            mcp::apps::ai_apps,
+            mcp::apps::ai_app_connect,
+            mcp::apps::ai_app_disconnect,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Glance");

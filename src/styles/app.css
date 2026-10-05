@@ -1689,6 +1689,20 @@ select {
   line-height: 16px;
   color: var(--text-2);
 }
+.settings-card-buttons {
+  display: flex;
+  gap: 8px;
+}
+.settings-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 2px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
 .settings-card-control select,
 .number-box {
   height: 32px;

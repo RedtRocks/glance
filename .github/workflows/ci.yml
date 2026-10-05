@@ -69,6 +69,7 @@ jobs:
           workspaces: |
             src-tauri
             src-tauri/thumbnailer
+            src-tauri/mcp-bridge
       - run: npm ci
       - name: Build frontend
         run: npm run build
@@ -77,6 +78,9 @@ jobs:
         run: cargo test --locked
       - name: PDF thumbnailer tests
         working-directory: src-tauri/thumbnailer
+        run: cargo test --locked
+      - name: glance-mcp tests
+        working-directory: src-tauri/mcp-bridge
         run: cargo test --locked
       - name: Build installer
         run: npx tauri build --bundles nsis
@@ -112,11 +116,18 @@ jobs:
           foreach ($c in $classes) { reg delete "HKLM\Software\Classes\CLSID\$c" /f /reg:64 | Out-Null }
           if ($failed -ne 0) { throw 'no thumbnail from the installed handler' }
           Pop-Location
+          # AI apps: glance-mcp starts the installed Glance in the background, and its tools
+          # work end to end. Glance quits a few seconds after the AI app disconnects.
+          node scripts/mcp-smoke.mjs (Join-Path $env:LOCALAPPDATA 'Glance\glance-mcp.exe')
+          if ($LASTEXITCODE -ne 0) { throw 'AI tools smoke test failed' }
+          Start-Sleep -Seconds 6
+          if (Get-Process glance -ErrorAction SilentlyContinue) { throw 'Glance kept running after the AI app disconnected' }
           $dir = Join-Path $env:LOCALAPPDATA Glance
           Start-Process (Join-Path $dir uninstall.exe) -ArgumentList '/S', "_?=$dir" -Wait
           if (Get-ItemProperty 'HKCU:\Software\RegisteredApplications' -Name Glance -ErrorAction SilentlyContinue) { throw 'still registered after uninstall' }
           if (Test-Path 'HKCU:\Software\Glance\Capabilities') { throw 'Capabilities left after uninstall' }
           if (Test-Path 'HKCU:\Software\Classes\CLSID\{4d578e19-3f31-49d8-8d05-706466000000}') { throw 'thumbnailer left after uninstall' }
+          if (Test-Path (Join-Path $dir 'glance-mcp.exe')) { throw 'glance-mcp.exe left after uninstall' }
       - uses: actions/upload-artifact@v4
         with:
           name: glance-windows-x64-installer
@@ -154,6 +165,9 @@ jobs:
       - name: Check PDF thumbnailer
         working-directory: src-tauri/thumbnailer
         run: cargo check --locked --target aarch64-pc-windows-msvc
+      - name: Check glance-mcp
+        working-directory: src-tauri/mcp-bridge
+        run: cargo check --locked --target aarch64-pc-windows-msvc
 
   linux-rust:
     name: Rust tests (Linux)
@@ -175,3 +189,6 @@ jobs:
         run: |
           mkdir -p ../dist && [ -f ../dist/index.html ] || echo '<!doctype html>' > ../dist/index.html
           cargo test --locked
+      - name: glance-mcp tests
+        working-directory: src-tauri/mcp-bridge
+        run: cargo test --locked
