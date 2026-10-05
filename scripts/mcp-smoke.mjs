@@ -123,8 +123,18 @@ try {
     check(current.content.some((c) => c.type === 'image') && hasEmail(text(current)), 'glance_current_view returns page 1 with its text')
     check(text(await tool('glance_mark_redactions', { patterns: ['email'] })).includes('1 match'), 'glance_mark_redactions marks the email for review')
   }
-  console.log('all good')
+  // Like an AI app: close glance-mcp's input and wait for its output to end. If Glance
+  // inherited glance-mcp's pipes, the output never ends.
+  const closed = new Promise((resolve) => child.on('close', resolve))
   child.stdin.end()
+  const timer = setTimeout(() => {
+    console.error('glance-mcp output stayed open after it exited (Glance holds the pipe?)')
+    process.exit(1)
+  }, 20_000)
+  await closed
+  clearTimeout(timer)
+  check(true, 'glance-mcp exits and its output closes')
+  console.log('all good')
   process.exitCode = 0
 } catch (e) {
   console.error(e.message)

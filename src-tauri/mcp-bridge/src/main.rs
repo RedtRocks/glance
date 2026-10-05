@@ -126,12 +126,36 @@ fn launch() -> Result<(), String> {
         // Outlive the AI app's process tree when it allows that; the user may open the
         // window later and keep working.
         cmd.creation_flags(DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP | CREATE_BREAKAWAY_FROM_JOB);
+        keep_std_handles_to_ourselves();
         if cmd.spawn().is_ok() {
             return Ok(());
         }
         cmd.creation_flags(DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP);
     }
     cmd.spawn().map(|_| ()).map_err(|e| format!("couldn't start {}: {e}", app.display()))
+}
+
+/// Windows hands every inheritable handle to a child, whatever its stdio says, and the
+/// pipes the AI app gave us are inheritable. Glance would then hold the AI app's pipes
+/// open after we exit, and an AI app waiting for our output to end would wait forever.
+#[cfg(windows)]
+fn keep_std_handles_to_ourselves() {
+    const STD_HANDLES: [u32; 3] = [-10i32 as u32, -11i32 as u32, -12i32 as u32];
+    const HANDLE_FLAG_INHERIT: u32 = 1;
+    #[link(name = "kernel32")]
+    extern "system" {
+        fn GetStdHandle(which: u32) -> isize;
+        fn SetHandleInformation(handle: isize, mask: u32, flags: u32) -> i32;
+    }
+    for which in STD_HANDLES {
+        // SAFETY: plain Win32 calls on this process's own standard handles.
+        unsafe {
+            let h = GetStdHandle(which);
+            if h != 0 && h != -1 {
+                SetHandleInformation(h, HANDLE_FLAG_INHERIT, 0);
+            }
+        }
+    }
 }
 
 fn app_path() -> Result<PathBuf, String> {
