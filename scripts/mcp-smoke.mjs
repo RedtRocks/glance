@@ -4,7 +4,10 @@
  * speaks MCP over its stdin/stdout, and calls tools on a generated PDF. glance-mcp
  * starts Glance in the background (hidden window) and Glance quits when we disconnect.
  *
- *   node scripts/mcp-smoke.mjs <path to glance-mcp(.exe)>
+ *   node scripts/mcp-smoke.mjs <path to glance-mcp(.exe)> [--live]
+ *
+ * --live also opens the PDF in the window and uses the live tools; Glance then stays
+ * open (as it would for a user).
  */
 import { spawn } from 'node:child_process'
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
@@ -14,6 +17,7 @@ import { createInterface } from 'node:readline'
 import { PDFDocument, StandardFonts } from '@cantoo/pdf-lib'
 
 const bridge = process.argv[2]
+const live = process.argv.includes('--live')
 if (!bridge || !existsSync(bridge)) throw new Error(`usage: mcp-smoke.mjs <glance-mcp>; not found: ${bridge}`)
 
 const dir = mkdtempSync(join(tmpdir(), 'glance-mcp-'))
@@ -106,6 +110,17 @@ try {
   check((await tool('glance_info', { path: combined })).structuredContent.pages === 3, 'glance_combine adds PDFs and images')
 
   check(Array.isArray((await tool('glance_list_open', {})).structuredContent.tabs), 'glance_list_open answers')
+
+  if (live) {
+    const opened = (await tool('glance_open', { paths: [input], page: 2 })).structuredContent.opened
+    check(opened.length === 1 && opened[0].page === 2, 'glance_open shows page 2')
+    const tabs = (await tool('glance_list_open', {})).structuredContent.tabs
+    check(tabs.some((t) => t.active && t.path === input), 'glance_list_open lists the active tab')
+    await tool('glance_go_to_page', { page: 1 })
+    const current = await tool('glance_current_view', { max_size: 400 })
+    check(current.content.some((c) => c.type === 'image') && text(current).includes('jane.doe@example.com'), 'glance_current_view returns page 1 with its text')
+    check(text(await tool('glance_mark_redactions', { patterns: ['email'] })).includes('1 match'), 'glance_mark_redactions marks the email for review')
+  }
   console.log('all good')
   child.stdin.end()
   process.exitCode = 0

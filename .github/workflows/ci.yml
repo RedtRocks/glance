@@ -122,6 +122,11 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'AI tools smoke test failed' }
           Start-Sleep -Seconds 6
           if (Get-Process glance -ErrorAction SilentlyContinue) { throw 'Glance kept running after the AI app disconnected' }
+          # The live tools open the window, so Glance stays open after this run.
+          node scripts/mcp-smoke.mjs (Join-Path $env:LOCALAPPDATA 'Glance\glance-mcp.exe') --live
+          if ($LASTEXITCODE -ne 0) { throw 'AI live tools smoke test failed' }
+          Stop-Process -Name glance -Force -ErrorAction SilentlyContinue
+          Start-Sleep -Seconds 2
           $dir = Join-Path $env:LOCALAPPDATA Glance
           Start-Process (Join-Path $dir uninstall.exe) -ArgumentList '/S', "_?=$dir" -Wait
           if (Get-ItemProperty 'HKCU:\Software\RegisteredApplications' -Name Glance -ErrorAction SilentlyContinue) { throw 'still registered after uninstall' }

@@ -184,8 +184,8 @@ async function encode(c: Canvas, type: 'image/png' | 'image/jpeg', quality = 0.8
   return new Uint8Array(await blob.arrayBuffer())
 }
 
-async function imageContent(c: Canvas, alpha: boolean): Promise<Content> {
-  const mimeType = alpha ? 'image/png' : 'image/jpeg'
+async function imageContent(c: Canvas, png: boolean): Promise<Content> {
+  const mimeType = png ? 'image/png' : 'image/jpeg'
   return { type: 'image', data: toBase64(await encode(c, mimeType)), mimeType }
 }
 
@@ -381,7 +381,7 @@ const view: ToolHandler = async ({ path, page, max_size }) =>
     const i = pageIndex(page, src.pages)
     const max = Number(max_size ?? VIEW_SIZE)
     const c = src.kind === 'pdf' ? (await renderPdfPage(src.proxy, i, { maxSide: max })).canvas : await renderImage(src.probe, i, max)
-    const image = await imageContent(c, src.kind !== 'pdf' && hasAlpha(src.path))
+    const image = await imageContent(c, src.kind === 'pdf' || hasAlpha(src.path))
     // i18n-ignore: read by the AI app, not shown in Glance
     return { content: [{ type: 'text', text: `${src.probe.name}, page ${i + 1} of ${src.pages}` }, image] }
   })
@@ -602,7 +602,7 @@ const currentView: ToolHandler = async ({ tab, max_size }) => {
       const i = d.current.peek()
       const { canvas: c } = await renderPdfPage(proxy, i, { maxSide: max })
       const text = itemsText(await pageItems(proxy, i))
-      return { content: [{ type: 'text', text: `${head(i, proxy.numPages)}\n\n${text || '(no selectable text on this page)'}` }, await imageContent(c, false)] }
+      return { content: [{ type: 'text', text: `${head(i, proxy.numPages)}\n\n${text || '(no selectable text on this page)'}` }, await imageContent(c, true)] }
     } finally {
       await proxy.loadingTask.destroy()
     }
