@@ -2,12 +2,13 @@ import { computed, signal, type Signal } from '@preact/signals'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 import { History } from './history'
 import { openPdf, readOutline, PasswordRequired, type OutlineNode } from '../pdf/engine'
-import { releaseFile, type Probe } from '../platform'
+import { forgetBrowserFile, releaseFile, type Probe } from '../platform'
 import { remapPages, transformForImage, type Markup, type PageMap, type Redaction } from '../core/markup'
 import type { Raster } from '../core/image/raster'
 import type { Backdrop, CameraView, Lighting, Look } from '../model/viewer'
 import { t } from '../i18n'
 import type { Affine } from '../core/image/transform'
+import { previewExt, previewFlavor, type PreviewFlavor } from '../core/previews'
 
 let seq = 0
 const nextId = (): string => `doc${++seq}`
@@ -351,7 +352,26 @@ export class ModelDoc extends BaseDoc {
   }
 }
 
-export type Doc = PdfDoc | ImageDoc | NoticeDoc | ModelDoc
+/** A file previewed read-only as HTML by the lazy-loaded preview/render.ts: Office files, text, Markdown, media, books, fonts or email. */
+export class PreviewDoc extends BaseDoc {
+  readonly kind = 'preview' as const
+  readonly probe: Probe
+  readonly flavor: PreviewFlavor
+  /** Slides in a deck or sheets in a workbook, once the file is laid out; 1 for Word. */
+  readonly pageCount = signal(1)
+  readonly current = signal(0)
+  readonly zoom = signal(1)
+  /** Sheet names for a workbook's tabs. */
+  readonly sheetNames = signal<string[]>([])
+  constructor(probe: Probe) {
+    super(probe.name, probe.path)
+    this.probe = probe
+    this.flavor = previewFlavor(previewExt(probe.name)) ?? 'text'
+    this.sidebar.value = 'none'
+  }
+}
+
+export type Doc = PdfDoc | ImageDoc | NoticeDoc | ModelDoc | PreviewDoc
 
 export const docs = signal<Doc[]>([])
 export const activeId = signal<string | null>(null)
@@ -369,7 +389,11 @@ export function removeDoc(id: string): void {
   const doc = list[idx]
   if (doc.kind === 'pdf') void doc.proxy.peek()?.loadingTask.destroy()
   const path = doc.path.peek() ?? (doc.kind === 'pdf' ? doc.convertedFrom : null)
-  if (path) void releaseFile(path)
+  if (path) {
+    void releaseFile(path)
+    // In the browser the file and its decoded pages are only in memory; let them go.
+    forgetBrowserFile(path)
+  }
   const next = list.filter((d) => d.id !== id)
   docs.value = next
   if (activeId.value === id) activeId.value = next[Math.min(idx, next.length - 1)]?.id ?? null

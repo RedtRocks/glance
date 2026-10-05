@@ -1,6 +1,6 @@
 //! Comic book archives (.cbz): a zip of images shown as pages.
 
-use std::io::Read;
+use std::io::{Read, Seek};
 use std::path::Path;
 
 fn is_image_name(name: &str) -> bool {
@@ -41,24 +41,37 @@ fn natural_key(s: &str) -> Vec<(bool, u64, String)> {
 
 pub fn page_names(path: &Path) -> Result<Vec<String>, String> {
     let file = std::fs::File::open(path).map_err(|e| e.to_string())?;
-    let mut zip = zip::ZipArchive::new(file).map_err(|e| e.to_string())?;
+    page_names_in(file)
+}
+
+pub fn read_page(path: &Path, page: usize) -> Result<(String, Vec<u8>), String> {
+    let file = std::fs::File::open(path).map_err(|e| e.to_string())?;
+    read_page_in(file, page)
+}
+
+/// Image entries of a zip, in reading order. Takes any reader, so the browser
+/// version (web/decoder) can pass the file's bytes.
+pub fn page_names_in<R: Read + Seek>(reader: R) -> Result<Vec<String>, String> {
+    let mut zip = zip::ZipArchive::new(reader).map_err(|e| e.to_string())?;
+    Ok(sorted_pages(&mut zip))
+}
+
+pub fn read_page_in<R: Read + Seek>(reader: R, page: usize) -> Result<(String, Vec<u8>), String> {
+    let mut zip = zip::ZipArchive::new(reader).map_err(|e| e.to_string())?;
+    let name = sorted_pages(&mut zip).get(page).ok_or("page out of range")?.clone();
+    let mut entry = zip.by_name(&name).map_err(|e| e.to_string())?;
+    let mut buf = Vec::with_capacity(entry.size() as usize);
+    entry.read_to_end(&mut buf).map_err(|e| e.to_string())?;
+    Ok((name, buf))
+}
+
+fn sorted_pages<R: Read + Seek>(zip: &mut zip::ZipArchive<R>) -> Vec<String> {
     let mut names: Vec<String> = (0..zip.len())
         .filter_map(|i| zip.by_index(i).ok().map(|f| f.name().to_string()))
         .filter(|n| is_image_name(n))
         .collect();
     names.sort_by_cached_key(|n| natural_key(n));
-    Ok(names)
-}
-
-pub fn read_page(path: &Path, page: usize) -> Result<(String, Vec<u8>), String> {
-    let names = page_names(path)?;
-    let name = names.get(page).ok_or("page out of range")?.clone();
-    let file = std::fs::File::open(path).map_err(|e| e.to_string())?;
-    let mut zip = zip::ZipArchive::new(file).map_err(|e| e.to_string())?;
-    let mut entry = zip.by_name(&name).map_err(|e| e.to_string())?;
-    let mut buf = Vec::with_capacity(entry.size() as usize);
-    entry.read_to_end(&mut buf).map_err(|e| e.to_string())?;
-    Ok((name, buf))
+    names
 }
 
 #[cfg(test)]

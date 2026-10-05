@@ -20,7 +20,7 @@ import {
   type TextStyle,
   type Tool
 } from '../../state/markupState'
-import { deleteSignature, listFonts, listSignatures, type SavedSignature } from '../../platform'
+import { deleteSignature, isTauri, listFonts, listSignatures, type SavedSignature } from '../../platform'
 import { markSelection, type TextMarkupKind } from './textSelection'
 import { Icon } from '../Icon'
 import type { IconName } from '../icons'
@@ -394,8 +394,9 @@ export function MarkupToolbar() {
           <ActionButton icon="straighten" label={tip(t('Straighten'), 'tools.straighten')} onClick={() => void runCommand('tools.straighten')} />
           <ActionButton icon="adjustColor" label={tip(t('Adjust color'), 'tools.adjustColor')} onClick={() => (adjustColorOpen.value = true)} />
           <ActionButton icon="adjustSize" label={tip(t('Adjust size'), 'tools.adjustSize')} onClick={() => (adjustSizeOpen.value = true)} />
-          <ActionButton icon="removeBg" label={tip(t('Remove background'), 'tools.removeBackground')} onClick={() => void removeBackground(image)} />
-          <ActionButton icon="copySubject" label={t('Copy subject')} onClick={() => void copySubject(image)} />
+          {/* The subject model runs in the Windows app's backend. */}
+          {isTauri && <ActionButton icon="removeBg" label={tip(t('Remove background'), 'tools.removeBackground')} onClick={() => void removeBackground(image)} />}
+          {isTauri && <ActionButton icon="copySubject" label={t('Copy subject')} onClick={() => void copySubject(image)} />}
         </>
       )}
       <div class="tb-spacer" />

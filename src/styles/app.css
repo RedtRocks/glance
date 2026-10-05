@@ -2539,3 +2539,601 @@ input[type='range'] {
 .view-zoom * {
   cursor: zoom-in !important;
 }
+
+/* ---------- Phones and small tablets ----------
+   The browser version (web/) runs the same UI on a phone, where the window is a
+   fraction of a desktop one and fingers need bigger targets. The menu bar and the
+   toolbar each scroll sideways instead of overflowing, and the sidebar slides over
+   the document instead of taking a column of its own. */
+@media (max-width: 700px) {
+  .commandbar {
+    flex-wrap: wrap;
+    height: auto;
+    gap: 0;
+    padding: 0;
+  }
+  .menubar,
+  .toolbar {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    padding: 2px 4px;
+  }
+  .menubar::-webkit-scrollbar,
+  .toolbar::-webkit-scrollbar,
+  .tabstrip::-webkit-scrollbar {
+    display: none;
+  }
+  .menubar {
+    border-bottom: 1px solid var(--stroke);
+  }
+  .menubar-entry,
+  .tb-item {
+    flex: none;
+  }
+  /* A flexible space would push everything after it out of reach when scrolling. */
+  .tb-item.tb-spacer {
+    display: none;
+  }
+  .tb-search {
+    min-width: 160px;
+  }
+  .menu,
+  .overflow-menu {
+    max-width: calc(100vw - 16px);
+  }
+
+  .sidebar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 20;
+    max-width: 78vw;
+    box-shadow: var(--shadow-flyout);
+  }
+  .sidebar-resizer {
+    display: none;
+  }
+  .workspace {
+    position: relative;
+  }
+  /* Panels that sit beside the document on a desktop cover it here. */
+  .side-pane {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    width: min(100%, 360px);
+    box-shadow: var(--shadow-flyout);
+  }
+
+  .welcome {
+    padding: 0 20px;
+  }
+}
+
+/* Fingers need a bigger target than a mouse pointer does. */
+@media (pointer: coarse) {
+  .tb-button,
+  .menubar-button,
+  .sidebar-tabs button {
+    min-width: 40px;
+    height: 40px;
+  }
+  .menu-item,
+  .toc-item {
+    padding-top: 9px;
+    padding-bottom: 9px;
+  }
+  .tab {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+}
+
+/* Keep the app clear of a phone's rounded corners and home indicator. */
+@supports (padding: env(safe-area-inset-left)) {
+  .app {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Dims the document behind the sidebar on a phone; tapping it closes the sidebar. */
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.image-decoding {
+  padding: 24px;
+  color: var(--text-2);
+}
+
+/* ---------- Office files (Word, PowerPoint, Excel) ---------- */
+/* Office's own fonts where installed, else ones with the same metrics, else the
+   closest common font, so a Calibri document doesn't fall back to a serif. */
+@font-face { font-family: Calibri; src: local('Calibri'), local('Carlito'), local('Segoe UI'), local('Roboto'), local('Helvetica Neue'), local('Arial'); }
+@font-face { font-family: Calibri Light; src: local('Calibri Light'), local('Carlito'), local('Segoe UI Light'), local('Roboto Light'), local('Helvetica Neue'), local('Arial'); }
+@font-face { font-family: Cambria; src: local('Cambria'), local('Caladea'), local('Georgia'), local('Times New Roman'); }
+@font-face { font-family: Aptos; src: local('Aptos'), local('Segoe UI'), local('Roboto'), local('Helvetica Neue'), local('Arial'); }
+@font-face { font-family: Arial; src: local('Arial'), local('Liberation Sans'), local('Helvetica Neue'), local('Helvetica'), local('Roboto'); }
+@font-face { font-family: Times New Roman; src: local('Times New Roman'), local('Liberation Serif'), local('Times'), local('Georgia'); }
+.office-view {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+.office-scroller {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  user-select: text;
+}
+/* docx-preview's grey wrapper gives way to the app's canvas; pages keep their paper. */
+.office-word .docx-wrapper {
+  background: transparent;
+  padding: 24px 16px 96px;
+}
+.office-word .docx-wrapper > section.docx {
+  box-shadow: var(--page-shadow);
+  margin-bottom: 24px;
+}
+.office-slides {
+  padding: 16px 0;
+}
+.office-sheets {
+  display: inline-block;
+  min-width: 100%;
+}
+.office-view-sheets .office-scroller {
+  background: var(--card);
+}
+.sheet-grid {
+  border-collapse: collapse;
+  table-layout: fixed;
+  font: 13px/18px 'Segoe UI', Calibri, Arial, sans-serif;
+  color: #000;
+  background: #fff;
+}
+.sheet-grid td,
+.sheet-grid th {
+  min-width: 64px;
+  height: 22px;
+  padding: 1px 6px;
+  border: 1px solid #e1e1e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+.sheet-grid td.num {
+  text-align: right;
+}
+.sheet-grid th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  min-width: 40px;
+  background: var(--layer-alt);
+  color: var(--text-2);
+  font-weight: 400;
+  text-align: center;
+}
+.sheet-grid tr > th:first-child {
+  left: 0;
+  z-index: 2;
+}
+.sheet-tabs {
+  display: flex;
+  gap: 2px;
+  flex: none;
+  padding: 4px 8px;
+  overflow-x: auto;
+  background: var(--layer-alt);
+  border-top: 1px solid var(--stroke);
+}
+.sheet-tabs button {
+  flex: none;
+  height: 30px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-2);
+}
+.sheet-tabs button[aria-selected='true'] {
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 0 0 1px var(--stroke);
+}
+.office-status {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 32px;
+  text-align: center;
+  background: var(--canvas);
+}
+.office-status h2 {
+  margin: 0;
+  font: 600 20px/28px var(--font-display);
+}
+.office-status p {
+  margin: 0;
+  max-width: 520px;
+  color: var(--text-2);
+}
+
+/* ---------- Text, code, Markdown, media, books, fonts and email ---------- */
+:root {
+  --code-font: 'Cascadia Mono', 'Cascadia Code', Consolas, ui-monospace, 'SF Mono', Menlo, monospace;
+  --hl-keyword: #a626a4;
+  --hl-string: #2f7d32;
+  --hl-number: #b35900;
+  --hl-comment: #6e7781;
+  --hl-title: #0b5cad;
+  --hl-attr: #8a5a00;
+  --hl-type: #0f7b8a;
+  --hl-tag: #c2185b;
+}
+:root[data-theme='dark'] {
+  --hl-keyword: #d19af5;
+  --hl-string: #8bd17c;
+  --hl-number: #f2a65a;
+  --hl-comment: #8b949e;
+  --hl-title: #79b8ff;
+  --hl-attr: #e5c07b;
+  --hl-type: #56d4dd;
+  --hl-tag: #ff7aa8;
+}
+.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-doctag, .hljs-meta .hljs-keyword { color: var(--hl-keyword); }
+.hljs-string, .hljs-regexp, .hljs-addition, .hljs-meta .hljs-string { color: var(--hl-string); }
+.hljs-number, .hljs-symbol, .hljs-bullet, .hljs-variable.constant_ { color: var(--hl-number); }
+.hljs-comment, .hljs-quote, .hljs-meta { color: var(--hl-comment); }
+.hljs-comment, .hljs-quote { font-style: italic; }
+.hljs-title, .hljs-section, .hljs-title.function_ { color: var(--hl-title); }
+.hljs-attr, .hljs-attribute, .hljs-property, .hljs-params, .hljs-variable, .hljs-template-variable { color: var(--hl-attr); }
+.hljs-type, .hljs-built_in, .hljs-title.class_, .hljs-selector-class, .hljs-selector-id { color: var(--hl-type); }
+.hljs-tag, .hljs-name, .hljs-selector-pseudo { color: var(--hl-tag); }
+.hljs-deletion { color: #d1242f; }
+.hljs-emphasis { font-style: italic; }
+.hljs-strong { font-weight: 700; }
+
+.preview-note {
+  margin: 12px 16px 0;
+  color: var(--text-2);
+}
+.office-view-text .office-scroller,
+.office-view-markdown .office-scroller,
+.office-view-ebook .office-scroller,
+.office-view-font .office-scroller {
+  background: var(--card);
+}
+.code-view {
+  display: flex;
+  min-width: max-content;
+  min-height: 100%;
+  font: 13px/20px var(--code-font);
+  tab-size: 4;
+}
+.code-view pre {
+  margin: 0;
+  padding: 12px 16px 64px;
+  font: inherit;
+}
+.code-lines {
+  position: sticky;
+  left: 0;
+  flex: none;
+  min-width: 3ch;
+  text-align: right;
+  color: var(--text-3);
+  background: var(--card);
+  border-right: 1px solid var(--stroke);
+  user-select: none;
+}
+.code-text {
+  color: var(--text);
+}
+
+.md-body,
+.ebook {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 24px 96px;
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.md-body h1, .md-body h2, .md-body h3, .md-body h4,
+.ebook h1, .ebook h2, .ebook h3, .ebook h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.25;
+  margin: 1.6em 0 0.6em;
+}
+.md-body h1, .ebook h1 { font-size: 2em; }
+.md-body h2, .ebook h2 { font-size: 1.5em; }
+.md-body h3, .ebook h3 { font-size: 1.25em; }
+.md-body h1, .md-body h2 {
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--stroke);
+}
+.md-body > :first-child { margin-top: 0; }
+.md-body a, .ebook a { color: var(--accent); }
+.md-body img, .ebook img, .ebook svg {
+  max-width: 100%;
+  height: auto;
+}
+.md-body code, .ebook code {
+  font: 0.9em var(--code-font);
+  padding: 0.15em 0.35em;
+  border-radius: var(--radius);
+  background: var(--subtle-hover);
+}
+.md-body pre, .ebook pre {
+  padding: 14px 16px;
+  overflow: auto;
+  border-radius: var(--radius-lg);
+  background: var(--subtle-hover);
+  line-height: 1.5;
+}
+.md-body pre code, .ebook pre code {
+  padding: 0;
+  background: none;
+}
+.md-body blockquote, .ebook blockquote {
+  margin: 1em 0;
+  padding: 0 1em;
+  color: var(--text-2);
+  border-left: 4px solid var(--stroke-strong);
+}
+.md-body table {
+  border-collapse: collapse;
+  display: block;
+  overflow: auto;
+}
+.md-body th, .md-body td {
+  padding: 6px 12px;
+  border: 1px solid var(--stroke-strong);
+}
+.md-body hr {
+  border: 0;
+  border-top: 1px solid var(--stroke-strong);
+}
+.md-body li:has(> input[type='checkbox']) { list-style: none; }
+.md-body li > input[type='checkbox'] { margin: 0 0.5em 0 -1.4em; }
+.blocked-image {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px dashed var(--stroke-strong);
+  border-radius: var(--radius);
+  color: var(--text-2);
+  font-size: 13px;
+  text-decoration: none;
+}
+.blocked-image::before { content: '🖼 '; }
+.ebook {
+  font-family: Georgia, Cambria, 'Times New Roman', serif;
+  font-size: 18px;
+}
+.ebook-chapter + .ebook-chapter {
+  margin-top: 48px;
+  padding-top: 48px;
+  border-top: 1px solid var(--stroke);
+}
+
+.media-stage {
+  display: grid;
+  place-items: center;
+  min-height: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+}
+.media-video video {
+  max-width: 100%;
+  max-height: calc(100vh - 200px);
+  border-radius: var(--radius-lg);
+  background: #000;
+}
+.media-card {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  width: min(420px, 100%);
+  padding: 32px 24px;
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  text-align: center;
+}
+.media-card h2 {
+  margin: 0;
+  font: 600 18px/24px var(--font-display);
+  overflow-wrap: anywhere;
+}
+.media-card audio { width: 100%; }
+.media-art {
+  display: grid;
+  place-items: center;
+  width: 160px;
+  height: 160px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--accent), #8a3ffc);
+  color: #fff;
+}
+.media-art svg { width: 64px; height: 64px; }
+
+.font-sheet {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 24px 96px;
+}
+.font-head {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.font-big {
+  font-size: 120px;
+  line-height: 1;
+}
+.font-titles h1 {
+  margin: 0 0 4px;
+  font: 600 28px/36px var(--font-display);
+}
+.font-meta, .font-copyright {
+  margin: 0;
+  color: var(--text-2);
+}
+.font-copyright {
+  margin-top: 32px;
+  font-size: 12px;
+}
+.font-try {
+  width: 100%;
+  box-sizing: border-box;
+  height: 40px;
+  padding: 0 12px;
+  margin-bottom: 24px;
+  border: 1px solid var(--stroke-strong);
+  border-radius: var(--radius);
+  background: var(--control);
+  color: var(--text);
+  font: inherit;
+}
+.font-charset {
+  font-size: 32px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--stroke);
+}
+.font-charset p { margin: 0; }
+.font-size-row {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--stroke);
+}
+.font-size-label {
+  flex: none;
+  width: 2.5em;
+  color: var(--text-3);
+  font-size: 12px;
+}
+.font-sample {
+  margin: 0;
+  min-width: 0;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.email-view {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 16px 96px;
+}
+.email-head {
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  border: 1px solid var(--stroke);
+}
+.email-head h1 {
+  margin: 0 0 12px;
+  font: 600 22px/30px var(--font-display);
+  overflow-wrap: anywhere;
+}
+.email-head dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0;
+}
+.email-head dt { color: var(--text-2); }
+.email-head dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.email-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.email-attachment {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  max-width: 100%;
+  padding: 6px 12px;
+  border: 1px solid var(--stroke-strong);
+  border-radius: var(--radius-lg);
+  background: var(--control);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.email-attachment:hover { background: var(--subtle-hover); }
+.email-attachment span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.email-attachment small { color: var(--text-2); }
+.email-body {
+  display: block;
+  width: 100%;
+  min-height: 120px;
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-lg);
+  background: #fff;
+}
+.email-text {
+  margin: 0;
+  padding: 20px 24px;
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  line-height: 1.6;
+}
+/* The document is the reader's, not the app's: neutral type, whatever the app's own font. */
+.md-body,
+.email-view,
+.font-titles h1,
+.media-card h2 {
+  --doc-font: 'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--doc-font);
+}
+.md-body h1, .md-body h2, .md-body h3, .md-body h4, .email-head h1 { font-family: var(--doc-font); }
+.ebook h1, .ebook h2, .ebook h3, .ebook h4 { font-family: inherit; }
+.md-body th { text-align: left; }
+@media (max-width: 700px) {
+  .md-body, .ebook, .font-sheet { padding: 20px 16px 120px; }
+  .font-big { font-size: 72px; }
+  .font-titles h1 { font-size: 22px; line-height: 28px; }
+  .font-charset { font-size: 22px; }
+  .email-view { padding: 12px 12px 120px; }
+  .email-head { padding: 16px; }
+}

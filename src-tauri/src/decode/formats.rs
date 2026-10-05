@@ -12,6 +12,7 @@ pub enum Kind {
     Postscript,
     Xps,
     Archive,
+    Preview,
     Unsupported,
 }
 
@@ -33,6 +34,20 @@ pub const RAW_IMAGES: &[&str] = &[
 
 pub const MODELS: &[&str] = &[
     "glb", "gltf", "obj", "stl", "ply", "fbx", "usdz", "usda", "usdc", "dae", "3mf", "3ds",
+];
+
+/// Files the frontend previews itself as HTML (src/preview/): Office files, text and
+/// code, Markdown, video and audio, e-books, fonts and email. Same list as src/core/previews.ts.
+pub const PREVIEWS: &[&str] = &[
+    "docx", "docm", "dotx", "dotm", "pptx", "pptm", "ppsx", "ppsm", "potx", "potm", "xlsx", "xlsm", "xltx",
+    "xltm", "csv", "tsv", "md", "markdown", "mdown", "mkd", "txt", "text", "log", "nfo", "ini", "cfg", "conf",
+    "env", "properties", "toml", "yaml", "yml", "json", "jsonc", "json5", "xml", "plist", "html", "htm",
+    "css", "scss", "less", "js", "mjs", "cjs", "ts", "tsx", "jsx", "vue", "svelte", "py", "rb", "php", "pl",
+    "go", "rs", "java", "kt", "kts", "swift", "c", "h", "cpp", "cc", "cxx", "hpp", "cs", "fs", "vb", "lua",
+    "r", "dart", "scala", "sh", "bash", "zsh", "fish", "ps1", "psm1", "bat", "cmd", "sql", "graphql", "gql",
+    "proto", "tex", "bib", "srt", "vtt", "diff", "patch", "gitignore", "dockerfile", "makefile", "cmake",
+    "gradle", "mp4", "m4v", "webm", "mov", "ogv", "mkv", "mp3", "m4a", "aac", "wav", "oga", "ogg", "opus",
+    "flac", "weba", "epub", "ttf", "otf", "woff", "woff2", "eml", "msg",
 ];
 
 pub fn extension(path: &Path) -> String {
@@ -57,6 +72,7 @@ pub fn classify(path: &Path, head: &[u8]) -> Kind {
         "ps" | "eps" | "epsf" | "epsi" => Kind::Postscript,
         "xps" | "oxps" => Kind::Xps,
         "cbz" => Kind::Archive,
+        _ if PREVIEWS.contains(&e) => Kind::Preview,
         _ if BROWSER_IMAGES.contains(&e) || BACKEND_IMAGES.contains(&e) || RAW_IMAGES.contains(&e) => {
             Kind::Image
         }
@@ -74,10 +90,6 @@ pub fn classify(path: &Path, head: &[u8]) -> Kind {
 
 pub fn is_browser_native(path: &Path) -> bool {
     BROWSER_IMAGES.contains(&extension(path).as_str())
-}
-
-pub fn is_raw(path: &Path) -> bool {
-    RAW_IMAGES.contains(&extension(path).as_str())
 }
 
 pub fn mime_for(path: &Path) -> &'static str {
@@ -113,6 +125,9 @@ mod tests {
         assert_eq!(classify(Path::new("a.CR3"), b""), Kind::Image);
         assert_eq!(classify(Path::new("a.heic"), b""), Kind::Image);
         assert_eq!(classify(Path::new("a.usdz"), b""), Kind::Model);
+        // Office files are zip archives; the extension decides.
+        assert_eq!(classify(Path::new("Plan.docx"), b"PK\x03\x04"), Kind::Preview);
+        assert_eq!(classify(Path::new("Deck.PPTX"), b"PK\x03\x04"), Kind::Preview);
         assert_eq!(classify(Path::new("a.oxps"), b""), Kind::Xps);
         assert_eq!(classify(Path::new("a.cbz"), b""), Kind::Archive);
         assert_eq!(classify(Path::new("a.xyz"), b"nothing"), Kind::Unsupported);

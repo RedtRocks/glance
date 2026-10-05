@@ -71,7 +71,9 @@ export const findOpen = signal(false)
 export const settingsOpen = signal(false)
 export const customizeOpen = signal(false)
 export const menuOpen = signal<string | null>(null)
-export const sidebarVisible = signal(true)
+/** Narrow windows (phones) show the sidebar over the document, so it starts closed. */
+export const narrowWindow = signal(typeof matchMedia !== 'undefined' && matchMedia('(max-width: 700px)').matches)
+export const sidebarVisible = signal(!narrowWindow.peek())
 export const slideshow = signal(false)
 
 export interface ContextMenuItem {

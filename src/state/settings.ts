@@ -70,7 +70,24 @@ function load(): Settings {
   return { ...DEFAULTS }
 }
 
-export const settings = signal<Settings>(load())
+/**
+ * The browser version shares its address with the website, whose light/dark toggle
+ * keeps its choice here; the two follow each other.
+ */
+const SITE_THEME = 'glance-theme'
+const onWeb = typeof window !== 'undefined' && !('__TAURI_INTERNALS__' in window)
+
+function withSiteTheme(s: Settings): Settings {
+  if (!onWeb) return s
+  try {
+    const site = localStorage.getItem(SITE_THEME)
+    return { ...s, theme: site === 'light' || site === 'dark' ? site : 'system' }
+  } catch {
+    return s
+  }
+}
+
+export const settings = signal<Settings>(withSiteTheme(load()))
 
 export function updateSettings(patch: Partial<Settings>): void {
   settings.value = { ...settings.value, ...patch }
@@ -84,6 +101,10 @@ effect(() => {
   const value = settings.value
   try {
     localStorage.setItem(KEY, JSON.stringify(value))
+    if (onWeb) {
+      if (value.theme === 'system') localStorage.removeItem(SITE_THEME)
+      else localStorage.setItem(SITE_THEME, value.theme)
+    }
   } catch {
     /* ignore */
   }

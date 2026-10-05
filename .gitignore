@@ -10,3 +10,6 @@ src-tauri/target/
 src-tauri/gen/
 src-tauri/thumbnailer/target/
 src-tauri/mcp-bridge/target/
+dist-web/
+public/decoder.wasm
+web/decoder/target/

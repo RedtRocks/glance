@@ -13,7 +13,7 @@ export const batchProgress = signal<{ done: number; total: number; current: stri
 async function decode(path: string): Promise<Raster> {
   const probe = await platform.probe(path)
   if (probe.kind !== 'image') throw new Error(t('not an image Glance can read'))
-  const res = await fetch(platform.imageUrl(probe))
+  const res = await fetch(await platform.imageUrlAsync(probe))
   if (!res.ok) throw new Error(await res.text())
   const bmp = await createImageBitmap(await res.blob(), { imageOrientation: 'from-image', premultiplyAlpha: 'none' })
   const c = new OffscreenCanvas(bmp.width, bmp.height)

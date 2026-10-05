@@ -8,6 +8,7 @@ import { activeDoc, ImageDoc, PdfDoc, type Doc } from './documents'
 import { alertDialog, toast, withBusy } from './ui'
 import { canRemoveLocation, type ShellRequest } from '../core/explorer'
 import { msg, t } from '../i18n'
+import { SHEETS, SLIDES, WORD } from '../core/previews'
 
 /**
  * Formats that are really another app's working files; Glance shows a flattened preview.
@@ -20,12 +21,22 @@ const EXTERNAL: Record<string, { kind: string; detail: string }> = {
   ai: { kind: msg('Illustrator artwork'), detail: msg('Glance shows the PDF-compatible version. To edit the artwork, open it in Illustrator or another vector editor.') },
   eps: { kind: msg('EPS artwork'), detail: msg('Glance shows a rendered preview. To edit it, open it in a vector editor.') },
   xcf: { kind: msg('GIMP image'), detail: msg('To edit layers, open it in GIMP.') },
+  ...office(WORD, { kind: msg('Word document'), detail: msg('Glance shows a preview. To edit it, open it in Word or another word processor.') }),
+  ...office(SLIDES, { kind: msg('PowerPoint presentation'), detail: msg('Glance shows a preview. To edit it or play animations, open it in PowerPoint or another presentation app.') }),
+  ...office(SHEETS, { kind: msg('Spreadsheet'), detail: msg('Glance shows the saved values. To edit it or see charts, open it in Excel or another spreadsheet app.') }),
+  eml: { kind: msg('Email message'), detail: msg('Glance shows the message. To reply or forward it, open it in Outlook or another mail app.') },
+  msg: { kind: msg('Outlook message'), detail: msg('Glance shows the message. To reply or forward it, open it in Outlook or another mail app.') },
+  epub: { kind: msg('E-book'), detail: msg('Glance shows the text and pictures. For the book’s own layout and your reading place, open it in a reading app.') },
   ...Object.fromEntries(
     ['cr2', 'cr3', 'nef', 'nrw', 'arw', 'srf', 'sr2', 'raf', 'orf', 'rw2', 'dng', 'pef', 'srw', 'x3f', 'erf', '3fr', 'iiq', 'mrw', 'kdc', 'dcr'].map((e) => [
       e,
       { kind: msg('Camera RAW photo'), detail: msg('Glance shows the preview the camera embedded. To develop the RAW data, open it in a photo editor.') }
     ])
   )
+}
+
+function office(exts: string[], hint: { kind: string; detail: string }): Record<string, { kind: string; detail: string }> {
+  return Object.fromEntries(exts.map((e) => [e, hint]))
 }
 
 function ext(doc: Doc): string {
@@ -62,7 +73,7 @@ async function imageBytes(doc: ImageDoc): Promise<{ bytes: Uint8Array; ext: stri
   }
   if (doc.editable && doc.raster.peek()) return { bytes: await engine.encodePng(await engine.flatten(doc)), ext: 'png' }
   // View-only images (multi-page TIFF, RAW previews…): the page currently shown.
-  const bitmap = await createImageBitmap(await (await fetch(platform.imageUrl(doc.probe, doc.current.peek()))).blob())
+  const bitmap = await createImageBitmap(await (await fetch(await platform.imageUrlAsync(doc.probe, doc.current.peek()))).blob())
   const turn = doc.rotation.peek()
   const side = turn % 180 !== 0
   const canvas = new OffscreenCanvas(side ? bitmap.height : bitmap.width, side ? bitmap.width : bitmap.height)

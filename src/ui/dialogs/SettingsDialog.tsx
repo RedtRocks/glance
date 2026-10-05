@@ -11,6 +11,7 @@ import { LANGUAGES, PSEUDO, languageName, t } from '../../i18n'
 import { Icon } from '../Icon'
 import type { IconName } from '../icons'
 import type { ComponentChildren } from 'preact'
+import * as platform from '../../platform'
 import { AiAppsPanel } from './AiAppsPanel'
 
 /** Windows 11 Settings-style row: icon, title and description, control on the right. */
@@ -121,7 +122,7 @@ export function SettingsDialog() {
       <div class="segmented" role="tablist">
         <button role="tab" aria-selected={tab === 'general'} onClick={() => setTab('general')}>{t('General')}</button>
         <button role="tab" aria-selected={tab === 'shortcuts'} onClick={() => setTab('shortcuts')}>{t('Keyboard shortcuts')}</button>
-        <button role="tab" aria-selected={tab === 'ai'} onClick={() => setTab('ai')}>{t('AI apps')}</button>
+        {platform.isTauri && <button role="tab" aria-selected={tab === 'ai'} onClick={() => setTab('ai')}>{t('AI apps')}</button>}
       </div>
       {tab === 'general' ? (
         <div class="settings-cards">

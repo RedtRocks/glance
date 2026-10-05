@@ -1,0 +1,1040 @@
+/* Glance in the browser wears the website's Wollo design: Urbanist in one weight,
+   ink and violet, flat surfaces separated by a soft grey or a 1px line, no shadows.
+   Everything here applies only with <html data-platform="web"> (see main.tsx); the
+   Windows app keeps its Fluent look from app.css. The document itself stays neutral. */
+
+@font-face {
+  font-family: Urbanist;
+  src: url('./fonts/urbanist.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root[data-platform='web'] {
+  --font: Urbanist, 'Helvetica Neue', Arial, sans-serif;
+  --font-display: Urbanist, 'Helvetica Neue', Arial, sans-serif;
+  --ink: #0a0a0a;
+  --on-ink: #ffffff;
+  --violet: #6312f6;
+  --violet-deep: #4408b1;
+  --pink: #f258a8;
+  --orange: #f47933;
+  --yellow: #f8d32c;
+  --accent: #6312f6;
+  --accent-hover: #5410d6;
+  --on-accent: #ffffff;
+  --text: #0a0a0a;
+  --text-2: #6b6b6b;
+  --text-3: #8a8a8a;
+  --bg-solid: #ffffff;
+  --chrome: #ffffff;
+  --layer: #f9f9f9;
+  --layer-alt: #ffffff;
+  --subtle: #f9f9f9;
+  --canvas: #f2f2f4;
+  --card: #ffffff;
+  --stroke: #dcdcdc;
+  --stroke-strong: #bdbdbd;
+  --subtle-hover: rgba(10, 10, 10, 0.05);
+  --subtle-press: rgba(10, 10, 10, 0.08);
+  --control: #ffffff;
+  --control-hover: #f9f9f9;
+  --flyout: #ffffff;
+  --shadow-flyout: 0 0 0 1px var(--stroke);
+  --shadow-dialog: 0 0 0 1px var(--stroke);
+  --selection: rgba(99, 18, 246, 0.14);
+  --radius: 10px;
+  --radius-lg: 20px;
+  --page-shadow: 0 0 0 1px var(--stroke);
+  --infobar-info-bg: #f9f9f9;
+}
+
+:root[data-platform='web'][data-theme='dark'] {
+  --ink: #f4f3f7;
+  --on-ink: #0e0d12;
+  --accent: #b49bff;
+  --accent-hover: #c5b2ff;
+  --on-accent: #0e0d12;
+  --text: #f4f3f7;
+  --text-2: #a9a6b3;
+  --text-3: #8b8895;
+  --bg-solid: #0e0d12;
+  --chrome: #0e0d12;
+  --layer: #1a1920;
+  --layer-alt: #0e0d12;
+  --subtle: #1a1920;
+  --canvas: #16151b;
+  --card: #1a1920;
+  --stroke: #34323d;
+  --stroke-strong: #4a4755;
+  --subtle-hover: rgba(244, 243, 247, 0.07);
+  --subtle-press: rgba(244, 243, 247, 0.11);
+  --control: #0e0d12;
+  --control-hover: #1a1920;
+  --flyout: #1a1920;
+  --selection: rgba(180, 155, 255, 0.2);
+  --infobar-info-bg: #1a1920;
+}
+
+/* ---------- Type: one weight, as on the website ---------- */
+:root[data-platform='web'] body {
+  font: 15px/22px var(--font);
+  font-weight: 400;
+  background: var(--bg-solid);
+}
+:root[data-platform='web'] .app :is(h1, h2, h3, h4, b, strong, th, .modal-title, .menu-heading, .settings-card-title) {
+  font-weight: 400;
+}
+/* Text people typed into a document keeps its own weight. */
+:root[data-platform='web'] :is(.markup-layer, .pdf-page, .textLayer) :is(b, strong) {
+  font-weight: revert;
+}
+:root[data-platform='web'] :focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+:root[data-platform='web'][data-theme='dark'] :focus-visible {
+  outline-color: var(--accent);
+}
+
+/* ---------- Shared pieces ---------- */
+.w-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--bg-solid);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--stroke);
+  font: 15px/20px var(--font);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.w-btn:hover {
+  background: var(--subtle);
+}
+.w-btn:disabled {
+  color: var(--text-3);
+  cursor: default;
+}
+.w-btn.ink {
+  background: var(--ink);
+  color: var(--on-ink);
+  box-shadow: none;
+}
+.w-btn.ink:hover {
+  opacity: 0.88;
+}
+.w-btn.big {
+  min-height: 56px;
+  padding: 0 28px;
+  font-size: 17px;
+}
+.phone-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.phone-icon:hover {
+  background: var(--subtle-hover);
+}
+.phone-icon:disabled {
+  color: var(--text-3);
+}
+.w-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 24px;
+  line-height: 28px;
+  letter-spacing: -0.5px;
+}
+.w-segmented {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 9999px;
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+.w-segmented button {
+  height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.w-segmented button[aria-selected='true'] {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+.w-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 9999px;
+  box-shadow: inset 0 0 0 1px var(--stroke);
+  color: var(--text-2);
+}
+.w-field:focus-within {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.w-field input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font: 16px/22px var(--font);
+}
+.w-field input::-webkit-search-cancel-button {
+  display: none;
+}
+
+/* ---------- Desktop chrome ---------- */
+:root[data-platform='web'] .chrome {
+  padding: 16px 16px 0;
+  background: var(--bg-solid);
+}
+.web-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 72px;
+  padding: 12px 12px 12px 20px;
+  border-radius: 20px;
+  background: var(--subtle);
+}
+.web-nav-spacer {
+  flex: 1;
+}
+:root[data-platform='web'] .web-nav .tabstrip {
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  min-width: 0;
+}
+:root[data-platform='web'] .tab {
+  height: 44px;
+  min-width: 0;
+  max-width: 260px;
+  padding: 0 8px 0 16px;
+  border-radius: 9999px;
+  color: var(--text-2);
+}
+:root[data-platform='web'] .tab.active {
+  background: var(--bg-solid);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--stroke);
+  clip-path: none;
+}
+:root[data-platform='web'] .tab-title {
+  font-size: 15px;
+}
+:root[data-platform='web'] .tab-close,
+:root[data-platform='web'] .tab-new {
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  border-radius: 9999px;
+  color: var(--ink);
+}
+:root[data-platform='web'] .commandbar {
+  height: 64px;
+  gap: 12px;
+  padding: 0 4px;
+  background: transparent;
+  border: 0;
+}
+:root[data-platform='web'] .menubar-button {
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+}
+:root[data-platform='web'] .tb-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  color: var(--ink);
+}
+:root[data-platform='web'] .tb-button.pressed {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+:root[data-platform='web'] .tb-sep {
+  background: var(--stroke);
+}
+:root[data-platform='web'] .page-field input,
+:root[data-platform='web'] .field input,
+:root[data-platform='web'] .field select {
+  height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--bg-solid);
+  box-shadow: inset 0 0 0 1px var(--stroke);
+}
+:root[data-platform='web'] .search-field {
+  height: 44px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--bg-solid);
+  box-shadow: inset 0 0 0 1px var(--stroke);
+  padding: 0 16px;
+}
+:root[data-platform='web'] :is(.page-field input, .search-field, .field input, .field select):is(:focus, :focus-within) {
+  border: 0;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+/* Menus, flyouts and toasts: white cards with a 1px line, rounded like the site. */
+:root[data-platform='web'] :is(.menu, .flyout, .toast) {
+  border: 0;
+  border-radius: 20px;
+  box-shadow: 0 0 0 1px var(--stroke);
+}
+:root[data-platform='web'] .menu {
+  padding: 8px;
+}
+:root[data-platform='web'] .menu-item {
+  height: 40px;
+  border-radius: 10px;
+}
+
+/* Workspace: the sidebar and the document sit in rounded panels with a gap between. */
+:root[data-platform='web'] .workspace {
+  gap: 16px;
+  padding: 0 16px 16px;
+  background: var(--bg-solid);
+}
+:root[data-platform='web'] .sidebar {
+  border: 0;
+  border-radius: 28px;
+  background: var(--subtle);
+  overflow: hidden;
+}
+:root[data-platform='web'] .sidebar-tabs {
+  justify-content: center;
+  gap: 2px;
+  margin: 16px auto 8px;
+  padding: 3px;
+  border: 0;
+  border-radius: 9999px;
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+:root[data-platform='web'] .sidebar-tabs button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 34px;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--ink);
+}
+:root[data-platform='web'] .sidebar-tabs button[aria-selected='true'] {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+:root[data-platform='web'] .thumb.selected {
+  background: transparent;
+}
+:root[data-platform='web'] .thumb.current :is(.thumb-canvas, .thumb-img) {
+  outline: 3px solid var(--violet);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+:root[data-platform='web'][data-theme='dark'] .thumb.current :is(.thumb-canvas, .thumb-img) {
+  outline-color: var(--accent);
+}
+:root[data-platform='web'] .viewer {
+  border-radius: 28px;
+  overflow: hidden;
+}
+
+/* Dialogs and side panels. */
+:root[data-platform='web'] .modal-backdrop {
+  background: rgba(10, 10, 10, 0.4);
+}
+:root[data-platform='web'] .modal {
+  border: 0;
+  border-radius: 28px;
+  background: var(--bg-solid);
+}
+:root[data-platform='web'] .modal-title {
+  padding: 28px 28px 12px;
+  font-size: 24px;
+  line-height: 30px;
+}
+:root[data-platform='web'] .modal-body {
+  padding: 0 28px 28px;
+}
+:root[data-platform='web'] .modal-footer {
+  padding: 20px 28px 28px;
+  border: 0;
+  background: transparent;
+}
+:root[data-platform='web'] .btn {
+  min-height: 44px;
+  height: auto;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--bg-solid);
+  box-shadow: inset 0 0 0 1px var(--stroke);
+}
+:root[data-platform='web'] .btn:hover {
+  background: var(--subtle);
+}
+:root[data-platform='web'] .btn.primary {
+  background: var(--ink);
+  color: var(--on-ink);
+  box-shadow: none;
+}
+:root[data-platform='web'] .side-pane {
+  border: 0;
+  border-radius: 28px;
+  background: var(--subtle);
+}
+:root[data-platform='web'] .infobar {
+  margin: 12px 12px 0;
+  border: 0;
+  border-radius: 20px;
+}
+:root[data-platform='web'] .markup-toolbar {
+  height: 56px;
+  margin: 0 0 12px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--subtle);
+}
+
+/* ---------- Start screen ---------- */
+.web-welcome {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--bg-solid);
+  color: var(--ink);
+}
+.web-welcome h1 {
+  margin: 0;
+  font-weight: 400;
+  text-wrap: balance;
+}
+.ww-lead {
+  margin: 0;
+  color: var(--text-2);
+  text-wrap: pretty;
+}
+
+.ww-desk {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  min-height: 100%;
+  padding: 16px;
+}
+.ww-intro {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 28px;
+  padding: 48px clamp(32px, 6vw, 88px);
+  border-radius: 28px;
+  background: var(--subtle);
+}
+.ww-intro.drag-over {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.ww-desk h1 {
+  font-size: clamp(44px, 5.4vw, 80px);
+  line-height: 1.02;
+  letter-spacing: -2px;
+}
+.ww-desk .ww-lead {
+  max-width: 560px;
+  font-size: 19px;
+  line-height: 28px;
+}
+.ww-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.ww-drop {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 640px;
+  padding: 24px 28px;
+  border: 1px dashed var(--stroke);
+  border-radius: 20px;
+  color: var(--text-2);
+}
+.ww-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.ww-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.ww-tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 32px;
+  min-height: 176px;
+  padding: 28px;
+  border-radius: 28px;
+  color: #0a0a0a;
+}
+.ww-tile b {
+  font-weight: 400;
+  font-size: clamp(40px, 4.4vw, 64px);
+  line-height: 1;
+  letter-spacing: -1.5px;
+}
+.ww-tile span {
+  font-size: 17px;
+}
+.ww-tile.violet {
+  color: #ffffff;
+}
+.orange {
+  --tone: var(--orange);
+}
+.pink {
+  --tone: var(--pink);
+}
+.violet {
+  --tone: var(--violet);
+}
+.yellow {
+  --tone: var(--yellow);
+}
+.ww-tile,
+.ww-tag,
+.ww-card,
+.sheet-row-icon {
+  background: var(--tone, var(--subtle));
+}
+.ww-formats {
+  flex: 1;
+  padding: 28px;
+  border-radius: 28px;
+  background: var(--subtle);
+}
+.ww-formats h2 {
+  margin: 0 0 20px;
+  font-size: 24px;
+  font-weight: 400;
+}
+.ww-formats ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ww-formats li {
+  padding: 8px 16px;
+  border-radius: 9999px;
+  box-shadow: inset 0 0 0 1px var(--stroke);
+  font-size: 15px;
+}
+
+/* Phone start: the website's tilted card stack, with a photo on top. */
+.ww-phone {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: max(12px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+}
+.ww-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 64px;
+}
+.ww-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.ww-hero {
+  position: relative;
+  height: min(250px, 30vh);
+  margin: 28px 12px 40px;
+}
+.ww-card {
+  position: absolute;
+  inset: 0;
+  border-radius: 28px;
+}
+.ww-card.yellow {
+  transform: rotate(-4deg);
+}
+.ww-card.pink {
+  transform: rotate(2.5deg);
+}
+.ww-card.violet {
+  --tone: var(--violet-deep);
+  overflow: hidden;
+  padding: 28px 28px 0;
+}
+.ww-card img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 14px 14px 0 0;
+}
+.ww-tag {
+  position: absolute;
+  z-index: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: #0a0a0a;
+  font-size: 13px;
+  line-height: 18px;
+}
+.ww-tag b {
+  display: block;
+  margin-bottom: 2px;
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+.ww-tag.yellow {
+  left: -6px;
+  bottom: -16px;
+  transform: rotate(-8deg);
+}
+.ww-tag.orange {
+  right: -4px;
+  top: -14px;
+  transform: rotate(8deg);
+}
+.ww-phone h1 {
+  font-size: 44px;
+  line-height: 46px;
+  letter-spacing: -1px;
+  text-align: center;
+}
+.ww-phone .ww-lead {
+  margin: 16px 8px 0;
+  font-size: 17px;
+  line-height: 24px;
+  text-align: center;
+}
+.ww-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 32px;
+}
+.ww-cta .w-btn {
+  width: 100%;
+}
+.ww-fine {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+/* ---------- Phone: top bar, dock and sheets ---------- */
+.phone-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 64px;
+  padding: max(8px, env(safe-area-inset-top)) 12px 8px 8px;
+  background: var(--bg-solid);
+}
+.phone-title {
+  flex: 1;
+  min-width: 0;
+}
+.phone-title h1,
+.phone-bar.markup h1 {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 19px/24px var(--font);
+}
+.phone-title p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 18px;
+}
+.phone-bar.markup {
+  justify-content: space-between;
+}
+.phone-count {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid var(--ink);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font: 15px/1 var(--font);
+}
+.phone-search {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 12px 10px;
+  background: var(--bg-solid);
+}
+.phone-search .w-btn {
+  min-height: 40px;
+  padding: 0 14px;
+}
+.phone-dock {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 30;
+  display: flex;
+  justify-content: space-around;
+  padding: 6px;
+  border-radius: 9999px;
+  background: var(--bg-solid);
+  box-shadow: 0 0 0 1px var(--stroke);
+}
+.dock-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  padding: 6px 0;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--ink);
+  font: 13px/16px var(--font);
+}
+.dock-button.pressed {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+.page-counter {
+  position: absolute;
+  left: 50%;
+  bottom: calc(max(12px, env(safe-area-inset-bottom)) + 84px);
+  z-index: 30;
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: var(--ink);
+  color: var(--on-ink);
+  font-size: 15px;
+  pointer-events: none;
+}
+/* Room under the last page for the dock. */
+:root[data-platform='web'] .phone-shell .viewer-stage {
+  padding-bottom: 0;
+}
+
+/* On a phone the markup toolbar becomes a tray under the thumb, scrolling sideways. */
+@media (max-width: 700px) {
+  :root[data-platform='web'] .chrome {
+    padding: 0;
+  }
+  :root[data-platform='web'] .workspace {
+    padding: 0;
+    gap: 0;
+  }
+  :root[data-platform='web'] .viewer {
+    border-radius: 0;
+  }
+  :root[data-platform='web'] .app > .markup-toolbar {
+    flex: none;
+    height: auto;
+    min-height: 68px;
+    margin: 12px 12px max(12px, env(safe-area-inset-bottom));
+    padding: 8px 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-radius: 28px;
+    background: var(--bg-solid);
+    box-shadow: 0 0 0 1px var(--stroke);
+  }
+  :root[data-platform='web'] .app > .markup-toolbar .tb-button {
+    flex: none;
+    width: 48px;
+    height: 48px;
+    border-radius: 9999px;
+  }
+  :root[data-platform='web'] .app > .markup-toolbar :is(.flyout, .menu) {
+    position: fixed;
+    top: auto;
+    left: 12px;
+    right: 12px;
+    bottom: calc(max(12px, env(safe-area-inset-bottom)) + 92px);
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+  :root[data-platform='web'] .infobar {
+    margin: 8px 8px 0;
+  }
+  :root[data-platform='web'] .modal {
+    width: 100vw;
+    max-height: 92vh;
+    margin-top: auto;
+    border-radius: 28px 28px 0 0;
+  }
+  :root[data-platform='web'] .modal-backdrop {
+    place-items: end center;
+  }
+  :root[data-platform='web'] .side-pane {
+    border-radius: 0;
+  }
+}
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 85;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(10, 10, 10, 0.35);
+  animation: sheet-fade 160ms ease-out;
+}
+.sheet {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 86vh;
+  padding: 10px 20px max(20px, env(safe-area-inset-bottom));
+  border-radius: 28px 28px 0 0;
+  background: var(--bg-solid);
+  color: var(--ink);
+  animation: sheet-up 220ms cubic-bezier(0, 0, 0, 1);
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(40%);
+  }
+}
+@keyframes sheet-fade {
+  from {
+    opacity: 0;
+  }
+}
+.sheet-handle {
+  align-self: center;
+  width: 40px;
+  height: 5px;
+  margin-bottom: 14px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--stroke);
+}
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 16px;
+}
+.sheet-head h2 {
+  margin: 0;
+  font: 24px/30px var(--font);
+}
+.sheet-head p {
+  margin: 2px 0 0;
+  color: var(--text-2);
+}
+.sheet-body {
+  overflow-y: auto;
+  min-height: 0;
+}
+.sheet-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 14px 4px;
+  border: 0;
+  border-top: 1px solid var(--stroke);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font: 17px/22px var(--font);
+}
+.sheet-row-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  color: #0a0a0a;
+}
+.sheet-row-icon.plain {
+  color: var(--ink);
+}
+.sheet-row-text {
+  display: flex;
+  flex-direction: column;
+}
+.sheet-row-text small {
+  color: var(--text-2);
+  font-size: 14px;
+}
+.sheet-actions {
+  display: flex;
+  gap: 10px;
+  padding-top: 16px;
+}
+.sheet-actions .w-btn {
+  flex: 1;
+  padding: 0 12px;
+}
+.pages-grid .thumb-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.pages-grid .thumb {
+  padding: 0;
+}
+.pages-grid .thumb :is(.thumb-canvas, .thumb-img) {
+  border-radius: 6px;
+  overflow: hidden;
+}
+.pages-grid .drop-indicator {
+  display: none;
+}
+.more-group h3 {
+  margin: 12px 0 4px;
+  color: var(--text-2);
+  font: 13px/18px var(--font);
+}
+.more-group .menu {
+  position: static;
+  min-width: 0;
+  padding: 0;
+  box-shadow: none;
+  border-radius: 0;
+  background: transparent;
+  animation: none;
+}
+.more-group .menu-item {
+  height: 48px;
+  font-size: 16px;
+}
+.more-group .menu-keys {
+  display: none;
+}
+.file-row {
+  display: flex;
+  align-items: center;
+  border-top: 1px solid var(--stroke);
+}
+.file-row-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+  padding: 14px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font: 17px/22px var(--font);
+}
+.file-row-main span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.file-row.active .file-row-main {
+  color: var(--accent);
+}
+:root[data-platform='web'] :is(.sidebar-tabs, .segmented) button[aria-selected='true']::after {
+  display: none;
+}
+.pages-grid {
+  padding: 4px;
+}
+:root[data-platform='web'] .more-group .menu {
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+}
+.more-group .menu-item {
+  grid-template-columns: 20px 1fr;
+  padding: 0 4px 0 0;
+}
+:root[data-platform='web'] .w-field input:focus-visible {
+  outline: none;
+}
+:root[data-platform='web'] .sheet-tabs {
+  gap: 6px;
+  padding: 8px 12px;
+  border: 0;
+  background: var(--subtle);
+}
+:root[data-platform='web'] .sheet-tabs button {
+  height: 36px;
+  border-radius: 9999px;
+  color: var(--ink);
+}
+:root[data-platform='web'] .sheet-tabs button[aria-selected='true'] {
+  background: var(--ink);
+  color: var(--on-ink);
+  box-shadow: none;
+}
+@media (max-width: 700px) {
+  /* Clear of the floating dock. */
+  :root[data-platform='web'] .office-scroller {
+    padding-bottom: 96px;
+  }
+  :root[data-platform='web'] .sheet-tabs {
+    margin-bottom: 88px;
+  }
+  :root[data-platform='web'] .office-word .docx-wrapper {
+    padding: 12px 0 96px;
+  }
+}

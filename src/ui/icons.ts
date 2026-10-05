@@ -93,5 +93,12 @@ const squiggly =
 import sparkle from '@fluentui/svg-icons/icons/sparkle_20_regular.svg?raw'
 import exportIcon from '@fluentui/svg-icons/icons/arrow_export_ltr_20_regular.svg?raw'
 
-export const ICONS = { sidebar, zoomIn, zoomOut, rotateRight, rotateLeft, highlight, search, print, share, more, up, down, left, right, open, close, settings, grid, toc, bookmark, moon, language, save, trash, add, addPage, fullscreen, slideshow, fitPage, zoomFit, undo, redo, edit, check, copy, image, cube, info, newWindow, document, tabs, pen, markup, cursor, draw, sketch, shapes, textBox, note, signature, redact, lineWidth, strokeColor, fillColor, textStyle, underline, strike, star, oval, square, roundRect, arrow, line, bubble, polygon, bookmarkAdd, bookmarks, notes, warningFilled, infoFilled, successFilled, errorFilled, certificate, chevronSmall, crop, straighten, adjustColor, adjustSize, removeBg, copySubject, selectRect, selectEllipse, lasso, smartLasso, instantAlpha, flipH, flipV, exportIcon, squiggly, sparkle, apps }
+import back from '@fluentui/svg-icons/icons/arrow_left_20_regular.svg?raw'
+import download from '@fluentui/svg-icons/icons/arrow_download_20_regular.svg?raw'
+import upload from '@fluentui/svg-icons/icons/arrow_upload_20_regular.svg?raw'
+import folderOpen from '@fluentui/svg-icons/icons/folder_open_20_regular.svg?raw'
+import lock from '@fluentui/svg-icons/icons/lock_closed_20_regular.svg?raw'
+import sun from '@fluentui/svg-icons/icons/weather_sunny_20_regular.svg?raw'
+
+export const ICONS = { sidebar, zoomIn, zoomOut, rotateRight, rotateLeft, highlight, search, print, share, more, up, down, left, right, open, close, settings, grid, toc, bookmark, moon, language, save, trash, add, addPage, fullscreen, slideshow, fitPage, zoomFit, undo, redo, edit, check, copy, image, cube, info, newWindow, document, tabs, pen, markup, cursor, draw, sketch, shapes, textBox, note, signature, redact, lineWidth, strokeColor, fillColor, textStyle, underline, strike, star, oval, square, roundRect, arrow, line, bubble, polygon, bookmarkAdd, bookmarks, notes, warningFilled, infoFilled, successFilled, errorFilled, certificate, chevronSmall, crop, straighten, adjustColor, adjustSize, removeBg, copySubject, selectRect, selectEllipse, lasso, smartLasso, instantAlpha, flipH, flipV, exportIcon, squiggly, sparkle, apps, back, download, upload, folderOpen, lock, sun }
 export type IconName = keyof typeof ICONS

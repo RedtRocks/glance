@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Open EML and MSG Email Files Online, Without Outlook | Glance</title>
+<meta name="description" content="Read saved .eml and Outlook .msg emails and their attachments in your browser or on Windows. Free, nothing uploaded, tracking images blocked.">
+<link rel="canonical" href="https://redtrocks.github.io/glance/eml-msg-viewer/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e0d12" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Glance">
+<meta property="og:url" content="https://redtrocks.github.io/glance/eml-msg-viewer/">
+<meta property="og:title" content="Open EML and MSG Email Files Online, Without Outlook | Glance">
+<meta property="og:description" content="Read saved .eml and Outlook .msg emails and their attachments in your browser or on Windows. Free, nothing uploaded, tracking images blocked.">
+<meta property="og:image" content="https://redtrocks.github.io/glance/assets/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">[
+ {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Glance EML and MSG Viewer",
+  "url": "https://redtrocks.github.io/glance/eml-msg-viewer/",
+  "description": "Read saved .eml and Outlook .msg emails and their attachments in your browser or on Windows. Free, nothing uploaded, tracking images blocked.",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser), Windows 10, Windows 11",
+  "browserRequirements": "Requires a modern browser with JavaScript and WebAssembly",
+  "isAccessibleForFree": true,
+  "offers": {
+   "@type": "Offer",
+   "price": "0",
+   "priceCurrency": "USD"
+  },
+  "license": "https://www.apache.org/licenses/LICENSE-2.0"
+ },
+ {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to open a Email file",
+  "step": [
+   {
+    "@type": "HowToStep",
+    "position": 1,
+    "name": "Open Glance",
+    "text": "Open Glance in your browser, or install the free Windows app."
+   },
+   {
+    "@type": "HowToStep",
+    "position": 2,
+    "name": "Choose your Email file",
+    "text": "Tap Choose a File, or drag the Email file onto the page. It stays on your device."
+   },
+   {
+    "@type": "HowToStep",
+    "position": 3,
+    "name": "Read and open attachments",
+    "text": "See the sender, recipients and date, read the message, and open any attachment in its own tab."
+   }
+  ]
+ },
+ {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+   {
+    "@type": "Question",
+    "name": "What is the difference between EML and MSG?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "EML is the standard saved-email format most mail apps use. MSG is Microsoft Outlook’s own format. Glance opens both."
+    }
+   },
+   {
+    "@type": "Question",
+    "name": "Is Glance's Email viewer free?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "Yes. Glance is free and open source under the Apache 2.0 licence, with no account, adverts or watermarks."
+    }
+   },
+   {
+    "@type": "Question",
+    "name": "Are my Email files uploaded anywhere?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "No. Glance opens files on your own device, in your browser or in the Windows app. Nothing is sent to a server, so it is safe for private documents."
+    }
+   },
+   {
+    "@type": "Question",
+    "name": "Does it work offline?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "Yes. Install Glance from your browser (Add to Home Screen on a phone) and it opens files with no internet connection."
+    }
+   },
+   {
+    "@type": "Question",
+    "name": "Can I open Email files on iPhone, Android or Mac?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "Yes. The browser version works in Safari, Chrome, Edge and Firefox on phones, tablets and computers. The Windows app adds Explorer thumbnails and opening files with a double-click."
+    }
+   }
+  ]
+ },
+ {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+   {
+    "@type": "ListItem",
+    "position": 1,
+    "name": "Glance",
+    "item": "https://redtrocks.github.io/glance/"
+   },
+   {
+    "@type": "ListItem",
+    "position": 2,
+    "name": "All File Types",
+    "item": "https://redtrocks.github.io/glance/file-viewer/"
+   },
+   {
+    "@type": "ListItem",
+    "position": 3,
+    "name": "EML and MSG Viewer",
+    "item": "https://redtrocks.github.io/glance/eml-msg-viewer/"
+   }
+  ]
+ }
+]</script>
+<link rel="preload" href="../assets/urbanist-latin.woff2" as="font" type="font/woff2" crossorigin>
+<script>(function(){try{var t=localStorage.getItem('glance-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}})();</script>
+<style>/* latin */
+@font-face {
+  font-family: 'Urbanist';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../assets/urbanist-latin.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+
+/* Wollo design system tokens, plus a dark theme derived from them. Brand blocks keep their colours in both themes. */
+:root{
+--surface:#ffffff;--surface-subtle:#f9f9f9;--backdrop:#dcdde2;--divider:#dcdcdc;
+--ink:#0a0a0a;--ink-muted:#6b6b6b;--ink-hover:#262626;--on-ink:#ffffff;--accent:#6312f6;
+--header-bg:rgba(255,255,255,.9);--night:#0a0a0a;
+--violet:#6312f6;--violet-deep:#4408b1;--periwinkle:#7182e7;--pink:#f258a8;--orange:#f47933;--yellow:#f8d32c;--on-block:#0a0a0a;--white:#ffffff;
+color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+--surface:#0e0d12;--surface-subtle:#1a1920;--backdrop:#24232b;--divider:#34323d;
+--ink:#f4f3f7;--ink-muted:#a9a6b3;--ink-hover:#dcdae2;--on-ink:#0e0d12;--accent:#b49bff;
+--header-bg:rgba(14,13,18,.85);--night:#1f1d27;color-scheme:dark}}
+:root[data-theme="dark"]{
+--surface:#0e0d12;--surface-subtle:#1a1920;--backdrop:#24232b;--divider:#34323d;
+--ink:#f4f3f7;--ink-muted:#a9a6b3;--ink-hover:#dcdae2;--on-ink:#0e0d12;--accent:#b49bff;
+--header-bg:rgba(14,13,18,.85);--night:#1f1d27;color-scheme:dark}
+html,body{margin:0;background:var(--surface)}
+a{color:var(--ink);text-underline-offset:4px}a:hover{color:var(--accent)}
+.w{font-family:Urbanist,"Helvetica Neue",Arial,sans-serif;font-weight:400;color:var(--ink);background:var(--surface);overflow-x:clip;font-variant-numeric:tabular-nums}
+.w *{box-sizing:border-box;font-weight:400}
+.w ::selection{background:var(--yellow);color:var(--on-block)}
+.w a:focus-visible,.w button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1280px;margin:0 auto;padding:0 80px}
+.h1{font-size:64px;line-height:64px;letter-spacing:-1px;margin:0;text-align:center;text-wrap:balance}
+.h2{font-size:52px;line-height:58px;letter-spacing:-.5px;margin:0;text-align:center;text-wrap:balance}
+.display{font-size:80px;line-height:96px;letter-spacing:-1px;margin:0;text-align:center}
+.h3{font-size:32px;line-height:40px;margin:0}
+.title{font-size:20px;line-height:24px;margin:0}
+.body{font-size:17px;line-height:26px;margin:0;text-wrap:pretty}
+.stat-hero{font-size:200px;line-height:1;letter-spacing:-4px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:0 24px;border-radius:10px;font:inherit;font-size:15px;line-height:20px;text-decoration:none;cursor:pointer;border:0;transition:transform 150ms cubic-bezier(.16,1,.3,1),background-color 150ms}
+.btn:hover{transform:translateY(-1px)}.btn:active{transform:scale(.96);transition-duration:100ms}
+.btn-ink{background:var(--ink);color:var(--on-ink)}.btn-ink:hover{color:var(--on-ink);background:var(--ink-hover)}
+.btn-violet{background:#6312f6;color:#ffffff}.btn-violet:hover{color:#ffffff;background:#5410d6}
+.btn-sec{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--divider)}.btn-sec:hover{color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.btn-ghost{background:transparent;color:#ffffff;box-shadow:inset 0 0 0 1px #ffffff}.btn-ghost:hover{color:#ffffff;background:rgba(255,255,255,.12)}
+.navlink{text-decoration:none;font-size:15px;line-height:20px;padding:12px 4px}
+.chip{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;width:136px;height:68px;border-radius:9999px;overflow:hidden;margin:0 8px;position:relative;top:-6px}
+.chip img{width:100%;height:100%;object-fit:cover;display:block}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
+.card-shot{border-radius:20px;overflow:hidden;aspect-ratio:16/10}
+.card-shot img{width:100%;height:100%;object-fit:cover;object-position:left top;display:block}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.seg{display:inline-flex;gap:4px;padding:4px;border-radius:9999px;box-shadow:inset 0 0 0 1px var(--ink)}
+.seg button{font:inherit;font-size:15px;min-height:44px;padding:0 22px;border-radius:9999px;border:0;cursor:pointer;background:transparent;color:var(--ink);transition:background-color 200ms cubic-bezier(.16,1,.3,1),color 200ms}
+.seg button.on{background:var(--ink);color:var(--on-ink)}
+.viewer{position:relative;aspect-ratio:16/10;border-radius:20px;overflow:hidden;background:var(--backdrop)}
+.viewer img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:left top;opacity:0;transform:scale(1.02);transition:opacity 380ms cubic-bezier(.16,1,.3,1),transform 500ms cubic-bezier(.16,1,.3,1)}
+.viewer img.on{opacity:1;transform:none}
+.dots{display:inline-grid;grid-template-columns:4px 4px;gap:2px}
+.dots i{width:4px;height:4px;border-radius:9999px;background:currentColor;display:block}
+.fchip{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:9999px;background:var(--surface-subtle);font-size:17px;line-height:20px}
+.duo{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px}
+.copy{background:transparent;border:0;color:#ffffff;font:inherit;font-size:15px;cursor:pointer;min-height:44px;padding:0 18px;border-radius:9999px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5);transition:background-color 150ms}
+.copy:hover{background:rgba(255,255,255,.12)}
+@media (max-width:960px){
+.wrap{padding:0 20px}
+.h1{font-size:42px;line-height:46px}.h2{font-size:34px;line-height:40px}
+.display{font-size:38px;line-height:56px}
+.chip{width:80px;height:42px;top:-3px;margin:0 4px}
+.chip svg{width:22px;height:22px}
+.stat-hero{font-size:104px;letter-spacing:-2px}
+.cards,.duo{grid-template-columns:minmax(0,1fr)}
+.stats{grid-template-columns:minmax(0,1fr)}
+.stagger{margin-top:0 !important}
+.hide-sm{display:none !important}
+.slab{height:auto !important;aspect-ratio:4/3.4}
+.seg button{padding:0 14px}
+}
+
+/* Focal moment: the three sheets deal out of one stack, like the Glance icon */
+@keyframes dealY{from{transform:rotate(0deg) translateY(30px)}to{transform:rotate(-4deg)}}
+@keyframes dealP{from{transform:rotate(0deg) translateY(30px)}to{transform:rotate(2.5deg)}}
+@keyframes riseShot{from{transform:translateY(80px)}to{transform:none}}
+@keyframes tagIn{from{transform:translateY(24px) rotate(0deg)}to{transform:none}}
+.motion .deal-y{animation:dealY 900ms cubic-bezier(.16,1,.3,1) 150ms both}
+.motion .deal-p{animation:dealP 900ms cubic-bezier(.16,1,.3,1) 60ms both}
+.motion .rise-shot{animation:riseShot 900ms cubic-bezier(.16,1,.3,1) 250ms both}
+.motion .tag-in{animation:tagIn 700ms cubic-bezier(.16,1,.3,1) 650ms both}
+.motion [data-reveal]{transition:opacity 700ms cubic-bezier(.16,1,.3,1),transform 900ms cubic-bezier(.16,1,.3,1)}
+.motion [data-reveal].pre{opacity:0;transform:translateY(56px)}
+.motion .chip[data-reveal].pre{opacity:0;transform:scale(.3) rotate(-14deg)}
+.motion .fchip[data-reveal].pre{opacity:0;transform:translateY(16px) scale(.9)}
+[data-hero],[data-py],[data-px]{will-change:transform}
+.theme-toggle .i-sun{display:none}.dark .theme-toggle .i-sun{display:inline}.dark .theme-toggle .i-moon{display:none}
+@media (prefers-reduced-motion:reduce){
+.w [class*="deal-"],.w .rise-shot,.w .tag-in,.w [class*="px-"],.w .stag-up,.w .stag-down,.w .tag-spin{animation:none !important}
+.btn:hover,.btn:active{transform:none !important}
+.viewer img{transform:none !important}
+}
+
+/* Phone fixes: parallax made the stacked cards overlap, and the hero shot sat small in a tall slab */
+@media (max-width:960px){
+.stagger{transform:none !important}
+.slab{aspect-ratio:4/3 !important;border-radius:28px}
+.slab>div:nth-child(3){padding:24px 16px 0 !important;border-radius:28px !important}
+.slab>div>div{border-radius:28px !important}
+}
+
+/* Format pages */
+.crumbs{display:flex;gap:8px;align-items:center;font-size:15px;line-height:20px;color:var(--ink-muted)}
+.crumbs a{color:var(--ink-muted);text-decoration:none}.crumbs a:hover{color:var(--accent)}
+.ext{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:9999px;background:var(--surface-subtle);font-size:15px;line-height:20px}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.step{border-radius:28px;padding:32px;display:flex;flex-direction:column;gap:12px;min-height:260px;color:var(--on-block)}
+.step .n{font-size:64px;line-height:1;letter-spacing:-2px;margin-bottom:auto}
+.can{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.can>div{border-radius:20px;padding:28px;background:var(--surface-subtle);display:flex;flex-direction:column;gap:10px}
+.faq{max-width:840px;margin:0 auto;border-top:1px solid var(--divider)}
+.faq details{border-bottom:1px solid var(--divider)}
+.faq summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:24px;align-items:center;padding:24px 4px;font-size:20px;line-height:26px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:'+';font-size:28px;line-height:1;transition:transform 200ms cubic-bezier(.16,1,.3,1)}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq details p{padding:0 4px 24px;color:var(--ink-muted)}
+.more{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:960px;margin:0 auto}
+.more a{text-decoration:none}
+.dropzone{display:flex;flex-direction:column;align-items:center;gap:16px;padding:56px 24px;border-radius:48px;background:var(--surface-subtle);box-shadow:inset 0 0 0 2px var(--divider);transition:box-shadow 200ms,background-color 200ms}
+.dropzone.dragging{box-shadow:inset 0 0 0 3px var(--accent);background:var(--surface)}
+.drop-stack{position:relative;width:120px;height:120px;margin-bottom:8px}
+.drop-stack span{position:absolute;inset:0;border-radius:28px;display:grid;place-items:center;box-shadow:inset 0 0 0 1px var(--divider)}
+.drop-stack img{width:56px;height:56px}
+.groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.group{border-radius:28px;padding:28px;box-shadow:inset 0 0 0 1px var(--divider);display:flex;flex-direction:column;gap:16px}
+.group .title{display:flex;align-items:center;gap:10px}
+a.fchip{text-decoration:none}a.fchip:hover{color:var(--accent)}
+@media (max-width:960px){.groups{grid-template-columns:minmax(0,1fr)}.fslab{aspect-ratio:4/5 !important}.fslab picture{display:block;height:100%}.steps,.can{grid-template-columns:minmax(0,1fr)}.step{min-height:0}.step .n{font-size:48px;margin-bottom:12px}}
+</style>
+</head>
+<body>
+<div class="w">
+
+<header style="position: sticky; top: 0; z-index: 50; padding: 16px 0 8px; background: var(--header-bg); backdrop-filter: blur(12px)">
+<div class="wrap">
+<nav aria-label="Main" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; background: var(--surface-subtle); border-radius: 10px; padding: 8px 8px 8px 16px">
+<a href="../" style="display: flex; align-items: center; gap: 10px; text-decoration: none; font-size: 26px; letter-spacing: -0.5px">
+<img src="../assets/icon.svg" alt="Glance logo" style="width: 30px; height: 30px">
+<span>glance</span>
+</a>
+<div style="display: flex; gap: 8px">
+<button type="button" class="btn btn-sec theme-toggle" id="theme-toggle" aria-label="Switch to dark mode" title="Switch theme" style="min-height: 44px; width: 44px; padding: 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="i-moon" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path><g class="i-sun"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></g></svg></button>
+<a class="btn btn-sec hide-sm" href="https://github.com/RedtRocks/glance/releases/latest" style="min-height: 44px; padding: 0 18px">Windows App</a>
+<a class="btn btn-ink" href="../app/" data-open-file style="min-height: 44px; padding: 0 18px">Open File</a>
+</div>
+</nav>
+</div>
+</header>
+
+<main>
+<section id="top" style="padding-top: 48px">
+<div class="wrap" style="display: flex; flex-direction: column; align-items: center; gap: 24px">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../">Glance</a><span aria-hidden="true">/</span><a href="../file-viewer/">All File Types</a><span aria-hidden="true">/</span><span>EML and MSG Viewer</span></nav>
+<h1 class="h1" style="max-width: 900px">Open EML and MSG Emails Without Outlook</h1>
+<p class="body" style="max-width: 640px; text-align: center; color: var(--ink-muted)">Read saved emails and Outlook messages on any phone or computer, and open their attachments. Nothing is uploaded, and tracking images never load.</p>
+<div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center">
+<a class="btn btn-ink" href="../app/" data-open-file>Open an Email File</a>
+<a class="btn btn-sec" href="https://github.com/RedtRocks/glance/releases/latest">Get the Windows App</a>
+</div>
+<div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center">
+<span class="ext"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>.eml</span>
+<span class="ext"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>.msg</span>
+</div>
+</div>
+<div class="wrap" style="margin-top: 56px">
+<div class="slab fslab" style="position: relative; height: 620px">
+<div style="position: absolute; inset: 0"><div style="width: 100%; height: 100%; background: #6312f6; border-radius: 48px; transform: rotate(-3deg)"></div></div>
+<div style="position: absolute; inset: 0"><div style="width: 100%; height: 100%; background: #f8d32c; border-radius: 48px; transform: rotate(2deg)"></div></div>
+<div style="position: absolute; inset: 0; padding: 48px 48px 0; border-radius: 48px; overflow: hidden; background: var(--surface-subtle)">
+<div style="border-radius: 20px 20px 0 0; overflow: hidden; background: #ffffff; height: 100%">
+<picture><source media="(max-width: 960px)" srcset="../assets/formats/eml-msg-viewer-phone.webp"><img src="../assets/formats/eml-msg-viewer.webp" alt="A saved email with attachments open in Glance" style="width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block"></picture>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<section style="padding-top: 120px">
+<div class="wrap" style="display: flex; flex-direction: column; gap: 48px">
+<h2 class="h2">How to Open a Email File</h2>
+<ol class="steps" style="list-style: none; margin: 0; padding: 0">
+<li class="step" style="background: #f8d32c">
+<span class="n" aria-hidden="true">1</span>
+<p class="title">Open Glance</p>
+<p class="body">Open Glance in your browser, or install the free Windows app.</p>
+</li>
+<li class="step" style="background: #f258a8">
+<span class="n" aria-hidden="true">2</span>
+<p class="title">Choose your Email file</p>
+<p class="body">Tap Choose a File, or drag the Email file onto the page. It stays on your device.</p>
+</li>
+<li class="step" style="background: #f47933">
+<span class="n" aria-hidden="true">3</span>
+<p class="title">Read and open attachments</p>
+<p class="body">See the sender, recipients and date, read the message, and open any attachment in its own tab.</p>
+</li>
+</ol>
+</div>
+</section>
+
+<section style="padding-top: 120px">
+<div class="wrap" style="display: flex; flex-direction: column; gap: 48px">
+<h2 class="h2">What You Can Do With Email Files</h2>
+<div class="can">
+<div><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span><p class="title">Open Attachments</p><p class="body" style="color: var(--ink-muted)">Attached PDFs, photos and Office files open in Glance with one tap.</p></div>
+<div><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span><p class="title">Read It Safely</p><p class="body" style="color: var(--ink-muted)">Scripts never run and pictures from the web are blocked, so the sender can’t tell you opened it.</p></div>
+<div><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span><p class="title">No Outlook Needed</p><p class="body" style="color: var(--ink-muted)">Outlook .msg files open on a phone or Mac as easily as on Windows.</p></div>
+</div>
+</div>
+</section>
+
+<section style="padding-top: 120px">
+<div class="wrap">
+<div class="duo">
+<div style="background: var(--night); color: #ffffff; border-radius: 28px; padding: 40px; display: flex; flex-direction: column; gap: 16px; justify-content: flex-end; min-height: 320px">
+<p class="h2" style="text-align: left; max-width: 640px">Your Email Files Never Leave Your Device</p>
+<p class="body" style="color: #d4d4d4; max-width: 560px">Most online viewers upload your file to their server. Glance reads it right in your browser, so nothing is sent anywhere, and it keeps working offline.</p>
+</div>
+<div style="background: #7182e7; color: #ffffff; border-radius: 28px; padding: 40px; display: flex; flex-direction: column; gap: 16px; justify-content: flex-end">
+<p class="h3">Free and Open Source</p>
+<p class="body">No account, no adverts, no watermark. Read every line of the code on GitHub.</p>
+<a href="https://github.com/RedtRocks/glance" style="color: #ffffff; font-size: 17px">View the Source</a>
+</div>
+</div>
+</div>
+</section>
+
+<section style="padding-top: 120px">
+<div class="wrap" style="display: flex; flex-direction: column; gap: 40px">
+<h2 class="h2">Questions About Email Files</h2>
+<div class="faq">
+<details><summary>What is the difference between EML and MSG?</summary><p class="body">EML is the standard saved-email format most mail apps use. MSG is Microsoft Outlook’s own format. Glance opens both.</p></details>
+<details><summary>Is Glance's Email viewer free?</summary><p class="body">Yes. Glance is free and open source under the Apache 2.0 licence, with no account, adverts or watermarks.</p></details>
+<details><summary>Are my Email files uploaded anywhere?</summary><p class="body">No. Glance opens files on your own device, in your browser or in the Windows app. Nothing is sent to a server, so it is safe for private documents.</p></details>
+<details><summary>Does it work offline?</summary><p class="body">Yes. Install Glance from your browser (Add to Home Screen on a phone) and it opens files with no internet connection.</p></details>
+<details><summary>Can I open Email files on iPhone, Android or Mac?</summary><p class="body">Yes. The browser version works in Safari, Chrome, Edge and Firefox on phones, tablets and computers. The Windows app adds Explorer thumbnails and opening files with a double-click.</p></details>
+</div>
+</div>
+</section>
+
+<section style="padding: 120px 0 80px">
+<div class="wrap" style="display: flex; flex-direction: column; gap: 32px; align-items: center">
+<h2 class="h3">Glance Also Opens</h2>
+<div class="more">
+<a class="fchip" href="../pdf-viewer/"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>PDF</a>
+<a class="fchip" href="../heic-viewer/"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>HEIC</a>
+<a class="fchip" href="../psd-viewer/"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>PSD</a>
+<a class="fchip" href="../raw-viewer/"><span class="dots" style="color: #f8d32c" aria-hidden="true"><i></i><i></i><i></i><i></i></span>RAW</a>
+<a class="fchip" href="../tiff-viewer/"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>TIFF</a>
+<a class="fchip" href="../webp-viewer/"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>WebP</a>
+<a class="fchip" href="../jxl-viewer/"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>JPEG XL</a>
+<a class="fchip" href="../svg-viewer/"><span class="dots" style="color: #f8d32c" aria-hidden="true"><i></i><i></i><i></i><i></i></span>SVG</a>
+<a class="fchip" href="../docx-viewer/"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Word</a>
+<a class="fchip" href="../pptx-viewer/"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>PowerPoint</a>
+<a class="fchip" href="../xlsx-viewer/"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Excel</a>
+<a class="fchip" href="../csv-viewer/"><span class="dots" style="color: #f8d32c" aria-hidden="true"><i></i><i></i><i></i><i></i></span>CSV</a>
+<a class="fchip" href="../epub-reader/"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>EPUB</a>
+<a class="fchip" href="../markdown-viewer/"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Markdown</a>
+<a class="fchip" href="../code-viewer/"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Code</a>
+<a class="fchip" href="../3d-model-viewer/"><span class="dots" style="color: #f8d32c" aria-hidden="true"><i></i><i></i><i></i><i></i></span>3D Model</a>
+<a class="fchip" href="../font-viewer/"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Font</a>
+<a class="fchip" href="../video-player/"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Video</a>
+<a class="fchip" href="../cbz-reader/"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>CBZ</a>
+</div>
+<a href="../file-viewer/" style="font-size: 17px; line-height: 26px">See Every File Type Glance Opens</a>
+<p class="body" style="color: var(--ink-muted); text-align: center">Supported extensions: .eml, .msg</p>
+</div>
+</section>
+</main>
+
+<footer style="border-top: 1px solid var(--divider)">
+<div class="wrap" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 24px; padding-top: 40px; padding-bottom: 48px">
+<a href="../" style="display: flex; align-items: center; gap: 10px; text-decoration: none; font-size: 26px">
+<img src="../assets/icon.svg" alt="" style="width: 28px; height: 28px">
+<span>glance</span>
+</a>
+<div style="display: flex; flex-wrap: wrap; gap: 24px; font-size: 20px; line-height: 24px">
+<a href="../app/" style="text-decoration: none">Open in Browser</a>
+<a href="https://github.com/RedtRocks/glance" style="text-decoration: none">GitHub</a>
+<a href="https://github.com/RedtRocks/glance/blob/main/PRIVACY.md" style="text-decoration: none">Privacy</a>
+<a href="https://github.com/RedtRocks/glance/blob/main/LICENSE" style="text-decoration: none">Apache-2.0</a>
+</div>
+</div>
+</footer>
+
+</div>
+<script src="../assets/open.js" defer></script>
+<script>
+(function () {
+  var root = document.documentElement, mq = window.matchMedia('(prefers-color-scheme: dark)'), b = document.getElementById('theme-toggle');
+  var isDark = function () { var t = root.getAttribute('data-theme'); return t ? t === 'dark' : mq.matches; };
+  var sync = function () { var d = isDark(); root.classList.toggle('dark', d); b.setAttribute('aria-label', d ? 'Switch to light mode' : 'Switch to dark mode'); };
+  b.addEventListener('click', function () { var n = isDark() ? 'light' : 'dark'; root.setAttribute('data-theme', n); try { localStorage.setItem('glance-theme', n); } catch (e) {} sync(); });
+  if (mq.addEventListener) mq.addEventListener('change', sync);
+  sync();
+})();
+</script>
+</body>
+</html>
