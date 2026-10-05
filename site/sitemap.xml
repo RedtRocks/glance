@@ -2,6 +2,26 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://redtrocks.github.io/glance/</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-10-05</lastmod>
+  </url>
+  <url>
+    <loc>https://redtrocks.github.io/glance/app/</loc>
+    <lastmod>2026-10-05</lastmod>
+  </url>
+  <url>
+    <loc>https://redtrocks.github.io/glance/heic-viewer/</loc>
+    <lastmod>2026-10-05</lastmod>
+  </url>
+  <url>
+    <loc>https://redtrocks.github.io/glance/pdf-viewer/</loc>
+    <lastmod>2026-10-05</lastmod>
+  </url>
+  <url>
+    <loc>https://redtrocks.github.io/glance/psd-viewer/</loc>
+    <lastmod>2026-10-05</lastmod>
+  </url>
+  <url>
+    <loc>https://redtrocks.github.io/glance/eml-msg-viewer/</loc>
+    <lastmod>2026-10-05</lastmod>
   </url>
 </urlset>
