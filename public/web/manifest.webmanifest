@@ -1,0 +1,46 @@
+{
+  "name": "Glance",
+  "short_name": "Glance",
+  "description": "Open and mark up PDFs, images, camera RAW and 3D models right in the browser. Files never leave your device.",
+  "start_url": "../",
+  "scope": "../",
+  "id": "glance-viewer",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f3f3f3",
+  "theme_color": "#f3f3f3",
+  "categories": ["productivity", "utilities", "photo"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "file_handlers": [
+    {
+      "action": "../",
+      "accept": {
+        "application/pdf": [".pdf", ".ai"],
+        "image/jpeg": [".jpg", ".jpeg", ".jfif"],
+        "image/png": [".png", ".apng"],
+        "image/gif": [".gif"],
+        "image/webp": [".webp"],
+        "image/avif": [".avif"],
+        "image/bmp": [".bmp"],
+        "image/tiff": [".tif", ".tiff"],
+        "image/vnd.adobe.photoshop": [".psd"],
+        "image/jxl": [".jxl"],
+        "application/vnd.comicbook+zip": [".cbz"],
+        "model/gltf-binary": [".glb"],
+        "model/gltf+json": [".gltf"]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "../share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "files": [{ "name": "files", "accept": ["application/pdf", "image/*", "model/*"] }]
+    }
+  }
+}

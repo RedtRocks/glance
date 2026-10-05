@@ -2,7 +2,7 @@ import { computed, signal, type Signal } from '@preact/signals'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 import { History } from './history'
 import { openPdf, readOutline, PasswordRequired, type OutlineNode } from '../pdf/engine'
-import { releaseFile, type Probe } from '../platform'
+import { forgetBrowserFile, releaseFile, type Probe } from '../platform'
 import { remapPages, transformForImage, type Markup, type PageMap, type Redaction } from '../core/markup'
 import type { Raster } from '../core/image/raster'
 import type { Backdrop, CameraView, Lighting, Look } from '../model/viewer'
@@ -369,7 +369,11 @@ export function removeDoc(id: string): void {
   const doc = list[idx]
   if (doc.kind === 'pdf') void doc.proxy.peek()?.loadingTask.destroy()
   const path = doc.path.peek() ?? (doc.kind === 'pdf' ? doc.convertedFrom : null)
-  if (path) void releaseFile(path)
+  if (path) {
+    void releaseFile(path)
+    // In the browser the file and its decoded pages are only in memory; let them go.
+    forgetBrowserFile(path)
+  }
   const next = list.filter((d) => d.id !== id)
   docs.value = next
   if (activeId.value === id) activeId.value = next[Math.min(idx, next.length - 1)]?.id ?? null

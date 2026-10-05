@@ -400,7 +400,7 @@ export async function movePages(doc: PdfDoc, pages: number[], to: number): Promi
 export async function imageForPdf(probe: Probe): Promise<PageOps.ImageInput> {
   if (/\.(jpe?g|jfif)$/i.test(probe.path)) return { bytes: await platform.readFile(probe.path), type: 'jpg' }
   if (/\.png$/i.test(probe.path)) return { bytes: await platform.readFile(probe.path), type: 'png' }
-  const res = await fetch(platform.imageUrl(probe))
+  const res = await fetch(await platform.imageUrlAsync(probe))
   const bitmap = await createImageBitmap(await res.blob())
   const canvas = new OffscreenCanvas(bitmap.width, bitmap.height)
   canvas.getContext('2d')!.drawImage(bitmap, 0, 0)

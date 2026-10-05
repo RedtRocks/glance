@@ -61,7 +61,8 @@ export function ImageView({ doc }: { doc: ImageDoc }) {
   const rotation = doc.raster.value ? 0 : doc.rotation.value
   const zoom = doc.zoom.value
   const page = doc.current.value
-  const src = useMemo(() => imageUrl(doc.probe, page), [doc.probe, page])
+  // Not memoized: in the browser version the URL appears once the page is decoded.
+  const src = imageUrl(doc.probe, page)
 
   useEffect(() => {
     const el = box.current
@@ -150,6 +151,9 @@ export function ImageView({ doc }: { doc: ImageDoc }) {
             <div class="image-page checkerboard" style={{ width: w || undefined, height: h || undefined, transform: turn ? turn.transform : `rotate(${rotation}deg)` }}>
               {raster ? (
                 <canvas ref={canvas} class="image-pixels" style={{ width: w, height: h, imageRendering: scale >= 3 ? 'pixelated' : 'auto' }} />
+              ) : !src ? (
+                // The browser version decodes TIFF, RAW and the like before it can show them.
+                <p class="image-decoding">{t('Opening…')}</p>
               ) : (
                 <img
                   ref={img}

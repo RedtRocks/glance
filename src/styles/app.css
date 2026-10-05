@@ -2525,3 +2525,119 @@ input[type='range'] {
 .view-zoom * {
   cursor: zoom-in !important;
 }
+
+/* ---------- Phones and small tablets ----------
+   The browser version (web/) runs the same UI on a phone, where the window is a
+   fraction of a desktop one and fingers need bigger targets. The menu bar and the
+   toolbar each scroll sideways instead of overflowing, and the sidebar slides over
+   the document instead of taking a column of its own. */
+@media (max-width: 700px) {
+  .commandbar {
+    flex-wrap: wrap;
+    height: auto;
+    gap: 0;
+    padding: 0;
+  }
+  .menubar,
+  .toolbar {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    padding: 2px 4px;
+  }
+  .menubar::-webkit-scrollbar,
+  .toolbar::-webkit-scrollbar,
+  .tabstrip::-webkit-scrollbar {
+    display: none;
+  }
+  .menubar {
+    border-bottom: 1px solid var(--stroke);
+  }
+  .menubar-entry,
+  .tb-item {
+    flex: none;
+  }
+  /* A flexible space would push everything after it out of reach when scrolling. */
+  .tb-item.tb-spacer {
+    display: none;
+  }
+  .tb-search {
+    min-width: 160px;
+  }
+  .menu,
+  .overflow-menu {
+    max-width: calc(100vw - 16px);
+  }
+
+  .sidebar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 20;
+    max-width: 78vw;
+    box-shadow: var(--shadow-flyout);
+  }
+  .sidebar-resizer {
+    display: none;
+  }
+  .workspace {
+    position: relative;
+  }
+  /* Panels that sit beside the document on a desktop cover it here. */
+  .side-pane {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    width: min(100%, 360px);
+    box-shadow: var(--shadow-flyout);
+  }
+
+  .welcome {
+    padding: 0 20px;
+  }
+}
+
+/* Fingers need a bigger target than a mouse pointer does. */
+@media (pointer: coarse) {
+  .tb-button,
+  .menubar-button,
+  .sidebar-tabs button {
+    min-width: 40px;
+    height: 40px;
+  }
+  .menu-item,
+  .toc-item {
+    padding-top: 9px;
+    padding-bottom: 9px;
+  }
+  .tab {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+}
+
+/* Keep the app clear of a phone's rounded corners and home indicator. */
+@supports (padding: env(safe-area-inset-left)) {
+  .app {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Dims the document behind the sidebar on a phone; tapping it closes the sidebar. */
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.image-decoding {
+  padding: 24px;
+  color: var(--text-2);
+}

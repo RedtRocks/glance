@@ -1,10 +1,10 @@
 name: Website
 
-# Publishes site/ (the landing page) to GitHub Pages.
+# Publishes the landing page (site/) and the browser version of Glance (at /app/)
+# to GitHub Pages.
 on:
   push:
     branches: [main]
-    paths: [site/**, .github/workflows/pages.yml]
   workflow_dispatch:
 
 permissions:
@@ -24,11 +24,31 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: web/decoder
+          key: wasm
       - uses: actions/configure-pages@v5
         with:
           enablement: true
+      - run: npm ci
+      - name: Build the browser version
+        run: node scripts/build-web.mjs
+      - name: Assemble the site
+        run: |
+          mkdir -p _site
+          cp -r site/. _site/
+          mkdir -p _site/app
+          cp -r dist-web/. _site/app/
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@v4

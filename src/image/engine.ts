@@ -65,7 +65,7 @@ export function fromCanvas(c: OffscreenCanvas | HTMLCanvasElement): Raster {
 
 /** Decodes the document's image into editable pixels (EXIF orientation applied). */
 export async function loadRaster(doc: ImageDoc): Promise<Raster> {
-  const res = await fetch(platform.imageUrl(doc.probe, doc.current.peek()))
+  const res = await fetch(await platform.imageUrlAsync(doc.probe, doc.current.peek()))
   if (!res.ok) throw new Error(await res.text())
   const bmp = await createImageBitmap(await res.blob(), { imageOrientation: 'from-image', premultiplyAlpha: 'none' })
   const c = new OffscreenCanvas(bmp.width, bmp.height)

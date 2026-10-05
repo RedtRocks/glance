@@ -1,7 +1,7 @@
 import { useEffect } from 'preact/hooks'
 import { activeDoc, activeId, docs, findByPath } from '../state/documents'
 import { isDark, settings } from '../state/settings'
-import { cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, inspectorOpen, signaturesOpen, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
+import { cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, inspectorOpen, narrowWindow, signaturesOpen, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
 import { confirmCloseWindow, openFiles } from '../state/actions'
 import { startAutosave } from '../state/autosave'
 import { restoreSession } from '../state/session'
@@ -11,6 +11,7 @@ import { UpdateBar } from './UpdateBar'
 import { DefaultAppBar } from './DefaultAppBar'
 import { offerDefaultApp } from '../state/defaultApp'
 import * as platform from '../platform'
+import { startWebApp } from '../platform/webApp'
 import { MenuBar } from './MenuBar'
 import { TabStrip } from './TabStrip'
 import { Toolbar } from './Toolbar'
@@ -61,6 +62,8 @@ function Viewer() {
   return (
     <div class="workspace">
       {sidebarVisible.value && <Sidebar key={doc.id} doc={doc} />}
+      {/* Over the document on a phone: tapping the document puts it away again. */}
+      {sidebarVisible.value && narrowWindow.value && <div class="scrim" onClick={() => (sidebarVisible.value = false)} />}
       <main class="viewer" aria-label={doc.name.value}>
         {(doc.kind === 'pdf' || doc.kind === 'image') && <RedactionBar doc={doc} />}
         <ExternalAppBar key={doc.id} doc={doc} />
@@ -83,6 +86,18 @@ function Viewer() {
 export function App() {
   useShortcuts()
   useFileDrop()
+
+  // Phones show the sidebar and the side panels over the document (see app.css).
+  useEffect(() => {
+    const narrow = matchMedia('(max-width: 700px)')
+    const update = (): void => {
+      if (narrow.matches === narrowWindow.peek()) return
+      narrowWindow.value = narrow.matches
+      sidebarVisible.value = !narrow.matches
+    }
+    narrow.addEventListener('change', update)
+    return () => narrow.removeEventListener('change', update)
+  }, [])
 
   // Theme + window material.
   const dark = isDark()
@@ -109,6 +124,8 @@ export function App() {
     let unshell: (() => void) | undefined
     void platform.onShellRequest((r) => void handleShellRequest(r)).then((d) => (unshell = d))
     void platform.showWindow()
+    // Files the operating system hands to the installed web app (Open with, Share).
+    startWebApp((paths) => void openFiles(paths))
     const stopAutosave = startAutosave()
     // A few seconds after start, so it never competes with opening files.
     const updateTimer = window.setTimeout(() => void checkForUpdates(), 5000)

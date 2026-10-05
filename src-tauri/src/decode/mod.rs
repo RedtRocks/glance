@@ -99,23 +99,29 @@ fn decode_unguarded(path: &Path, page: u32, max: Option<u32>) -> Result<Decoded,
     }
 
     let data = std::fs::read(path).map_err(|e| e.to_string())?;
-    let decoded = match ext.as_str() {
-        "jp2" | "j2k" | "jpf" | "jpx" | "j2c" => decode_jpeg2000(&data)?,
-        "jxl" => decode_jxl(&data)?,
-        "psd" | "psb" => psd::decode(&data)?,
-        "icns" => decode_icns(&data)?,
+    Ok(decode_data(&ext, &data)?.fit(max))
+}
+
+/// Decodes a whole file's bytes with the pure-Rust decoders, picked by extension.
+/// Shared with the browser version (web/decoder), which has no WIC.
+pub fn decode_data(ext: &str, data: &[u8]) -> Result<Decoded, String> {
+    let decoded = match ext {
+        "jp2" | "j2k" | "jpf" | "jpx" | "j2c" => decode_jpeg2000(data)?,
+        "jxl" => decode_jxl(data)?,
+        "psd" | "psb" => psd::decode(data)?,
+        "icns" => decode_icns(data)?,
         "eps" | "epsf" | "epsi" => {
-            let tiff = eps::embedded_tiff_preview(&data).ok_or("This EPS file has no embedded preview")?;
+            let tiff = eps::embedded_tiff_preview(data).ok_or("This EPS file has no embedded preview")?;
             decode_bytes(tiff, None)?
         }
-        _ if formats::is_raw(path) => {
-            let jpeg = raw_preview::largest_embedded_jpeg(&data)
+        _ if formats::RAW_IMAGES.contains(&ext) => {
+            let jpeg = raw_preview::largest_embedded_jpeg(data)
                 .ok_or("No RAW codec is installed and the file has no embedded preview")?;
-            decode_bytes(jpeg, raw_preview::tiff_orientation(&data))?
+            decode_bytes(jpeg, raw_preview::tiff_orientation(data))?
         }
-        _ => decode_hinted(&data, image::ImageFormat::from_extension(&ext), None)?,
+        _ => decode_hinted(data, image::ImageFormat::from_extension(ext), None)?,
     };
-    Ok(decoded.fit(max))
+    Ok(decoded)
 }
 
 /// Generic path through the `image` crate, honoring EXIF orientation.

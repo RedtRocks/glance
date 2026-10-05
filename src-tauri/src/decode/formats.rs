@@ -76,10 +76,6 @@ pub fn is_browser_native(path: &Path) -> bool {
     BROWSER_IMAGES.contains(&extension(path).as_str())
 }
 
-pub fn is_raw(path: &Path) -> bool {
-    RAW_IMAGES.contains(&extension(path).as_str())
-}
-
 pub fn mime_for(path: &Path) -> &'static str {
     match extension(path).as_str() {
         "pdf" | "ai" => "application/pdf",

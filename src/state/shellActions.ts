@@ -62,7 +62,7 @@ async function imageBytes(doc: ImageDoc): Promise<{ bytes: Uint8Array; ext: stri
   }
   if (doc.editable && doc.raster.peek()) return { bytes: await engine.encodePng(await engine.flatten(doc)), ext: 'png' }
   // View-only images (multi-page TIFF, RAW previews…): the page currently shown.
-  const bitmap = await createImageBitmap(await (await fetch(platform.imageUrl(doc.probe, doc.current.peek()))).blob())
+  const bitmap = await createImageBitmap(await (await fetch(await platform.imageUrlAsync(doc.probe, doc.current.peek()))).blob())
   const turn = doc.rotation.peek()
   const side = turn % 180 !== 0
   const canvas = new OffscreenCanvas(side ? bitmap.height : bitmap.width, side ? bitmap.width : bitmap.height)

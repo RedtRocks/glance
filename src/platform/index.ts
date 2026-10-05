@@ -6,6 +6,7 @@
  */
 
 import type { ShellRequest } from '../core/explorer'
+import { archivePage, archivePageCount, cachedUrl, cachedUrlAsync, decodeImage, forgetCached } from './webDecode'
 import { t } from '../i18n'
 
 export type Kind = 'pdf' | 'image' | 'model' | 'postscript' | 'xps' | 'archive' | 'unsupported'
@@ -39,6 +40,26 @@ export function registerBrowserFile(file: File): string {
   return key
 }
 
+/** Frees a file the browser version held in memory, with any pages decoded from it. */
+export function forgetBrowserFile(path: string): void {
+  browserFiles.delete(path)
+  forgetCached(`${path}#`)
+}
+
+async function browserBytes(path: string): Promise<Uint8Array> {
+  const f = browserFiles.get(path)
+  if (!f) throw new Error(`Unknown file ${path}`)
+  return new Uint8Array(await f.arrayBuffer())
+}
+
+/** Decodes one page with the WebAssembly decoders (web/decoder). */
+async function decodeInBrowser(probe: Probe, page: number): Promise<Uint8Array> {
+  const bytes = await browserBytes(probe.path)
+  // A comic book archive's pages are ordinary images; the decoder sniffs them.
+  if (probe.kind === 'archive') return decodeImage('', await archivePage(bytes, page))
+  return decodeImage(extOf(probe.name), bytes)
+}
+
 function extOf(path: string): string {
   const m = /\.([^./\\]+)$/.exec(path)
   return m ? m[1].toLowerCase() : ''
@@ -65,17 +86,50 @@ export function schemeUrl(route: 'file' | 'decode' | 'archive', params: Record<s
 /** URL an <img> can load directly for one page of an image file. */
 export function imageUrl(probe: Probe, page = 0, max?: number): string {
   if (!isTauri) {
-    const f = browserFiles.get(probe.path)
-    return f ? URL.createObjectURL(f) : ''
+    if (probe.browserNative) {
+      const f = browserFiles.get(probe.path)
+      return f ? objectUrl(probe.path, f) : ''
+    }
+    return cachedUrl(`${probe.path}#${page}`, () => decodeInBrowser(probe, page))
   }
   if (probe.kind === 'archive') return schemeUrl('archive', { path: probe.path, page })
   if (probe.browserNative && !max) return schemeUrl('file', { path: probe.path })
   return schemeUrl('decode', { path: probe.path, page, ...(max ? { max } : {}) })
 }
 
+/** Like [`imageUrl`], but waits for a page the browser version still has to decode. */
+export async function imageUrlAsync(probe: Probe, page = 0, max?: number): Promise<string> {
+  if (isTauri || probe.browserNative) return imageUrl(probe, page, max)
+  return cachedUrlAsync(`${probe.path}#${page}`, () => decodeInBrowser(probe, page))
+}
+
+/** One object URL per file, so repeated renders don't leak a URL each time. */
+const objectUrls = new Map<string, string>()
+function objectUrl(path: string, file: File): string {
+  let url = objectUrls.get(path)
+  if (!url) {
+    url = URL.createObjectURL(file)
+    objectUrls.set(path, url)
+  }
+  return url
+}
+
 // ---------------------------------------------------------------------------
 
-const BROWSER_NATIVE = ['jpg', 'jpeg', 'jfif', 'png', 'apng', 'gif', 'webp', 'bmp', 'ico', 'svg', 'avif']
+const BROWSER_NATIVE = ['jpg', 'jpeg', 'jfif', 'pjpeg', 'png', 'apng', 'gif', 'webp', 'bmp', 'dib', 'ico', 'cur', 'svg', 'avif']
+
+/** Formats the WebAssembly decoders handle in the browser version (web/decoder). */
+const WASM_IMAGES = [
+  'tif', 'tiff', 'jp2', 'j2k', 'jpf', 'jpx', 'j2c', 'jxl', 'exr', 'hdr', 'tga', 'dds', 'qoi',
+  'ppm', 'pgm', 'pbm', 'pam', 'pnm', 'icns', 'psd', 'psb'
+]
+
+const RAW_IMAGES = [
+  'cr2', 'cr3', 'crw', 'nef', 'nrw', 'arw', 'srf', 'sr2', 'raf', 'orf', 'rw2', 'raw', 'dng', 'pef',
+  'srw', 'x3f', 'erf', 'mef', 'mos', 'mrw', 'kdc', 'dcr', '3fr', 'fff', 'iiq', 'rwl', 'gpr'
+]
+
+const MODELS = ['glb', 'gltf', 'obj', 'stl', 'ply', 'fbx', 'usdz', 'usda', 'usdc', 'dae', '3mf', '3ds']
 
 export async function probe(path: string): Promise<Probe> {
   if (isTauri) return invoke<Probe>('probe', { path })
@@ -83,18 +137,27 @@ export async function probe(path: string): Promise<Probe> {
   if (!f) throw new Error(`Unknown file ${path}`)
   const ext = extOf(f.name)
   const head = new Uint8Array(await f.slice(0, 5).arrayBuffer())
+  // Files are often misnamed, so the magic bytes win, as they do in the Windows app.
   const isPdf = String.fromCharCode(...head) === '%PDF-'
-  const MODELS = ['glb', 'gltf', 'obj', 'stl', 'ply', '3mf', 'dae', 'fbx', 'usdz', '3ds']
-  const kind: Kind = isPdf || ext === 'pdf' ? 'pdf' : BROWSER_NATIVE.includes(ext) ? 'image' : MODELS.includes(ext) ? 'model' : 'unsupported'
-  return { path, name: f.name, size: f.size, kind, browserNative: kind === 'image', pages: 1 }
+  const kind: Kind = isPdf || ext === 'pdf' || ext === 'ai' ? 'pdf' : classifyExt(ext)
+  const browserNative = kind === 'image' && BROWSER_NATIVE.includes(ext)
+  const base = { path, name: f.name, size: f.size, kind, browserNative }
+  if (kind === 'archive') return { ...base, pages: await archivePageCount(await browserBytes(path)) }
+  // XPS is rendered by Windows itself; 0 pages is how the backend says "can't show this".
+  return { ...base, pages: kind === 'xps' ? 0 : 1 }
+}
+
+function classifyExt(ext: string): Kind {
+  if (BROWSER_NATIVE.includes(ext) || WASM_IMAGES.includes(ext) || RAW_IMAGES.includes(ext)) return 'image'
+  if (MODELS.includes(ext)) return 'model'
+  if (ext === 'cbz') return 'archive'
+  if (['ps', 'eps', 'epsf', 'epsi'].includes(ext)) return 'postscript'
+  if (ext === 'xps' || ext === 'oxps') return 'xps'
+  return 'unsupported'
 }
 
 export async function readFile(path: string): Promise<Uint8Array> {
-  if (!isTauri) {
-    const f = browserFiles.get(path)
-    if (!f) throw new Error(`Unknown file ${path}`)
-    return new Uint8Array(await f.arrayBuffer())
-  }
+  if (!isTauri) return browserBytes(path)
   const res = await fetch(schemeUrl('file', { path }))
   if (!res.ok) throw new Error(await res.text())
   return new Uint8Array(await res.arrayBuffer())
@@ -303,6 +366,8 @@ export async function openUrl(url: string): Promise<void> {
 }
 
 export async function convertPostscript(path: string): Promise<string> {
+  // Ghostscript is a separate program, so the browser version can't convert.
+  if (!isTauri) throw new Error('ghostscript-missing')
   return invoke<string>('convert_postscript', { path })
 }
 
