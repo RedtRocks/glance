@@ -373,7 +373,9 @@ for (const [rule, ids] of VISIBILITY) {
 const WINDOWS_ONLY = [
   'file.newFromClipboard', 'file.scan', 'file.newWindow', 'file.openWith', 'file.makeDefault', 'file.versions', 'file.batch',
   'image.setWallpaper', 'image.setLockScreen', 'tools.ocr', 'tools.copyImageText', 'tools.certSign', 'view.signatures',
-  'view.customizeToolbar', 'help.updates'
+  'view.customizeToolbar', 'help.updates',
+  // The subject model runs in the Rust backend.
+  'tools.removeBackground', 'tools.copySubject'
 ]
 if (!platform.isTauri) {
   for (const id of WINDOWS_ONLY) {

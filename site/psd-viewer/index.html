@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-app="../app/">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -67,10 +67,10 @@
   "mainEntity": [
    {
     "@type": "Question",
-    "name": "Can I edit layers?",
+    "name": "Can I edit the layers?",
     "acceptedAnswer": {
      "@type": "Answer",
-     "text": "No. Glance shows the flattened image Photoshop saved inside the file. To change layers, text or effects, open the file in Photoshop or another image editor."
+     "text": "No. Glance shows the flattened image Photoshop saved inside the file. To change layers, text or effects, open it in Photoshop or another image editor."
     }
    },
    {
@@ -120,6 +120,12 @@
    {
     "@type": "ListItem",
     "position": 2,
+    "name": "All File Types",
+    "item": "https://redtrocks.github.io/glance/file-viewer/"
+   },
+   {
+    "@type": "ListItem",
+    "position": 3,
     "name": "PSD Viewer",
     "item": "https://redtrocks.github.io/glance/psd-viewer/"
    }
@@ -141,7 +147,7 @@
 
 /* Wollo design system tokens, plus a dark theme derived from them. Brand blocks keep their colours in both themes. */
 :root{
---surface:#ffffff;--surface-subtle:#f9f9f9;--backdrop:#dcdde2;--divider:var(--divider);
+--surface:#ffffff;--surface-subtle:#f9f9f9;--backdrop:#dcdde2;--divider:#dcdcdc;
 --ink:#0a0a0a;--ink-muted:#6b6b6b;--ink-hover:#262626;--on-ink:#ffffff;--accent:#6312f6;
 --header-bg:rgba(255,255,255,.9);--night:#0a0a0a;
 --violet:#6312f6;--violet-deep:#4408b1;--periwinkle:#7182e7;--pink:#f258a8;--orange:#f47933;--yellow:#f8d32c;--on-block:#0a0a0a;--white:#ffffff;
@@ -255,7 +261,16 @@ a{color:var(--ink);text-underline-offset:4px}a:hover{color:var(--accent)}
 .faq details p{padding:0 4px 24px;color:var(--ink-muted)}
 .more{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:960px;margin:0 auto}
 .more a{text-decoration:none}
-@media (max-width:960px){.fslab{aspect-ratio:4/5 !important}.fslab picture{display:block;height:100%}.steps,.can{grid-template-columns:minmax(0,1fr)}.step{min-height:0}.step .n{font-size:48px;margin-bottom:12px}}
+.dropzone{display:flex;flex-direction:column;align-items:center;gap:16px;padding:56px 24px;border-radius:48px;background:var(--surface-subtle);box-shadow:inset 0 0 0 2px var(--divider);transition:box-shadow 200ms,background-color 200ms}
+.dropzone.dragging{box-shadow:inset 0 0 0 3px var(--accent);background:var(--surface)}
+.drop-stack{position:relative;width:120px;height:120px;margin-bottom:8px}
+.drop-stack span{position:absolute;inset:0;border-radius:28px;display:grid;place-items:center;box-shadow:inset 0 0 0 1px var(--divider)}
+.drop-stack img{width:56px;height:56px}
+.groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.group{border-radius:28px;padding:28px;box-shadow:inset 0 0 0 1px var(--divider);display:flex;flex-direction:column;gap:16px}
+.group .title{display:flex;align-items:center;gap:10px}
+a.fchip{text-decoration:none}a.fchip:hover{color:var(--accent)}
+@media (max-width:960px){.groups{grid-template-columns:minmax(0,1fr)}.fslab{aspect-ratio:4/5 !important}.fslab picture{display:block;height:100%}.steps,.can{grid-template-columns:minmax(0,1fr)}.step{min-height:0}.step .n{font-size:48px;margin-bottom:12px}}
 </style>
 </head>
 <body>
@@ -271,7 +286,7 @@ a{color:var(--ink);text-underline-offset:4px}a:hover{color:var(--accent)}
 <div style="display: flex; gap: 8px">
 <button type="button" class="btn btn-sec theme-toggle" id="theme-toggle" aria-label="Switch to dark mode" title="Switch theme" style="min-height: 44px; width: 44px; padding: 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="i-moon" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path><g class="i-sun"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></g></svg></button>
 <a class="btn btn-sec hide-sm" href="https://github.com/RedtRocks/glance/releases/latest" style="min-height: 44px; padding: 0 18px">Windows App</a>
-<a class="btn btn-ink" href="../app/" style="min-height: 44px; padding: 0 18px">Open PSD</a>
+<a class="btn btn-ink" href="../app/" data-open-file style="min-height: 44px; padding: 0 18px">Open File</a>
 </div>
 </nav>
 </div>
@@ -280,11 +295,11 @@ a{color:var(--ink);text-underline-offset:4px}a:hover{color:var(--accent)}
 <main>
 <section id="top" style="padding-top: 48px">
 <div class="wrap" style="display: flex; flex-direction: column; align-items: center; gap: 24px">
-<nav class="crumbs" aria-label="Breadcrumb"><a href="../">Glance</a><span aria-hidden="true">/</span><span>PSD Viewer</span></nav>
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../">Glance</a><span aria-hidden="true">/</span><a href="../file-viewer/">All File Types</a><span aria-hidden="true">/</span><span>PSD Viewer</span></nav>
 <h1 class="h1" style="max-width: 900px">Open Photoshop PSD Files Without Photoshop</h1>
 <p class="body" style="max-width: 640px; text-align: center; color: var(--ink-muted)">See what is inside a PSD or PSB file on any phone or computer, and save it as PNG or JPEG. No Photoshop or account needed, and nothing is uploaded.</p>
 <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center">
-<a class="btn btn-ink" href="../app/">Open a PSD File</a>
+<a class="btn btn-ink" href="../app/" data-open-file>Open a PSD File</a>
 <a class="btn btn-sec" href="https://github.com/RedtRocks/glance/releases/latest">Get the Windows App</a>
 </div>
 <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center">
@@ -333,7 +348,7 @@ a{color:var(--ink);text-underline-offset:4px}a:hover{color:var(--accent)}
 <h2 class="h2">What You Can Do With PSD Files</h2>
 <div class="can">
 <div><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span><p class="title">Convert PSD to PNG</p><p class="body" style="color: var(--ink-muted)">Export As saves the flattened image as PNG, JPEG or WebP.</p></div>
-<div><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span><p class="title">Check Details</p><p class="body" style="color: var(--ink-muted)">Zoom in to the pixel, look at the size and colour profile in the Inspector.</p></div>
+<div><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span><p class="title">Check the Details</p><p class="body" style="color: var(--ink-muted)">Zoom in to the pixel, and see the size and colour details in the Inspector.</p></div>
 <div><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span><p class="title">Open in Photoshop</p><p class="body" style="color: var(--ink-muted)">In the Windows app, Open With hands the file to Photoshop or another editor to change its layers.</p></div>
 </div>
 </div>
@@ -359,7 +374,7 @@ a{color:var(--ink);text-underline-offset:4px}a:hover{color:var(--accent)}
 <div class="wrap" style="display: flex; flex-direction: column; gap: 40px">
 <h2 class="h2">Questions About PSD Files</h2>
 <div class="faq">
-<details><summary>Can I edit layers?</summary><p class="body">No. Glance shows the flattened image Photoshop saved inside the file. To change layers, text or effects, open the file in Photoshop or another image editor.</p></details>
+<details><summary>Can I edit the layers?</summary><p class="body">No. Glance shows the flattened image Photoshop saved inside the file. To change layers, text or effects, open it in Photoshop or another image editor.</p></details>
 <details><summary>Is Glance's PSD viewer free?</summary><p class="body">Yes. Glance is free and open source under the Apache 2.0 licence, with no account, adverts or watermarks.</p></details>
 <details><summary>Are my PSD files uploaded anywhere?</summary><p class="body">No. Glance opens files on your own device, in your browser or in the Windows app. Nothing is sent to a server, so it is safe for private documents.</p></details>
 <details><summary>Does it work offline?</summary><p class="body">Yes. Install Glance from your browser (Add to Home Screen on a phone) and it opens files with no internet connection.</p></details>
@@ -372,10 +387,27 @@ a{color:var(--ink);text-underline-offset:4px}a:hover{color:var(--accent)}
 <div class="wrap" style="display: flex; flex-direction: column; gap: 32px; align-items: center">
 <h2 class="h3">Glance Also Opens</h2>
 <div class="more">
-<a class="fchip" href="../heic-viewer/"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>HEIC</a>
-<a class="fchip" href="../pdf-viewer/"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>PDF</a>
-<a class="fchip" href="../eml-msg-viewer/"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Email</a>
+<a class="fchip" href="../pdf-viewer/"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>PDF</a>
+<a class="fchip" href="../heic-viewer/"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>HEIC</a>
+<a class="fchip" href="../raw-viewer/"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>RAW</a>
+<a class="fchip" href="../tiff-viewer/"><span class="dots" style="color: #f8d32c" aria-hidden="true"><i></i><i></i><i></i><i></i></span>TIFF</a>
+<a class="fchip" href="../webp-viewer/"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>WebP</a>
+<a class="fchip" href="../jxl-viewer/"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>JPEG XL</a>
+<a class="fchip" href="../svg-viewer/"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>SVG</a>
+<a class="fchip" href="../docx-viewer/"><span class="dots" style="color: #f8d32c" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Word</a>
+<a class="fchip" href="../pptx-viewer/"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>PowerPoint</a>
+<a class="fchip" href="../xlsx-viewer/"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Excel</a>
+<a class="fchip" href="../csv-viewer/"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>CSV</a>
+<a class="fchip" href="../epub-reader/"><span class="dots" style="color: #f8d32c" aria-hidden="true"><i></i><i></i><i></i><i></i></span>EPUB</a>
+<a class="fchip" href="../eml-msg-viewer/"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Email</a>
+<a class="fchip" href="../markdown-viewer/"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Markdown</a>
+<a class="fchip" href="../code-viewer/"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Code</a>
+<a class="fchip" href="../3d-model-viewer/"><span class="dots" style="color: #f8d32c" aria-hidden="true"><i></i><i></i><i></i><i></i></span>3D Model</a>
+<a class="fchip" href="../font-viewer/"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Font</a>
+<a class="fchip" href="../video-player/"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Video</a>
+<a class="fchip" href="../cbz-reader/"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>CBZ</a>
 </div>
+<a href="../file-viewer/" style="font-size: 17px; line-height: 26px">See Every File Type Glance Opens</a>
 <p class="body" style="color: var(--ink-muted); text-align: center">Supported extensions: .psd, .psb</p>
 </div>
 </section>
@@ -397,6 +429,7 @@ a{color:var(--ink);text-underline-offset:4px}a:hover{color:var(--accent)}
 </footer>
 
 </div>
+<script src="../assets/open.js" defer></script>
 <script>
 (function () {
   var root = document.documentElement, mq = window.matchMedia('(prefers-color-scheme: dark)'), b = document.getElementById('theme-toggle');
