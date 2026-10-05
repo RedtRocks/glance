@@ -6,10 +6,11 @@
  */
 
 import type { ShellRequest } from '../core/explorer'
+import { OFFICE } from '../core/office'
 import { archivePage, archivePageCount, cachedUrl, cachedUrlAsync, decodeImage, forgetCached } from './webDecode'
 import { t } from '../i18n'
 
-export type Kind = 'pdf' | 'image' | 'model' | 'postscript' | 'xps' | 'archive' | 'unsupported'
+export type Kind = 'pdf' | 'image' | 'model' | 'postscript' | 'xps' | 'archive' | 'office' | 'unsupported'
 
 export interface Probe {
   path: string
@@ -152,7 +153,7 @@ export async function probe(path: string): Promise<Probe> {
 /** Media types the share sheet needs to offer the right apps. */
 function mimeOf(name: string): string {
   const ext = extOf(name)
-  const types: Record<string, string> = { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', avif: 'image/avif', bmp: 'image/bmp', tif: 'image/tiff', tiff: 'image/tiff', heic: 'image/heic', svg: 'image/svg+xml' }
+  const types: Record<string, string> = { pdf: 'application/pdf', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', csv: 'text/csv', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', avif: 'image/avif', bmp: 'image/bmp', tif: 'image/tiff', tiff: 'image/tiff', heic: 'image/heic', svg: 'image/svg+xml' }
   return types[ext] ?? 'application/octet-stream'
 }
 
@@ -160,6 +161,7 @@ function classifyExt(ext: string): Kind {
   if (BROWSER_NATIVE.includes(ext) || WASM_IMAGES.includes(ext) || RAW_IMAGES.includes(ext)) return 'image'
   if (MODELS.includes(ext)) return 'model'
   if (ext === 'cbz') return 'archive'
+  if (OFFICE.includes(ext)) return 'office'
   if (['ps', 'eps', 'epsf', 'epsi'].includes(ext)) return 'postscript'
   if (ext === 'xps' || ext === 'oxps') return 'xps'
   return 'unsupported'

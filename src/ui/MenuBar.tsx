@@ -20,7 +20,7 @@ const HELP: Entry[] = ['help.github', 'help.updates', 'help.about']
 const ZOOM: Entry[] = ['view.zoomIn', 'view.zoomOut', 'view.actualSize', 'view.zoomToFit']
 
 /** Each kind of file gets its own menu bar, like separate apps would. */
-export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'notice', Record<string, Entry[]>> = {
+export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'office' | 'notice', Record<string, Entry[]>> = {
   none: {
     File: ['file.open', 'file.newFromClipboard', 'file.scan', 'file.newWindow', '-', 'file.batch', 'file.collage', '-', 'file.makeDefault', 'file.settings'],
     Help: HELP
@@ -63,6 +63,12 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'notice', Record
     File: ['file.open', 'file.openWith', 'file.newFromClipboard', 'file.scan', 'file.newWindow', '-', 'file.export', '-', 'file.share', '-', 'file.close', '-', 'file.makeDefault', 'file.settings'],
     View: [...ZOOM, 'model.resetView', '-', 'model.view.front', 'model.view.back', 'model.view.left', 'model.view.right', 'model.view.top', 'model.view.bottom', '-', 'model.wireframe', 'model.autoRotate', 'model.shadow', 'model.grid', '-', 'view.fullscreen', '-', 'view.inspector', 'view.customizeToolbar'],
     Go: ['go.nextTab', 'go.previousTab'],
+    Help: HELP
+  },
+  office: {
+    File: ['file.open', 'file.openWith', 'file.newWindow', '-', 'file.share', '-', 'file.close', '-', 'file.makeDefault', 'file.settings'],
+    View: [...ZOOM, '-', 'view.fullscreen'],
+    Go: ['go.previous', 'go.next', 'go.first', 'go.last', '-', 'go.nextTab', 'go.previousTab'],
     Help: HELP
   },
   notice: {

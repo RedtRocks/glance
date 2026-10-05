@@ -12,6 +12,7 @@ pub enum Kind {
     Postscript,
     Xps,
     Archive,
+    Office,
     Unsupported,
 }
 
@@ -33,6 +34,11 @@ pub const RAW_IMAGES: &[&str] = &[
 
 pub const MODELS: &[&str] = &[
     "glb", "gltf", "obj", "stl", "ply", "fbx", "usdz", "usda", "usdc", "dae", "3mf", "3ds",
+];
+
+/// Word, PowerPoint and Excel files the frontend previews itself (src/office/).
+pub const OFFICE: &[&str] = &[
+    "docx", "docm", "dotx", "dotm", "pptx", "pptm", "ppsx", "ppsm", "potx", "potm", "xlsx", "xlsm", "xltx", "xltm", "csv", "tsv",
 ];
 
 pub fn extension(path: &Path) -> String {
@@ -57,6 +63,7 @@ pub fn classify(path: &Path, head: &[u8]) -> Kind {
         "ps" | "eps" | "epsf" | "epsi" => Kind::Postscript,
         "xps" | "oxps" => Kind::Xps,
         "cbz" => Kind::Archive,
+        _ if OFFICE.contains(&e) => Kind::Office,
         _ if BROWSER_IMAGES.contains(&e) || BACKEND_IMAGES.contains(&e) || RAW_IMAGES.contains(&e) => {
             Kind::Image
         }
@@ -109,6 +116,9 @@ mod tests {
         assert_eq!(classify(Path::new("a.CR3"), b""), Kind::Image);
         assert_eq!(classify(Path::new("a.heic"), b""), Kind::Image);
         assert_eq!(classify(Path::new("a.usdz"), b""), Kind::Model);
+        // Office files are zip archives; the extension decides.
+        assert_eq!(classify(Path::new("Plan.docx"), b"PK\x03\x04"), Kind::Office);
+        assert_eq!(classify(Path::new("Deck.PPTX"), b"PK\x03\x04"), Kind::Office);
         assert_eq!(classify(Path::new("a.oxps"), b""), Kind::Xps);
         assert_eq!(classify(Path::new("a.cbz"), b""), Kind::Archive);
         assert_eq!(classify(Path::new("a.xyz"), b"nothing"), Kind::Unsupported);

@@ -14,6 +14,7 @@ import {
   findByPath,
   ImageDoc,
   ModelDoc,
+  OfficeDoc,
   NoticeDoc,
   PdfDoc,
   removeDoc,
@@ -25,6 +26,7 @@ import * as versions from './versions'
 import { flushAutosave } from './autosave'
 import { msg, t } from '../i18n'
 import { mayHaveSignatures } from '../core/signatureStatus'
+import { OFFICE } from '../core/office'
 
 const GS_INSTALL = 'winget install ArtifexSoftware.GhostScript'
 
@@ -38,10 +40,12 @@ export const OPEN_FILTERS: platform.FileFilter[] = [
       'exr', 'hdr', 'tga', 'dds', 'qoi', 'ppm', 'pgm', 'pbm', 'pam', 'pnm', 'icns', 'psd', 'psb',
       'cr2', 'cr3', 'crw', 'nef', 'nrw', 'arw', 'srf', 'sr2', 'raf', 'orf', 'rw2', 'raw', 'dng', 'pef',
       'srw', 'x3f', 'erf', 'mef', 'mos', 'mrw', 'kdc', 'dcr', '3fr', 'fff', 'iiq', 'rwl', 'gpr',
-      'glb', 'gltf', 'obj', 'stl', 'ply', 'fbx', 'usdz', 'usda', 'usdc', 'dae', '3mf', '3ds'
+      'glb', 'gltf', 'obj', 'stl', 'ply', 'fbx', 'usdz', 'usda', 'usdc', 'dae', '3mf', '3ds',
+      ...OFFICE
     ]
   },
   { name: msg('PDF documents'), extensions: ['pdf', 'ai'] },
+  { name: msg('Word, PowerPoint and Excel files'), extensions: OFFICE },
   { name: msg('All files'), extensions: ['*'] }
 ]
 
@@ -143,6 +147,11 @@ async function openFresh(path: string): Promise<Doc | null> {
     }
     case 'model': {
       const doc = new ModelDoc(probe)
+      addDoc(doc)
+      return doc
+    }
+    case 'office': {
+      const doc = new OfficeDoc(probe)
       addDoc(doc)
       return doc
     }
