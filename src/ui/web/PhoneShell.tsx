@@ -149,7 +149,8 @@ export function PageCounter({ doc }: { doc: Doc }) {
 }
 
 function PagesSheet({ doc }: { doc: Doc }) {
-  const body = sidebarBody(doc)
+  // Three thumbnails across the sheet (20px sides, 12px gaps).
+  const body = sidebarBody(doc, Math.floor((Math.min(innerWidth, 700) - 40 - 24) / 3))
   const modes = doc.kind === 'pdf'
     ? ([['thumbnails', t('Pages')], ['toc', t('Contents')], ['notes', t('Notes')]] as const)
     : []

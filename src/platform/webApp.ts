@@ -5,7 +5,48 @@
  * None of this runs in the Windows app, which gets its files from Explorer instead.
  */
 
+import { signal } from '@preact/signals'
 import { isTauri, registerBrowserFile } from '.'
+
+interface InstallPrompt extends Event {
+  prompt(): Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
+
+/** Chrome and Edge's install offer, kept for the Install button. Safari has none. */
+const installPrompt = signal<InstallPrompt | null>(null)
+
+/** Already running as the installed app (its own window, or from the home screen). */
+export const installed = signal(
+  typeof matchMedia !== 'undefined' && (matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true)
+)
+
+if (!isTauri && typeof window !== 'undefined') {
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault()
+    installPrompt.value = e as InstallPrompt
+  })
+  window.addEventListener('appinstalled', () => {
+    installPrompt.value = null
+    installed.value = true
+  })
+}
+
+/** Whether Install can do anything here: a browser offer, or the iPhone's Add to Home Screen. */
+export function canInstall(): boolean {
+  if (isTauri || installed.value) return false
+  return !!installPrompt.value || /iPhone|iPad|iPod/.test(navigator.userAgent)
+}
+
+/** Shows the browser's install offer; false when there is none (Safari: Share, then Add to Home Screen). */
+export async function install(): Promise<boolean> {
+  const p = installPrompt.value
+  if (!p) return false
+  await p.prompt()
+  const { outcome } = await p.userChoice
+  if (outcome === 'accepted') installPrompt.value = null
+  return true
+}
 
 interface LaunchParams {
   files: FileSystemFileHandle[]
@@ -35,9 +76,12 @@ export function startWebApp(open: (paths: string[]) => void): void {
 function registerServiceWorker(): void {
   // Only over HTTPS (or localhost); without it the app still works, just not offline.
   if (!('serviceWorker' in navigator)) return
-  window.addEventListener('load', () => {
+  const register = (): void => {
     void navigator.serviceWorker.register(new URL('sw.js', document.baseURI), { scope: './' }).catch(() => undefined)
-  })
+  }
+  // After the page has loaded, so caching the app never slows down opening it.
+  if (document.readyState === 'complete') register()
+  else window.addEventListener('load', register)
 }
 
 /** Files sent to Glance by another app's Share sheet (Android, Chrome OS). */

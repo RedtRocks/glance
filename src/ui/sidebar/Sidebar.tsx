@@ -14,7 +14,7 @@ import { t } from '../../i18n'
 
 const THUMB_WIDTH = 120
 
-function ThumbList({ doc }: { doc: PdfDoc }) {
+function ThumbList({ doc, width = THUMB_WIDTH }: { doc: PdfDoc; width?: number }) {
   const count = doc.pageCount.value
   const current = doc.current.value
   const selection = doc.selection.value
@@ -44,7 +44,7 @@ function ThumbList({ doc }: { doc: PdfDoc }) {
               }}
               onContextMenu={(e) => pageContextMenu(e, doc, i)}
             >
-              <PageThumb doc={doc} index={i} width={THUMB_WIDTH} />
+              <PageThumb doc={doc} index={i} width={width} />
               <span class="thumb-label">{i + 1}</span>
             </div>
           </div>
@@ -55,7 +55,7 @@ function ThumbList({ doc }: { doc: PdfDoc }) {
   )
 }
 
-function ImageThumbList({ doc }: { doc: ImageDoc }) {
+function ImageThumbList({ doc, width = THUMB_WIDTH }: { doc: ImageDoc; width?: number }) {
   const current = doc.current.value
   return (
     <div class="thumb-list" role="listbox" aria-label={t('Pages')}>
@@ -67,7 +67,7 @@ function ImageThumbList({ doc }: { doc: ImageDoc }) {
           aria-selected={i === current}
           onClick={() => (doc.current.value = i)}
         >
-          <img class="thumb-img" loading="lazy" src={imageUrl(doc.probe, i, 256)} width={THUMB_WIDTH} alt={t('Page {page}', { page: i + 1 })} />
+          <img class="thumb-img" loading="lazy" src={imageUrl(doc.probe, i, 256)} width={width} alt={t('Page {page}', { page: i + 1 })} />
           <span class="thumb-label">{i + 1}</span>
         </div>
       ))}
@@ -121,12 +121,12 @@ function Resizer() {
 }
 
 /** What the sidebar shows for its current mode; null when the file has nothing to list. */
-export function sidebarBody(doc: Doc): JSX.Element | null {
+export function sidebarBody(doc: Doc, thumbWidth = THUMB_WIDTH): JSX.Element | null {
   if (doc.kind === 'pdf') {
     const mode = doc.sidebar.value
-    return mode === 'toc' ? <Toc doc={doc} /> : mode === 'notes' ? <NotesList doc={doc} /> : mode === 'bookmarks' ? <BookmarksList doc={doc} /> : <ThumbList doc={doc} />
+    return mode === 'toc' ? <Toc doc={doc} /> : mode === 'notes' ? <NotesList doc={doc} /> : mode === 'bookmarks' ? <BookmarksList doc={doc} /> : <ThumbList doc={doc} width={thumbWidth} />
   }
-  if (doc.kind === 'image' && doc.pageCount.value > 1) return <ImageThumbList doc={doc} />
+  if (doc.kind === 'image' && doc.pageCount.value > 1) return <ImageThumbList doc={doc} width={thumbWidth} />
   return null
 }
 

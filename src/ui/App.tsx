@@ -1,7 +1,7 @@
 import { useEffect } from 'preact/hooks'
 import { activeDoc, activeId, docs, findByPath } from '../state/documents'
 import { isDark, settings } from '../state/settings'
-import { cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, inspectorOpen, narrowWindow, signaturesOpen, redactTextOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
+import { cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, inspectorOpen, narrowWindow, signaturesOpen, redactTextOpen, findOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
 import { confirmCloseWindow, openFiles } from '../state/actions'
 import { startAutosave } from '../state/autosave'
 import { restoreSession } from '../state/session'
@@ -12,6 +12,9 @@ import { DefaultAppBar } from './DefaultAppBar'
 import { offerDefaultApp } from '../state/defaultApp'
 import * as platform from '../platform'
 import { startWebApp } from '../platform/webApp'
+import { WebNav } from './web/WebNav'
+import { WebWelcome } from './web/WebWelcome'
+import { PageCounter, PhoneBar, PhoneDock, PhoneSearch, PhoneSheets } from './web/PhoneShell'
 import { MenuBar } from './MenuBar'
 import { TabStrip } from './TabStrip'
 import { Toolbar } from './Toolbar'
@@ -58,12 +61,13 @@ import { ExportDialog } from './image/ExportDialog'
 
 function Viewer() {
   const doc = activeDoc.value
-  if (!doc) return <Welcome />
+  if (!doc) return platform.isWeb ? <WebWelcome /> : <Welcome />
+  const phone = platform.isWeb && narrowWindow.value
   return (
     <div class="workspace">
-      {sidebarVisible.value && <Sidebar key={doc.id} doc={doc} />}
+      {sidebarVisible.value && !phone && <Sidebar key={doc.id} doc={doc} />}
       {/* Over the document on a phone: tapping the document puts it away again. */}
-      {sidebarVisible.value && narrowWindow.value && <div class="scrim" onClick={() => (sidebarVisible.value = false)} />}
+      {sidebarVisible.value && narrowWindow.value && !phone && <div class="scrim" onClick={() => (sidebarVisible.value = false)} />}
       <main class="viewer" aria-label={doc.name.value}>
         {(doc.kind === 'pdf' || doc.kind === 'image') && <RedactionBar doc={doc} />}
         <ExternalAppBar key={doc.id} doc={doc} />
@@ -75,6 +79,8 @@ function Viewer() {
           {doc.kind === 'notice' && <NoticeView doc={doc} />}
           {doc.kind === 'model' && <ModelView key={doc.id} doc={doc} />}
         </div>
+        {phone && <PageCounter doc={doc} />}
+        {phone && <PhoneDock doc={doc} />}
       </main>
       {doc instanceof ImageDoc && doc.editable && adjustColorOpen.value && <AdjustColorPanel key={doc.id} doc={doc} />}
       {inspectorOpen.value && doc.kind !== 'notice' && <InspectorPane key={doc.id} doc={doc} />}
@@ -156,6 +162,7 @@ export function App() {
 
   // Window title follows the active document (Windows shows it in the taskbar).
   const doc = activeDoc.value
+  const phone = platform.isWeb && narrowWindow.value
   useEffect(() => {
     imageSelection.value = null
     adjustColorOpen.value = false
@@ -168,17 +175,31 @@ export function App() {
 
   return (
     <div class={`app ${fileDragOver.value ? 'file-drag' : ''}`}>
-      <header class="chrome">
-        {docs.value.length > 0 && <TabStrip />}
-        <div class="commandbar">
-          <MenuBar />
-          <Toolbar />
-        </div>
-        <MarkupToolbar />
-        <UpdateBar />
-        <DefaultAppBar />
-      </header>
+      {phone ? (
+        doc && (
+          <header class="chrome">
+            <PhoneBar doc={doc} />
+            {findOpen.value && <PhoneSearch doc={doc} />}
+          </header>
+        )
+      ) : (
+        <header class="chrome">
+          {platform.isWeb ? <WebNav /> : docs.value.length > 0 && <TabStrip />}
+          {(!platform.isWeb || doc) && (
+            <div class="commandbar">
+              <MenuBar />
+              <Toolbar />
+            </div>
+          )}
+          <MarkupToolbar />
+          <UpdateBar />
+          <DefaultAppBar />
+        </header>
+      )}
       <Viewer />
+      {/* On a phone the markup tools sit at the bottom, under the thumb. */}
+      {phone && <MarkupToolbar />}
+      {phone && <PhoneSheets />}
       {slideshow.value && <Slideshow />}
       {settingsOpen.value && <SettingsDialog />}
       {customizeOpen.value && <CustomizeToolbar />}
