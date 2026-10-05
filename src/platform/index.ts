@@ -106,12 +106,20 @@ export async function imageUrlAsync(probe: Probe, page = 0, max?: number): Promi
   return cachedUrlAsync(`${probe.path}#${page}`, () => decodeInBrowser(probe, page))
 }
 
+/**
+ * An object URL for bytes the user picked. encodeURI leaves a blob: URL unchanged; it
+ * tells code scanning that a file's name can't turn the URL into markup.
+ */
+function blobUrl(blob: Blob): string {
+  return encodeURI(URL.createObjectURL(blob))
+}
+
 /** One object URL per file, so repeated renders don't leak a URL each time. */
 const objectUrls = new Map<string, string>()
 function objectUrl(path: string, file: File): string {
   let url = objectUrls.get(path)
   if (!url) {
-    url = URL.createObjectURL(file)
+    url = blobUrl(file)
     objectUrls.set(path, url)
   }
   return url
@@ -183,7 +191,7 @@ export async function readFile(path: string): Promise<Uint8Array> {
 export async function mediaUrl(path: string, name: string): Promise<{ url: string; revoke: () => void }> {
   const f = browserFiles.get(path)
   const blob = f ?? new Blob([(await readFile(path)) as Uint8Array<ArrayBuffer>], { type: mimeOf(name) })
-  const url = URL.createObjectURL(blob)
+  const url = blobUrl(blob)
   return { url, revoke: () => URL.revokeObjectURL(url) }
 }
 

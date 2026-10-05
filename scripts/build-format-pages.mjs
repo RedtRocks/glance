@@ -40,7 +40,7 @@ function commonQuestions(name) {
 /** The page around each landing page's content: head, styles, header and footer. */
 function frame({ title, description, url, ld, navCta, main }) {
   return `<!DOCTYPE html>
-<html lang="en" data-app="../app/">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

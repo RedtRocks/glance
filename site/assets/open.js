@@ -5,7 +5,8 @@
  * the cache lives in this browser. Without JavaScript the buttons are plain links.
  */
 (function () {
-  var app = document.documentElement.getAttribute('data-app') || 'app/';
+  // The app sits beside this script's folder: /assets/open.js -> /app/.
+  var app = new URL('../app/', document.currentScript.src).href;
   var input = document.createElement('input');
   input.type = 'file';
   input.multiple = true;
