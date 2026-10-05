@@ -21,6 +21,8 @@ export interface Probe {
 }
 
 export const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+/** The browser version (web/), which wears the website's Wollo design instead of Fluent. */
+export const isWeb = !isTauri
 const isWindows = typeof navigator !== 'undefined' && /Windows/i.test(navigator.userAgent)
 
 type Invoke = typeof import('@tauri-apps/api/core').invoke
@@ -147,6 +149,13 @@ export async function probe(path: string): Promise<Probe> {
   return { ...base, pages: kind === 'xps' ? 0 : 1 }
 }
 
+/** Media types the share sheet needs to offer the right apps. */
+function mimeOf(name: string): string {
+  const ext = extOf(name)
+  const types: Record<string, string> = { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', avif: 'image/avif', bmp: 'image/bmp', tif: 'image/tiff', tiff: 'image/tiff', heic: 'image/heic', svg: 'image/svg+xml' }
+  return types[ext] ?? 'application/octet-stream'
+}
+
 function classifyExt(ext: string): Kind {
   if (BROWSER_NATIVE.includes(ext) || WASM_IMAGES.includes(ext) || RAW_IMAGES.includes(ext)) return 'image'
   if (MODELS.includes(ext)) return 'model'
@@ -177,6 +186,8 @@ export async function writeFile(path: string, data: Uint8Array): Promise<void> {
 }
 
 export async function writeTemp(name: string, data: Uint8Array): Promise<string> {
+  // The browser has no temp folder: the bytes become an in-memory file instead.
+  if (!isTauri) return registerBrowserFile(new File([data as BlobPart], name, { type: mimeOf(name) }))
   return invoke<string>('write_temp', data, { headers: { 'x-name': encodeURIComponent(name) } })
 }
 
@@ -720,7 +731,20 @@ export async function fileStamp(path: string): Promise<FileStamp | null> {
 
 /** Opens the Windows share sheet for these files. */
 export async function shareFiles(paths: string[], title: string): Promise<void> {
-  if (!isTauri) throw new Error(t('Sharing uses the Windows share sheet, available in the Windows app.'))
+  if (!isTauri) {
+    const files = paths.map((p) => browserFiles.get(p)).filter((f): f is File => !!f)
+    // The phone's share sheet where there is one (WhatsApp, Mail, Files); a download elsewhere.
+    if (navigator.canShare?.({ files })) {
+      try {
+        await navigator.share({ files, title })
+      } catch (e) {
+        if ((e as Error).name !== 'AbortError') throw e
+      }
+      return
+    }
+    for (const f of files) await writeFile(f.name, new Uint8Array(await f.arrayBuffer()))
+    return
+  }
   await invoke('share_files', { paths, title })
 }
 

@@ -120,15 +120,18 @@ function Resizer() {
   )
 }
 
-export function Sidebar({ doc }: { doc: Doc }) {
-  let body: JSX.Element | null = null
+/** What the sidebar shows for its current mode; null when the file has nothing to list. */
+export function sidebarBody(doc: Doc): JSX.Element | null {
   if (doc.kind === 'pdf') {
     const mode = doc.sidebar.value
-    body =
-      mode === 'toc' ? <Toc doc={doc} /> : mode === 'notes' ? <NotesList doc={doc} /> : mode === 'bookmarks' ? <BookmarksList doc={doc} /> : <ThumbList doc={doc} />
-  } else if (doc.kind === 'image' && doc.pageCount.value > 1) {
-    body = <ImageThumbList doc={doc} />
+    return mode === 'toc' ? <Toc doc={doc} /> : mode === 'notes' ? <NotesList doc={doc} /> : mode === 'bookmarks' ? <BookmarksList doc={doc} /> : <ThumbList doc={doc} />
   }
+  if (doc.kind === 'image' && doc.pageCount.value > 1) return <ImageThumbList doc={doc} />
+  return null
+}
+
+export function Sidebar({ doc }: { doc: Doc }) {
+  const body = sidebarBody(doc)
   if (!body) return null
   return (
     <aside class="sidebar" style={{ width: settings.value.sidebarWidth }} data-drop-doc={doc.id}>

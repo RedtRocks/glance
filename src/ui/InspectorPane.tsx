@@ -7,7 +7,7 @@ import { intlLocale, locale, t } from '../i18n'
 
 type Rows = [string, string][]
 
-function bytes(n: number): string {
+export function bytes(n: number): string {
   if (n < 1024) return t('{count, plural, one {# byte} other {# bytes}}', { count: n })
   let v = n / 1024
   let i = 0
