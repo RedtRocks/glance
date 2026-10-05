@@ -124,7 +124,9 @@ const BROWSER_NATIVE = ['jpg', 'jpeg', 'jfif', 'pjpeg', 'png', 'apng', 'gif', 'w
 /** Formats the WebAssembly decoders handle in the browser version (web/decoder). */
 const WASM_IMAGES = [
   'tif', 'tiff', 'jp2', 'j2k', 'jpf', 'jpx', 'j2c', 'jxl', 'exr', 'hdr', 'tga', 'dds', 'qoi',
-  'ppm', 'pgm', 'pbm', 'pam', 'pnm', 'icns', 'psd', 'psb'
+  'ppm', 'pgm', 'pbm', 'pam', 'pnm', 'icns', 'psd', 'psb',
+  // libheif, loaded on its own (platform/heif.ts)
+  'heic', 'heif', 'hif'
 ]
 
 const RAW_IMAGES = [

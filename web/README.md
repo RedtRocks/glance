@@ -27,9 +27,10 @@ npx vite preview --outDir dist-web
 
 Anything that needs Windows itself: text recognition (the Windows OCR engine), scanning,
 Explorer integration and default-app registration, the share sheet, certificate
-signatures, saved signatures, Ghostscript for PostScript, XPS, and the Windows RAW and
-HEIF codecs (RAW files fall back to the full-size preview the camera embedded, as they
-do on Windows without the codec installed). Those commands hide or explain themselves
+signatures, saved signatures, Ghostscript for PostScript, XPS, and the Windows RAW
+codec (RAW files fall back to the full-size preview the camera embedded, as they do on
+Windows without the codec installed). HEIC and HEIF photos use libheif (LGPL-3.0, from
+libheif-js) as WebAssembly, loaded only when one is opened. Those commands hide or explain themselves
 rather than failing.
 
 Saving downloads the file instead of writing it back in place, so there is no autosave

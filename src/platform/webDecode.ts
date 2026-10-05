@@ -7,6 +7,7 @@
  */
 
 import { signal, type Signal } from '@preact/signals'
+import { decodeHeif, encodeBmp, HEIF } from './heif'
 
 interface DecoderExports {
   memory: WebAssembly.Memory
@@ -62,6 +63,10 @@ function withText(d: DecoderExports, text: string, use: (ptr: number, len: numbe
 
 /** Decodes one image file into BMP bytes every browser can show. */
 export async function decodeImage(ext: string, bytes: Uint8Array): Promise<Uint8Array> {
+  if (HEIF.includes(ext)) {
+    const { width, height, rgba } = await decodeHeif(bytes)
+    return encodeBmp(width, height, rgba)
+  }
   return run(bytes, (d, ptr, len) => withText(d, ext, (ePtr, eLen) => d.decode_image(ePtr, eLen, ptr, len)))
 }
 
