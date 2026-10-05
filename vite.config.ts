@@ -1,6 +1,7 @@
 import { defineConfig, type Plugin } from 'vite'
 import preact from '@preact/preset-vite'
 import { cpSync, existsSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 
 /**
  * PDF.js needs its CMaps (CJK text), standard fonts, ICC profiles and WASM decoders
@@ -29,6 +30,10 @@ const host = process.env.TAURI_DEV_HOST
 export default defineConfig({
   plugins: [preact(), pdfjsAssets()],
   clearScreen: false,
+  resolve: {
+    // Outlook .msg files: the browser's TextDecoder stands in for Node's iconv-lite (see the shim).
+    alias: { 'iconv-lite': fileURLToPath(new URL('./src/preview/iconvShim.ts', import.meta.url)) }
+  },
   server: {
     port: 1420,
     strictPort: true,

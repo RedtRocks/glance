@@ -5,7 +5,7 @@
  */
 import { ImageDoc, type Doc } from './documents'
 import * as engine from '../image/engine'
-import { imageUrl } from '../platform'
+import { imageUrlAsync } from '../platform'
 import { withBusy } from './ui'
 import { openPdf } from '../pdf/engine'
 import { serialize } from './actions'
@@ -53,7 +53,7 @@ export async function printDoc(doc: Doc | null): Promise<void> {
       for (let p = 0; p < doc.pageCount.value; p++) {
         const img = document.createElement('img')
         img.className = 'print-page'
-        img.src = imageUrl(doc.probe, p)
+        img.src = await imageUrlAsync(doc.probe, p)
         await img.decode().catch(() => undefined)
         root.appendChild(img)
       }

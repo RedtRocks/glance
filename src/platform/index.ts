@@ -6,9 +6,11 @@
  */
 
 import type { ShellRequest } from '../core/explorer'
+import { PREVIEWS } from '../core/previews'
+import { archivePage, archivePageCount, cachedUrl, cachedUrlAsync, decodeImage, forgetCached } from './webDecode'
 import { t } from '../i18n'
 
-export type Kind = 'pdf' | 'image' | 'model' | 'postscript' | 'xps' | 'archive' | 'unsupported'
+export type Kind = 'pdf' | 'image' | 'model' | 'postscript' | 'xps' | 'archive' | 'preview' | 'unsupported'
 
 export interface Probe {
   path: string
@@ -20,6 +22,8 @@ export interface Probe {
 }
 
 export const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+/** The browser version (web/), which wears the website's Wollo design instead of Fluent. */
+export const isWeb = !isTauri
 const isWindows = typeof navigator !== 'undefined' && /Windows/i.test(navigator.userAgent)
 
 type Invoke = typeof import('@tauri-apps/api/core').invoke
@@ -37,6 +41,26 @@ export function registerBrowserFile(file: File): string {
   const key = `browser:${++browserSeq}/${file.name}`
   browserFiles.set(key, file)
   return key
+}
+
+/** Frees a file the browser version held in memory, with any pages decoded from it. */
+export function forgetBrowserFile(path: string): void {
+  browserFiles.delete(path)
+  forgetCached(`${path}#`)
+}
+
+async function browserBytes(path: string): Promise<Uint8Array> {
+  const f = browserFiles.get(path)
+  if (!f) throw new Error(`Unknown file ${path}`)
+  return new Uint8Array(await f.arrayBuffer())
+}
+
+/** Decodes one page with the WebAssembly decoders (web/decoder). */
+async function decodeInBrowser(probe: Probe, page: number): Promise<Uint8Array> {
+  const bytes = await browserBytes(probe.path)
+  // A comic book archive's pages are ordinary images; the decoder sniffs them.
+  if (probe.kind === 'archive') return decodeImage('', await archivePage(bytes, page))
+  return decodeImage(extOf(probe.name), bytes)
 }
 
 function extOf(path: string): string {
@@ -65,17 +89,60 @@ export function schemeUrl(route: 'file' | 'decode' | 'archive', params: Record<s
 /** URL an <img> can load directly for one page of an image file. */
 export function imageUrl(probe: Probe, page = 0, max?: number): string {
   if (!isTauri) {
-    const f = browserFiles.get(probe.path)
-    return f ? URL.createObjectURL(f) : ''
+    if (probe.browserNative) {
+      const f = browserFiles.get(probe.path)
+      return f ? objectUrl(probe.path, f) : ''
+    }
+    return cachedUrl(`${probe.path}#${page}`, () => decodeInBrowser(probe, page))
   }
   if (probe.kind === 'archive') return schemeUrl('archive', { path: probe.path, page })
   if (probe.browserNative && !max) return schemeUrl('file', { path: probe.path })
   return schemeUrl('decode', { path: probe.path, page, ...(max ? { max } : {}) })
 }
 
+/** Like [`imageUrl`], but waits for a page the browser version still has to decode. */
+export async function imageUrlAsync(probe: Probe, page = 0, max?: number): Promise<string> {
+  if (isTauri || probe.browserNative) return imageUrl(probe, page, max)
+  return cachedUrlAsync(`${probe.path}#${page}`, () => decodeInBrowser(probe, page))
+}
+
+/**
+ * An object URL for bytes the user picked. encodeURI leaves a blob: URL unchanged; it
+ * tells code scanning that a file's name can't turn the URL into markup.
+ */
+function blobUrl(blob: Blob): string {
+  return encodeURI(URL.createObjectURL(blob))
+}
+
+/** One object URL per file, so repeated renders don't leak a URL each time. */
+const objectUrls = new Map<string, string>()
+function objectUrl(path: string, file: File): string {
+  let url = objectUrls.get(path)
+  if (!url) {
+    url = blobUrl(file)
+    objectUrls.set(path, url)
+  }
+  return url
+}
+
 // ---------------------------------------------------------------------------
 
-const BROWSER_NATIVE = ['jpg', 'jpeg', 'jfif', 'png', 'apng', 'gif', 'webp', 'bmp', 'ico', 'svg', 'avif']
+const BROWSER_NATIVE = ['jpg', 'jpeg', 'jfif', 'pjpeg', 'png', 'apng', 'gif', 'webp', 'bmp', 'dib', 'ico', 'cur', 'svg', 'avif']
+
+/** Formats the WebAssembly decoders handle in the browser version (web/decoder). */
+const WASM_IMAGES = [
+  'tif', 'tiff', 'jp2', 'j2k', 'jpf', 'jpx', 'j2c', 'jxl', 'exr', 'hdr', 'tga', 'dds', 'qoi',
+  'ppm', 'pgm', 'pbm', 'pam', 'pnm', 'icns', 'psd', 'psb',
+  // libheif, loaded on its own (platform/heif.ts)
+  'heic', 'heif', 'hif'
+]
+
+const RAW_IMAGES = [
+  'cr2', 'cr3', 'crw', 'nef', 'nrw', 'arw', 'srf', 'sr2', 'raf', 'orf', 'rw2', 'raw', 'dng', 'pef',
+  'srw', 'x3f', 'erf', 'mef', 'mos', 'mrw', 'kdc', 'dcr', '3fr', 'fff', 'iiq', 'rwl', 'gpr'
+]
+
+const MODELS = ['glb', 'gltf', 'obj', 'stl', 'ply', 'fbx', 'usdz', 'usda', 'usdc', 'dae', '3mf', '3ds']
 
 export async function probe(path: string): Promise<Probe> {
   if (isTauri) return invoke<Probe>('probe', { path })
@@ -83,21 +150,49 @@ export async function probe(path: string): Promise<Probe> {
   if (!f) throw new Error(`Unknown file ${path}`)
   const ext = extOf(f.name)
   const head = new Uint8Array(await f.slice(0, 5).arrayBuffer())
+  // Files are often misnamed, so the magic bytes win, as they do in the Windows app.
   const isPdf = String.fromCharCode(...head) === '%PDF-'
-  const MODELS = ['glb', 'gltf', 'obj', 'stl', 'ply', '3mf', 'dae', 'fbx', 'usdz', '3ds']
-  const kind: Kind = isPdf || ext === 'pdf' ? 'pdf' : BROWSER_NATIVE.includes(ext) ? 'image' : MODELS.includes(ext) ? 'model' : 'unsupported'
-  return { path, name: f.name, size: f.size, kind, browserNative: kind === 'image', pages: 1 }
+  const kind: Kind = isPdf || ext === 'pdf' || ext === 'ai' ? 'pdf' : classifyExt(ext)
+  const browserNative = kind === 'image' && BROWSER_NATIVE.includes(ext)
+  const base = { path, name: f.name, size: f.size, kind, browserNative }
+  if (kind === 'archive') return { ...base, pages: await archivePageCount(await browserBytes(path)) }
+  // XPS is rendered by Windows itself; 0 pages is how the backend says "can't show this".
+  return { ...base, pages: kind === 'xps' ? 0 : 1 }
+}
+
+/** Media types the share sheet needs to offer the right apps. */
+function mimeOf(name: string): string {
+  const ext = extOf(name)
+  const types: Record<string, string> = { pdf: 'application/pdf', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', csv: 'text/csv', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', avif: 'image/avif', bmp: 'image/bmp', tif: 'image/tiff', tiff: 'image/tiff', heic: 'image/heic', svg: 'image/svg+xml', mp4: 'video/mp4', m4v: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime', ogv: 'video/ogg', mkv: 'video/x-matroska', mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac', wav: 'audio/wav', oga: 'audio/ogg', ogg: 'audio/ogg', opus: 'audio/ogg', flac: 'audio/flac', weba: 'audio/webm', md: 'text/markdown', txt: 'text/plain', epub: 'application/epub+zip', eml: 'message/rfc822' }
+  return types[ext] ?? 'application/octet-stream'
+}
+
+function classifyExt(ext: string): Kind {
+  if (BROWSER_NATIVE.includes(ext) || WASM_IMAGES.includes(ext) || RAW_IMAGES.includes(ext)) return 'image'
+  if (MODELS.includes(ext)) return 'model'
+  if (ext === 'cbz') return 'archive'
+  if (PREVIEWS.includes(ext)) return 'preview'
+  if (['ps', 'eps', 'epsf', 'epsi'].includes(ext)) return 'postscript'
+  if (ext === 'xps' || ext === 'oxps') return 'xps'
+  return 'unsupported'
 }
 
 export async function readFile(path: string): Promise<Uint8Array> {
-  if (!isTauri) {
-    const f = browserFiles.get(path)
-    if (!f) throw new Error(`Unknown file ${path}`)
-    return new Uint8Array(await f.arrayBuffer())
-  }
+  if (!isTauri) return browserBytes(path)
   const res = await fetch(schemeUrl('file', { path }))
   if (!res.ok) throw new Error(await res.text())
   return new Uint8Array(await res.arrayBuffer())
+}
+
+/**
+ * An address a <video> or <audio> element can play the file from. In the browser
+ * that's the picked file itself; the app reads it into memory first. Call revoke when done.
+ */
+export async function mediaUrl(path: string, name: string): Promise<{ url: string; revoke: () => void }> {
+  const f = browserFiles.get(path)
+  const blob = f ?? new Blob([(await readFile(path)) as Uint8Array<ArrayBuffer>], { type: mimeOf(name) })
+  const url = blobUrl(blob)
+  return { url, revoke: () => URL.revokeObjectURL(url) }
 }
 
 export async function writeFile(path: string, data: Uint8Array): Promise<void> {
@@ -114,6 +209,8 @@ export async function writeFile(path: string, data: Uint8Array): Promise<void> {
 }
 
 export async function writeTemp(name: string, data: Uint8Array): Promise<string> {
+  // The browser has no temp folder: the bytes become an in-memory file instead.
+  if (!isTauri) return registerBrowserFile(new File([data as BlobPart], name, { type: mimeOf(name) }))
   return invoke<string>('write_temp', data, { headers: { 'x-name': encodeURIComponent(name) } })
 }
 
@@ -303,6 +400,8 @@ export async function openUrl(url: string): Promise<void> {
 }
 
 export async function convertPostscript(path: string): Promise<string> {
+  // Ghostscript is a separate program, so the browser version can't convert.
+  if (!isTauri) throw new Error('ghostscript-missing')
   return invoke<string>('convert_postscript', { path })
 }
 
@@ -655,7 +754,20 @@ export async function fileStamp(path: string): Promise<FileStamp | null> {
 
 /** Opens the Windows share sheet for these files. */
 export async function shareFiles(paths: string[], title: string): Promise<void> {
-  if (!isTauri) throw new Error(t('Sharing uses the Windows share sheet, available in the Windows app.'))
+  if (!isTauri) {
+    const files = paths.map((p) => browserFiles.get(p)).filter((f): f is File => !!f)
+    // The phone's share sheet where there is one (WhatsApp, Mail, Files); a download elsewhere.
+    if (navigator.canShare?.({ files })) {
+      try {
+        await navigator.share({ files, title })
+      } catch (e) {
+        if ((e as Error).name !== 'AbortError') throw e
+      }
+      return
+    }
+    for (const f of files) await writeFile(f.name, new Uint8Array(await f.arrayBuffer()))
+    return
+  }
   await invoke('share_files', { paths, title })
 }
 

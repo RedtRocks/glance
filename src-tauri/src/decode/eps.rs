@@ -4,10 +4,13 @@
 //! installed we run it as a separate program to convert to PDF, which keeps vectors
 //! sharp. Otherwise we fall back to the TIFF preview embedded in DOS-EPS files.
 
+#[cfg(not(target_arch = "wasm32"))]
 use std::path::{Path, PathBuf};
+#[cfg(not(target_arch = "wasm32"))]
 use std::process::Command;
 
 /// Locates `gswin64c.exe` / `gswin32c.exe` / `gs` on PATH or in the default install dirs.
+#[cfg(not(target_arch = "wasm32"))] // no programs to run in the browser version
 pub fn find_ghostscript() -> Option<PathBuf> {
     for name in ["gswin64c", "gswin32c", "gs"] {
         if let Ok(p) = which::which(name) {
@@ -33,6 +36,7 @@ pub fn find_ghostscript() -> Option<PathBuf> {
 }
 
 /// Converts PS/EPS to PDF with Ghostscript. EPS pages are cropped to the bounding box.
+#[cfg(not(target_arch = "wasm32"))]
 pub fn to_pdf(gs: &Path, input: &Path, output: &Path) -> Result<(), String> {
     let mut cmd = Command::new(gs);
     cmd.args(["-dSAFER", "-dBATCH", "-dNOPAUSE", "-dQUIET", "-sDEVICE=pdfwrite", "-dEPSCrop"])

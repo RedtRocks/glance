@@ -9,3 +9,6 @@ public/pdfjs/
 src-tauri/target/
 src-tauri/gen/
 src-tauri/thumbnailer/target/
+dist-web/
+public/decoder.wasm
+web/decoder/target/

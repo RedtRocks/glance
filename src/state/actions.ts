@@ -14,6 +14,7 @@ import {
   findByPath,
   ImageDoc,
   ModelDoc,
+  PreviewDoc,
   NoticeDoc,
   PdfDoc,
   removeDoc,
@@ -25,6 +26,7 @@ import * as versions from './versions'
 import { flushAutosave } from './autosave'
 import { msg, t } from '../i18n'
 import { mayHaveSignatures } from '../core/signatureStatus'
+import { PREVIEWS } from '../core/previews'
 
 const GS_INSTALL = 'winget install ArtifexSoftware.GhostScript'
 
@@ -38,10 +40,12 @@ export const OPEN_FILTERS: platform.FileFilter[] = [
       'exr', 'hdr', 'tga', 'dds', 'qoi', 'ppm', 'pgm', 'pbm', 'pam', 'pnm', 'icns', 'psd', 'psb',
       'cr2', 'cr3', 'crw', 'nef', 'nrw', 'arw', 'srf', 'sr2', 'raf', 'orf', 'rw2', 'raw', 'dng', 'pef',
       'srw', 'x3f', 'erf', 'mef', 'mos', 'mrw', 'kdc', 'dcr', '3fr', 'fff', 'iiq', 'rwl', 'gpr',
-      'glb', 'gltf', 'obj', 'stl', 'ply', 'fbx', 'usdz', 'usda', 'usdc', 'dae', '3mf', '3ds'
+      'glb', 'gltf', 'obj', 'stl', 'ply', 'fbx', 'usdz', 'usda', 'usdc', 'dae', '3mf', '3ds',
+      ...PREVIEWS
     ]
   },
   { name: msg('PDF documents'), extensions: ['pdf', 'ai'] },
+  { name: msg('Word, PowerPoint and Excel files'), extensions: PREVIEWS },
   { name: msg('All files'), extensions: ['*'] }
 ]
 
@@ -143,6 +147,11 @@ async function openFresh(path: string): Promise<Doc | null> {
     }
     case 'model': {
       const doc = new ModelDoc(probe)
+      addDoc(doc)
+      return doc
+    }
+    case 'preview': {
+      const doc = new PreviewDoc(probe)
       addDoc(doc)
       return doc
     }
@@ -400,7 +409,7 @@ export async function movePages(doc: PdfDoc, pages: number[], to: number): Promi
 export async function imageForPdf(probe: Probe): Promise<PageOps.ImageInput> {
   if (/\.(jpe?g|jfif)$/i.test(probe.path)) return { bytes: await platform.readFile(probe.path), type: 'jpg' }
   if (/\.png$/i.test(probe.path)) return { bytes: await platform.readFile(probe.path), type: 'png' }
-  const res = await fetch(platform.imageUrl(probe))
+  const res = await fetch(await platform.imageUrlAsync(probe))
   const bitmap = await createImageBitmap(await res.blob())
   const canvas = new OffscreenCanvas(bitmap.width, bitmap.height)
   canvas.getContext('2d')!.drawImage(bitmap, 0, 0)

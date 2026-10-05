@@ -1,0 +1,29 @@
+[package]
+name = "glance-web-decoder"
+version = "0.0.0"
+edition = "2021"
+license = "Apache-2.0"
+publish = false
+description = "The desktop app's pure-Rust image decoders, built for the browser version of Glance."
+
+[lib]
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+
+# Same decoders as src-tauri, without threads (wasm32-unknown-unknown has none).
+[dependencies]
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "bmp", "ico", "tiff", "webp", "tga", "exr", "hdr", "dds", "pnm", "qoi"] }
+icns = "0.5"
+jxl-oxide = { version = "0.12", default-features = false, features = ["image"] }
+hayro-jpeg2000 = "0.4"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+serde = { version = "1", features = ["derive"] }
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[workspace]

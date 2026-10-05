@@ -10,6 +10,10 @@ What it does:
 - 3D models: GLB, glTF, OBJ, STL, 3MF, FBX, USDZ, 3DS with orbit, wireframe, clay and X-ray materials.
 - Windows integration: default-app registration, Explorer thumbnails for PDF, RAW, PSD, JPEG XL and other types Windows can't preview, dark mode, x64 and ARM64 builds.
 
+## In the browser
+
+Glance also runs in any modern browser at https://redtrocks.github.io/glance/app/ (installable, works offline, files never leave the device). It opens 190+ file types: PDFs (with editing), photos including HEIC and camera RAW, Photoshop PSD, Word, PowerPoint and Excel (read-only), CSV, Markdown, code and text, EPUB, CBZ, email (.eml, .msg), fonts, video and audio, and 3D models. Pages for each type: https://redtrocks.github.io/glance/file-viewer/
+
 ## Links
 
 - [Website](https://redtrocks.github.io/glance/)

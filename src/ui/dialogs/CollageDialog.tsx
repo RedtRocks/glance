@@ -12,7 +12,7 @@ type Background = 'white' | 'black' | 'transparent'
 
 async function bitmap(path: string, max?: number): Promise<ImageBitmap> {
   const probe = await platform.probe(path)
-  const res = await fetch(platform.imageUrl(probe, 0, max))
+  const res = await fetch(await platform.imageUrlAsync(probe, 0, max))
   return createImageBitmap(await res.blob(), { imageOrientation: 'from-image' })
 }
 

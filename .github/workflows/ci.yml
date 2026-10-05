@@ -52,6 +52,32 @@ jobs:
       - run: npm test
       - run: npx vite build
 
+  web:
+    name: Web version (WebAssembly decoders, offline build)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: web/decoder
+          key: wasm
+      - run: npm ci
+      - run: node scripts/build-web.mjs
+      - name: Check the offline build is complete
+        run: |
+          test -f dist-web/decoder.wasm
+          test -f dist-web/web/manifest.webmanifest
+          grep -q "const CORE = \[" dist-web/sw.js
+
   windows:
     name: Windows (Rust tests incl. WIC, NSIS installer)
     needs: changes

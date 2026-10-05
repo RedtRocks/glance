@@ -72,6 +72,7 @@ function zoom(dir: 1 | -1): void {
   const d = activeDoc.value
   if (!d || d.kind === 'notice') return
   if (d.kind === 'model') return void (d.viewRequest.value = { kind: 'zoom', dir })
+  if (d.kind === 'preview') return void (d.zoom.value = stepZoom(d.zoom.value, dir))
   const next = stepZoom(d.effectiveScale.value, dir)
   if (d.kind === 'pdf') d.zoom.value = next
   else d.zoom.value = next
@@ -81,6 +82,7 @@ function setZoom(mode: 'actual' | 'fit'): void {
   const d = activeDoc.value
   if (!d || d.kind === 'notice') return
   if (d.kind === 'model') return void (d.viewRequest.value = { kind: 'reset' })
+  if (d.kind === 'preview') return void (d.zoom.value = 1)
   if (d.kind === 'pdf') d.zoom.value = mode === 'actual' ? 1 : 'fit-page'
   else d.zoom.value = mode === 'actual' ? 1 : 'fit'
 }
@@ -138,7 +140,7 @@ export const COMMANDS: Command[] = [
   { id: 'file.cleanup', label: msg('Clean Up PDF…'), run: () => void (cleanupOpen.value = true), enabled: isPdf },
   { id: 'file.collage', label: msg('Create Collage…'), run: () => void (collageOpen.value = true) },
   { id: 'file.batch', label: msg('Batch Edit Images…'), run: () => void (batchOpen.value = true) },
-  { id: 'file.share', label: msg('Share…'), run: () => shell.shareDoc(), enabled: () => platform.isTauri },
+  { id: 'file.share', label: msg('Share…'), run: () => shell.shareDoc() },
   { id: 'file.openWith', label: msg('Open With Another App…'), run: () => shell.openWithOtherApp(), enabled: () => shell.canOpenWith() },
   { id: 'image.setWallpaper', label: msg('Set as Desktop Background'), run: () => shell.setAsWallpaper('desktop'), enabled: anyImage },
   { id: 'image.setLockScreen', label: msg('Set as Lock Screen'), run: () => shell.setAsWallpaper('lock'), enabled: anyImage },
@@ -336,7 +338,7 @@ const ifMarkup = () => ifPdf() || isImage()
 const ifPaged = () => ifPdf() || multiPage()
 const VISIBILITY: [(() => boolean), string[]][] = [
   [hasDoc, ['file.close', 'file.openWith', 'view.customizeToolbar']],
-  [() => ifPdf() || anyImage(), ['file.share']],
+  [() => ifPdf() || anyImage() || activeDoc.value?.kind === 'preview', ['file.share']],
   [ifViewable, ['view.inspector']],
   [() => ifPdf() || anyImage(), ['file.versions']],
   [ifViewable, ['view.zoomIn', 'view.zoomOut', 'view.zoomToFit', 'view.fullscreen']],
@@ -364,6 +366,22 @@ for (const [rule, ids] of VISIBILITY) {
     const cmd = COMMANDS.find((c) => c.id === id)
     if (!cmd) throw new Error(`visibility rule for unknown command ${id}`)
     cmd.visible = rule
+  }
+}
+
+// The browser version can't reach Windows: these stay out of its menus.
+const WINDOWS_ONLY = [
+  'file.newFromClipboard', 'file.scan', 'file.newWindow', 'file.openWith', 'file.makeDefault', 'file.versions', 'file.batch',
+  'image.setWallpaper', 'image.setLockScreen', 'tools.ocr', 'tools.copyImageText', 'tools.certSign', 'view.signatures',
+  'view.customizeToolbar', 'help.updates',
+  // The subject model runs in the Rust backend.
+  'tools.removeBackground', 'tools.copySubject'
+]
+if (!platform.isTauri) {
+  for (const id of WINDOWS_ONLY) {
+    const cmd = COMMANDS.find((c) => c.id === id)
+    if (!cmd) throw new Error(`web rule for unknown command ${id}`)
+    cmd.visible = () => false
   }
 }
 
