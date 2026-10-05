@@ -64,6 +64,10 @@ describe('MSIX manifest', () => {
     const xml = msixManifest(conf, 'x64', DEV_IDENTITY)
     expect(xml).toContain('<uap3:Extension Category="windows.appExecutionAlias" Executable="glance-mcp.exe"')
     expect(xml).toContain('<desktop:ExecutionAlias Alias="glance-mcp.exe" />')
+    // MakeAppx allows one alias extension per application.
+    for (const app of xml.split('<Application ').slice(1)) {
+      expect(app.match(/Category="windows.appExecutionAlias"/g)?.length ?? 0).toBeLessThanOrEqual(1)
+    }
   })
 
   it('escapes the identity', () => {
