@@ -22,7 +22,7 @@ const closeSheet = (): void => void (phoneSheet.value = null)
 
 function sizeOf(doc: Doc): number | null {
   if (doc.kind === 'pdf') return doc.bytes.length || null
-  if (doc.kind === 'image' || doc.kind === 'model') return doc.probe.size
+  if (doc.kind === 'image' || doc.kind === 'model' || doc.kind === 'office') return doc.probe.size
   return null
 }
 
@@ -132,7 +132,7 @@ export function PhoneDock({ doc }: { doc: Doc }) {
       {paged && <DockButton icon="grid" label={t('Pages')} onClick={() => (phoneSheet.value = 'pages')} />}
       {doc.kind === 'pdf' && <DockButton icon="search" label={t('Search')} pressed={findOpen.value} onClick={() => (findOpen.value = !findOpen.value)} />}
       {doc.kind === 'image' && !paged && <DockButton icon="rotateLeft" label={t('Rotate')} onClick={() => void runCommand('tools.rotateLeft')} />}
-      {doc.kind !== 'model' && isVisible('tools.markup') && <DockButton icon="pen" label={t('Markup')} onClick={() => void runCommand('tools.markup')} />}
+      {(doc.kind === 'pdf' || doc.kind === 'image') && isVisible('tools.markup') && <DockButton icon="pen" label={t('Markup')} onClick={() => void runCommand('tools.markup')} />}
       {doc.kind === 'image' && isVisible('tools.adjustColor') && <DockButton icon="adjustColor" label={t('Adjust')} onClick={() => void runCommand('tools.adjustColor')} />}
       {doc.kind === 'model' && <DockButton icon="cube" label={t('Reset View')} onClick={() => void runCommand('model.resetView')} />}
       {share}
@@ -142,7 +142,7 @@ export function PhoneDock({ doc }: { doc: Doc }) {
 }
 
 export function PageCounter({ doc }: { doc: Doc }) {
-  if (markupBar.value || (doc.kind !== 'pdf' && doc.kind !== 'image')) return null
+  if (markupBar.value || doc.kind === 'notice' || doc.kind === 'model' || (doc.kind === 'office' && doc.flavor === 'sheets')) return null
   const count = doc.pageCount.value
   if (count < 2) return null
   return <div class="page-counter" aria-live="polite">{t('{page} of {count}', { page: doc.current.value + 1, count })}</div>

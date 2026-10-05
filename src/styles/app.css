@@ -2641,3 +2641,122 @@ input[type='range'] {
   padding: 24px;
   color: var(--text-2);
 }
+
+/* ---------- Office files (Word, PowerPoint, Excel) ---------- */
+/* Office's own fonts where installed, else ones with the same metrics, else the
+   closest common font, so a Calibri document doesn't fall back to a serif. */
+@font-face { font-family: Calibri; src: local('Calibri'), local('Carlito'), local('Segoe UI'), local('Roboto'), local('Helvetica Neue'), local('Arial'); }
+@font-face { font-family: Calibri Light; src: local('Calibri Light'), local('Carlito'), local('Segoe UI Light'), local('Roboto Light'), local('Helvetica Neue'), local('Arial'); }
+@font-face { font-family: Cambria; src: local('Cambria'), local('Caladea'), local('Georgia'), local('Times New Roman'); }
+@font-face { font-family: Aptos; src: local('Aptos'), local('Segoe UI'), local('Roboto'), local('Helvetica Neue'), local('Arial'); }
+@font-face { font-family: Arial; src: local('Arial'), local('Liberation Sans'), local('Helvetica Neue'), local('Helvetica'), local('Roboto'); }
+@font-face { font-family: Times New Roman; src: local('Times New Roman'), local('Liberation Serif'), local('Times'), local('Georgia'); }
+.office-view {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+.office-scroller {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  user-select: text;
+}
+/* docx-preview's grey wrapper gives way to the app's canvas; pages keep their paper. */
+.office-word .docx-wrapper {
+  background: transparent;
+  padding: 24px 16px 96px;
+}
+.office-word .docx-wrapper > section.docx {
+  box-shadow: var(--page-shadow);
+  margin-bottom: 24px;
+}
+.office-slides {
+  padding: 16px 0;
+}
+.office-sheets {
+  display: inline-block;
+  min-width: 100%;
+}
+.office-view-sheets .office-scroller {
+  background: var(--card);
+}
+.sheet-grid {
+  border-collapse: collapse;
+  table-layout: fixed;
+  font: 13px/18px 'Segoe UI', Calibri, Arial, sans-serif;
+  color: #000;
+  background: #fff;
+}
+.sheet-grid td,
+.sheet-grid th {
+  min-width: 64px;
+  height: 22px;
+  padding: 1px 6px;
+  border: 1px solid #e1e1e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+.sheet-grid td.num {
+  text-align: right;
+}
+.sheet-grid th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  min-width: 40px;
+  background: var(--layer-alt);
+  color: var(--text-2);
+  font-weight: 400;
+  text-align: center;
+}
+.sheet-grid tr > th:first-child {
+  left: 0;
+  z-index: 2;
+}
+.sheet-tabs {
+  display: flex;
+  gap: 2px;
+  flex: none;
+  padding: 4px 8px;
+  overflow-x: auto;
+  background: var(--layer-alt);
+  border-top: 1px solid var(--stroke);
+}
+.sheet-tabs button {
+  flex: none;
+  height: 30px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-2);
+}
+.sheet-tabs button[aria-selected='true'] {
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 0 0 1px var(--stroke);
+}
+.office-status {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 32px;
+  text-align: center;
+  background: var(--canvas);
+}
+.office-status h2 {
+  margin: 0;
+  font: 600 20px/28px var(--font-display);
+}
+.office-status p {
+  margin: 0;
+  max-width: 520px;
+  color: var(--text-2);
+}

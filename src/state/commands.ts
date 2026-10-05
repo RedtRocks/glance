@@ -338,7 +338,7 @@ const ifMarkup = () => ifPdf() || isImage()
 const ifPaged = () => ifPdf() || multiPage()
 const VISIBILITY: [(() => boolean), string[]][] = [
   [hasDoc, ['file.close', 'file.openWith', 'view.customizeToolbar']],
-  [() => ifPdf() || anyImage(), ['file.share']],
+  [() => ifPdf() || anyImage() || activeDoc.value?.kind === 'office', ['file.share']],
   [ifViewable, ['view.inspector']],
   [() => ifPdf() || anyImage(), ['file.versions']],
   [ifViewable, ['view.zoomIn', 'view.zoomOut', 'view.zoomToFit', 'view.fullscreen']],

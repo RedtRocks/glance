@@ -26,7 +26,7 @@
     "@tauri-apps/plugin-dialog": "2.7.3",
     "@tauri-apps/plugin-opener": "2.5.5",
     "docx-preview": "^0.4.1",
-    "exceljs": "^4.4.0",
+    "jszip": "^3.10.1",
     "pdfjs-dist": "6.3.289",
     "preact": "10.29.8",
     "three": "0.180.0"

@@ -1010,3 +1010,31 @@
 :root[data-platform='web'] .w-field input:focus-visible {
   outline: none;
 }
+:root[data-platform='web'] .sheet-tabs {
+  gap: 6px;
+  padding: 8px 12px;
+  border: 0;
+  background: var(--subtle);
+}
+:root[data-platform='web'] .sheet-tabs button {
+  height: 36px;
+  border-radius: 9999px;
+  color: var(--ink);
+}
+:root[data-platform='web'] .sheet-tabs button[aria-selected='true'] {
+  background: var(--ink);
+  color: var(--on-ink);
+  box-shadow: none;
+}
+@media (max-width: 700px) {
+  /* Clear of the floating dock. */
+  :root[data-platform='web'] .office-scroller {
+    padding-bottom: 96px;
+  }
+  :root[data-platform='web'] .sheet-tabs {
+    margin-bottom: 88px;
+  }
+  :root[data-platform='web'] .office-word .docx-wrapper {
+    padding: 12px 0 96px;
+  }
+}

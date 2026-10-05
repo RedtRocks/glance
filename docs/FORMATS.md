@@ -11,6 +11,16 @@
 | XPS / OpenXPS | `.xps`, `.oxps` | Windows XPS Rasterization Service |
 | Comic book archives | `.cbz` | Zip of images, shown as pages |
 
+## Office files (read-only preview)
+| Format | Extensions | Engine |
+|---|---|---|
+| Word | `.docx .docm .dotx .dotm` | `docx-preview`, loaded on demand |
+| PowerPoint | `.pptx .pptm .ppsx .ppsm .potx .potm` | `@aiden0z/pptx-renderer`, loaded on demand |
+| Excel | `.xlsx .xlsm .xltx .xltm` | `src/office/xlsx.ts` (saved values, formats, fills, merges; no charts) |
+| CSV / TSV | `.csv .tsv` | `src/office/render.ts` |
+
+Each shows a bar with **Open with…** (Windows app) to edit the file in Office or another app. Older binary files (`.doc .xls .ppt`) and OpenDocument aren't previewed.
+
 ## Images
 | Format | Extensions | Engine |
 |---|---|---|
