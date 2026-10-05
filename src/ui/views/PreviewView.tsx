@@ -4,6 +4,7 @@ import type { PreviewRendering } from '../../preview/render'
 import * as platform from '../../platform'
 import { t } from '../../i18n'
 import { openFiles } from '../../state/actions'
+import { useTouchZoom } from '../touchGestures'
 
 /** Office files, text, Markdown, media, books, fonts and email, previewed read-only (preview/render.ts, loaded on demand). */
 export function PreviewView({ doc }: { doc: PreviewDoc }) {
@@ -13,6 +14,8 @@ export function PreviewView({ doc }: { doc: PreviewDoc }) {
   const [state, setState] = useState<'loading' | 'ready' | string>('loading')
   /** Set while the view itself moves the current page, so scrolling doesn't fight it. */
   const following = useRef(-1)
+  /** The zoom the file opened at, which a double-tap returns to. */
+  const startZoom = useRef(1)
 
   useEffect(() => {
     let cancelled = false
@@ -37,6 +40,7 @@ export function PreviewView({ doc }: { doc: PreviewDoc }) {
         const page = host.current.querySelector<HTMLElement>('section.docx')
         if (page && page.offsetWidth > scroller.current.clientWidth - 32) doc.zoom.value = Math.max(0.25, (scroller.current.clientWidth - 32) / page.offsetWidth)
         r.setZoom(doc.zoom.peek())
+        startZoom.current = doc.zoom.peek()
         setState('ready')
       } catch (e) {
         console.error(e)
@@ -51,6 +55,19 @@ export function PreviewView({ doc }: { doc: PreviewDoc }) {
   }, [doc])
 
   const zoom = doc.zoom.value
+  useTouchZoom(
+    scroller,
+    {
+      content: () => host.current,
+      scale: () => doc.zoom.peek(),
+      zoom: (s) => (doc.zoom.value = s),
+      min: 0.25,
+      max: 5,
+      doubleTap: (s) => (s <= startZoom.current * 1.01 ? s * 2 : null),
+      fit: () => (doc.zoom.value = startZoom.current)
+    },
+    [doc]
+  )
   useEffect(() => rendering.current?.setZoom(zoom), [zoom])
 
   // Go menu, page counter and sheet tabs move the view; scrolling moves them back.

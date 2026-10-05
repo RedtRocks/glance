@@ -7,6 +7,7 @@ import * as platform from '../../platform'
 import { Icon } from '../Icon'
 import { Popover } from '../markup/Popover'
 import { intlLocale, msg, t } from '../../i18n'
+import { isDoubleTap, isTap } from '../touchGestures'
 
 /** A file next to the model, referenced by name (textures, .bin buffers, .mtl materials). */
 function sibling(modelPath: string, relative: string): string {
@@ -118,6 +119,35 @@ export function ModelView({ doc }: { doc: ModelDoc }) {
       viewer.current = null
     }
   }, [doc])
+
+  // Touch: one finger orbits and two pinch or pan (OrbitControls); a double-tap resets the view.
+  useEffect(() => {
+    const c = canvas.current!
+    let down: { x: number; y: number; t: number } | null = null
+    let last: { x: number; y: number; t: number } | null = null
+    const onStart = (e: TouchEvent): void => {
+      const p = e.touches[0]
+      down = e.touches.length === 1 ? { x: p.clientX, y: p.clientY, t: e.timeStamp } : null
+    }
+    const onEnd = (e: TouchEvent): void => {
+      const p = e.changedTouches[0]
+      const start = down
+      down = null
+      if (!start || e.touches.length || !p) return
+      const tap = { x: p.clientX, y: p.clientY, t: e.timeStamp }
+      if (!isTap(tap.x - start.x, tap.y - start.y, tap.t - start.t)) return void (last = null)
+      if (last && isDoubleTap(last, tap)) {
+        last = null
+        viewer.current?.resetView()
+      } else last = tap
+    }
+    c.addEventListener('touchstart', onStart, { passive: true })
+    c.addEventListener('touchend', onEnd)
+    return () => {
+      c.removeEventListener('touchstart', onStart)
+      c.removeEventListener('touchend', onEnd)
+    }
+  }, [])
 
   useEffect(() => viewer.current?.setWireframe(doc.wireframe.value), [doc.wireframe.value])
   useEffect(() => viewer.current?.setAutoRotate(doc.autoRotate.value), [doc.autoRotate.value])

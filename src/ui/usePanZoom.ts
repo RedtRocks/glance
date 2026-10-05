@@ -17,9 +17,11 @@ export function dragPan(el: HTMLElement, e: PointerEvent): void {
     el.classList.remove('panning')
     window.removeEventListener('pointermove', move)
     window.removeEventListener('pointerup', up)
+    window.removeEventListener('pointercancel', up)
   }
   window.addEventListener('pointermove', move)
   window.addEventListener('pointerup', up)
+  window.addEventListener('pointercancel', up)
 }
 
 /** One zoom step in or out, keeping the clicked point under the pointer. */
@@ -57,7 +59,10 @@ export function usePanZoom(ref: { current: HTMLElement | null }, doc: PdfDoc | I
       if (!spaceHeld.peek() && t !== 'hand' && t !== 'zoom') return
       e.preventDefault()
       e.stopPropagation()
-      if (spaceHeld.peek() || t === 'hand') dragPan(el, e)
+      // A finger already pans natively; the Hand tool only needs to stop drawing.
+      if (spaceHeld.peek() || t === 'hand') {
+        if (e.pointerType !== 'touch') dragPan(el, e)
+      }
       else zoomAt(el, doc, e, e.altKey ? -1 : 1)
     }
     el.addEventListener('pointerdown', onDown, true)

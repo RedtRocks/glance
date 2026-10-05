@@ -11,6 +11,9 @@ import { t } from '../../i18n'
 import { straighten } from '../../state/imageState'
 import { StraightenBar, StraightenOverlay, straightenPreview } from '../image/Straighten'
 import { dragPan, usePanZoom } from '../usePanZoom'
+import { useTouchZoom } from '../touchGestures'
+import { ZOOM_STEPS } from '../../state/commands'
+import { activeId, docs } from '../../state/documents'
 
 /** Draws the magnified content of loupe markup (the ring itself is SVG in the markup layer). */
 function LoupeLayer({ doc, source, scale }: { doc: ImageDoc; source: HTMLCanvasElement | HTMLImageElement | null; scale: number }) {
@@ -105,11 +108,39 @@ export function ImageView({ doc }: { doc: ImageDoc }) {
   // Drag to pan (Select tool only; drawing tools own the pointer).
   const onPointerDown = (e: PointerEvent): void => {
     const el = box.current
-    if (!el || e.button !== 0 || tool.peek() !== 'select' || e.defaultPrevented) return
+    // A finger scrolls natively (see touchGestures for pinch and swipe).
+    if (!el || e.button !== 0 || e.pointerType === 'touch' || tool.peek() !== 'select' || e.defaultPrevented) return
     if ((e.target as HTMLElement).closest('.text-box.editing, .note-editor')) return
     dragPan(el, e)
   }
   const panZoom = usePanZoom(box, doc)
+  useTouchZoom(
+    box,
+    {
+      content: () => box.current?.firstElementChild as HTMLElement | null,
+      scale: () => doc.effectiveScale.peek(),
+      zoom: (s) => (doc.zoom.value = s),
+      min: ZOOM_STEPS[0],
+      max: ZOOM_STEPS.at(-1)!,
+      // From fitting the window to actual pixels (or 2.5x a small image), and back.
+      doubleTap: (s) => (doc.zoom.peek() === 'fit' ? Math.max(1, s * 2.5) : null),
+      fit: () => (doc.zoom.value = 'fit'),
+      // Swipe through the pages of a multi-page image, or else between open files.
+      swipe: (dir) => {
+        const pages = doc.pageCount.peek()
+        if (pages > 1) {
+          doc.current.value = Math.min(pages - 1, Math.max(0, doc.current.peek() + dir))
+          return
+        }
+        const all = docs.peek()
+        const next = all[all.findIndex((d) => d.id === doc.id) + dir]
+        if (next) activeId.value = next.id
+      },
+      tapsAllowed: () => tool.peek() === 'select' || tool.peek() === 'hand',
+      anchor: () => '.image-page'
+    },
+    [doc]
+  )
 
   const w = natural ? natural.width * scale : 0
   const h = natural ? natural.height * scale : 0

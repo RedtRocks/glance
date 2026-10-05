@@ -8,6 +8,8 @@ import { markSelection } from '../markup/textSelection'
 import { tool } from '../../state/markupState'
 import { pageDrag } from '../dragState'
 import { usePanZoom } from '../usePanZoom'
+import { useTouchZoom } from '../touchGestures'
+import { ZOOM_STEPS } from '../../state/commands'
 
 const PAD = 24
 const GAP = 16
@@ -156,6 +158,28 @@ function PdfScroller({ doc }: { doc: PdfDoc }) {
   }
 
   const panZoom = usePanZoom(scroller, doc)
+  useTouchZoom(
+    scroller,
+    {
+      content: () => scroller.current?.firstElementChild as HTMLElement | null,
+      scale: () => doc.effectiveScale.peek(),
+      zoom: (s) => (doc.zoom.value = s),
+      min: ZOOM_STEPS[0],
+      max: ZOOM_STEPS.at(-1)!,
+      // From a fit mode to twice the size, and back to the page width.
+      doubleTap: (s) => (typeof doc.zoom.peek() === 'number' ? null : s * 2),
+      fit: () => (doc.zoom.value = 'fit-width'),
+      swipe: (dir) => {
+        if (doc.viewMode.peek() === 'single') doc.goTo(doc.current.peek() + dir)
+      },
+      tapsAllowed: () => tool.peek() === 'select' || tool.peek() === 'hand',
+      anchor: (under) => {
+        const page = under.closest<HTMLElement>('[data-page]')
+        return page ? `[data-page="${page.dataset.page}"]` : null
+      }
+    },
+    [doc]
+  )
   const drag = pageDrag.value
   const drop = drag && drag.docId !== doc.id && drag.targetDocId === doc.id ? drag.insertAt : null
   return (
