@@ -23,7 +23,7 @@ import { PdfView } from './views/PdfView'
 import { ImageView } from './views/ImageView'
 import { NoticeView } from './views/NoticeView'
 import { ModelView } from './views/ModelView'
-import { OfficeView } from './views/OfficeView'
+import { PreviewView } from './views/PreviewView'
 import { Welcome } from './views/Welcome'
 import { Slideshow } from './views/Slideshow'
 import { DialogHost } from './dialogs/Dialog'
@@ -79,7 +79,7 @@ function Viewer() {
           {doc.kind === 'image' && <ImageView key={doc.id} doc={doc} />}
           {doc.kind === 'notice' && <NoticeView doc={doc} />}
           {doc.kind === 'model' && <ModelView key={doc.id} doc={doc} />}
-          {doc.kind === 'office' && <OfficeView key={doc.id} doc={doc} />}
+          {doc.kind === 'preview' && <PreviewView key={doc.id} doc={doc} />}
         </div>
         {phone && <PageCounter doc={doc} />}
         {phone && <PhoneDock doc={doc} />}

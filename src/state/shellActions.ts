@@ -8,7 +8,7 @@ import { activeDoc, ImageDoc, PdfDoc, type Doc } from './documents'
 import { alertDialog, toast, withBusy } from './ui'
 import { canRemoveLocation, type ShellRequest } from '../core/explorer'
 import { msg, t } from '../i18n'
-import { SHEETS, SLIDES, WORD } from '../core/office'
+import { SHEETS, SLIDES, WORD } from '../core/previews'
 
 /**
  * Formats that are really another app's working files; Glance shows a flattened preview.
@@ -24,6 +24,9 @@ const EXTERNAL: Record<string, { kind: string; detail: string }> = {
   ...office(WORD, { kind: msg('Word document'), detail: msg('Glance shows a preview. To edit it, open it in Word or another word processor.') }),
   ...office(SLIDES, { kind: msg('PowerPoint presentation'), detail: msg('Glance shows a preview. To edit it or play animations, open it in PowerPoint or another presentation app.') }),
   ...office(SHEETS, { kind: msg('Spreadsheet'), detail: msg('Glance shows the saved values. To edit it or see charts, open it in Excel or another spreadsheet app.') }),
+  eml: { kind: msg('Email message'), detail: msg('Glance shows the message. To reply or forward it, open it in Outlook or another mail app.') },
+  msg: { kind: msg('Outlook message'), detail: msg('Glance shows the message. To reply or forward it, open it in Outlook or another mail app.') },
+  epub: { kind: msg('E-book'), detail: msg('Glance shows the text and pictures. For the book’s own layout and your reading place, open it in a reading app.') },
   ...Object.fromEntries(
     ['cr2', 'cr3', 'nef', 'nrw', 'arw', 'srf', 'sr2', 'raf', 'orf', 'rw2', 'dng', 'pef', 'srw', 'x3f', 'erf', '3fr', 'iiq', 'mrw', 'kdc', 'dcr'].map((e) => [
       e,

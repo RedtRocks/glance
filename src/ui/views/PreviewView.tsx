@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
-import type { OfficeDoc } from '../../state/documents'
-import type { OfficeRendering } from '../../office/render'
+import type { PreviewDoc } from '../../state/documents'
+import type { PreviewRendering } from '../../preview/render'
 import * as platform from '../../platform'
 import { t } from '../../i18n'
+import { openFiles } from '../../state/actions'
 
-/** Word, PowerPoint and Excel files, previewed read-only (office/render.ts, loaded on demand). */
-export function OfficeView({ doc }: { doc: OfficeDoc }) {
+/** Office files, text, Markdown, media, books, fonts and email, previewed read-only (preview/render.ts, loaded on demand). */
+export function PreviewView({ doc }: { doc: PreviewDoc }) {
   const scroller = useRef<HTMLDivElement>(null)
   const host = useRef<HTMLDivElement>(null)
-  const rendering = useRef<OfficeRendering | null>(null)
+  const rendering = useRef<PreviewRendering | null>(null)
   const [state, setState] = useState<'loading' | 'ready' | string>('loading')
   /** Set while the view itself moves the current page, so scrolling doesn't fight it. */
   const following = useRef(-1)
@@ -17,15 +18,16 @@ export function OfficeView({ doc }: { doc: OfficeDoc }) {
     let cancelled = false
     void (async () => {
       try {
-        const [{ renderOffice }, bytes] = await Promise.all([import('../../office/render'), platform.readFile(doc.probe.path)])
+        const { renderPreview } = await import('../../preview/render')
         if (cancelled || !host.current || !scroller.current) return
-        const ext = /\.([^.]+)$/.exec(doc.probe.name)?.[1]?.toLowerCase() ?? ''
-        const r = await renderOffice(doc.flavor, ext, bytes, host.current, {
+        const r = await renderPreview(doc.flavor, doc.probe, host.current, {
           scroller: scroller.current,
           onCurrent: (i) => {
             following.current = i
             doc.current.value = i
-          }
+          },
+          openLink: (href) => void platform.openUrl(href),
+          openAttachment: (name, bytes) => void platform.writeTemp(name, bytes).then((path) => openFiles([path]))
         })
         if (cancelled) return r.dispose()
         rendering.current = r
@@ -61,16 +63,18 @@ export function OfficeView({ doc }: { doc: OfficeDoc }) {
 
   return (
     <div class={`office-view office-view-${doc.flavor}`}>
-      {/* Links open in the browser, never inside Glance (office/render.ts keeps only web and mail links). */}
+      {/* Links open in the browser, never inside Glance (preview/render.ts keeps only web and mail links). */}
       <div
         class="office-scroller"
         ref={scroller}
         onClick={(e) => {
           const a = (e.target as HTMLElement).closest('a')
           const href = a?.getAttribute('href')
-          if (!a || !href || href.startsWith('#')) return
+          if (!a || !href) return
           e.preventDefault()
-          void platform.openUrl(href)
+          // A spot in the same file (a book's table of contents) scrolls there.
+          if (href.startsWith('#')) host.current?.querySelector(`[id="${CSS.escape(decodeURIComponent(href.slice(1)))}"]`)?.scrollIntoView({ block: 'start' })
+          else void platform.openUrl(href)
         }}
       >
         <div ref={host} class="office-host" />

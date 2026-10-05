@@ -72,7 +72,7 @@ function zoom(dir: 1 | -1): void {
   const d = activeDoc.value
   if (!d || d.kind === 'notice') return
   if (d.kind === 'model') return void (d.viewRequest.value = { kind: 'zoom', dir })
-  if (d.kind === 'office') return void (d.zoom.value = stepZoom(d.zoom.value, dir))
+  if (d.kind === 'preview') return void (d.zoom.value = stepZoom(d.zoom.value, dir))
   const next = stepZoom(d.effectiveScale.value, dir)
   if (d.kind === 'pdf') d.zoom.value = next
   else d.zoom.value = next
@@ -82,7 +82,7 @@ function setZoom(mode: 'actual' | 'fit'): void {
   const d = activeDoc.value
   if (!d || d.kind === 'notice') return
   if (d.kind === 'model') return void (d.viewRequest.value = { kind: 'reset' })
-  if (d.kind === 'office') return void (d.zoom.value = 1)
+  if (d.kind === 'preview') return void (d.zoom.value = 1)
   if (d.kind === 'pdf') d.zoom.value = mode === 'actual' ? 1 : 'fit-page'
   else d.zoom.value = mode === 'actual' ? 1 : 'fit'
 }
@@ -338,7 +338,7 @@ const ifMarkup = () => ifPdf() || isImage()
 const ifPaged = () => ifPdf() || multiPage()
 const VISIBILITY: [(() => boolean), string[]][] = [
   [hasDoc, ['file.close', 'file.openWith', 'view.customizeToolbar']],
-  [() => ifPdf() || anyImage() || activeDoc.value?.kind === 'office', ['file.share']],
+  [() => ifPdf() || anyImage() || activeDoc.value?.kind === 'preview', ['file.share']],
   [ifViewable, ['view.inspector']],
   [() => ifPdf() || anyImage(), ['file.versions']],
   [ifViewable, ['view.zoomIn', 'view.zoomOut', 'view.zoomToFit', 'view.fullscreen']],

@@ -6,11 +6,11 @@
  */
 
 import type { ShellRequest } from '../core/explorer'
-import { OFFICE } from '../core/office'
+import { PREVIEWS } from '../core/previews'
 import { archivePage, archivePageCount, cachedUrl, cachedUrlAsync, decodeImage, forgetCached } from './webDecode'
 import { t } from '../i18n'
 
-export type Kind = 'pdf' | 'image' | 'model' | 'postscript' | 'xps' | 'archive' | 'office' | 'unsupported'
+export type Kind = 'pdf' | 'image' | 'model' | 'postscript' | 'xps' | 'archive' | 'preview' | 'unsupported'
 
 export interface Probe {
   path: string
@@ -153,7 +153,7 @@ export async function probe(path: string): Promise<Probe> {
 /** Media types the share sheet needs to offer the right apps. */
 function mimeOf(name: string): string {
   const ext = extOf(name)
-  const types: Record<string, string> = { pdf: 'application/pdf', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', csv: 'text/csv', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', avif: 'image/avif', bmp: 'image/bmp', tif: 'image/tiff', tiff: 'image/tiff', heic: 'image/heic', svg: 'image/svg+xml' }
+  const types: Record<string, string> = { pdf: 'application/pdf', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', csv: 'text/csv', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', avif: 'image/avif', bmp: 'image/bmp', tif: 'image/tiff', tiff: 'image/tiff', heic: 'image/heic', svg: 'image/svg+xml', mp4: 'video/mp4', m4v: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime', ogv: 'video/ogg', mkv: 'video/x-matroska', mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac', wav: 'audio/wav', oga: 'audio/ogg', ogg: 'audio/ogg', opus: 'audio/ogg', flac: 'audio/flac', weba: 'audio/webm', md: 'text/markdown', txt: 'text/plain', epub: 'application/epub+zip', eml: 'message/rfc822' }
   return types[ext] ?? 'application/octet-stream'
 }
 
@@ -161,7 +161,7 @@ function classifyExt(ext: string): Kind {
   if (BROWSER_NATIVE.includes(ext) || WASM_IMAGES.includes(ext) || RAW_IMAGES.includes(ext)) return 'image'
   if (MODELS.includes(ext)) return 'model'
   if (ext === 'cbz') return 'archive'
-  if (OFFICE.includes(ext)) return 'office'
+  if (PREVIEWS.includes(ext)) return 'preview'
   if (['ps', 'eps', 'epsf', 'epsi'].includes(ext)) return 'postscript'
   if (ext === 'xps' || ext === 'oxps') return 'xps'
   return 'unsupported'
@@ -172,6 +172,17 @@ export async function readFile(path: string): Promise<Uint8Array> {
   const res = await fetch(schemeUrl('file', { path }))
   if (!res.ok) throw new Error(await res.text())
   return new Uint8Array(await res.arrayBuffer())
+}
+
+/**
+ * An address a <video> or <audio> element can play the file from. In the browser
+ * that's the picked file itself; the app reads it into memory first. Call revoke when done.
+ */
+export async function mediaUrl(path: string, name: string): Promise<{ url: string; revoke: () => void }> {
+  const f = browserFiles.get(path)
+  const blob = f ?? new Blob([(await readFile(path)) as Uint8Array<ArrayBuffer>], { type: mimeOf(name) })
+  const url = URL.createObjectURL(blob)
+  return { url, revoke: () => URL.revokeObjectURL(url) }
 }
 
 export async function writeFile(path: string, data: Uint8Array): Promise<void> {

@@ -20,7 +20,7 @@ const HELP: Entry[] = ['help.github', 'help.updates', 'help.about']
 const ZOOM: Entry[] = ['view.zoomIn', 'view.zoomOut', 'view.actualSize', 'view.zoomToFit']
 
 /** Each kind of file gets its own menu bar, like separate apps would. */
-export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'office' | 'notice', Record<string, Entry[]>> = {
+export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'preview' | 'notice', Record<string, Entry[]>> = {
   none: {
     File: ['file.open', 'file.newFromClipboard', 'file.scan', 'file.newWindow', '-', 'file.batch', 'file.collage', '-', 'file.makeDefault', 'file.settings'],
     Help: HELP
@@ -65,7 +65,7 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'office' | 'noti
     Go: ['go.nextTab', 'go.previousTab'],
     Help: HELP
   },
-  office: {
+  preview: {
     File: ['file.open', 'file.openWith', 'file.newWindow', '-', 'file.share', '-', 'file.close', '-', 'file.makeDefault', 'file.settings'],
     View: [...ZOOM, '-', 'view.fullscreen'],
     Go: ['go.previous', 'go.next', 'go.first', 'go.last', '-', 'go.nextTab', 'go.previousTab'],

@@ -1,15 +1,23 @@
 /**
- * Read-only previews of Word, PowerPoint and Excel files, drawn as HTML into a
- * container. Loaded only when such a file is opened (see ui/views/OfficeView.tsx).
+ * Read-only previews drawn as HTML into a container. Loaded only when such a file
+ * is opened (see ui/views/PreviewView.tsx).
  *
- *   Word        docx-preview (Apache-2.0)
- *   PowerPoint  @aiden0z/pptx-renderer (Apache-2.0)
- *   Excel       office/xlsx.ts; CSV and TSV are parsed here
+ *   Word          docx-preview (Apache-2.0)
+ *   PowerPoint    @aiden0z/pptx-renderer (Apache-2.0)
+ *   Excel         preview/xlsx.ts; CSV and TSV are parsed here
+ *   Text, code    preview/text.ts, highlight.js (BSD-3-Clause)
+ *   Markdown      preview/markdown.ts, marked (MIT) and DOMPurify (Apache-2.0)
+ *   Video, audio  preview/media.ts, the web view's own players
+ *   EPUB          preview/ebook.ts
+ *   Fonts         preview/font.ts
+ *   Email         preview/email.ts, postal-mime (MIT-0) and @kenjiuno/msgreader (Apache-2.0)
  */
-import type { OfficeFlavor } from '../core/office'
+import type { PreviewFlavor } from '../core/previews'
+import { previewExt } from '../core/previews'
+import * as platform from '../platform'
 
-export interface OfficeRendering {
-  /** Pages (Word), slides or sheets. */
+export interface PreviewRendering {
+  /** Pages (Word), slides, sheets or chapters. */
   pageCount: number
   /** Sheet names, for a workbook's tabs. */
   sheetNames: string[]
@@ -22,14 +30,63 @@ export interface RenderOptions {
   /** The element that scrolls; slides use it to track which one is in view. */
   scroller: HTMLElement
   onCurrent(index: number): void
+  /** Opens a web or mail link outside the app. */
+  openLink(href: string): void
+  /** Opens a file carried inside this one (an email attachment) in its own tab. */
+  openAttachment(name: string, bytes: Uint8Array): void
 }
 
-export async function renderOffice(flavor: OfficeFlavor, ext: string, bytes: Uint8Array, container: HTMLElement, opts: RenderOptions): Promise<OfficeRendering> {
+export interface PreviewFile {
+  name: string
+  path: string
+}
+
+export async function renderPreview(flavor: PreviewFlavor, file: PreviewFile, container: HTMLElement, opts: RenderOptions): Promise<PreviewRendering> {
   container.replaceChildren()
-  const rendering =
-    flavor === 'word' ? await renderWord(bytes, container, opts) : flavor === 'slides' ? await renderSlides(bytes, container, opts) : await renderSheets(ext, bytes, container)
+  const ext = previewExt(file.name)
+  // Players stream the file themselves; everything else reads it whole.
+  if (flavor === 'video' || flavor === 'audio') return (await import('./media')).renderMedia(flavor, file, container)
+  const bytes = await platform.readFile(file.path)
+  let rendering: PreviewRendering
+  switch (flavor) {
+    case 'word':
+      rendering = await renderWord(bytes, container, opts)
+      break
+    case 'slides':
+      rendering = await renderSlides(bytes, container, opts)
+      break
+    case 'sheets':
+      rendering = await renderSheets(ext, bytes, container)
+      break
+    case 'text':
+      rendering = await (await import('./text')).renderText(ext, bytes, container)
+      break
+    case 'markdown':
+      rendering = await (await import('./markdown')).renderMarkdown(bytes, container)
+      break
+    case 'ebook':
+      rendering = await (await import('./ebook')).renderEbook(bytes, container, opts)
+      break
+    case 'font':
+      rendering = await (await import('./font')).renderFont(ext, file.name, bytes, container)
+      break
+    case 'email':
+      rendering = await (await import('./email')).renderEmail(ext, bytes, container, opts)
+      break
+  }
   defuseLinks(container)
   return rendering
+}
+
+/** Zooms a block of HTML with CSS zoom; most previews need nothing more. */
+export function zoomable(el: HTMLElement, dispose: () => void = () => {}, pageCount = 1): PreviewRendering {
+  return {
+    pageCount,
+    sheetNames: [],
+    goTo: () => {},
+    setZoom: (scale) => (el.style.zoom = String(scale)),
+    dispose
+  }
 }
 
 /**
@@ -47,7 +104,7 @@ export function defuseLinks(root: HTMLElement): void {
 // ---------------------------------------------------------------------------
 // Word
 
-async function renderWord(bytes: Uint8Array, container: HTMLElement, opts: RenderOptions): Promise<OfficeRendering> {
+async function renderWord(bytes: Uint8Array, container: HTMLElement, opts: RenderOptions): Promise<PreviewRendering> {
   const { renderAsync } = await import('docx-preview')
   const styles = document.createElement('div')
   const body = document.createElement('div')
@@ -76,8 +133,8 @@ async function renderWord(bytes: Uint8Array, container: HTMLElement, opts: Rende
   }
 }
 
-/** Reports the page or slide that fills most of the view. */
-function trackCurrent(items: HTMLElement[], opts: RenderOptions): IntersectionObserver {
+/** Reports the page, slide or chapter that fills most of the view. */
+export function trackCurrent(items: HTMLElement[], opts: RenderOptions): IntersectionObserver {
   const ratios = new Map<Element, number>()
   const observer = new IntersectionObserver(
     (entries) => {
@@ -99,7 +156,7 @@ function trackCurrent(items: HTMLElement[], opts: RenderOptions): IntersectionOb
 // ---------------------------------------------------------------------------
 // PowerPoint
 
-async function renderSlides(bytes: Uint8Array, container: HTMLElement, opts: RenderOptions): Promise<OfficeRendering> {
+async function renderSlides(bytes: Uint8Array, container: HTMLElement, opts: RenderOptions): Promise<PreviewRendering> {
   const { PptxViewer, RECOMMENDED_ZIP_LIMITS } = await import('@aiden0z/pptx-renderer')
   const host = document.createElement('div')
   host.className = 'office-slides'
@@ -130,7 +187,7 @@ interface Sheet {
   table: HTMLTableElement
 }
 
-async function renderSheets(ext: string, bytes: Uint8Array, container: HTMLElement): Promise<OfficeRendering> {
+async function renderSheets(ext: string, bytes: Uint8Array, container: HTMLElement): Promise<PreviewRendering> {
   const sheets = ext === 'csv' || ext === 'tsv' ? [delimitedSheet(new TextDecoder().decode(bytes), ext === 'tsv' ? '\t' : ',')] : await workbookSheets(bytes)
   const host = document.createElement('div')
   host.className = 'office-sheets'

@@ -8,7 +8,7 @@ import type { Raster } from '../core/image/raster'
 import type { Backdrop, CameraView, Lighting, Look } from '../model/viewer'
 import { t } from '../i18n'
 import type { Affine } from '../core/image/transform'
-import { officeFlavor, type OfficeFlavor } from '../core/office'
+import { previewExt, previewFlavor, type PreviewFlavor } from '../core/previews'
 
 let seq = 0
 const nextId = (): string => `doc${++seq}`
@@ -352,11 +352,11 @@ export class ModelDoc extends BaseDoc {
   }
 }
 
-/** A Word, PowerPoint or Excel file, previewed read-only by the lazy-loaded office/render.ts. */
-export class OfficeDoc extends BaseDoc {
-  readonly kind = 'office' as const
+/** A file previewed read-only as HTML by the lazy-loaded preview/render.ts: Office files, text, Markdown, media, books, fonts or email. */
+export class PreviewDoc extends BaseDoc {
+  readonly kind = 'preview' as const
   readonly probe: Probe
-  readonly flavor: OfficeFlavor
+  readonly flavor: PreviewFlavor
   /** Slides in a deck or sheets in a workbook, once the file is laid out; 1 for Word. */
   readonly pageCount = signal(1)
   readonly current = signal(0)
@@ -366,12 +366,12 @@ export class OfficeDoc extends BaseDoc {
   constructor(probe: Probe) {
     super(probe.name, probe.path)
     this.probe = probe
-    this.flavor = officeFlavor(/\.([^.]+)$/.exec(probe.name)?.[1] ?? '') ?? 'word'
+    this.flavor = previewFlavor(previewExt(probe.name)) ?? 'text'
     this.sidebar.value = 'none'
   }
 }
 
-export type Doc = PdfDoc | ImageDoc | NoticeDoc | ModelDoc | OfficeDoc
+export type Doc = PdfDoc | ImageDoc | NoticeDoc | ModelDoc | PreviewDoc
 
 export const docs = signal<Doc[]>([])
 export const activeId = signal<string | null>(null)

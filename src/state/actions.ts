@@ -14,7 +14,7 @@ import {
   findByPath,
   ImageDoc,
   ModelDoc,
-  OfficeDoc,
+  PreviewDoc,
   NoticeDoc,
   PdfDoc,
   removeDoc,
@@ -26,7 +26,7 @@ import * as versions from './versions'
 import { flushAutosave } from './autosave'
 import { msg, t } from '../i18n'
 import { mayHaveSignatures } from '../core/signatureStatus'
-import { OFFICE } from '../core/office'
+import { PREVIEWS } from '../core/previews'
 
 const GS_INSTALL = 'winget install ArtifexSoftware.GhostScript'
 
@@ -41,11 +41,11 @@ export const OPEN_FILTERS: platform.FileFilter[] = [
       'cr2', 'cr3', 'crw', 'nef', 'nrw', 'arw', 'srf', 'sr2', 'raf', 'orf', 'rw2', 'raw', 'dng', 'pef',
       'srw', 'x3f', 'erf', 'mef', 'mos', 'mrw', 'kdc', 'dcr', '3fr', 'fff', 'iiq', 'rwl', 'gpr',
       'glb', 'gltf', 'obj', 'stl', 'ply', 'fbx', 'usdz', 'usda', 'usdc', 'dae', '3mf', '3ds',
-      ...OFFICE
+      ...PREVIEWS
     ]
   },
   { name: msg('PDF documents'), extensions: ['pdf', 'ai'] },
-  { name: msg('Word, PowerPoint and Excel files'), extensions: OFFICE },
+  { name: msg('Word, PowerPoint and Excel files'), extensions: PREVIEWS },
   { name: msg('All files'), extensions: ['*'] }
 ]
 
@@ -150,8 +150,8 @@ async function openFresh(path: string): Promise<Doc | null> {
       addDoc(doc)
       return doc
     }
-    case 'office': {
-      const doc = new OfficeDoc(probe)
+    case 'preview': {
+      const doc = new PreviewDoc(probe)
       addDoc(doc)
       return doc
     }

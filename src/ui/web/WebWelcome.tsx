@@ -10,7 +10,7 @@ import { t } from '../../i18n'
 
 /** Shown as chips under "Opens"; names of formats aren't translated. */
 // i18n-ignore: file format names
-const FORMATS = ['PDF', 'Word', 'PowerPoint', 'Excel', 'JPEG', 'PNG', 'HEIC', 'WebP', 'AVIF', 'GIF', 'TIFF', 'PSD', 'Camera RAW', 'DNG', 'JPEG XL', 'JPEG 2000', 'EXR', 'HDR', 'TGA', 'SVG', 'CBZ', 'GLB', 'OBJ', 'STL', 'FBX', 'USDZ']
+const FORMATS = ['PDF', 'Word', 'PowerPoint', 'Excel', 'Markdown', 'Code', 'MP4', 'MP3', 'EPUB', 'Fonts', 'Email', 'JPEG', 'PNG', 'HEIC', 'WebP', 'AVIF', 'GIF', 'TIFF', 'PSD', 'Camera RAW', 'DNG', 'JPEG XL', 'JPEG 2000', 'EXR', 'HDR', 'TGA', 'SVG', 'CBZ', 'GLB', 'OBJ', 'STL', 'FBX', 'USDZ']
 
 const photoUrl = new URL('web/start-photo.webp', document.baseURI).href
 
@@ -52,7 +52,7 @@ function PhoneStart() {
           <img src={photoUrl} alt="" width={600} height={400} />
         </div>
         <span class="ww-tag yellow">
-          <b>+75</b>
+          <b>+190</b>
           {t('File Types')}
         </span>
         <span class="ww-tag orange">
@@ -104,7 +104,7 @@ function DesktopStart() {
       <section class="ww-side">
         <div class="ww-tiles">
           <div class="ww-tile orange">
-            <b>+75</b>
+            <b>+190</b>
             <span>{t('File Types, From PDF to Camera RAW')}</span>
           </div>
           <div class="ww-tile pink">
