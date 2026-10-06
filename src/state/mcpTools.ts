@@ -30,6 +30,7 @@ import { openPdf, PasswordRequired } from '../pdf/engine'
 import { imageForPdf, makeRasterizer, openFiles, serialize } from './actions'
 import { activeDoc, activeId, docs, findByPath, ImageDoc, PdfDoc, type Doc } from './documents'
 import { pageOps, redact } from './pdfModules'
+import { editHandlers } from './aiEdit'
 import { toast } from './ui'
 import { t } from '../i18n'
 
@@ -670,5 +671,6 @@ export const handlers: Record<string, ToolHandler> = {
   glance_list_open: listOpen,
   glance_current_view: currentView,
   glance_go_to_page: goToPage,
-  glance_mark_redactions: markRedactions
+  glance_mark_redactions: markRedactions,
+  ...editHandlers
 }

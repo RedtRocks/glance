@@ -3,6 +3,8 @@ import { marked } from 'marked'
 import type { Doc } from '../../state/documents'
 import { aiOpen, dialog, menuOpen, settingsOpen, toast } from '../../state/ui'
 import * as ai from '../../state/ai'
+import * as changes from '../../state/aiChanges'
+import * as voice from '../../state/voice'
 import type { Part } from '../../core/ai/transcript'
 import { cleanFragment, adopt, keepImagesLocal } from '../../preview/sanitize'
 import * as platform from '../../platform'
@@ -74,7 +76,7 @@ function Markdown({ text }: { text: string }) {
   return <div ref={ref} class="ai-md md-body" onClick={click} />
 }
 
-function PartView({ part, agent }: { part: Part; agent: string }) {
+function PartView({ part, agent, index }: { part: Part; agent: string; index: number }) {
   switch (part.kind) {
     case 'user':
       return (
@@ -125,7 +127,84 @@ function PartView({ part, agent }: { part: Part; agent: string }) {
       )
     case 'notice':
       return <p class={`ai-notice${part.error ? ' error' : ''}`}>{part.text}</p>
+    case 'edits':
+      return <EditsCard part={part} index={index} />
   }
+}
+
+/** One change, worded for the user: what went and what came. */
+function ChangeText({ what }: { what: changes.AiChange['what'] }) {
+  switch (what.kind) {
+    case 'replace':
+      return (
+        <>
+          <del>{what.old}</del> <ins>{what.text}</ins>
+        </>
+      )
+    case 'delete':
+      return <del>{what.old}</del>
+    case 'add':
+      return <ins>{what.text}</ins>
+    case 'erase':
+      return what.old ? <del>{what.old}</del> : <span>{t('Erased an area')}</span>
+  }
+}
+
+/** What the AI changed in one request: each change, and Keep or Undo for all of them. */
+function EditsCard({ part, index }: { part: Extract<Part, { kind: 'edits' }>; index: number }) {
+  const list = part.changes.map(changes.findChange).filter((c): c is changes.AiChange => !!c)
+  // Re-render when changes are kept or undone elsewhere (Ctrl+Z, another card).
+  void changes.pending.value
+  const doc = list[0]?.doc.name.value
+  return (
+    <div class="ai-edits" role="group" aria-label={t('Changes')}>
+      <div class="ai-edits-head">
+        <Icon name="sparkleFilled" size={16} />
+        <strong>{t('{count, plural, one {# change} other {# changes}}', { count: part.changes.length })}</strong>
+        {doc && <span class="muted">· {doc}</span>}
+      </div>
+      {list.length ? (
+        <ul class="ai-edits-list">
+          {list.map((c) => (
+            <li key={c.id}>
+              <button class="ai-edit-row" title={t('Show on the page')} onClick={() => changes.reveal(c)}>
+                <span class="ai-edit-what">
+                  <ChangeText what={c.what} />
+                </span>
+                <span class="ai-edit-page">{t('Page {page}', { page: c.page + 1 })}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="muted small">{t('These changes were made before Glance last closed.')}</p>
+      )}
+      {part.state === 'kept' ? (
+        <p class="ai-edits-state">
+          <Icon name="check" size={14} />
+          {t('Kept')}
+        </p>
+      ) : part.state === 'undone' ? (
+        <p class="ai-edits-state">
+          <Icon name="undo" size={14} />
+          {t('Undone')}
+        </p>
+      ) : (
+        !!list.length && (
+          <div class="ai-edits-buttons">
+            <button class="btn primary" onClick={() => ai.settleEdits(index, 'kept')}>
+              <Icon name="check" size={16} />
+              {t('Keep')}
+            </button>
+            <button class="btn" onClick={() => ai.settleEdits(index, 'undone')}>
+              <Icon name="undo" size={16} />
+              {t('Undo')}
+            </button>
+          </div>
+        )
+      )}
+    </div>
+  )
 }
 
 /** The first-run guide: what Ask AI does and how to start. */
@@ -431,14 +510,34 @@ function PermissionCard() {
 function Composer({ doc }: { doc: Doc }) {
   const [text, setText] = useState('')
   const input = useRef<HTMLTextAreaElement>(null)
+  const latest = useRef('')
+  latest.current = text
   const working = ai.status.value === 'working'
   const canShow = doc.kind === 'pdf' || doc.kind === 'image'
+  const listening = voice.voiceState.value !== 'off'
+  const heard = voice.partial.value
+  const problem = voice.voiceProblem.value
   useEffect(() => input.current?.focus(), [ai.chat.value.id])
-  const send = (): void => {
-    if (working) return
-    const value = text
+  useEffect(() => () => void voice.stopVoice(), [])
+  const send = (value = latest.current): void => {
+    if (working || (!value.trim() && !ai.attachments.peek().length)) return
     setText('')
+    latest.current = ''
     void ai.send(value)
+  }
+  const mic = (): void => {
+    if (listening) {
+      void voice.stopVoice()
+      return
+    }
+    void voice.startVoice(
+      (phrase) => {
+        const next = latest.current.trim() ? `${latest.current.trimEnd()} ${phrase}` : phrase
+        latest.current = next
+        setText(next)
+      },
+      () => send()
+    )
   }
   const attachPage = async (): Promise<void> => {
     try {
@@ -462,44 +561,89 @@ function Composer({ doc }: { doc: Doc }) {
           ))}
         </div>
       )}
-      <div class="ai-input">
+      {problem && (
+        <div class="ai-notice error ai-voice-problem">
+          <span>{problem.text}</span>
+          {problem.settings && (
+            <button class="btn" onClick={() => void platform.openUrl(problem.settings!)}>
+              {t('Open Settings')}
+            </button>
+          )}
+        </div>
+      )}
+      <div class={`ai-input${listening ? ' listening' : ''}`}>
         <label class="sr-only" for="ai-ask">
-          {t('Ask about this document')}
+          {t('Ask about this document, or say what to change')}
         </label>
         <textarea
           id="ai-ask"
           ref={input}
           rows={2}
           value={text}
-          placeholder={t('Ask about this document…')}
-          onInput={(e) => setText((e.target as HTMLTextAreaElement).value)}
+          placeholder={listening ? t('Listening…') : canShow ? t('Ask, or tell the AI what to change…') : t('Ask about this document…')}
+          onInput={(e) => {
+            setText((e.target as HTMLTextAreaElement).value)
+            if (listening) voice.holdSend()
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
               e.preventDefault()
+              if (listening) void voice.stopVoice()
               send()
             }
           }}
         />
+        {listening && (
+          <p class="ai-heard" aria-live="polite">
+            {heard ? <span>{heard}</span> : <span class="muted">{voice.voiceState.value === 'starting' ? t('Starting the microphone…') : t('Speak now. Pause when you’re done and it sends.')}</span>}
+          </p>
+        )}
         <div class="ai-input-row">
-          {canShow && (
-            <button class="ai-tool-button" title={t('Drag a box on the document to show the AI just that part')} onClick={() => (ai.selectingArea.value = true)} aria-pressed={ai.selectingArea.value}>
-              <Icon name="selectArea" size={16} />
-              {t('Select area')}
-            </button>
-          )}
-          {canShow && (
-            <button class="ai-tool-button" title={t('Show the AI the page you’re looking at')} onClick={() => void attachPage()}>
-              <Icon name="onePage" size={16} />
-              {t('This page')}
-            </button>
+          {listening ? (
+            <span class="ai-listening">
+              <span class="ai-wave" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+              </span>
+              {t('Pause to send')}
+            </span>
+          ) : (
+            <>
+              {canShow && (
+                <button class="ai-tool-button" title={t('Drag a box on the document to show the AI just that part')} onClick={() => (ai.selectingArea.value = true)} aria-pressed={ai.selectingArea.value}>
+                  <Icon name="selectArea" size={16} />
+                  {t('Select area')}
+                </button>
+              )}
+              {canShow && (
+                <button class="ai-tool-button" title={t('Show the AI the page you’re looking at')} onClick={() => void attachPage()}>
+                  <Icon name="onePage" size={16} />
+                  {t('This page')}
+                </button>
+              )}
+            </>
           )}
           <div class="tb-spacer" />
+          {platform.speechAvailable && !working && (
+            <button
+              class={`ai-mic${listening ? ' on' : ''}`}
+              aria-pressed={listening}
+              aria-label={listening ? t('Stop listening') : t('Speak')}
+              title={listening ? t('Stop listening (what you said stays in the box)') : t('Speak instead of typing')}
+              onClick={mic}
+            >
+              <Icon name={listening ? 'micFilled' : 'mic'} size={16} />
+            </button>
+          )}
           {working ? (
             <button class="ai-send" aria-label={t('Stop')} title={t('Stop')} onClick={() => void ai.stop()}>
               <Icon name="stop" size={16} />
             </button>
           ) : (
-            <button class="ai-send" aria-label={t('Send')} title={t('Send (Enter)')} disabled={!text.trim() && !ai.attachments.value.length} onClick={send}>
+            <button class="ai-send" aria-label={t('Send')} title={t('Send (Enter)')} disabled={!text.trim() && !ai.attachments.value.length} onClick={() => send()}>
               <Icon name="sendUp" size={16} />
             </button>
           )}
@@ -675,12 +819,21 @@ export function AiSidebar({ doc }: { doc: Doc }) {
           <>
             {!c.parts.length && ai.status.value === 'ready' && (
               <div class="ai-empty">
-                <p>{t('Ask {agent} anything about {file}.', { agent: agent?.name ?? c.agentId, file: doc.name.value })}</p>
-                <p class="muted small">{t('Try: “Summarize this”, “What does this clause mean?”, or Select area and ask about a chart.')}</p>
+                <p>{t('Ask {agent} about {file}, or tell it what to change. Type, or tap the mic and talk.', { agent: agent?.name ?? c.agentId, file: doc.name.value })}</p>
+                {(doc.kind === 'pdf' || doc.kind === 'image') && (
+                  <div class="ai-suggestions">
+                    {[t('Fix spelling and grammar on this page'), t('Make the first paragraph shorter'), t('Add a closing sentence in the same style'), t('Summarize this')].map((s) => (
+                      <button key={s} class="ai-suggestion" onClick={() => void ai.send(s)}>
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <p class="muted small">{t('Changes appear on the page in the document’s own font and style. You keep or undo them here.')}</p>
               </div>
             )}
             {c.parts.map((p, i) => (
-              <PartView key={i} part={p} agent={c.agentId} />
+              <PartView key={i} part={p} agent={c.agentId} index={i} />
             ))}
             {ai.status.value === 'working' && c.parts[c.parts.length - 1]?.kind === 'user' && (
               <p class="ai-thinking muted">

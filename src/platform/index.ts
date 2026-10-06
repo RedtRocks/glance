@@ -508,11 +508,11 @@ export function listFonts(): Promise<string[]> {
   return fontList
 }
 
-/** The regular face of an installed family, ready to embed in a PDF; null if unavailable. */
-export async function fontBytes(family: string): Promise<Uint8Array | null> {
+/** A face of an installed family (regular unless `face` asks for bold or italic), ready to embed in a PDF; null if unavailable. */
+export async function fontBytes(family: string, face?: { bold?: boolean; italic?: boolean }): Promise<Uint8Array | null> {
   if (!isTauri) return null
   try {
-    const buf = await invoke<ArrayBuffer>('font_bytes', { family })
+    const buf = await invoke<ArrayBuffer>('font_bytes', { family, bold: face?.bold ?? null, italic: face?.italic ?? null })
     return new Uint8Array(buf)
   } catch {
     return null
@@ -957,4 +957,77 @@ export async function websiteHide(): Promise<void> {
 
 export async function websiteReload(id: string): Promise<void> {
   await invoke('website_reload', { id })
+}
+
+// ---------------------------------------------------------------------------
+// Speech to text for the Ask AI sidebar's mic (see src-tauri/src/speech.rs)
+
+export type SpeechEvent =
+  /** Words so far in the phrase being spoken; replaced by the next partial or final. */
+  | { kind: 'partial'; text: string }
+  /** A finished phrase. */
+  | { kind: 'final'; text: string }
+  /** The microphone was turned off (by stop(), or because of an error). */
+  | { kind: 'end' }
+  /** `code`: 'privacy' (online speech recognition is off in Windows), 'no-mic', 'language' or 'other'. */
+  | { kind: 'error'; code: string; message: string }
+
+interface WebRecognition {
+  lang: string
+  continuous: boolean
+  interimResults: boolean
+  start(): void
+  stop(): void
+  onresult: ((e: { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }> }) => void) | null
+  onerror: ((e: { error: string; message?: string }) => void) | null
+  onend: (() => void) | null
+}
+
+function webRecognition(): (new () => WebRecognition) | null {
+  const w = window as unknown as { SpeechRecognition?: new () => WebRecognition; webkitSpeechRecognition?: new () => WebRecognition }
+  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null
+}
+
+/** Whether this build can listen: Windows speech recognition, or the browser's. */
+export const speechAvailable = isTauri ? isWindows : typeof window !== 'undefined' && !!webRecognition()
+
+/**
+ * Starts listening in `language` (a BCP 47 tag; empty for the Windows display language).
+ * Returns a function that stops listening; `cb` gets an 'end' event when it has.
+ */
+export async function speechStart(language: string, cb: (e: SpeechEvent) => void): Promise<() => Promise<void>> {
+  if (isTauri) {
+    const { listen } = await import('@tauri-apps/api/event')
+    let unlisten: (() => void) | null = null
+    unlisten = await listen<SpeechEvent>('speech', (e) => {
+      cb(e.payload)
+      if (e.payload.kind === 'end') unlisten?.()
+    })
+    try {
+      await invoke('speech_start', { language })
+    } catch (e) {
+      unlisten()
+      throw e
+    }
+    return () => invoke('speech_stop')
+  }
+  const Ctor = webRecognition()
+  if (!Ctor) throw new Error(t('Speaking to the AI needs Windows speech recognition, in the Windows app.'))
+  const r = new Ctor()
+  r.lang = language || navigator.language
+  r.continuous = true
+  r.interimResults = true
+  r.onresult = (e) => {
+    let partial = ''
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const res = e.results[i]
+      if (res.isFinal) cb({ kind: 'final', text: res[0].transcript })
+      else partial += res[0].transcript
+    }
+    if (partial) cb({ kind: 'partial', text: partial })
+  }
+  r.onerror = (e) => cb({ kind: 'error', code: e.error === 'not-allowed' ? 'no-mic' : e.error === 'language-not-supported' ? 'language' : 'other', message: e.message || e.error })
+  r.onend = () => cb({ kind: 'end' })
+  r.start()
+  return async () => r.stop()
 }

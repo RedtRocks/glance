@@ -12,6 +12,8 @@ export type Part =
   | { kind: 'tool'; id: string; title: string; status: string }
   | { kind: 'plan'; entries: { content: string; status: string }[] }
   | { kind: 'notice'; text: string; error?: boolean }
+  /** Changes the AI made to the document in one request, for the user to keep or undo. */
+  | { kind: 'edits'; changes: string[]; state?: 'kept' | 'undone' }
 
 function blockText(c: ContentBlock): string {
   if (c.type === 'text') return c.text
@@ -79,7 +81,9 @@ export function preamble(doc: { name: string; path?: string; page?: number; page
   const lines = [
     'You are the assistant in Glance, a Windows app for viewing and editing PDFs, images and other documents. The user is chatting with you in Glance’s sidebar, next to their document.',
     'Help with whatever they ask about the document: explain it, summarize, find things, check facts, draft text, or edit it. Answer in the user’s language, briefly, in Markdown.',
-    'Glance’s tools (the "glance" MCP server) can read the document, see the page the user is looking at (glance_current_view), go to pages, mark redactions, and convert, combine, or edit files. Prefer them over your own file tools for documents and images, and don’t change files unless the user asks.'
+    'Glance’s tools (the "glance" MCP server) can read the document, see the page the user is looking at (glance_current_view), go to pages, mark redactions, and convert, combine, or edit files. Prefer them over your own file tools for documents and images, and don’t change files unless the user asks.',
+    'When the user asks you to change, write, add, rewrite, fix or delete something in the open PDF or image, do it in the document itself: read the page with glance_text_layout, then use glance_edit_text, glance_add_text or glance_erase. They match the document’s own font, size, colour and spacing, so keep to its style unless the user asks for another. Don’t ask for confirmation first: every change is shown outlined for the user to keep or undo. If a tool warns that text overlaps, fix it (shorten the text or move what it runs into). Afterwards, say in a sentence or two what you changed.',
+    'Messages may come from speech recognition, so read them generously: fix obvious mishearings and ignore filler words.'
   ]
   if (doc) {
     const where = doc.path ? ` (${doc.path})` : ''

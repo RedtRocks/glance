@@ -36,11 +36,28 @@ export type Markup =
   | (Base & { type: 'line' | 'arrow'; from: Pt; to: Pt })
   | (Base & { type: 'polygon'; points: Pt[]; closed: boolean })
   | (Base & { type: 'ink'; strokes: Pt[][] })
-  | (Base & { type: 'text'; rect: Rect; text: string; fontSize: number; color: Color; /** System font family; Helvetica when absent. */ font?: string })
+  | (Base & {
+      type: 'text'
+      rect: Rect
+      text: string
+      fontSize: number
+      color: Color
+      /** System font family; Helvetica when absent. */
+      font?: string
+      bold?: boolean
+      italic?: boolean
+      /** Set by AI edits to match the page: line spacing (a multiple of fontSize, default 1.2), */
+      lineHeight?: number
+      /** where the first baseline sits below the top (a multiple of fontSize; absent: classic layout), */
+      ascent?: number
+      /** and the text's left inset in points (default 4). */
+      inset?: number
+    })
   | (Base & { type: 'note'; at: Pt; text: string })
   /** Quads: [x1,y1 (top-left), x2,y2 (top-right), x3,y3 (bottom-left), x4,y4 (bottom-right)]. */
   | (Base & { type: 'highlight' | 'underline' | 'strike' | 'squiggly'; quads: number[][]; text?: string })
-  | (Base & { type: 'signature'; rect: Rect; png: Uint8Array })
+  /** `patch`: background filled in by an AI edit to hide what was there, not a signature. */
+  | (Base & { type: 'signature'; rect: Rect; png: Uint8Array; patch?: boolean })
   /** Magnifying circle over an image (images only; flattened on save). */
   | (Base & { type: 'loupe'; rect: Rect; zoom: number })
 
@@ -75,6 +92,18 @@ export const COLORS = {
 /** CSS font stack for a text box's family (Helvetica is the PDF standard font). */
 export function fontStack(font?: string): string {
   return font ? `"${font.replace(/"/g, '')}", Helvetica, Arial, sans-serif` : 'Helvetica, Arial, sans-serif'
+}
+
+export type TextMarkup = Extract<Markup, { type: 'text' }>
+
+/** How a text box lays out its lines, shared by the page view, image export and PDF save. */
+export function textBoxLayout(m: TextMarkup): { inset: number; lineHeight: number; /** First baseline below the top, in points; null for the classic top-aligned layout. */ baseline: number | null; font: string } {
+  return {
+    inset: m.inset ?? 4,
+    lineHeight: (m.lineHeight ?? 1.2) * m.fontSize,
+    baseline: m.ascent === undefined ? null : m.ascent * m.fontSize,
+    font: `${m.italic ? 'italic ' : ''}${m.bold ? 'bold ' : ''}${m.fontSize}px ${fontStack(m.font)}`
+  }
 }
 
 export const DEFAULT_STYLE: Style = { stroke: COLORS.red, fill: null, width: 2, opacity: 1 }

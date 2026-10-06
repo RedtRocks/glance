@@ -7,6 +7,7 @@ import { signal } from '@preact/signals'
 import type * as acp from '@agentclientprotocol/sdk'
 import * as platform from '../platform'
 import { applyUpdate, chatTitle, modelOption, preamble, type Choice, type Part } from '../core/ai/transcript'
+import { changeCount, changesSince, keep as keepChanges, undoChanges } from './aiChanges'
 import { activeDoc, ImageDoc, PdfDoc, type Doc } from './documents'
 import { settings } from './settings'
 import { toast } from './ui'
@@ -444,6 +445,7 @@ export async function send(text: string): Promise<void> {
   attachments.value = []
   chat.value = { ...c, parts: [...c.parts, { kind: 'user', text, context: files.map((a) => a.label) }], updatedAt: Date.now() }
   status.value = 'working'
+  const mark = changeCount()
   try {
     const res = await l.conn.prompt({ sessionId, prompt: blocks })
     if (res.stopReason === 'refusal') addNotice(t('{agent} declined to answer that.', { agent: agentName(c.agentId) }))
@@ -458,9 +460,23 @@ export async function send(text: string): Promise<void> {
       addNotice(errorText(e), true)
     }
   } finally {
+    const made = changesSince(mark)
+    if (made.length && chat.peek().id === c.id) chat.value = { ...chat.peek(), parts: [...chat.peek().parts, { kind: 'edits', changes: made.map((x) => x.id) }] }
     const done = chat.peek()
     if (done.id === c.id) storeChat({ ...done, updatedAt: Date.now() })
   }
+}
+
+/** Keeps or undoes the changes in an edits card, and remembers which. */
+export function settleEdits(index: number, how: 'kept' | 'undone'): void {
+  const c = chat.peek()
+  const part = c.parts[index]
+  if (part?.kind !== 'edits') return
+  if (how === 'kept') keepChanges(part.changes)
+  else undoChanges(part.changes)
+  const next = { ...c, parts: c.parts.map((p, i) => (i === index ? { ...part, state: how } : p)) }
+  chat.value = next
+  storeChat(next)
 }
 
 function addNotice(text: string, error = false): void {

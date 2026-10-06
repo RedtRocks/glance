@@ -42,31 +42,32 @@ import {
   type PDFOperator
 } from '@cantoo/pdf-lib'
 import { collectGarbage } from './gc'
-import { MARKER_KEY, NOTE_SIZE, headPath, outlinePath, paintBounds, type Color, type Markup, type Rect } from './markup'
+import { MARKER_KEY, NOTE_SIZE, headPath, outlinePath, paintBounds, textBoxLayout, type Color, type Markup, type Rect } from './markup'
 
 const FLIP: [number, number, number, number, number, number] = [1, 0, 0, -1, 0, 0]
 const rgbOf = (c: Color) => rgb(c[0], c[1], c[2])
 
 /** Supplies a system font's bytes by family name, or null when it isn't available. */
-export type FontSource = (family: string) => Promise<Uint8Array | null>
+/** An installed font's file; `face` picks the bold or italic member of the family when there is one. */
+export type FontSource = (family: string, face?: { bold?: boolean; italic?: boolean }) => Promise<Uint8Array | null>
 
 interface Ctx {
   doc: PDFDocument
   /** Pages embedded as form XObjects (for loupes), by page index. */
   embedded: Map<number, { ref: PDFRef; left: number; bottom: number }>
-  font: PDFFont | null
+  standard: Map<string, PDFFont>
   fonts: Map<string, PDFFont | null>
   loadFont?: FontSource
 }
 
 /** The chosen system font embedded as a subset, or null to fall back to Helvetica. */
-async function systemFont(ctx: Ctx, family: string | undefined): Promise<PDFFont | null> {
+async function systemFont(ctx: Ctx, family: string | undefined, face: { bold?: boolean; italic?: boolean } = {}): Promise<PDFFont | null> {
   if (!family || !ctx.loadFont) return null
-  const key = family.toLowerCase()
+  const key = `${family.toLowerCase()}|${face.bold ? 'b' : ''}${face.italic ? 'i' : ''}`
   if (ctx.fonts.has(key)) return ctx.fonts.get(key)!
   let font: PDFFont | null = null
   try {
-    const bytes = await ctx.loadFont(family)
+    const bytes = await ctx.loadFont(family, face.bold || face.italic ? face : undefined)
     if (bytes) {
       const fontkit = (await import('@cantoo/fontkit')).default
       ctx.doc.registerFontkit(fontkit as never)
@@ -169,17 +170,20 @@ async function appearance(ctx: Ctx, m: Markup, bbox: Rect): Promise<{ ops: PDFOp
     }
     case 'text': {
       if (s.fill || s.stroke) ops.push(...path(outlinePath({ ...m, type: 'rect' }), { fill: s.fill, stroke: s.stroke, width: s.width }))
-      const custom = await systemFont(ctx, m.font)
-      ctx.font ??= custom ? null : await doc.embedFont(StandardFonts.Helvetica)
-      const font = custom ?? ctx.font!
+      const custom = await systemFont(ctx, m.font, { bold: m.bold, italic: m.italic })
+      const standard = m.bold && m.italic ? StandardFonts.HelveticaBoldOblique : m.bold ? StandardFonts.HelveticaBold : m.italic ? StandardFonts.HelveticaOblique : StandardFonts.Helvetica
+      let helv = ctx.standard.get(standard)
+      if (!custom && !helv) ctx.standard.set(standard, (helv = await doc.embedFont(standard)))
+      const font = custom ?? helv!
       const name = custom ? 'F1' : 'Helv'
       resources.Font = { [name]: font.ref }
-      const pad = 4
+      const lay = textBoxLayout(m)
+      const pad = lay.inset
       // Embedded fonts cover Unicode; the standard Helvetica only WinAnsi.
       const lines = wrap(font, custom ? m.text : encodable(font, m.text), m.fontSize, m.rect[2] - m.rect[0] - pad * 2)
-      const lineH = m.fontSize * 1.2
+      const lineH = lay.lineHeight
       ops.push(beginText(), setFontAndSize(name, m.fontSize), setFillingRgbColor(...m.color))
-      ops.push(moveText(m.rect[0] + pad, m.rect[3] - pad - m.fontSize))
+      ops.push(moveText(m.rect[0] + pad, m.rect[3] - (lay.baseline ?? pad + m.fontSize)))
       lines.forEach((line, i) => {
         if (i) ops.push(moveText(0, -lineH))
         ops.push(showText(font.encodeText(line)))
@@ -318,7 +322,7 @@ export async function writeMarkup(
   options: { objectStreams?: boolean; loadFont?: FontSource } = {}
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.load(bytes, { ignoreEncryption: true, updateMetadata: false })
-  const ctx: Ctx = { doc, embedded: new Map(), font: null, fonts: new Map(), loadFont: options.loadFont }
+  const ctx: Ctx = { doc, embedded: new Map(), standard: new Map(), fonts: new Map(), loadFont: options.loadFont }
   const pages = doc.getPages()
   for (const m of markup) {
     const page = pages[m.page]
