@@ -998,7 +998,10 @@ export type SpeechEvent =
   | { kind: 'final'; text: string }
   /** The microphone was turned off (by stop(), or because of an error). */
   | { kind: 'end' }
-  /** `code`: 'privacy' (online speech recognition is off in Windows), 'no-mic', 'language' or 'other'. */
+  /**
+   * `code`: 'privacy' (online speech recognition is off in Windows), 'no-mic', 'no-audio'
+   * (listening started but Windows heard nothing it could use), 'language' or 'other'.
+   */
   | { kind: 'error'; code: string; message: string }
 
 interface WebRecognition {
@@ -1015,6 +1018,11 @@ interface WebRecognition {
 function webRecognition(): (new () => WebRecognition) | null {
   const w = window as unknown as { SpeechRecognition?: new () => WebRecognition; webkitSpeechRecognition?: new () => WebRecognition }
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null
+}
+
+/** Opens Windows voice typing (Win+H), which types into the focused text box. */
+export async function voiceTyping(): Promise<void> {
+  if (isTauri) await invoke('voice_typing')
 }
 
 /** Whether this build can listen: Windows speech recognition, or the browser's. */
