@@ -27,6 +27,8 @@ export interface Settings {
   defaultAppAsked?: boolean
   /** AI apps connected through glance-mcp may use Glance's tools (Settings → AI apps). */
   aiApps: boolean
+  /** Send the anonymous daily check-in that counts installs (state/installCount.ts). */
+  countInstall: boolean
 }
 
 export const DEFAULT_TOOLBAR = ['sidebar', 'pageControls', 'spacer', 'zoomOut', 'zoomIn', 'rotate', 'highlight', 'markup', 'askAi', 'search', 'overflow']
@@ -42,7 +44,8 @@ const DEFAULTS: Settings = {
   autosave: true,
   language: 'system',
   reopenTabs: false,
-  aiApps: true
+  aiApps: true,
+  countInstall: true
 }
 
 const KEY = 'glance.settings.v1'

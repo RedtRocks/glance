@@ -179,8 +179,9 @@ a{color:var(--ink);text-underline-offset:4px}a:hover{color:var(--accent)}
 .btn-ink{background:var(--ink);color:var(--on-ink)}.btn-ink:hover{color:var(--on-ink);background:var(--ink-hover)}
 .btn-violet{background:#6312f6;color:#ffffff}.btn-violet:hover{color:#ffffff;background:#5410d6}
 .btn-sec{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--divider)}.btn-sec:hover{color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.msbadge{display:inline-flex;align-items:center;gap:12px;min-height:48px;padding:0 20px 0 16px;border-radius:10px;background:#000000;color:#ffffff;text-decoration:none;box-shadow:inset 0 0 0 1px #a6a6a6;transition:transform 150ms cubic-bezier(.16,1,.3,1)}.msbadge:hover{transform:translateY(-1px)}.msbadge span{display:flex;flex-direction:column;font-family:"Segoe UI",Urbanist,system-ui,sans-serif;font-size:18px;line-height:20px;font-weight:600;text-align:left}.msbadge small{font-size:11px;line-height:13px;font-weight:400}
 .btn-ghost{background:transparent;color:#ffffff;box-shadow:inset 0 0 0 1px #ffffff}.btn-ghost:hover{color:#ffffff;background:rgba(255,255,255,.12)}
-.navlink{text-decoration:none;font-size:15px;line-height:20px;padding:12px 4px}
+.navlink{white-space:nowrap;text-decoration:none;font-size:15px;line-height:20px;padding:12px 4px}
 .chip{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;width:136px;height:68px;border-radius:9999px;overflow:hidden;margin:0 8px;position:relative;top:-6px}
 .chip img{width:100%;height:100%;object-fit:cover;display:block}
 .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
@@ -243,6 +244,33 @@ a{color:var(--ink);text-underline-offset:4px}a:hover{color:var(--accent)}
 .slab>div>div{border-radius:28px !important}
 }
 
+@media (max-width:1180px){.hide-md{display:none !important}}
+.show-sm{display:none !important}@media (max-width:960px){.show-sm{display:inline-flex !important}}
+/* Phones in the hero and the Everywhere cards */
+.phone{border-radius:34px;padding:7px;background:#0a0a0a;box-shadow:0 30px 60px -20px rgba(10,10,10,.45)}
+.phone img{display:block;width:100%;height:auto;border-radius:28px}
+.duo-eq{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.ticks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.ticks li{display:flex;gap:10px;align-items:flex-start;font-size:17px;line-height:24px}
+.ticks li::before{content:"";flex:none;width:8px;height:8px;margin-top:8px;border-radius:9999px;background:currentColor}
+.fmt-row{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px;align-items:start;padding:20px 0;border-top:1px solid var(--divider)}
+.fmt-row .title{padding-top:10px}
+a.fchip{text-decoration:none;color:var(--ink);transition:background-color 150ms,transform 150ms cubic-bezier(.16,1,.3,1)}
+a.fchip:hover{background:var(--backdrop);color:var(--ink);transform:translateY(-1px)}
+a.fchip::after{content:"\2197";font-size:14px;color:var(--ink-muted)}
+.seg-scroll{max-width:100%;overflow-x:auto;scrollbar-width:none}
+.seg-scroll::-webkit-scrollbar{display:none}
+.appchip{display:inline-flex;align-items:center;padding:8px 14px;border-radius:9999px;background:rgba(255,255,255,.1);color:#ffffff;font-size:15px;line-height:20px}
+.term{font-family:Consolas,ui-monospace,monospace;font-size:14px;line-height:22px;background:#0a0a0a;color:#e8e6ef;border-radius:16px;padding:20px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);overflow:hidden}
+.term .p{color:#f8d32c}.term .d{color:#a9a6b3}.term .ok{color:#7ee2a8}
+@media (max-width:960px){
+.duo-eq{grid-template-columns:minmax(0,1fr)}
+.fmt-row{grid-template-columns:minmax(0,1fr);gap:8px}
+.fmt-row .title{padding-top:0}
+.hero-phone{width:30% !important;right:4% !important;bottom:-24px !important}
+.phone{border-radius:20px;padding:4px}.phone img{border-radius:16px}
+}
+
 /* Format pages */
 .crumbs{display:flex;gap:8px;align-items:center;font-size:15px;line-height:20px;color:var(--ink-muted)}
 .crumbs a{color:var(--ink-muted);text-decoration:none}.crumbs a:hover{color:var(--accent)}
@@ -272,6 +300,7 @@ a{color:var(--ink);text-underline-offset:4px}a:hover{color:var(--accent)}
 a.fchip{text-decoration:none}a.fchip:hover{color:var(--accent)}
 @media (max-width:960px){.groups{grid-template-columns:minmax(0,1fr)}.fslab{aspect-ratio:4/5 !important}.fslab picture{display:block;height:100%}.steps,.can{grid-template-columns:minmax(0,1fr)}.step{min-height:0}.step .n{font-size:48px;margin-bottom:12px}}
 </style>
+<script defer src="../assets/download.js"></script>
 </head>
 <body>
 <div class="w">
