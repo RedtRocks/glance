@@ -1,3 +1,4 @@
+mod agents;
 mod certsig;
 mod color;
 mod commands;
@@ -98,9 +99,13 @@ pub fn run() {
         .manage(files::OpenFiles::default())
         .manage(explorer::Queue::default())
         .manage(mcp::Hub::default())
+        .manage(agents::Agents::default())
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {
                 files::release_window(window.app_handle(), window.label());
+                if window.label() == "main" {
+                    agents::stop_all(window.app_handle());
+                }
             }
         })
         .setup(|app| {
@@ -166,6 +171,13 @@ pub fn run() {
             mcp::apps::ai_apps,
             mcp::apps::ai_app_connect,
             mcp::apps::ai_app_disconnect,
+            agents::agents_list,
+            agents::agent_add,
+            agents::agent_remove,
+            agents::agent_start,
+            agents::agent_send,
+            agents::agent_stop,
+            agents::agent_login,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Glance");

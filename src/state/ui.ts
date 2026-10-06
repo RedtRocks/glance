@@ -95,6 +95,9 @@ export const inspectorOpen = signal(false)
 /** View → Signatures: the certificate signatures in a PDF. */
 export const signaturesOpen = signal(false)
 
+/** View → Ask AI: the AI sidebar (src/ui/ai). */
+export const aiOpen = signal(false)
+
 /** File → Clean Up PDF. */
 export const cleanupOpen = signal(false)
 

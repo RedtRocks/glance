@@ -877,3 +877,64 @@ export async function aiAppConnect(id: string): Promise<void> {
 export async function aiAppDisconnect(id: string): Promise<void> {
   await invoke('ai_app_disconnect', { id })
 }
+
+// The Ask AI sidebar's agents (see src-tauri/src/agents.rs and src/state/ai)
+
+export interface AgentInfo {
+  id: string
+  name: string
+  website?: string
+  /** Where to get the agent's program (Node.js or uv) when it isn't installed. */
+  install?: string
+  custom: boolean
+  /** One of its programs is installed. */
+  ready: boolean
+  /** The command Glance runs. */
+  command: string
+}
+
+export type AgentEvent = { kind: 'out' | 'log'; run: number; line: string } | { kind: 'exit'; run: number; code: number | null }
+
+export async function agentsList(): Promise<AgentInfo[]> {
+  return isTauri ? invoke<AgentInfo[]>('agents_list') : []
+}
+
+/** Starts an agent; rejects with "not-installed:<url>" when its program is missing. */
+export async function agentStart(id: string): Promise<{ run: number; cwd: string }> {
+  return invoke('agent_start', { id })
+}
+
+export async function agentSend(run: number, data: string): Promise<void> {
+  await invoke('agent_send', { run, data })
+}
+
+export async function agentStop(run: number): Promise<void> {
+  if (isTauri) await invoke('agent_stop', { run })
+}
+
+/** Runs the agent's own sign-in in a console window; resolves when the window closes. */
+export async function agentLogin(id: string, args: string[], env: Record<string, string>): Promise<void> {
+  await invoke('agent_login', { id, args, env })
+}
+
+/** Asks the user to confirm in a Windows dialog, then saves; resolves with the new id, or null if they said no. */
+export async function agentAdd(name: string, command: string): Promise<string | null> {
+  return invoke<string | null>('agent_add', {
+    name,
+    command,
+    title: t('Add an AI agent'),
+    question: t('Glance will run this program on your PC whenever you chat with it. Only add agents you trust.'),
+    confirm: t('Add'),
+    cancel: t('Cancel')
+  })
+}
+
+export async function agentRemove(id: string): Promise<void> {
+  await invoke('agent_remove', { id })
+}
+
+export async function onAgent(cb: (e: AgentEvent) => void): Promise<() => void> {
+  if (!isTauri) return () => {}
+  const { listen } = await import('@tauri-apps/api/event')
+  return listen<AgentEvent>('agent', (e) => cb(e.payload))
+}

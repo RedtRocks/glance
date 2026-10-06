@@ -11,6 +11,7 @@ name = "glance-mcp"
 path = "src/main.rs"
 
 [dependencies]
+serde_json = "1"
 
 [profile.release]
 codegen-units = 1

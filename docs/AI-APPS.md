@@ -46,9 +46,9 @@ Turn **Let AI apps use Glance** off in Settings → AI apps to refuse all reques
 
 ## How it works
 
-AI apps start `glance-mcp.exe` and talk JSON-RPC over its standard input and output. `glance-mcp` (src-tauri/mcp-bridge, a few hundred kilobytes, no dependencies) relays the messages to the Glance app over a loopback connection that only your Windows user can open: Glance listens on a random local port and writes the port and a secret token to `%LOCALAPPDATA%\io.github.redtrocks.glance\mcp-endpoint`; `glance-mcp` must present the token.
+AI apps start `glance-mcp.exe` and talk JSON-RPC over its standard input and output. `glance-mcp` (src-tauri/mcp-bridge, a few hundred kilobytes) answers the handshake and the tool list itself and relays tool calls to the Glance app over a loopback connection that only your Windows user can open: Glance listens on a random local port and writes the port and a secret token to `%LOCALAPPDATA%\io.github.redtrocks.glance\mcp-endpoint`; `glance-mcp` must present the token.
 
-If Glance isn't running, `glance-mcp` starts it with its window hidden. Glance quits again a few seconds after the last AI app disconnects, unless a tool or you showed the window. The tools run in Glance itself (src/state/mcpTools.ts), with the same decoders, PDF engine, OCR and redaction as the app ([ADR 0014](adr/0014-ai-apps-through-mcp.md)).
+You never need to open Glance for an AI app: when a tool is first used and Glance isn't running, `glance-mcp` starts it with its window hidden, and if you quit Glance, the next tool call starts it again. Glance quits again a few seconds after the last AI app disconnects, unless a tool or you showed the window. The tools run in Glance itself (src/state/mcpTools.ts), with the same decoders, PDF engine, OCR and redaction as the app ([ADR 0014](adr/0014-ai-apps-through-mcp.md)).
 
 ## Privacy
 
