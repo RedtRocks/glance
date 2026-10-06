@@ -22,11 +22,11 @@ pub fn same_path(a: &str, b: &str) -> bool {
 /// Claims `path` for this window. Returns the label of another window that already
 /// has it open (the caller should hand over to that window), or None when claimed.
 #[tauri::command]
-pub fn claim_file(app: tauri::AppHandle, window: tauri::WebviewWindow, state: tauri::State<'_, OpenFiles>, path: String) -> Option<String> {
+pub fn claim_file(app: tauri::AppHandle, window: tauri::Window, state: tauri::State<'_, OpenFiles>, path: String) -> Option<String> {
     let mut map = state.0.lock().unwrap();
     let key = norm(&path);
     if let Some(owner) = map.get(&key) {
-        if owner != window.label() && app.get_webview_window(owner).is_some() {
+        if owner != window.label() && app.get_window(owner).is_some() {
             return Some(owner.clone());
         }
     }
@@ -35,7 +35,7 @@ pub fn claim_file(app: tauri::AppHandle, window: tauri::WebviewWindow, state: ta
 }
 
 #[tauri::command]
-pub fn release_file(window: tauri::WebviewWindow, state: tauri::State<'_, OpenFiles>, path: String) {
+pub fn release_file(window: tauri::Window, state: tauri::State<'_, OpenFiles>, path: String) {
     let mut map = state.0.lock().unwrap();
     let key = norm(&path);
     if map.get(&key).is_some_and(|o| o == window.label()) {
@@ -53,7 +53,7 @@ pub fn release_window(app: &tauri::AppHandle, label: &str) {
 /// Brings the owning window forward and asks it to show the file's tab.
 #[tauri::command]
 pub fn focus_file(app: tauri::AppHandle, label: String, path: String) -> Result<(), String> {
-    let win = app.get_webview_window(&label).ok_or("That window has closed.")?;
+    let win = app.get_window(&label).ok_or("That window has closed.")?;
     let _ = win.unminimize();
     let _ = win.set_focus();
     win.emit_to(&label, "activate-file", path).map_err(|e| e.to_string())

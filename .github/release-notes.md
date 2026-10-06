@@ -2,6 +2,18 @@ Glance is a free, open-source, lightweight viewer and editor for PDFs, images, c
 
 > **Early preview.** Most of Preview's everyday features work, plus version history, 3D models, certificate signatures and more. Glance's entries in Explorer's right-click menu are under **Show more options** on Windows 11; the top-level entry comes once releases are code-signed. See the [README](https://github.com/RedtRocks/glance#features) for the full list.
 
+## New in 0.6.1
+
+Fixes for Ask AI:
+
+- **Signing in on a company's website works.** "Sign in with Google", Apple or Microsoft opens its sign-in window instead of failing.
+- **A way back.** Back, Home and Reload buttons sit above the website, with **Back to Glance chat**, so a sign-in page or link can't leave you stuck.
+- **Files open again after using a website.** Opening documents stopped working once a company website had been shown.
+- **F5 and Ctrl+R no longer reload Glance** and throw away open documents (Ctrl+R still rotates pages).
+- **Gemini opens its website,** where you sign in with Google. Google no longer lets its Gemini helper app sign in with a personal account.
+- **Switching AI company and back keeps the model list working,** and switching mid-answer no longer leaves the sidebar stuck.
+- **The model list is readable in dark mode,** each company shows its logo, and the Ask AI button has a purple sparkle.
+
 ## New in 0.6.0
 
 - **Ask AI about what you're looking at.** Press **Ask AI** (toolbar or View menu) to open a sidebar and chat with Claude, ChatGPT, Gemini, GitHub Copilot, Qwen, Kimi, Mistral or OpenCode about the open document, photo or model. Share **This page** or **Select area** to point at one part. It uses each company's own agent signed in with your account (free or paid), or an API key for OpenAI, Anthropic, OpenRouter, Z.ai, Kimi, DeepSeek, Mistral or any compatible address. Keys are kept in Windows Credential Manager. Each document keeps its past chats.

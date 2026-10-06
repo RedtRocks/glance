@@ -9,7 +9,7 @@ use tauri::Manager;
 /// (a layered PSD, an Illustrator file, …). Choosing an app opens the file once;
 /// file associations are left untouched.
 #[tauri::command]
-pub async fn open_with(window: tauri::WebviewWindow, path: String) -> Result<(), String> {
+pub async fn open_with(window: tauri::Window, path: String) -> Result<(), String> {
     #[cfg(windows)]
     {
         let hwnd = window.hwnd().map_err(|e| e.to_string())?.0 as isize;
@@ -109,7 +109,7 @@ mod share {
 
 /// Opens the Windows share sheet (mail, Nearby Share, apps) for these files.
 #[tauri::command]
-pub async fn share_files(app: tauri::AppHandle, window: tauri::WebviewWindow, paths: Vec<String>, title: String) -> Result<(), String> {
+pub async fn share_files(app: tauri::AppHandle, window: tauri::Window, paths: Vec<String>, title: String) -> Result<(), String> {
     #[cfg(windows)]
     {
         let hwnd = window.hwnd().map_err(|e| e.to_string())?.0 as isize;

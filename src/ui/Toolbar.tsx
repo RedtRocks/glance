@@ -34,16 +34,25 @@ function tip(label: string, command?: string): string {
   return k ? t('{label} ({shortcut})', { label, shortcut: displayCombo(k) }) : label
 }
 
-function Btn({ icon, label, command, onClick, pressed }: { icon: IconName; label: string; command?: string; onClick?: () => void; pressed?: boolean }) {
+function Btn({ icon, label, command, onClick, pressed, extra = '' }: { icon: IconName; label: string; command?: string; onClick?: () => void; pressed?: boolean; extra?: string }) {
   return (
     <button
-      class={`tb-button ${pressed ? 'pressed' : ''}`}
+      class={`tb-button ${extra} ${pressed ? 'pressed' : ''}`}
       title={tip(label, command)}
       aria-label={label}
       aria-pressed={pressed}
       onClick={onClick ?? (() => command && void runCommand(command))}
     >
       <Icon name={icon} />
+      {extra === 'ai-button' && (
+        <svg class="ai-gradient-defs" width="0" height="0" aria-hidden="true">
+          <linearGradient id="ai-gradient" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#a78bfa" />
+            <stop offset="0.5" stop-color="#8b5cf6" />
+            <stop offset="1" stop-color="#d946ef" />
+          </linearGradient>
+        </svg>
+      )}
     </button>
   )
 }
@@ -233,7 +242,7 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     id: 'askAi',
     label: msg('Ask AI'),
     applies: (c) => isShown(c) && platform.isTauri,
-    render: () => <Btn icon="sparkle" label={t('Ask AI')} command="view.askAi" pressed={aiOpen.value} />
+    render: () => <Btn icon="sparkleFilled" label={t('Ask AI')} command="view.askAi" pressed={aiOpen.value} extra="ai-button" />
   },
   { id: 'search', label: msg('Search'), applies: isPdf, render: (c) => <SearchField doc={c.doc!} /> },
   { id: 'overflow', label: msg('More'), applies: () => true, render: () => <Overflow /> }
