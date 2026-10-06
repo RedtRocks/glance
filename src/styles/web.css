@@ -704,6 +704,10 @@
 .phone-bar.markup {
   justify-content: space-between;
 }
+.phone-bar.markup h1 {
+  flex: 1;
+  text-align: center;
+}
 .phone-count {
   flex: none;
   width: 32px;
