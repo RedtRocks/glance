@@ -2,6 +2,15 @@ Glance is a free, open-source, lightweight viewer and editor for PDFs, images, c
 
 > **Early preview.** Most of Preview's everyday features work, plus version history, 3D models, certificate signatures and more. Glance's entries in Explorer's right-click menu are under **Show more options** on Windows 11; the top-level entry comes once releases are code-signed. See the [README](https://github.com/RedtRocks/glance#features) for the full list.
 
+## New in 0.6.0
+
+- **Ask AI about what you're looking at.** Press **Ask AI** (toolbar or View menu) to open a sidebar and chat with Claude, ChatGPT, Gemini, GitHub Copilot, Qwen, Kimi, Mistral or OpenCode about the open document, photo or model. Share **This page** or **Select area** to point at one part. It uses each company's own agent signed in with your account (free or paid), or an API key for OpenAI, Anthropic, OpenRouter, Z.ai, Kimi, DeepSeek, Mistral or any compatible address. Keys are kept in Windows Credential Manager. Each document keeps its past chats.
+- **Or use the company's own website.** The globe button in Ask AI shows chatgpt.com, claude.ai, Gemini and the others in the sidebar, signed in with your own account. **Copy this page** or **Copy an area** puts what you're looking at on the clipboard to paste into the chat.
+- **AI apps start Glance only when they need it.** Connecting Claude Code, Codex, Cursor and the rest no longer opens Glance when the AI app starts. Glance starts in the background on the first request, and again if you quit it mid-session, so the tools no longer disappear until the AI app restarts.
+- **Older Office files open too:** Word 97-2003 (.doc), Excel 97-2003 (.xls) and PowerPoint 97-2003 (.ppt), as read-only previews with **Open with…**, in the app and in the browser.
+- **Markup on phones and touchscreens:** tap markup to select it, then use the floating bar to edit, recolor, duplicate or delete it. Dragging with a finger moves markup instead of scrolling, and Redo sits next to Undo.
+- **The iPhone Home Screen app works offline reliably.** After its first launch online it tells you once everything is stored, and opens without a connection from then on.
+
 ## New in 0.5.0
 
 - **Let your AI apps use Glance.** Claude Code, Claude Desktop, Codex, Cursor, VS Code, Windsurf, Gemini CLI, LM Studio and any other MCP app can view every format Glance opens, read text (scanned pages through Windows OCR), convert, combine, split and redact files, remove a photo's location, and see or move to the page you have open in Glance. Turn it on with one **Connect** click in **Settings → AI apps**. Edits always go to new files, so your originals stay as they were. [How it works](https://github.com/RedtRocks/glance/blob/main/docs/AI-APPS.md)
