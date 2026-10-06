@@ -2,6 +2,13 @@ Glance is a free, open-source, lightweight viewer and editor for PDFs, images, c
 
 > **Early preview.** Most of Preview's everyday features work, plus version history, 3D models, certificate signatures and more. Glance's entries in Explorer's right-click menu are under **Show more options** on Windows 11; the top-level entry comes once releases are code-signed. See the [README](https://github.com/RedtRocks/glance#features) for the full list.
 
+## New in 0.6.2
+
+- **Tell the AI what to change in your document.** In Ask AI, type or say things like "change the tenant to Jordan Ellis" or "add a sentence about renewing under Term". The AI changes, adds or deletes text in the open PDF or photo, in the same font, size, colour and line spacing as the page, and the words and paragraphs after it move along to make room. Each answer's changes show as a card with **Keep** and **Undo**, and nothing is saved until you save. It works with every AI company in the sidebar.
+- **Talk instead of typing.** Tap the mic in Ask AI and speak. Glance types what you say, and a short pause sends it. It uses Windows speech recognition, so **Online speech recognition** must be on in Windows Settings (Glance offers a button to it if it's off).
+- **Gemini works in Glance chat again.** Glance now uses Google's Antigravity agent, which signs in with your Google account. It downloads once, the first time you pick Gemini.
+- **Copying an area for a company's website works.** **Copy an area** no longer fails with "expected RGBA image data".
+
 ## New in 0.6.1
 
 Fixes for Ask AI:
