@@ -838,6 +838,24 @@
     bottom: 6px;
     translate: -50% 0;
   }
+  /* Colours fill the sheet's width, centred, with finger-sized dots. */
+  :root[data-platform='web'] .app > .markup-toolbar .swatches {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px 16px;
+    /* Five to a row; a shorter last row stays centred too. */
+    max-width: 264px;
+    margin: 0 auto;
+    padding: 4px 0;
+  }
+  :root[data-platform='web'] .app > .markup-toolbar .swatch {
+    width: 40px;
+    height: 40px;
+  }
+  :root[data-platform='web'] .app > .markup-toolbar .flyout-label {
+    text-align: center;
+  }
   :root[data-platform='web'] .app > .markup-toolbar .shape-grid {
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
