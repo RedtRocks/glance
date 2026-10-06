@@ -15,5 +15,5 @@ Edits are markup (ADR 0003), not rewritten PDF content streams: a text box whose
 ## Consequences
 - The pure layout code (src/core/textLayout.ts) is tested without a renderer.
 - Each turn's changes show in the chat as a card with Keep and Undo; undoing restores any earlier AI markup a change replaced.
-- The old text is still in the PDF under the cover until it is redacted; the sidebar says so, and Apply Redactions removes it for good.
+- The old text is still in the PDF under the cover. Edits are for changing what a document says, not for hiding it; redaction (ADR 0005) is what removes text for good.
 - The mic uses Windows speech recognition (src-tauri/src/speech.rs), so it needs Windows' Online speech recognition setting; the web version uses the browser's.
