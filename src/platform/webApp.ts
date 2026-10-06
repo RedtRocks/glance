@@ -59,9 +59,13 @@ interface LaunchQueue {
 /** Where the service worker leaves files shared to Glance from another app. */
 const SHARED = 'glance-shared'
 
-export function startWebApp(open: (paths: string[]) => void): void {
+/**
+ * `offlineReady` runs the first time everything Glance needs is stored on this device:
+ * once per browser, and once more for an iPhone's Home Screen app, which keeps its own copy.
+ */
+export function startWebApp(open: (paths: string[]) => void, offlineReady: () => void): void {
   if (isTauri) return
-  registerServiceWorker()
+  registerServiceWorker(offlineReady)
   openSharedFiles(open)
 
   // "Open with Glance" in the operating system's file manager, once Glance is installed.
@@ -73,11 +77,27 @@ export function startWebApp(open: (paths: string[]) => void): void {
   })
 }
 
-function registerServiceWorker(): void {
+const OFFLINE_READY = 'glance-offline-ready'
+
+function registerServiceWorker(offlineReady: () => void): void {
   // Only over HTTPS (or localhost); without it the app still works, just not offline.
   if (!('serviceWorker' in navigator)) return
+  navigator.serviceWorker.addEventListener('message', (event: MessageEvent<{ type?: string } | null>) => {
+    if (event.data?.type !== 'offline-ready') return
+    try {
+      if (localStorage.getItem(OFFLINE_READY)) return
+      localStorage.setItem(OFFLINE_READY, '1')
+    } catch {
+      return
+    }
+    offlineReady()
+  })
   const register = (): void => {
     void navigator.serviceWorker.register(new URL('sw.js', document.baseURI), { scope: './' }).catch(() => undefined)
+    // Finish any download iOS cut short when the app went to the background.
+    void navigator.serviceWorker.ready.then((reg) => reg.active?.postMessage('fill'))
+    // Ask the browser not to clear Glance's copy when the device runs low on space.
+    void navigator.storage?.persist?.().catch(() => false)
   }
   // After the page has loaded, so caching the app never slows down opening it.
   if (document.readyState === 'complete') register()
