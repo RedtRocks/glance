@@ -4,6 +4,7 @@
   <a href="https://github.com/RedtRocks/glance/releases/latest"><img src="https://img.shields.io/github/v/release/RedtRocks/glance?style=flat-square&label=release&color=0f6cbd" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078d4?style=flat-square" alt="Windows 10 and 11">
   <img src="https://img.shields.io/badge/x64%20%2B%20ARM64-under%2020%20MB-0e7490?style=flat-square" alt="x64 and ARM64, under 20 MB">
+  <a href="https://apps.microsoft.com/detail/9N01BTLDS9X1"><img src="https://img.shields.io/badge/Microsoft%20Store-Get%20it-0078d4?style=flat-square" alt="Get it from the Microsoft Store"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/RedtRocks/glance?style=flat-square&color=6b7280" alt="Apache-2.0 license"></a>
 </p>
 
@@ -13,6 +14,8 @@
 
 <p align="center">
   <a href="https://github.com/RedtRocks/glance/releases/latest"><b>⬇&nbsp; Download for Windows</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://apps.microsoft.com/detail/9N01BTLDS9X1"><b>Microsoft Store</b></a>
   &nbsp;·&nbsp;
   <a href="https://redtrocks.github.io/glance/app/"><b>Open in your browser</b></a>
   &nbsp;·&nbsp;
