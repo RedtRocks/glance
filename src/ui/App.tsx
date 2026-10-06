@@ -5,6 +5,7 @@ import { cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpe
 import { confirmCloseWindow, openFiles } from '../state/actions'
 import { startAutosave } from '../state/autosave'
 import { restoreSession } from '../state/session'
+import { startMcp } from '../state/mcp'
 import { handleShellRequest } from '../state/shellActions'
 import { checkForUpdates } from '../state/updates'
 import { UpdateBar } from './UpdateBar'
@@ -131,7 +132,10 @@ export function App() {
     void platform.onOpenFiles((paths) => void openFiles(paths)).then((d) => (dispose = d))
     let unshell: (() => void) | undefined
     void platform.onShellRequest((r) => void handleShellRequest(r)).then((d) => (unshell = d))
-    void platform.showWindow()
+    // Started by an AI app (glance-mcp): stay hidden until a tool opens something.
+    void platform.launchedForAi().then((hidden) => (hidden ? undefined : platform.showWindow()))
+    let stopMcp: (() => void) | undefined
+    void startMcp().then((s) => (stopMcp = s))
     // Files the operating system hands to the installed web app (Open with, Share).
     startWebApp((paths) => void openFiles(paths))
     const stopAutosave = startAutosave()
@@ -153,6 +157,7 @@ export function App() {
     return () => {
       dispose?.()
       unshell?.()
+      stopMcp?.()
       unguard?.()
       stopAutosave()
       stopSession?.()

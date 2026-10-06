@@ -123,6 +123,7 @@
 | Touchpad gestures: pinch to zoom smoothly; two-finger orbit and Shift + two-finger pan for 3D models | ✅ |
 | Interface follows the Windows display language, with a Language setting (English only so far; translations welcome) | ✅ |
 | Explorer right-click menu: Open in Glance, Combine into PDF, Remove Location Info (on Windows 11 under "Show more options") | ✅ |
+| AI apps (Claude Code, Claude Desktop, Codex, Antigravity, Muse Code, Cursor, VS Code and any MCP app) can view any format, read text with OCR, convert, combine, split and redact files, and see and control what's open in Glance; one-click setup in Settings → AI apps ([how it works](docs/AI-APPS.md)) | ✅ |
 | Windows 11 top-level context menu (needs a signed build) | Milestone 6 |
 
 Signing on an iPhone or iPad (Preview's Continuity feature) isn't possible on Windows; use the camera or a photo of your signature instead.
@@ -131,7 +132,7 @@ Glance deliberately has no quick-look popup: pair it with [PowerToys Peek](https
 
 ## Privacy
 
-No telemetry and no accounts. The only network request is an optional daily check for a newer release on GitHub (turn it off in Settings; the Microsoft Store version leaves updates to the Store). Background removal and text recognition run on your PC.
+No telemetry and no accounts. The only network request is an optional daily check for a newer release on GitHub (turn it off in Settings; the Microsoft Store version leaves updates to the Store). Background removal and text recognition run on your PC. AI apps you connect in Settings → AI apps send what they read through Glance to their own AI provider.
 
 ## FAQ
 
@@ -169,6 +170,7 @@ Every pull request builds a Windows installer in CI (see the `glance-windows-x64
 ```
 src/                 Preact UI
   core/              Pure logic (page operations, shortcuts, page-control rules), unit tested
+  core/mcp/          MCP protocol and the AI tools' definitions (tools.json)
   pdf/               PDF.js integration: rendering, thumbnails, search
   state/             Documents, commands registry, actions, settings
   ui/                Components (toolbar, sidebar, views, dialogs)
@@ -177,6 +179,8 @@ src/                 Preact UI
 src-tauri/           Rust backend
   src/decode/        Image decoding: WIC, JPEG 2000, JPEG XL, PSD, ICNS, RAW previews, EPS, CBZ
   src/protocol.rs    glance:// scheme serving files and decoded images to the UI
+  src/mcp/           AI apps: the loopback listener for glance-mcp and Settings → AI apps
+  mcp-bridge/        glance-mcp.exe, the MCP server AI apps start (relays to Glance)
 packaging/           winget manifests and the Microsoft Store (MSIX) package and listing
 docs/adr/            Architecture decision records
 CONTEXT.md           Domain glossary

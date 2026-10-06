@@ -202,8 +202,9 @@ ${a.ext.map((e) => `              <uap:FileType>.${xml(e.toLowerCase())}</uap:Fi
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  xmlns:desktop4="http://schemas.microsoft.com/appx/manifest/desktop/windows10/4"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  IgnorableNamespaces="uap uap3 desktop rescap">
+  IgnorableNamespaces="uap uap3 desktop desktop4 rescap">
   <Identity Name="${xml(identity.name)}" Publisher="${xml(identity.publisher)}" Version="${msixVersion(conf.version)}" ProcessorArchitecture="${arch}" />
   <Properties>
     <DisplayName>${xml(displayName)}</DisplayName>
@@ -233,6 +234,24 @@ ${a.ext.map((e) => `              <uap:FileType>.${xml(e.toLowerCase())}</uap:Fi
           </uap3:AppExecutionAlias>
         </uap3:Extension>
 ${ftas}
+      </Extensions>
+    </Application>
+    <!-- AI apps run glance-mcp.exe (src-tauri/mcp-bridge) through this alias, which stays put across
+         updates. An application has one alias extension, so the console relay is its own, unlisted app. -->
+    <Application Id="GlanceMcp" Executable="glance-mcp.exe" EntryPoint="Windows.FullTrustApplication" desktop4:Subsystem="console" desktop4:SupportsMultipleInstances="true">
+      <uap:VisualElements
+        DisplayName="${xml(displayName)}"
+        Description="${xml(conf.bundle.shortDescription)}"
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\\Square150x150Logo.png"
+        Square44x44Logo="Assets\\Square44x44Logo.png"
+        AppListEntry="none" />
+      <Extensions>
+        <uap3:Extension Category="windows.appExecutionAlias" Executable="glance-mcp.exe" EntryPoint="Windows.FullTrustApplication">
+          <uap3:AppExecutionAlias>
+            <desktop:ExecutionAlias Alias="glance-mcp.exe" />
+          </uap3:AppExecutionAlias>
+        </uap3:Extension>
       </Extensions>
     </Application>
   </Applications>

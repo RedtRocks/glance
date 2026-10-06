@@ -1,0 +1,19 @@
+[package]
+name = "glance-mcp"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Lets AI apps use Glance: an MCP stdio server that relays to the Glance app (see src/main.rs)"
+publish = false
+
+[[bin]]
+name = "glance-mcp"
+path = "src/main.rs"
+
+[dependencies]
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

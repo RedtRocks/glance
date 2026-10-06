@@ -1,0 +1,206 @@
+{
+  "instructions": "Glance is the user's document and image viewer on Windows. Use it to look at and work with local files: see any page or image (PDF, camera RAW, HEIC, PSD, JPEG XL, EPS, XPS, TIFF, comics and 40+ other formats), read text with OCR, combine, split, rotate and reorder PDF pages, convert images, and redact text so it is really removed. Paths are absolute Windows paths and pages are numbered from 1. Tools never change the files you pass in: every edit writes a new file at output_path. The glance_open, glance_list_open, glance_current_view, glance_go_to_page and glance_mark_redactions tools work with what the user has open in the Glance window.",
+  "tools": [
+    {
+      "name": "glance_info",
+      "title": "File info",
+      "description": "Describes a document, image or 3D model: its kind, size, page count, image dimensions, PDF metadata (title, author, page sizes, whether pages have selectable text) and photo metadata (camera, date, location). Use it before working with an unfamiliar file.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string", "description": "Absolute path of the file." }
+        },
+        "required": ["path"]
+      },
+      "annotations": { "readOnlyHint": true, "openWorldHint": false }
+    },
+    {
+      "name": "glance_view",
+      "title": "View a page or image",
+      "description": "Renders one page of a PDF, PostScript/EPS, XPS, multi-page TIFF or comic book, or an image in any format Glance opens (camera RAW, HEIC/AVIF, PSD, JPEG XL, JPEG 2000, EXR/HDR, DDS, ICNS, SVG, …) and returns it as an image you can look at.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string", "description": "Absolute path of the file." },
+          "page": { "type": "integer", "minimum": 1, "description": "Page or frame to show, from 1. Default 1." },
+          "max_size": { "type": "integer", "minimum": 64, "maximum": 4096, "description": "Longest side of the returned image in pixels. Default 1568." }
+        },
+        "required": ["path"]
+      },
+      "annotations": { "readOnlyHint": true, "openWorldHint": false }
+    },
+    {
+      "name": "glance_read_text",
+      "title": "Read text",
+      "description": "Returns the text of a PDF (per page) or of an image. Pages without selectable text (scans, photos of documents) and images are read with Windows OCR.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string", "description": "Absolute path of the file." },
+          "pages": { "type": "string", "description": "Pages to read, like \"1-3,7\" or \"5-\". Default: all." },
+          "ocr": { "type": "string", "enum": ["auto", "always", "never"], "description": "auto (default): OCR only pages without selectable text. always: OCR every page, for garbled text layers. never: selectable text only." }
+        },
+        "required": ["path"]
+      },
+      "annotations": { "readOnlyHint": true, "openWorldHint": false }
+    },
+    {
+      "name": "glance_convert",
+      "title": "Convert",
+      "description": "Saves a page or image as a new file. The format follows output_path's extension: .png, .jpg, .webp, .tif, .bmp or .pdf. Works with every format Glance opens, so it can turn RAW, HEIC, PSD or a PDF page into a JPEG or PNG, or an image into a PDF.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string", "description": "Absolute path of the file to convert." },
+          "output_path": { "type": "string", "description": "Absolute path of the new file. Must not exist yet unless overwrite is true." },
+          "page": { "type": "integer", "minimum": 1, "description": "Page or frame to convert, from 1. Default 1." },
+          "max_size": { "type": "integer", "minimum": 16, "description": "Scale down so the longest side is at most this many pixels. PDF pages render at 200 dpi by default." },
+          "quality": { "type": "integer", "minimum": 1, "maximum": 100, "description": "JPEG and WebP quality. Default 90." },
+          "overwrite": { "type": "boolean", "description": "Replace output_path if it exists. Default false." }
+        },
+        "required": ["path", "output_path"]
+      },
+      "annotations": { "readOnlyHint": false, "destructiveHint": false, "openWorldHint": false }
+    },
+    {
+      "name": "glance_combine",
+      "title": "Combine into PDF",
+      "description": "Combines PDFs and images, in the order given, into one new PDF. Each image becomes a page.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "inputs": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "Absolute paths of the PDFs and images, in order." },
+          "output_path": { "type": "string", "description": "Absolute path of the new PDF. Must not exist yet unless overwrite is true." },
+          "overwrite": { "type": "boolean", "description": "Replace output_path if it exists. Default false." }
+        },
+        "required": ["inputs", "output_path"]
+      },
+      "annotations": { "readOnlyHint": false, "destructiveHint": false, "openWorldHint": false }
+    },
+    {
+      "name": "glance_pdf_pages",
+      "title": "Edit PDF pages",
+      "description": "Makes a new PDF from an existing one with pages extracted, deleted, rotated or reordered, or splits it into several PDFs. extract keeps only `pages`; delete removes `pages`; rotate turns `pages` (default all) by `degrees`; reorder uses `order`, a full list of page numbers in their new order; split writes one PDF per `every` pages, or starts a new PDF at each of `pages`, named after output_path with \" 1\", \" 2\", … added.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string", "description": "Absolute path of the PDF." },
+          "action": { "type": "string", "enum": ["extract", "delete", "rotate", "reorder", "split"] },
+          "output_path": { "type": "string", "description": "Absolute path of the new PDF (for split, the name the parts are numbered after). Must not exist yet unless overwrite is true." },
+          "pages": { "type": "string", "description": "Pages like \"1-3,7\" or \"5-\". For split: the first page of each part after the first." },
+          "degrees": { "type": "integer", "enum": [90, 180, 270, -90], "description": "rotate: clockwise degrees." },
+          "order": { "type": "array", "items": { "type": "integer" }, "description": "reorder: every page number exactly once, in the new order." },
+          "every": { "type": "integer", "minimum": 1, "description": "split: pages per part." },
+          "overwrite": { "type": "boolean", "description": "Replace existing output files. Default false." }
+        },
+        "required": ["path", "action", "output_path"]
+      },
+      "annotations": { "readOnlyHint": false, "destructiveHint": false, "openWorldHint": false }
+    },
+    {
+      "name": "glance_redact",
+      "title": "Redact text",
+      "description": "Finds text in a PDF or image and saves a redacted copy where it is truly gone: affected PDF pages are flattened to images with the text painted out and hidden copies (text layer, annotations, form fields, metadata) removed. Scanned pages and images are searched with OCR. Set dry_run to only list what would be redacted.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string", "description": "Absolute path of the PDF or image." },
+          "output_path": { "type": "string", "description": "Absolute path of the redacted copy. Must not exist yet unless overwrite is true. Not needed for dry_run." },
+          "terms": { "type": "array", "items": { "type": "string" }, "description": "Words or phrases to redact." },
+          "patterns": { "type": "array", "items": { "type": "string", "enum": ["email", "phone", "card", "id", "iban", "date"] }, "description": "Kinds of personal data to redact: email addresses, phone numbers, card numbers, ID numbers (SSN, national ID), bank accounts (IBAN), dates." },
+          "regex": { "type": "string", "description": "A JavaScript regular expression to redact matches of." },
+          "match_case": { "type": "boolean", "description": "For terms. Default false." },
+          "whole_word": { "type": "boolean", "description": "For terms. Default true." },
+          "pages": { "type": "string", "description": "Only these pages, like \"1-3,7\". Default: all." },
+          "dry_run": { "type": "boolean", "description": "Only report the matches; write nothing. Default false." },
+          "overwrite": { "type": "boolean", "description": "Replace output_path if it exists. Default false." }
+        },
+        "required": ["path"]
+      },
+      "annotations": { "readOnlyHint": false, "destructiveHint": false, "openWorldHint": false }
+    },
+    {
+      "name": "glance_remove_location",
+      "title": "Remove location",
+      "description": "Saves a copy of a photo without its GPS location (JPEG, PNG, TIFF, WebP, HEIC, JPEG XL). Everything else, pixels included, stays as it was.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string", "description": "Absolute path of the photo." },
+          "output_path": { "type": "string", "description": "Absolute path of the copy, same extension. Must not exist yet unless overwrite is true." },
+          "overwrite": { "type": "boolean", "description": "Replace output_path if it exists. Default false." }
+        },
+        "required": ["path", "output_path"]
+      },
+      "annotations": { "readOnlyHint": false, "destructiveHint": false, "openWorldHint": false }
+    },
+    {
+      "name": "glance_open",
+      "title": "Open in Glance",
+      "description": "Opens files in the Glance window for the user to see (each in its own tab), brings the window to the front, and optionally goes to a page of the first file.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "paths": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "Absolute paths of the files." },
+          "page": { "type": "integer", "minimum": 1, "description": "Page to show in the first file." }
+        },
+        "required": ["paths"]
+      },
+      "annotations": { "readOnlyHint": false, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false }
+    },
+    {
+      "name": "glance_list_open",
+      "title": "List open tabs",
+      "description": "Lists the documents open in the Glance window: tab id, name, path, kind, the page the user is on, page count, selected pages, unsaved changes, and which tab is active.",
+      "inputSchema": { "type": "object", "properties": {} },
+      "annotations": { "readOnlyHint": true, "openWorldHint": false }
+    },
+    {
+      "name": "glance_current_view",
+      "title": "What the user sees",
+      "description": "Returns the page the user is looking at in Glance (the active tab, or `tab`) as an image, with its text, including unsaved markup and edits.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tab": { "type": "string", "description": "Tab id or path from glance_list_open. Default: the active tab." },
+          "max_size": { "type": "integer", "minimum": 64, "maximum": 4096, "description": "Longest side of the returned image in pixels. Default 1568." }
+        },
+        "required": []
+      },
+      "annotations": { "readOnlyHint": true, "openWorldHint": false }
+    },
+    {
+      "name": "glance_go_to_page",
+      "title": "Go to page",
+      "description": "Shows a page in an open document in Glance.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "page": { "type": "integer", "minimum": 1, "description": "Page number, from 1." },
+          "tab": { "type": "string", "description": "Tab id or path from glance_list_open. Default: the active tab." }
+        },
+        "required": ["page"]
+      },
+      "annotations": { "readOnlyHint": false, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false }
+    },
+    {
+      "name": "glance_mark_redactions",
+      "title": "Mark for redaction",
+      "description": "Marks text in a PDF open in Glance for redaction, for the user to review and apply (nothing is removed until they choose Apply Redactions). Takes the same search options as glance_redact.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tab": { "type": "string", "description": "Tab id or path from glance_list_open. Default: the active tab." },
+          "terms": { "type": "array", "items": { "type": "string" } },
+          "patterns": { "type": "array", "items": { "type": "string", "enum": ["email", "phone", "card", "id", "iban", "date"] } },
+          "regex": { "type": "string" },
+          "match_case": { "type": "boolean" },
+          "whole_word": { "type": "boolean" },
+          "pages": { "type": "string" }
+        },
+        "required": []
+      },
+      "annotations": { "readOnlyHint": false, "destructiveHint": false, "openWorldHint": false }
+    }
+  ]
+}

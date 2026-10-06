@@ -25,6 +25,8 @@ export interface Settings {
   reopenTabs: boolean
   /** The "Make Glance your default viewer?" bar was shown and answered or closed. */
   defaultAppAsked?: boolean
+  /** AI apps connected through glance-mcp may use Glance's tools (Settings → AI apps). */
+  aiApps: boolean
 }
 
 export const DEFAULT_TOOLBAR = ['sidebar', 'pageControls', 'spacer', 'zoomOut', 'zoomIn', 'rotate', 'highlight', 'markup', 'search', 'overflow']
@@ -39,7 +41,8 @@ const DEFAULTS: Settings = {
   checkForUpdates: true,
   autosave: true,
   language: 'system',
-  reopenTabs: false
+  reopenTabs: false,
+  aiApps: true
 }
 
 const KEY = 'glance.settings.v1'
