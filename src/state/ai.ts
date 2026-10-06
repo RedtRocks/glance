@@ -118,7 +118,7 @@ export function deleteChat(id: string): void {
   } catch {
     // ignore
   }
-  if (chat.peek().id === id) chat.value = newChat(agentId.peek())
+  if (chat.peek().id === id) startNewChat()
 }
 
 function newChat(agent: string): Chat {
@@ -308,11 +308,25 @@ export async function refreshAgents(): Promise<void> {
   agents.value = await platform.agentsList()
 }
 
+/** Starts in flight, per chat, so two callers don't each open a session. */
+const starting = new Map<string, Promise<boolean>>()
+/** The chat whose prompt is running (status 'working' belongs to it). */
+let workingChat: string | null = null
+
 /** Makes sure the chat has a live session; shows sign-in or what's missing when it can't. */
-export async function ensureSession(): Promise<boolean> {
+export function ensureSession(): Promise<boolean> {
   const c = chat.peek()
+  if (status.peek() === 'working' && workingChat === c.id) return Promise.resolve(true)
+  let p = starting.get(c.id)
+  if (!p) {
+    p = startChat(c).finally(() => starting.delete(c.id))
+    starting.set(c.id, p)
+  }
+  return p
+}
+
+async function startChat(c: Chat): Promise<boolean> {
   const id = c.agentId
-  if (status.peek() === 'working') return true
   status.value = 'starting'
   problem.value = null
   let l: Link
@@ -470,35 +484,50 @@ export async function send(text: string): Promise<void> {
   attachments.value = []
   chat.value = { ...c, parts: [...c.parts, { kind: 'user', text, context: files.map((a) => a.label) }], updatedAt: Date.now() }
   status.value = 'working'
+  workingChat = c.id
+  // Once the user moves to another chat, this prompt's outcome is no longer theirs to see.
+  const here = (): boolean => chat.peek().id === c.id
   try {
     const res = await l.conn.prompt({ sessionId, prompt: blocks })
-    if (res.stopReason === 'refusal') addNotice(t('{agent} declined to answer that.', { agent: agentName(c.agentId) }))
-    else if (res.stopReason === 'max_tokens' || res.stopReason === 'max_turn_requests') addNotice(t('{agent} stopped early. Ask it to continue.', { agent: agentName(c.agentId) }))
-    status.value = 'ready'
+    if (res.stopReason === 'refusal') addNotice(t('{agent} declined to answer that.', { agent: agentName(c.agentId) }), false, c.id)
+    else if (res.stopReason === 'max_tokens' || res.stopReason === 'max_turn_requests') addNotice(t('{agent} stopped early. Ask it to continue.', { agent: agentName(c.agentId) }), false, c.id)
+    if (here()) status.value = 'ready'
   } catch (e) {
-    if (isAuthRequired(e)) {
+    if (here() && isAuthRequired(e)) {
       signInMethods.value = usableMethods(l.init.authMethods)
       status.value = 'signIn'
-    } else {
+    } else if (here()) {
       if (status.peek() === 'working') status.value = l.alive ? 'ready' : 'failed'
-      addNotice(errorText(e), true)
+      addNotice(errorText(e), true, c.id)
     }
   } finally {
+    if (workingChat === c.id) workingChat = null
     const done = chat.peek()
     if (done.id === c.id) storeChat({ ...done, updatedAt: Date.now() })
   }
 }
 
-function addNotice(text: string, error = false): void {
+/** Adds a notice to the open chat (or only to `chatId`, if that's still the open one). */
+function addNotice(text: string, error = false, chatId?: string): void {
   const c = chat.peek()
+  if (chatId && c.id !== chatId) return
   chat.value = { ...c, parts: [...c.parts, { kind: 'notice', text, error }] }
+}
+
+/** Leaving a chat: cancel its running prompt and any question it's asking. */
+function leaveChat(): void {
+  if (status.peek() === 'working') {
+    void stop().catch(() => undefined)
+    status.value = 'idle'
+  }
+  permission.peek()?.answer(null)
 }
 
 export async function stop(): Promise<void> {
   const c = chat.peek()
   const p = links.get(c.agentId)
-  if (!p || !c.sessionId) return
   permission.peek()?.answer(null)
+  if (!p || !c.sessionId) return
   await (await p).conn.cancel({ sessionId: c.sessionId })
 }
 
@@ -519,24 +548,36 @@ export async function chooseModel(value: string): Promise<void> {
 
 /** Switches company; the chat starts fresh (earlier chats stay under Past chats). */
 export function chooseAgent(id: string): void {
+  leaveChat()
   agentId.value = id
-  if (WEBSITE_FIRST.has(id)) siteView.value = true
   savePrefs()
   if (chat.peek().agentId !== id || chat.peek().parts.length) chat.value = newChat(id)
   model.value = null
   signInMethods.value = []
+  if (WEBSITE_FIRST.has(id)) {
+    // Its helper app can't sign in; start it only if the user goes back to Glance chat.
+    siteView.value = true
+    status.value = 'idle'
+    return
+  }
   void ensureSession()
 }
 
+/** Back from the website to Glance's chat: start the chat if nothing has yet. */
+export function showChat(): void {
+  siteView.value = false
+  if (status.peek() === 'idle') void ensureSession()
+}
+
 export function startNewChat(): void {
-  if (status.peek() === 'working') void stop()
+  leaveChat()
   chat.value = newChat(agentId.peek())
   model.value = null
   void ensureSession()
 }
 
 export function openChat(c: Chat): void {
-  if (status.peek() === 'working') void stop()
+  leaveChat()
   agentId.value = c.agentId
   savePrefs()
   chat.value = c

@@ -580,7 +580,7 @@ function SiteNav({ id }: { id: string }) {
       </button>
       <span class="ai-site-host">{host}</span>
       <div class="tb-spacer" />
-      <button class="ai-tool-button" onClick={() => (ai.siteView.value = false)}>
+      <button class="ai-tool-button" onClick={() => ai.showChat()}>
         {t('Back to Glance chat')}
       </button>
     </div>
@@ -629,7 +629,7 @@ export function AiSidebar({ doc }: { doc: Doc }) {
 
   useEffect(() => {
     void ai.refreshAgents().then(() => {
-      if (ai.welcomed.peek() && ai.status.peek() === 'idle') void ai.ensureSession()
+      if (ai.welcomed.peek() && ai.status.peek() === 'idle' && !(ai.siteView.peek() && ai.WEBSITE_FIRST.has(ai.chat.peek().agentId))) void ai.ensureSession()
     })
   }, [])
   useEffect(() => {
@@ -658,7 +658,8 @@ export function AiSidebar({ doc }: { doc: Doc }) {
             aria-label={site ? t('Back to Glance chat') : t('Use the {agent} website instead', { agent: agent.name })}
             title={site ? t('Back to Glance chat') : t('Use the {agent} website instead', { agent: agent.name })}
             onClick={() => {
-              ai.siteView.value = !site
+              if (site) ai.showChat()
+              else ai.siteView.value = true
               setView('chat')
             }}
           >
