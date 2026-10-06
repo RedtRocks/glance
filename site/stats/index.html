@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Glance Downloads</title>
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<script>(function(){try{var t=localStorage.getItem('glance-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}})();</script>
+<style>
+@font-face{font-family:'Urbanist';font-style:normal;font-weight:400;font-display:swap;src:url("../assets/urbanist-latin.woff2") format('woff2')}
+/* Wollo tokens, as on the landing page */
+:root{--surface:#ffffff;--surface-subtle:#f9f9f9;--divider:#dcdcdc;--ink:#0a0a0a;--ink-muted:#6b6b6b;--on-ink:#ffffff;--accent:#6312f6;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--surface:#0e0d12;--surface-subtle:#1a1920;--divider:#34323d;--ink:#f4f3f7;--ink-muted:#a9a6b3;--on-ink:#0e0d12;--accent:#b49bff;color-scheme:dark}}
+:root[data-theme="dark"]{--surface:#0e0d12;--surface-subtle:#1a1920;--divider:#34323d;--ink:#f4f3f7;--ink-muted:#a9a6b3;--on-ink:#0e0d12;--accent:#b49bff;color-scheme:dark}
+html,body{margin:0;background:var(--surface)}
+body{font-family:Urbanist,"Helvetica Neue",Arial,sans-serif;color:var(--ink);font-variant-numeric:tabular-nums}
+*{box-sizing:border-box}
+a{color:var(--ink);text-underline-offset:4px}a:hover{color:var(--accent)}
+main{max-width:960px;margin:0 auto;padding:48px 24px 80px}
+.top{display:flex;align-items:center;gap:12px;text-decoration:none;font-size:20px}
+.top img{width:32px;height:32px}
+h1{font-size:52px;line-height:58px;letter-spacing:-.5px;margin:40px 0 8px;font-weight:400}
+.lead{font-size:17px;line-height:26px;color:var(--ink-muted);margin:0 0 32px}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.tile{border-radius:20px;padding:24px;background:var(--surface-subtle)}
+.tile.brand{background:#6312f6;color:#ffffff}
+.tile.brand .k{color:rgba(255,255,255,.8)}
+.k{font-size:15px;line-height:20px;color:var(--ink-muted);margin:0}
+.v{font-size:52px;line-height:60px;letter-spacing:-1px;margin:8px 0 0}
+h2{font-size:32px;line-height:40px;margin:56px 0 16px;font-weight:400}
+table{width:100%;border-collapse:collapse;font-size:17px;line-height:24px}
+th{font-weight:400;color:var(--ink-muted);text-align:right;padding:10px 12px;border-bottom:1px solid var(--divider)}
+td{text-align:right;padding:12px;border-bottom:1px solid var(--divider)}
+th:first-child,td:first-child{text-align:left;padding-left:0}
+td small{display:block;color:var(--ink-muted);font-size:13px}
+.bar{display:block;height:6px;border-radius:9999px;background:var(--accent);margin-top:6px;min-width:2px}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.card{border-radius:20px;padding:24px;box-shadow:inset 0 0 0 1px var(--divider);display:block;text-decoration:none}
+.card:hover{box-shadow:inset 0 0 0 1px var(--ink);color:var(--ink)}
+.card p{margin:8px 0 0;color:var(--ink-muted);font-size:15px;line-height:22px}
+.card .t{font-size:20px;line-height:24px;margin:0;color:var(--ink)}
+.note{font-size:15px;line-height:22px;color:var(--ink-muted);margin:16px 0 0}
+@media (max-width:760px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.cards{grid-template-columns:1fr}h1{font-size:40px;line-height:46px}.v{font-size:40px;line-height:48px}th,td{padding:10px 6px}}
+</style>
+</head>
+<body>
+<main>
+<a class="top" href="../"><img src="../assets/icon.svg" alt="">Glance</a>
+<h1>Downloads</h1>
+<p class="lead" id="lead">Installer downloads from GitHub releases, counted by GitHub.</p>
+
+<div class="tiles">
+<div class="tile brand"><p class="k">All Downloads</p><p class="v" id="total">…</p></div>
+<div class="tile"><p class="k" id="latest-k">Latest Release</p><p class="v" id="latest">…</p></div>
+<div class="tile"><p class="k">Intel/AMD (x64)</p><p class="v" id="x64">…</p></div>
+<div class="tile"><p class="k">ARM (arm64)</p><p class="v" id="arm64">…</p></div>
+</div>
+
+<h2>By Release</h2>
+<table>
+<thead><tr><th>Release</th><th>x64</th><th>arm64</th><th>Total</th></tr></thead>
+<tbody id="rows"><tr><td colspan="4">Loading…</td></tr></tbody>
+</table>
+<p class="note">Every download counts, including people updating from an older version. Microsoft Store installs are counted separately.</p>
+
+<h2>More Numbers</h2>
+<div class="cards">
+<a class="card" href="https://cloud.umami.is/"><p class="t">Visitors and Countries</p><p>Website visits, unique visitors, countries, devices and download clicks, on Umami.</p></a>
+<a class="card" href="https://partner.microsoft.com/dashboard/insights/analytics/reports/summary"><p class="t">Microsoft Store</p><p>Store page views, installs and countries, in Partner Center.</p></a>
+</div>
+</main>
+<script>
+(function () {
+  var fmt = function (n) { return n.toLocaleString('en-US'); };
+  var set = function (id, t) { document.getElementById(id).textContent = t; };
+  fetch('https://api.github.com/repos/RedtRocks/glance/releases?per_page=100')
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function (releases) {
+      var rows = releases.filter(function (r) { return !r.draft; }).map(function (r) {
+        var row = { tag: r.tag_name, date: (r.published_at || '').slice(0, 10), x64: 0, arm64: 0 };
+        r.assets.forEach(function (a) {
+          if (!/\.(exe|msi|zip|msix)$/i.test(a.name)) return;
+          if (/arm64/i.test(a.name)) row.arm64 += a.download_count; else row.x64 += a.download_count;
+        });
+        row.total = row.x64 + row.arm64;
+        return row;
+      });
+      var sum = function (k) { return rows.reduce(function (s, r) { return s + r[k]; }, 0); };
+      var max = Math.max.apply(null, rows.map(function (r) { return r.total; }).concat(1));
+      set('total', fmt(sum('total'))); set('x64', fmt(sum('x64'))); set('arm64', fmt(sum('arm64')));
+      if (rows[0]) { set('latest', fmt(rows[0].total)); set('latest-k', 'Latest (' + rows[0].tag + ')'); }
+      var tbody = document.getElementById('rows'); tbody.textContent = '';
+      rows.forEach(function (r) {
+        var tr = document.createElement('tr');
+        var first = document.createElement('td'); first.textContent = r.tag;
+        var small = document.createElement('small'); small.textContent = r.date; first.appendChild(small);
+        tr.appendChild(first);
+        [r.x64, r.arm64].forEach(function (n) { var td = document.createElement('td'); td.textContent = fmt(n); tr.appendChild(td); });
+        var total = document.createElement('td'); total.textContent = fmt(r.total);
+        var bar = document.createElement('span'); bar.className = 'bar'; bar.style.width = (r.total / max * 100) + '%'; bar.style.marginLeft = 'auto';
+        total.appendChild(bar); tr.appendChild(total); tbody.appendChild(tr);
+      });
+    })
+    .catch(function () {
+      ['total', 'latest', 'x64', 'arm64'].forEach(function (id) { set(id, '–'); });
+      document.getElementById('rows').innerHTML = '<tr><td colspan="4">GitHub didn\'t answer. Try again in a minute.</td></tr>';
+    });
+})();
+</script>
+</body>
+</html>

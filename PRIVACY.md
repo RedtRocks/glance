@@ -8,4 +8,8 @@ Glance doesn't collect, store or send any personal information. There is no tele
 - Sharing a file through the Windows share sheet sends it only to the app you pick.
 - AI apps you connect (Settings → AI apps) can use Glance's tools on your files. Glance itself sends nothing; the AI app sends what it reads through Glance (page images, text, file names) to its AI provider, under that provider's terms. Turn AI access off in Settings → AI apps at any time.
 
+## The website
+
+The website (redtrocks.github.io/glance, including the browser version of Glance) counts visits with [Umami](https://umami.is), which sets no cookies and stores nothing on your device. It records the page, the referring site, your browser, operating system, device type and country (worked out from your IP address, which isn't stored), and clicks on the download and Microsoft Store links. It never sees the files you open in the browser version: they stay on your device. Glance on Windows has no such counting.
+
 Questions: [open an issue](https://github.com/RedtRocks/glance/issues).

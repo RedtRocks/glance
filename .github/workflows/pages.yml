@@ -47,6 +47,13 @@ jobs:
           cp -r site/. _site/
           mkdir -p _site/app
           cp -r dist-web/. _site/app/
+      # Visitor statistics (Umami). Set the repository variable UMAMI_WEBSITE_ID
+      # (Settings > Secrets and variables > Actions > Variables) to turn them on.
+      - name: Add visitor statistics
+        if: vars.UMAMI_WEBSITE_ID != ''
+        env:
+          UMAMI_WEBSITE_ID: ${{ vars.UMAMI_WEBSITE_ID }}
+        run: node scripts/add-analytics.mjs _site "$UMAMI_WEBSITE_ID"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
