@@ -52,7 +52,7 @@ export function SelectionActions({ doc, m, vp }: { doc: MarkupHost; m: Markup; v
       class={`markup-actions ${below ? 'below' : ''}`}
       role="toolbar"
       aria-label={t('Selected markup')}
-      style={{ left: centre, top: below ? b.bottom + 14 : b.top - 14 }}
+      style={{ left: centre, top: below ? b.bottom + 22 : b.top - 22 }}
       onPointerDown={(e) => e.stopPropagation()}
       // Quick taps on the buttons aren't a double-tap zoom of the page underneath.
       onTouchStart={(e) => e.stopPropagation()}
