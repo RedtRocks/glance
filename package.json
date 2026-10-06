@@ -1,6 +1,6 @@
 {
   "name": "glance",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "description": "Glance: a free, open-source, lightweight viewer and editor for PDFs, images, and 3D models on Windows, inspired by macOS Preview.",
   "license": "Apache-2.0",

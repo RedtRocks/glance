@@ -125,11 +125,12 @@
 | Password-protected PDF export (AES-256, permissions), Reduce File Size, New from Clipboard, Import from Scanner | ✅ |
 | Page numbers, headers, footers and text or image watermarks on PDFs (Pages → Header, Footer & Watermark, with live preview) | ✅ |
 | Touchpad gestures: pinch to zoom smoothly; two-finger orbit and Shift + two-finger pan for 3D models | ✅ |
-| Touchscreen gestures: pinch to zoom around your fingers, double-tap to zoom, swipe to turn pages or move between photos | ✅ |
+| Touchscreen gestures: pinch to zoom around your fingers, double-tap to zoom, swipe to turn pages or move between photos; tap markup to select it, with a bar to edit, recolor, duplicate or delete | ✅ |
 | Interface follows the Windows display language, with a Language setting (English only so far; translations welcome) | ✅ |
 | Explorer right-click menu: Open in Glance, Combine into PDF, Remove Location Info (on Windows 11 under "Show more options") | ✅ |
 | AI apps (Claude Code, Claude Desktop, Codex, Antigravity, Muse Code, Cursor, VS Code and any MCP app) can view any format, read text with OCR, convert, combine, split and redact files, and see and control what's open in Glance; one-click setup in Settings → AI apps ([how it works](docs/AI-APPS.md)) | ✅ |
 | Web version at [redtrocks.github.io/glance/app](https://redtrocks.github.io/glance/app/): the same app in any modern browser, installable, works offline, files never leave the device ([what it can't do](#faq)) | ✅ |
+| Ask AI sidebar: chat with Claude, ChatGPT, Gemini, GitHub Copilot, Qwen, Kimi, Mistral or OpenCode about the open file (whole page or a selected area), signed in with your own account or an API key, or use the company's website in the sidebar; chats are kept per document | ✅ |
 | Windows 11 top-level context menu (needs a signed build) | Milestone 6 |
 
 Signing on an iPhone or iPad (Preview's Continuity feature) isn't possible on Windows; use the camera or a photo of your signature instead.
@@ -138,7 +139,7 @@ Glance deliberately has no quick-look popup: pair it with [PowerToys Peek](https
 
 ## Privacy
 
-No telemetry and no accounts. The only network request is an optional daily check for a newer release on GitHub (turn it off in Settings; the Microsoft Store version leaves updates to the Store). Background removal and text recognition run on your PC. AI apps you connect in Settings → AI apps send what they read through Glance to their own AI provider.
+No telemetry and no accounts. The only network request is an optional daily check for a newer release on GitHub (turn it off in Settings; the Microsoft Store version leaves updates to the Store). Background removal and text recognition run on your PC. AI apps you connect in Settings → AI apps send what they read through Glance to their own AI provider, and Ask AI sends what you share in the sidebar to the AI company you pick there.
 
 ## FAQ
 
@@ -159,6 +160,9 @@ PDF, XPS, EPS and AI files, JPEG, PNG, WebP, AVIF, HEIC, JPEG XL, TIFF, PSD, Ope
 
 **Can I use Glance on a phone, a Mac or a Chromebook?**
 Yes, in the browser: open [redtrocks.github.io/glance/app](https://redtrocks.github.io/glance/app/) and install it from the browser menu if you like. It works offline and your files stay on the device. A few things need the Windows app: text recognition, scanning, Explorer integration, the Windows share sheet, certificate signatures, PostScript and XPS files, and autosave (in the browser, saving downloads the file).
+
+**Can I ask an AI about a document I have open?**
+Yes, in the Windows app. Press **Ask AI** to chat with Claude, ChatGPT, Gemini and others in a sidebar about the page you're on or an area you select. Sign in with your own account or paste an API key. What you share goes to the AI company you picked.
 
 **Can AI apps like Claude or Codex use Glance?**
 Yes. Connect them in **Settings → AI apps** and they can view, read, convert, combine, split and redact your files through Glance, and see the page you have open. See [docs/AI-APPS.md](docs/AI-APPS.md).
