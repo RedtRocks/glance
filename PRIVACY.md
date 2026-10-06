@@ -10,6 +10,6 @@ Glance doesn't collect, store or send any personal information. There is no tele
 
 ## The website
 
-The website (redtrocks.github.io/glance, including the browser version of Glance) counts visits with [Umami](https://umami.is), which sets no cookies and stores nothing on your device. It records the page, the referring site, your browser, operating system, device type and country (worked out from your IP address, which isn't stored), and clicks on the download and Microsoft Store links. It never sees the files you open in the browser version: they stay on your device. Glance on Windows has no such counting.
+The website (redtrocks.github.io/glance, including the browser version of Glance) counts visits with [Umami](https://umami.is), which sets no cookies and stores nothing on your device. It records the page, the referring site, your browser, operating system, device type and country (worked out from your IP address, which isn't stored), and clicks on the download and Microsoft Store links. In the browser version it also counts the type of file you open, edit or save (for example "pdf" or "heic"), never its name or contents: your files stay on your device. Glance on Windows has no such counting.
 
 Questions: [open an issue](https://github.com/RedtRocks/glance/issues).

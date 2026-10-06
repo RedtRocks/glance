@@ -116,8 +116,21 @@ async function openOne(path: string): Promise<Doc | null> {
     throw e
   })
   if (!doc) void platform.releaseFile(path)
-  else void versions.rememberStamp(doc)
+  else {
+    void versions.rememberStamp(doc)
+    trackUse(doc)
+  }
   return doc
+}
+
+/** Website statistics: which file types people open and edit (browser version only, type only). */
+function trackUse(doc: Doc): void {
+  platform.trackFile('Open file', doc.name.peek())
+  const stop = doc.dirty.subscribe((dirty) => {
+    if (!dirty) return
+    platform.trackFile('Edit file', doc.name.peek())
+    queueMicrotask(() => stop())
+  })
 }
 
 async function openFresh(path: string): Promise<Doc | null> {

@@ -12,7 +12,9 @@
  *
  * Besides visits, unique visitors, countries, devices and referrers, clicks on
  * these links are counted as events: Download Windows app (GitHub releases),
- * Get from Microsoft Store, and Open web app.
+ * Get from Microsoft Store, and Open web app. The web app itself reports the type
+ * (extension only) of files opened, edited and saved: see trackFile() in
+ * src/platform/index.ts.
  */
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
