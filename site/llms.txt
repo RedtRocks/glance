@@ -19,6 +19,7 @@ Glance also runs in any modern browser at https://redtrocks.github.io/glance/app
 ## Links
 
 - [Website](https://redtrocks.github.io/glance/)
+- [Microsoft Store](https://apps.microsoft.com/detail/9N01BTLDS9X1)
 - [Download the latest release](https://github.com/RedtRocks/glance/releases/latest): `Glance-<version>-windows-x64-setup.exe` or `-arm64-setup.exe`
 - [Source code and README](https://github.com/RedtRocks/glance)
 - [Supported formats](https://github.com/RedtRocks/glance/blob/main/docs/FORMATS.md)
