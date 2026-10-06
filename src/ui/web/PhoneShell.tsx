@@ -42,6 +42,9 @@ export function PhoneBar({ doc }: { doc: Doc }) {
         <button class="phone-icon" aria-label={t('Undo')} disabled={!isEnabled('edit.undo')} onClick={() => void runCommand('edit.undo')}>
           <Icon name="undo" size={24} />
         </button>
+        <button class="phone-icon" aria-label={t('Redo')} disabled={!isEnabled('edit.redo')} onClick={() => void runCommand('edit.redo')}>
+          <Icon name="redo" size={24} />
+        </button>
         <h1>{t('Markup')}</h1>
         <button class="w-btn ink" onClick={() => void runCommand('tools.markup')}>{t('Done')}</button>
       </div>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks'
 import type { PageViewport } from 'pdfjs-dist'
 import {
   bounds,
@@ -29,6 +29,7 @@ import {
   type Tool
 } from '../../state/markupState'
 import { RedactionMark, Shape, cssBox } from './Shape'
+import { SelectionActions } from './SelectionActions'
 import { t } from '../../i18n'
 
 interface Props {
@@ -43,6 +44,12 @@ type Drag =
   | { kind: 'move'; id: string; start: Pt; delta: Pt }
   | { kind: 'resize'; id: string; corner: 0 | 1 | 2 | 3; from: Rect; to: Rect }
   | { kind: 'endpoint'; id: string; end: 'from' | 'to'; at: Pt }
+
+/** How far from markup a press still grabs it, in CSS pixels: a fingertip covers far more than a mouse pointer. */
+const reach = (pointerType: string): number => (pointerType === 'mouse' ? 5 : 16)
+const handleReach = (pointerType: string): number => (pointerType === 'mouse' ? 8 : 22)
+/** Bigger handles where fingers do the grabbing. */
+const coarse = (): boolean => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
 
 const DRAW_TOOLS = new Set<Tool>([...SHAPE_TOOLS, 'sketch', 'draw', 'text', 'note', 'signature', 'redact', 'loupe'])
 
@@ -92,22 +99,28 @@ export function MarkupLayer({ doc, index, vp, interactive = true }: Props) {
   useEffect(() => {
     const page = host.current?.parentElement
     if (!interactive || !page || current !== 'select') return
-    const onDown = (e: PointerEvent): void => {
-      if (e.button !== 0 || (e.target as HTMLElement).closest('textarea, .annotationLayer input, .annotationLayer select, .annotationLayer textarea')) return
-      const pt = toPdf(e.clientX, e.clientY)
+    const ignored = (target: EventTarget | null): boolean =>
+      !!(target as HTMLElement | null)?.closest?.('textarea, .markup-actions, .annotationLayer input, .annotationLayer select, .annotationLayer textarea')
+    /** The handle or markup under a press, handles of the selected item first. */
+    const grab = (cx: number, cy: number, pointerType: string): { handle: Drag } | { hit: Markup } | null => {
       const list = doc.markup.peek().filter((m) => m.page === index)
       const selected = list.find((m) => m.id === selectedId.peek())
-      // Handles of the selected item first.
-      if (selected) {
-        const handle = handleAt(selected, e.clientX, e.clientY)
-        if (handle) {
-          e.preventDefault()
-          e.stopPropagation()
-          setDrag(handle)
-          return
-        }
+      const handle = selected && handleAt(selected, cx, cy, handleReach(pointerType))
+      if (handle) return { handle }
+      const hit = markupAt(cx, cy, pointerType)
+      return hit ? { hit } : null
+    }
+    const onDown = (e: PointerEvent): void => {
+      if (e.button !== 0 || ignored(e.target)) return
+      const pt = toPdf(e.clientX, e.clientY)
+      const found = grab(e.clientX, e.clientY, e.pointerType)
+      if (found && 'handle' in found) {
+        e.preventDefault()
+        e.stopPropagation()
+        setDrag(found.handle)
+        return
       }
-      const hit = [...list].reverse().find((m) => hitTest(m, pt, tol))
+      const hit = found?.hit
       if (!hit) {
         if (selectedId.peek()) selectedId.value = null
         return
@@ -122,15 +135,36 @@ export function MarkupLayer({ doc, index, vp, interactive = true }: Props) {
       }
       setDrag({ kind: 'move', id: hit.id, start: pt, delta: [0, 0] })
     }
+    // A finger on markup moves it; anywhere else it scrolls the document as usual.
+    // Pointer events can't stop the browser panning, so the touch itself is cancelled.
+    const onTouch = (e: TouchEvent): void => {
+      const touch = e.touches[0]
+      if (e.touches.length !== 1 || !e.cancelable || ignored(e.target)) return
+      if (!grab(touch.clientX, touch.clientY, 'touch')) return
+      e.preventDefault()
+      // Nor is it a tap for the view's double-tap zoom.
+      e.stopPropagation()
+    }
     page.addEventListener('pointerdown', onDown, true)
-    return () => page.removeEventListener('pointerdown', onDown, true)
+    page.addEventListener('touchstart', onTouch, { capture: true, passive: false })
+    return () => {
+      page.removeEventListener('pointerdown', onDown, true)
+      page.removeEventListener('touchstart', onTouch, true)
+    }
   }, [current, vp, index, interactive])
 
-  function handleAt(m: Markup, cx: number, cy: number): Drag | null {
+  /** The topmost markup on this page under a point, allowing for the pointer's size. */
+  function markupAt(cx: number, cy: number, pointerType: string): Markup | undefined {
+    const pt = toPdf(cx, cy)
+    const list = doc.markup.peek().filter((m) => m.page === index)
+    return [...list].reverse().find((m) => hitTest(m, pt, reach(pointerType) / vp.scale))
+  }
+
+  function handleAt(m: Markup, cx: number, cy: number, radius = 8): Drag | null {
     const r = host.current!.getBoundingClientRect()
     const near = (p: Pt): boolean => {
       const [x, y] = vp.convertToViewportPoint(p[0], p[1])
-      return Math.hypot(cx - r.left - x, cy - r.top - y) <= 8
+      return Math.hypot(cx - r.left - x, cy - r.top - y) <= radius
     }
     if (m.type === 'line' || m.type === 'arrow') {
       if (near(m.to)) return { kind: 'endpoint', id: m.id, end: 'to', at: m.to }
@@ -145,7 +179,8 @@ export function MarkupLayer({ doc, index, vp, interactive = true }: Props) {
   }
 
   // Drag tracking for move/resize (window-level so it survives leaving the page).
-  useEffect(() => {
+  // A layout effect, so a quick tap's pointerup can't arrive before it is listening.
+  useLayoutEffect(() => {
     if (!drag) return
     const move = (e: PointerEvent): void => {
       const pt = toPdf(e.clientX, e.clientY)
@@ -170,9 +205,11 @@ export function MarkupLayer({ doc, index, vp, interactive = true }: Props) {
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up, { once: true })
+    window.addEventListener('pointercancel', up, { once: true })
     return () => {
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', up)
     }
   }, [drag?.kind, drag?.id])
 
@@ -264,6 +301,13 @@ export function MarkupLayer({ doc, index, vp, interactive = true }: Props) {
       setDraft(null)
       setDraftRedaction(null)
       const tiny = Math.hypot(end[0] - start[0], end[1] - start[1]) < 4 / vp.scale
+      // A finger tapping existing markup picks it up rather than dropping a dot or a shape on it.
+      const tapped = tiny && ev.pointerType !== 'mouse' ? markupAt(ev.clientX, ev.clientY, ev.pointerType) : undefined
+      if (tapped) {
+        setTool('select')
+        selectedId.value = tapped.id
+        return
+      }
       if (t === 'redact') {
         if (!tiny) doc.edit('Mark for Redaction', { redactions: [...doc.redactions.peek(), { id: newId('redact'), page: index, rect: normRect(start, end) }] })
         return
@@ -351,8 +395,9 @@ export function MarkupLayer({ doc, index, vp, interactive = true }: Props) {
           {draftRedaction && <RedactionMark r={{ id: 'draft', page: index, rect: draftRedaction }} pattern={pattern} />}
           {draft && <Shape m={draft} />}
         </g>
-        {interactive && selected && <Selection m={shown(selected)} vp={vp} />}
+        {interactive && selected && <Selection m={shown(selected)} vp={vp} big={coarse()} />}
       </svg>
+      {interactive && selected && !drag && editingId.value !== selected.id && <SelectionActions doc={doc} m={selected} vp={vp} />}
       {items
         .filter((m): m is Extract<Markup, { type: 'text' }> => m.type === 'text')
         .map((m) => (
@@ -378,13 +423,14 @@ function applyDrag(m: Markup, d: Drag): Markup {
   return m
 }
 
-function Selection({ m, vp }: { m: Markup; vp: PageViewport }) {
+function Selection({ m, vp, big }: { m: Markup; vp: PageViewport; big: boolean }) {
+  const r = big ? 8 : 4
   if (m.type === 'line' || m.type === 'arrow') {
     return (
       <g class="selection">
         {[m.from, m.to].map((p, i) => {
           const [x, y] = vp.convertToViewportPoint(p[0], p[1])
-          return <circle key={i} class="handle" cx={x} cy={y} r={5} />
+          return <circle key={i} class="handle" cx={x} cy={y} r={r + 1} />
         })}
       </g>
     )
@@ -402,7 +448,7 @@ function Selection({ m, vp }: { m: Markup; vp: PageViewport }) {
             [b.left - pad, b.bottom + pad],
             [b.right + pad, b.bottom + pad]
           ] as Pt[]
-        ).map(([x, y], i) => <rect key={i} class="handle" x={x - 4} y={y - 4} width={8} height={8} rx={2} />)}
+        ).map(([x, y], i) => <rect key={i} class="handle" x={x - r} y={y - r} width={r * 2} height={r * 2} rx={big ? r : 2} />)}
     </g>
   )
 }

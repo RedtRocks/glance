@@ -704,6 +704,10 @@
 .phone-bar.markup {
   justify-content: space-between;
 }
+.phone-bar.markup h1 {
+  flex: 1;
+  text-align: center;
+}
 .phone-count {
   flex: none;
   width: 32px;
@@ -803,6 +807,61 @@
     width: 48px;
     height: 48px;
     border-radius: 9999px;
+  }
+  /* A dropdown keeps its icon centred in the round button; the chevron becomes a small badge. */
+  :root[data-platform='web'] .app > .markup-toolbar .tb-button.with-chevron {
+    justify-content: center;
+    padding: 0;
+  }
+  :root[data-platform='web'] .app > .markup-toolbar .with-chevron:not(.split-chevron) .chevron {
+    position: absolute;
+    right: 3px;
+    bottom: 7px;
+    margin: 0;
+    color: inherit;
+  }
+  /* The dropdown half of the highlighter: a slim chevron, never an empty black circle. */
+  :root[data-platform='web'] .app > .markup-toolbar .tb-button.split-chevron {
+    width: 24px;
+    margin-left: -6px;
+    background: transparent;
+    color: var(--ink);
+  }
+  :root[data-platform='web'] .app > .markup-toolbar .split-chevron .chevron {
+    color: inherit;
+  }
+  :root[data-platform='web'] .app > .markup-toolbar .split-chevron[aria-expanded='true'] .chevron {
+    transform: rotate(180deg);
+  }
+  :root[data-platform='web'] .app > .markup-toolbar .swatch-bar {
+    left: 50%;
+    bottom: 6px;
+    translate: -50% 0;
+  }
+  /* Colours fill the sheet's width, centred, with finger-sized dots. */
+  :root[data-platform='web'] .app > .markup-toolbar .swatches {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px 16px;
+    /* Five to a row; a shorter last row stays centred too. */
+    max-width: 264px;
+    margin: 0 auto;
+    padding: 4px 0;
+  }
+  :root[data-platform='web'] .app > .markup-toolbar .swatch {
+    width: 40px;
+    height: 40px;
+  }
+  :root[data-platform='web'] .app > .markup-toolbar .flyout-label {
+    text-align: center;
+  }
+  :root[data-platform='web'] .app > .markup-toolbar .shape-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  :root[data-platform='web'] .app > .markup-toolbar .shape-grid .tb-button {
+    justify-self: center;
   }
   :root[data-platform='web'] .app > .markup-toolbar :is(.flyout, .menu) {
     position: fixed;

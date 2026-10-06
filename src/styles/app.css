@@ -1167,6 +1167,69 @@ body,
   stroke: var(--accent);
   stroke-width: 1.5;
 }
+/* Edit, colour, duplicate and delete for selected markup, where there's no keyboard or right-click. */
+.markup-actions {
+  position: absolute;
+  z-index: 6;
+  display: none;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 9999px;
+  background: #1d1b22;
+  color: #fff;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.28);
+  transform: translate(-50%, -100%);
+  pointer-events: auto;
+  touch-action: manipulation;
+  white-space: nowrap;
+}
+.markup-actions.below {
+  transform: translate(-50%, 0);
+}
+@media (pointer: coarse), (max-width: 700px) {
+  .markup-actions {
+    display: flex;
+  }
+}
+.ma-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 56px;
+  height: 52px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  color: inherit;
+  font: 600 11px/1 var(--font, inherit);
+}
+.ma-button:active {
+  background: rgba(255, 255, 255, 0.14);
+}
+.ma-button.danger {
+  color: #ff7a6b;
+}
+.ma-dot,
+.ma-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.7);
+}
+.ma-swatch {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin: 0 2px;
+  border: 0;
+}
+.ma-swatch.selected {
+  box-shadow: 0 0 0 2px #1d1b22, 0 0 0 4px #fff;
+}
 .text-box {
   position: absolute;
   margin: 0;
