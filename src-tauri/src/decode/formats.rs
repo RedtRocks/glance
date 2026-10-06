@@ -36,11 +36,12 @@ pub const MODELS: &[&str] = &[
     "glb", "gltf", "obj", "stl", "ply", "fbx", "usdz", "usda", "usdc", "dae", "3mf", "3ds",
 ];
 
-/// Files the frontend previews itself as HTML (src/preview/): Office files, text and
-/// code, Markdown, video and audio, e-books, fonts and email. Same list as src/core/previews.ts.
+/// Files the frontend previews itself as HTML (src/preview/): Office files (97-2003 too),
+/// text and code, Markdown, video and audio, e-books, fonts and email. Same list as src/core/previews.ts.
 pub const PREVIEWS: &[&str] = &[
-    "docx", "docm", "dotx", "dotm", "pptx", "pptm", "ppsx", "ppsm", "potx", "potm", "xlsx", "xlsm", "xltx",
-    "xltm", "csv", "tsv", "md", "markdown", "mdown", "mkd", "txt", "text", "log", "nfo", "ini", "cfg", "conf",
+    "docx", "docm", "dotx", "dotm", "doc", "dot", "pptx", "pptm", "ppsx", "ppsm", "potx", "potm", "ppt",
+    "pps", "pot", "xlsx", "xlsm", "xltx", "xltm", "xls", "xlt", "csv", "tsv", "md", "markdown", "mdown",
+    "mkd", "txt", "text", "log", "nfo", "ini", "cfg", "conf",
     "env", "properties", "toml", "yaml", "yml", "json", "jsonc", "json5", "xml", "plist", "html", "htm",
     "css", "scss", "less", "js", "mjs", "cjs", "ts", "tsx", "jsx", "vue", "svelte", "py", "rb", "php", "pl",
     "go", "rs", "java", "kt", "kts", "swift", "c", "h", "cpp", "cc", "cxx", "hpp", "cs", "fs", "vb", "lua",
@@ -128,6 +129,8 @@ mod tests {
         // Office files are zip archives; the extension decides.
         assert_eq!(classify(Path::new("Plan.docx"), b"PK\x03\x04"), Kind::Preview);
         assert_eq!(classify(Path::new("Deck.PPTX"), b"PK\x03\x04"), Kind::Preview);
+        // Office 97-2003 files are compound files, like Outlook .msg; the extension decides.
+        assert_eq!(classify(Path::new("Old.doc"), b"\xD0\xCF\x11\xE0"), Kind::Preview);
         assert_eq!(classify(Path::new("a.oxps"), b""), Kind::Xps);
         assert_eq!(classify(Path::new("a.cbz"), b""), Kind::Archive);
         assert_eq!(classify(Path::new("a.xyz"), b"nothing"), Kind::Unsupported);

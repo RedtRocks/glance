@@ -17,6 +17,9 @@
 | Word | `.docx .docm .dotx .dotm` | `docx-preview`, loaded on demand |
 | PowerPoint | `.pptx .pptm .ppsx .ppsm .potx .potm` | `@aiden0z/pptx-renderer`, loaded on demand |
 | Excel | `.xlsx .xlsm .xltx .xltm` | `src/preview/xlsx.ts` (saved values, formats, fills, merges; no charts) |
+| Word 97-2003 | `.doc .dot` | `src/preview/doc.ts` (text, headings, bold/italic/underline, lists, tables, links, page breaks; no pictures) |
+| PowerPoint 97-2003 | `.ppt .pps .pot` | `src/preview/ppt.ts` (the text on each slide; no pictures or design) |
+| Excel 97-2003 | `.xls .xlt` | `src/preview/xls.ts` (saved values, number formats, fonts, merges, column widths) |
 | CSV / TSV | `.csv .tsv` | `src/preview/render.ts` |
 
 Each shows a bar with **Open with…** (Windows app) to edit the file in Office or another app. Older binary files (`.doc .xls .ppt`) and OpenDocument aren't previewed.

@@ -2,9 +2,9 @@
  * Read-only previews drawn as HTML into a container. Loaded only when such a file
  * is opened (see ui/views/PreviewView.tsx).
  *
- *   Word          docx-preview (Apache-2.0)
- *   PowerPoint    @aiden0z/pptx-renderer (Apache-2.0)
- *   Excel         preview/xlsx.ts; CSV and TSV are parsed here
+ *   Word          docx-preview (Apache-2.0); Word 97-2003 .doc in preview/doc.ts
+ *   PowerPoint    @aiden0z/pptx-renderer (Apache-2.0); the text of 97-2003 .ppt slides in preview/ppt.ts
+ *   Excel         preview/xlsx.ts, Excel 97-2003 in preview/xls.ts; CSV and TSV are parsed here
  *   Text, code    preview/text.ts, highlight.js (BSD-3-Clause)
  *   Markdown      preview/markdown.ts, marked (MIT) and DOMPurify (Apache-2.0)
  *   Video, audio  preview/media.ts, the web view's own players
@@ -15,6 +15,7 @@
 import type { PreviewFlavor } from '../core/previews'
 import { previewExt } from '../core/previews'
 import * as platform from '../platform'
+import { t } from '../i18n'
 
 export interface PreviewRendering {
   /** Pages (Word), slides, sheets or chapters. */
@@ -50,10 +51,10 @@ export async function renderPreview(flavor: PreviewFlavor, file: PreviewFile, co
   let rendering: PreviewRendering
   switch (flavor) {
     case 'word':
-      rendering = await renderWord(bytes, container, opts)
+      rendering = ext === 'doc' || ext === 'dot' ? await renderLegacyWord(bytes, container, opts) : await renderWord(bytes, container, opts)
       break
     case 'slides':
-      rendering = await renderSlides(bytes, container, opts)
+      rendering = ['ppt', 'pps', 'pot'].includes(ext) ? await renderLegacySlides(bytes, container, opts) : await renderSlides(bytes, container, opts)
       break
     case 'sheets':
       rendering = await renderSheets(ext, bytes, container)
@@ -133,6 +134,79 @@ async function renderWord(bytes: Uint8Array, container: HTMLElement, opts: Rende
   }
 }
 
+/** Word 97-2003: the text and its basic formatting on plain pages, one per page break. */
+async function renderLegacyWord(bytes: Uint8Array, container: HTMLElement, opts: RenderOptions): Promise<PreviewRendering> {
+  const { readDoc, DocError } = await import('./doc')
+  let blocks
+  try {
+    blocks = readDoc(bytes)
+  } catch (e) {
+    if (e instanceof DocError) throw new Error(e.message === 'encrypted' ? t('The document is password-protected.') : t('This isn’t a Word 97-2003 document.'))
+    throw e
+  }
+  const body = document.createElement('div')
+  body.className = 'office-word'
+  const wrapper = document.createElement('div')
+  wrapper.className = 'docx-wrapper doc-legacy'
+  body.append(wrapper)
+  container.append(body)
+  const newPage = (): HTMLElement => {
+    const section = document.createElement('section')
+    section.className = 'docx'
+    wrapper.append(section)
+    return section
+  }
+  let page = newPage()
+  for (const b of blocks) {
+    if (b.type === 'break') page = newPage()
+    else if (b.type === 'table') {
+      const table = document.createElement('table')
+      for (const row of b.rows) {
+        const tr = table.insertRow()
+        for (const cell of row) tr.insertCell().append(...cell.map(legacyParagraph))
+      }
+      page.append(table)
+    } else page.append(legacyParagraph(b))
+  }
+  const pages = () => [...wrapper.querySelectorAll<HTMLElement>('section.docx')]
+  const observer = trackCurrent(pages(), opts)
+  return {
+    pageCount: pages().length,
+    sheetNames: [],
+    goTo: (i) => pages()[i]?.scrollIntoView({ block: 'start' }),
+    setZoom: (scale) => (body.style.zoom = String(scale)),
+    dispose: () => observer.disconnect()
+  }
+}
+
+function legacyParagraph(p: import('./doc').DocParagraph): HTMLElement {
+  const el = document.createElement(p.heading ? `h${Math.min(p.heading, 6)}` : 'p')
+  if (p.align) el.style.textAlign = p.align
+  if (p.marker) {
+    el.classList.add('list')
+    el.style.paddingLeft = `${1.5 + (p.level ?? 0) * 1.5}em`
+    const marker = document.createElement('span')
+    marker.className = 'marker'
+    marker.textContent = p.marker
+    el.append(marker)
+  }
+  for (const r of p.runs) {
+    const span = document.createElement(r.link && /^(https?:|mailto:)/i.test(r.link) ? 'a' : 'span')
+    if (span instanceof HTMLAnchorElement) span.href = r.link!
+    span.textContent = r.text
+    const st = span.style
+    if (r.bold) st.fontWeight = '700'
+    if (r.italic) st.fontStyle = 'italic'
+    if (r.underline || r.strike) st.textDecoration = [r.underline && 'underline', r.strike && 'line-through'].filter(Boolean).join(' ')
+    if (r.size) st.fontSize = `${r.size}pt`
+    if (r.color) st.color = r.color
+    el.append(span)
+  }
+  // An empty paragraph still takes a line.
+  if (!p.runs.length) el.append(document.createElement('br'))
+  return el
+}
+
 /** Reports the page, slide or chapter that fills most of the view. */
 export function trackCurrent(items: HTMLElement[], opts: RenderOptions): IntersectionObserver {
   const ratios = new Map<Element, number>()
@@ -179,6 +253,55 @@ async function renderSlides(bytes: Uint8Array, container: HTMLElement, opts: Ren
   }
 }
 
+/** PowerPoint 97-2003: each slide's titles and text, on a blank slide of the deck's size. */
+async function renderLegacySlides(bytes: Uint8Array, container: HTMLElement, opts: RenderOptions): Promise<PreviewRendering> {
+  const { readPpt, PptError } = await import('./ppt')
+  let deck
+  try {
+    deck = readPpt(bytes)
+  } catch (e) {
+    if (e instanceof PptError) throw new Error(e.message === 'encrypted' ? t('The presentation is password-protected.') : e.message === 'empty' ? t('The presentation has no slides.') : t('This isn’t a PowerPoint 97-2003 presentation.'))
+    throw e
+  }
+  const host = document.createElement('div')
+  host.className = 'office-slides ppt-legacy'
+  container.append(host)
+  // Points to pixels.
+  const width = Math.round((deck.width * 4) / 3)
+  const items = deck.slides.map((slide) => {
+    const el = document.createElement('div')
+    el.className = 'ppt-slide'
+    el.style.width = `${width}px`
+    el.style.aspectRatio = `${deck.width} / ${deck.height}`
+    for (const box of slide.texts) {
+      if (box.title) {
+        const h = document.createElement('h2')
+        h.textContent = box.paragraphs.join('\n')
+        el.append(h)
+      } else {
+        const ul = document.createElement('ul')
+        for (const p of box.paragraphs) {
+          const li = document.createElement('li')
+          li.textContent = p
+          if (!p.trim()) li.className = 'blank'
+          ul.append(li)
+        }
+        el.append(ul)
+      }
+    }
+    host.append(el)
+    return el
+  })
+  const observer = trackCurrent(items, opts)
+  return {
+    pageCount: items.length,
+    sheetNames: [],
+    goTo: (i) => items[i]?.scrollIntoView({ block: 'start' }),
+    setZoom: (scale) => (host.style.zoom = String(scale)),
+    dispose: () => observer.disconnect()
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Excel, CSV and TSV
 
@@ -188,7 +311,7 @@ interface Sheet {
 }
 
 async function renderSheets(ext: string, bytes: Uint8Array, container: HTMLElement): Promise<PreviewRendering> {
-  const sheets = ext === 'csv' || ext === 'tsv' ? [delimitedSheet(new TextDecoder().decode(bytes), ext === 'tsv' ? '\t' : ',')] : await workbookSheets(bytes)
+  const sheets = ext === 'csv' || ext === 'tsv' ? [delimitedSheet(new TextDecoder().decode(bytes), ext === 'tsv' ? '\t' : ',')] : await workbookSheets(ext, bytes)
   const host = document.createElement('div')
   host.className = 'office-sheets'
   container.append(host)
@@ -281,9 +404,9 @@ export function columnName(i: number): string {
   return s
 }
 
-async function workbookSheets(bytes: Uint8Array): Promise<Sheet[]> {
-  const { readXlsx } = await import('./xlsx')
-  return (await readXlsx(bytes)).map((sheet) => {
+async function workbookSheets(ext: string, bytes: Uint8Array): Promise<Sheet[]> {
+  const workbook = ext === 'xls' || ext === 'xlt' ? (await import('./xls')).readXls(bytes) : await (await import('./xlsx')).readXlsx(bytes)
+  return workbook.map((sheet) => {
     // A little room past the data, as a spreadsheet would show.
     const table = gridTable(Math.max(sheet.rows, 1), Math.max(sheet.cols, 1))
     // Widths are in characters, about 7px each at Excel's default font.
