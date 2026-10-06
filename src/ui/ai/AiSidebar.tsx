@@ -584,8 +584,20 @@ function Composer({ doc }: { doc: Doc }) {
         <div class="ai-notice error ai-voice-problem">
           <span>{problem.text}</span>
           {problem.settings && (
-            <button class="btn" onClick={() => void platform.openUrl(problem.settings!)}>
+            <button class="btn" onClick={() => void platform.openUrl(problem.settings!).catch((e) => toast(String(e)))}>
               {t('Open Settings')}
+            </button>
+          )}
+          {problem.voiceTyping && platform.isTauri && platform.speechAvailable && (
+            <button
+              class="btn"
+              onClick={() => {
+                voice.voiceProblem.value = null
+                input.current?.focus()
+                void platform.voiceTyping().catch((e) => toast(String(e)))
+              }}
+            >
+              {t('Use Windows voice typing')}
             </button>
           )}
         </div>

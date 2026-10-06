@@ -12,7 +12,14 @@ export const voiceState = signal<VoiceState>('off')
 /** The words being spoken right now, before the phrase is finished. */
 export const partial = signal('')
 /** Why listening stopped or couldn't start, and what the user can do. */
-export const voiceProblem = signal<{ text: string; settings?: string } | null>(null)
+export const voiceProblem = signal<VoiceProblem | null>(null)
+
+/** `voiceTyping`: Windows voice typing (Win+H) may work where Glance's listening didn't. */
+export interface VoiceProblem {
+  text: string
+  settings?: string
+  voiceTyping?: boolean
+}
 
 /** How long a pause after speaking sends the message. */
 export const SEND_AFTER_MS = 1800
@@ -22,16 +29,22 @@ let quiet: ReturnType<typeof setTimeout> | null = null
 let heardAny = false
 let held = false
 
-function problemFor(code: string, message: string): { text: string; settings?: string } {
+function problemFor(code: string, message: string): VoiceProblem {
   switch (code) {
     case 'privacy':
-      return { text: t('Turn on Online speech recognition in Windows Settings to talk to the AI.'), settings: 'ms-settings:privacy-speech' }
+      return { text: t('Turn on Online speech recognition in Windows Settings to talk to the AI.'), settings: 'ms-settings:privacy-speech', voiceTyping: true }
     case 'no-mic':
-      return { text: t('Glance can’t use the microphone. Check that one is connected and that apps may use it.'), settings: 'ms-settings:privacy-microphone' }
+      return { text: t('Glance can’t use the microphone. Check that one is connected and that apps may use it.'), settings: 'ms-settings:privacy-microphone', voiceTyping: true }
+    case 'no-audio':
+      return {
+        text: t('Windows couldn’t hear your microphone. Check that “Let desktop apps access your microphone” is on and the mic isn’t muted, or use Windows voice typing.'),
+        settings: 'ms-settings:privacy-microphone',
+        voiceTyping: true
+      }
     case 'language':
       return { text: t('Speech recognition isn’t installed for your language. Add it under Language & region in Windows Settings.'), settings: 'ms-settings:regionlanguage' }
     default:
-      return { text: t('Listening stopped: {error}', { error: message }) }
+      return { text: t('Listening stopped: {error}', { error: message }), voiceTyping: true }
   }
 }
 
