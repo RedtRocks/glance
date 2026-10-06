@@ -198,7 +198,7 @@ mod win {
         if sent as usize == inputs.len() {
             Ok(())
         } else {
-            Err(windows::core::Error::from_win32().message())
+            Err(windows::core::Error::from_thread().message())
         }
     }
 
