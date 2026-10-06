@@ -153,6 +153,7 @@ pub fn run() {
             ocr::ocr_image,
             speech::speech_start,
             speech::speech_stop,
+            speech::voice_typing,
             ocr::ocr_max_dimension,
             scan::scanners_list,
             scan::scan,

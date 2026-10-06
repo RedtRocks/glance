@@ -158,6 +158,12 @@ export function SettingsDialog() {
               <Toggle checked={s.checkForUpdates} label={t('Check for updates')} onChange={(v) => updateSettings({ checkForUpdates: v })} />
             </SettingsCard>
           )}
+          {platform.isTauri ? (
+            <SettingsCard icon="info" title={t('Count this install')}
+              description={t('Once a day Glance tells its developer that a copy is in use, with its version number, so they know how many people use Glance. No ID, file names or anything you open is sent. See the privacy policy.')}>
+              <Toggle checked={s.countInstall} label={t('Count this install')} onChange={(v) => updateSettings({ countInstall: v })} />
+            </SettingsCard>
+          ) : null}
           <SettingsCard icon="document" title={t('Dark appearance for PDFs')} description={t('Invert page colors while Glance is dark. Images inside PDFs are inverted too.')}>
             <Toggle checked={s.darkPdf} label={t('Dark appearance for PDFs')} onChange={(v) => updateSettings({ darkPdf: v })} />
           </SettingsCard>

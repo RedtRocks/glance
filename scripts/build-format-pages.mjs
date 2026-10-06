@@ -92,6 +92,7 @@ function frame({ title, description, url, ld, navCta, main }) {
 a.fchip{text-decoration:none}a.fchip:hover{color:var(--accent)}
 @media (max-width:960px){.groups{grid-template-columns:minmax(0,1fr)}.fslab{aspect-ratio:4/5 !important}.fslab picture{display:block;height:100%}.steps,.can{grid-template-columns:minmax(0,1fr)}.step{min-height:0}.step .n{font-size:48px;margin-bottom:12px}}
 </style>
+<script defer src="../assets/download.js"></script>
 </head>
 <body>
 <div class="w">

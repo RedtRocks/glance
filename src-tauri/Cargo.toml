@@ -65,6 +65,8 @@ windows = { version = "0.62", features = [
   "System_UserProfile",
   "Media_Ocr",
   "Media_SpeechRecognition",
+  "Media_Capture",
+  "Win32_UI_Input_KeyboardAndMouse",
   "Graphics_Imaging",
   "Globalization",
   "Security_Cryptography",
