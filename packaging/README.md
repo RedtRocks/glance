@@ -45,7 +45,7 @@ The Store takes MSIX packages and signs them itself, so this route works without
 4. Actions → **Microsoft Store package** → Run workflow on `main`. Download the `Glance-<version>-store` artifact and unzip it to get the `.msixbundle`.
 5. In Partner Center, start a submission:
    - **Packages:** upload the `.msixbundle`.
-   - **Store listing:** copy from [`store/listing.md`](store/listing.md); upload `store/images/StoreLogo-300.png` as the 1:1 app logo and at least one screenshot (see the listing file).
+   - **Store listing:** copy from [`store/listing.md`](store/listing.md); upload `store/images/StoreLogo-300.png` as the 1:1 app logo and the screenshots in `store/screenshots/` in order (see the listing file).
    - **Properties:** category Productivity; privacy policy URL from [`store/listing.md`](store/listing.md#privacy-policy).
    - **Age ratings:** complete the questionnaire (no user interaction, no shared location or personal info, no purchases).
    - The package declares `runFullTrust` (every desktop app does). When asked why, answer: "Glance is a desktop app (Win32, built with Tauri) that opens and saves the user's files, uses Windows imaging, OCR and scanner APIs."

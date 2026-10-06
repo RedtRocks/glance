@@ -4,76 +4,114 @@ Copy each field into Partner Center → Store listings. Limits are Partner Cente
 
 ## Product name
 
-Glance Viewer (must match the name reserved in Partner Center and STORE_DISPLAY_NAME in scripts/packaging.ts)
+Glance Viewer
 
-## Short description (for the listing header)
+Must match the name reserved in Partner Center and STORE_DISPLAY_NAME in scripts/packaging.ts.
 
-View and edit PDFs, images, camera RAW and 3D models. Free, open source and light, inspired by macOS Preview.
+---
 
 ## Description
 
-Glance brings the everyday tools of macOS Preview to Windows, in a small, fast app that feels at home on Windows 11.
+Glance brings the everyday tools of macOS Preview to Windows, in a small, fast app that feels at home on Windows 11. Open a PDF, a photo, a camera RAW file, a Word document or a 3D model, and view, mark up or edit it in one place.
 
-PDFs: read in continuous, single or two-page view; rearrange, rotate, delete and insert pages by dragging; merge documents by dragging pages between tabs, or drag pages out of the window to make a new PDF. Fill in forms, sign with your mouse, pen or a photo of your signature, and add highlights, notes, shapes, arrows and text boxes that stay editable in other PDF apps.
+Ask AI about what you're looking at. Open the Ask AI sidebar and chat with Claude, ChatGPT, Gemini, GitHub Copilot, Qwen, Kimi, Mistral or OpenCode about the open document, photo or model. Glance signs in with your own account, free or paid, so there's nothing extra to pay for. Share the whole page or select an area to point at one part. You can also use an API key, or show the company's own website in the sidebar.
 
-Redaction that really removes content, not a black box on top. Text recognition makes scanned documents searchable and lets you copy text from images. Clean Up PDF strips comments, metadata, attachments and scripts. Export with a password (AES-256), reduce file size, or save pages as PNG, JPEG or TIFF.
+Tell the AI what to change. Type or say things like "change the tenant to Jordan Ellis" or "add a sentence about renewing under Term". The AI changes, adds or deletes text in the open PDF or photo, in the same font, size and colour as the page, and the text after it moves to make room. Every change shows with Keep and Undo, and nothing is saved until you save.
 
-Images: HEIC, camera RAW, JPEG XL, WebP, AVIF, PSD, TIFF and dozens more. Adjust color, resize, crop, remove the background with on-device AI, mark up screenshots, remove location info, and batch-convert many images at once. Make collages, set wallpapers, and scan straight into a PDF.
+PDFs: read in continuous, single or two-page view. Rearrange, rotate, delete and insert pages by dragging, merge documents by dragging pages between tabs, or drag pages out of the window to make a new PDF. Fill in forms, sign with your mouse, pen or a photo of your signature, or sign with a certificate. Add highlights, notes, shapes, arrows and text boxes that stay editable in other PDF apps. Add headers, footers, page numbers and watermarks.
 
-3D models: GLB/glTF, OBJ, STL, 3MF, FBX, USDZ and more, with orbit, wireframe and snapshots.
+Redaction that really removes content, not a black box on top. Find names, email addresses and ID numbers across a document and remove them for good. Text recognition makes scanned documents searchable and lets you copy text from images. Clean Up PDF strips comments, metadata, attachments and scripts. Export with a password (AES-256), reduce file size, or save pages as PNG, JPEG or TIFF.
 
-Every save keeps a version you can go back to, and edits save automatically.
+Images: HEIC, camera RAW, JPEG XL, WebP, AVIF, PSD, TIFF and dozens more. Adjust colour, resize, crop, straighten, remove the background with Instant Alpha, mark up screenshots, remove location info, and batch-convert many images at once. Make collages, set wallpapers, and scan straight into a PDF.
 
-Private by design: no account, no telemetry, and everything runs on your PC. Glance is open source under the Apache 2.0 license: https://github.com/RedtRocks/glance
+Office files and more: Word, Excel and PowerPoint files open as read-only previews, including old .doc, .xls and .ppt files, with Open with… to edit them in Office. Glance also previews text and code, Markdown, EPUB e-books, fonts, video, audio, and .eml and .msg email.
+
+3D models: GLB/glTF, OBJ, STL, 3MF, FBX, USDZ and more, with orbit, lighting presets, materials, wireframe and snapshots.
+
+Every save keeps a version you can go back to, and edits save automatically. File Explorer shows thumbnails for PDFs, camera RAW, Photoshop and other files Windows can't preview on its own.
+
+Works with your AI apps: Claude, Codex, Cursor, VS Code and other MCP apps can use Glance to read, convert, combine, split and redact files.
+
+Private by design: no account needed, and your files stay on your PC. Glance is free and open source under the Apache 2.0 license: https://github.com/RedtRocks/glance
+
+---
 
 ## What's new in this version
 
-Version history and autosave, 3D models, XPS documents, Clean Up PDF, Create Collage, password-protected PDF export, Reduce File Size, New from Clipboard and Import from Scanner.
+- Ask AI: chat with Claude, ChatGPT, Gemini, Copilot and more about the open document, signed in with your own account.
+- Tell the AI what to change in a PDF or photo, by typing or by voice. Edits match the page's font, and you keep or undo each one.
+- Word, Excel and PowerPoint previews, including old .doc, .xls and .ppt files.
+- Previews for text, code, Markdown, EPUB, fonts, video, audio and email.
+- AI apps like Claude, Codex and Cursor can use Glance through MCP.
+- Better touch and pen markup, and many fixes.
 
-## Product features (one per line, up to 20)
+---
 
-- Rearrange, rotate, merge and split PDF pages by dragging
-- Markup: highlights, notes, shapes, arrows and text boxes saved as standard PDF annotations
-- Sign documents with your mouse, pen or a photo of your signature
-- Fill in PDF forms
-- Real redaction that removes the underlying text and images
-- Text recognition for scanned PDFs and images
-- Opens HEIC, camera RAW, JPEG XL, WebP, AVIF, PSD, TIFF and more
-- Adjust color, resize, crop and rotate images
-- Remove image backgrounds with on-device AI
-- Batch-convert and resize images
-- View 3D models: GLB, OBJ, STL, 3MF, FBX, USDZ
-- Version history and autosave
-- Password-protect PDFs when exporting
-- Import from scanner straight into a PDF
-- No account, no telemetry, free and open source
+## Short description
 
-## Search terms (up to 7)
+View, mark up and edit PDFs, photos, camera RAW, Office files and 3D models, and ask the AI you already use about them. Free, open source and light, inspired by macOS Preview.
 
-PDF editor, image viewer, photo viewer, PDF annotate, redact PDF, HEIC viewer, PDF reader
+---
 
-## Screenshots
+## Product features (one per line)
 
-At least one is required; 1920×1080 PNGs look best. Take them on Windows 11 (Win+Shift+S → Window) so the Mica window and fonts show:
+Ask Claude, ChatGPT, Gemini, Copilot and more about the open file
+Tell the AI what to change, by typing or by voice
+Rearrange, rotate, merge and split PDF pages by dragging
+Highlights, notes, shapes, arrows and text boxes saved as standard PDF annotations
+Sign with your mouse, pen, a photo of your signature or a certificate
+Fill in PDF forms
+Real redaction that removes the underlying text and images
+Text recognition for scanned PDFs and images
+Opens HEIC, camera RAW, JPEG XL, WebP, AVIF, PSD, TIFF and more
+Adjust colour, resize, crop, straighten and remove backgrounds
+Batch-convert and resize images
+Word, Excel and PowerPoint previews, old formats included
+View 3D models: GLB, OBJ, STL, 3MF, FBX, USDZ
+Version history and autosave
+Password-protect PDFs when exporting
+Explorer thumbnails for PDFs, RAW, PSD and more
+No account needed, free and open source
 
-1. A multi-page PDF with the page thumbnails sidebar open.
-2. Markup on a PDF: a highlight, an arrow and a note.
-3. A photo with the Adjust Color panel open.
-4. The Browse Versions view or Redact in action.
+---
 
-Captions (optional): "Rearrange pages by dragging", "Mark up and sign PDFs", "Edit photos and camera RAW", "Every save keeps a version".
+## Search terms (7)
+
+PDF editor
+image viewer
+AI PDF
+PDF annotate
+redact PDF
+HEIC viewer
+RAW viewer
+
+---
+
+## Screenshots (upload in this order, with these captions)
+
+1920×1080 PNGs in [`screenshots/`](screenshots/), captured from the real UI with a headline on each.
+
+1. `01-aiedit.png`: Tell the AI what to change
+2. `02-aipick.png`: Ask the AI you already use
+3. `03-markup.png`: Mark up and sign PDFs
+4. `04-pages.png`: Rearrange pages by dragging
+5. `05-redact.png`: Redaction that really removes text
+6. `06-alpha.png`: Edit photos and camera RAW
+7. `07-office.png`: Word, Excel and PowerPoint too
+8. `08-model.png`: Open 3D models
+
+---
 
 ## Store logo
 
 `images/StoreLogo-300.png` (300×300, 1:1 app logo).
 
+---
+
 ## Additional information
 
-- Category: Productivity (subcategory: none)
-- Website: https://github.com/RedtRocks/glance
+- Category: Productivity
+- Website: https://redtrocks.github.io/glance/
 - Support contact: https://github.com/RedtRocks/glance/issues
+- Privacy policy: https://github.com/RedtRocks/glance/blob/main/PRIVACY.md
 - Copyright: Copyright 2026 Glance contributors. Apache-2.0.
-
-## Privacy policy
-
-https://github.com/RedtRocks/glance/blob/main/PRIVACY.md
