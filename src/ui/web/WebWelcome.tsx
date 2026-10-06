@@ -16,7 +16,7 @@ const photoUrl = new URL('web/start-photo.webp', document.baseURI).href
 
 async function onInstall(): Promise<void> {
   // Safari has no install prompt: it's in the Share menu.
-  if (!(await install())) toast(t('Tap Share, then Add to Home Screen.'))
+  if (!(await install())) toast(t('Tap Share, then Add to Home Screen. Open Glance from your Home Screen once while online so it works offline.'))
 }
 
 /** Back to the files that are still open, from the start screen. */

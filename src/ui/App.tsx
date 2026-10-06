@@ -1,7 +1,7 @@
 import { useEffect } from 'preact/hooks'
 import { activeDoc, activeId, docs, findByPath } from '../state/documents'
 import { isDark, settings } from '../state/settings'
-import { cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, inspectorOpen, narrowWindow, signaturesOpen, redactTextOpen, findOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
+import { cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, inspectorOpen, narrowWindow, signaturesOpen, redactTextOpen, findOpen, settingsOpen, sidebarVisible, slideshow, toast } from '../state/ui'
 import { confirmCloseWindow, openFiles } from '../state/actions'
 import { startAutosave } from '../state/autosave'
 import { restoreSession } from '../state/session'
@@ -13,6 +13,7 @@ import { DefaultAppBar } from './DefaultAppBar'
 import { offerDefaultApp } from '../state/defaultApp'
 import * as platform from '../platform'
 import { startWebApp } from '../platform/webApp'
+import { t } from '../i18n'
 import { WebNav } from './web/WebNav'
 import { WebWelcome } from './web/WebWelcome'
 import { PageCounter, PhoneBar, PhoneDock, PhoneSearch, PhoneSheets } from './web/PhoneShell'
@@ -137,7 +138,10 @@ export function App() {
     let stopMcp: (() => void) | undefined
     void startMcp().then((s) => (stopMcp = s))
     // Files the operating system hands to the installed web app (Open with, Share).
-    startWebApp((paths) => void openFiles(paths))
+    startWebApp(
+      (paths) => void openFiles(paths),
+      () => toast(t('Glance is ready to use offline.'))
+    )
     const stopAutosave = startAutosave()
     // A few seconds after start, so it never competes with opening files.
     const updateTimer = window.setTimeout(() => void checkForUpdates(), 5000)

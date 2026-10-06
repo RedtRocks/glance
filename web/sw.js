@@ -7,6 +7,12 @@
  * first time it is used. Files the user opens are never cached: they are read on the
  * device and never leave it.
  *
+ * On iPhone and iPad, an app added to the Home Screen gets its own storage, separate
+ * from Safari's, so it has to download everything again the first time it is opened
+ * from there. Each page load asks the worker to finish any download that was cut short
+ * (iOS stops a worker when the app goes to the background), and the page is told once
+ * everything is stored, so it can say that Glance now works offline.
+ *
  * scripts/build-web.mjs fills in the cache name and the file lists at build time.
  */
 
@@ -38,22 +44,44 @@ self.addEventListener('activate', (event) => {
   )
 })
 
-/** Downloads the rest a few files at a time, so it never crowds out what the user is doing. */
-async function fillCache() {
-  const cache = await caches.open(CACHE)
-  for (let i = 0; i < REST.length; i += 6) {
-    await Promise.all(
-      REST.slice(i, i + 6).map(async (file) => {
-        if (await cache.match(file)) return
-        await cache.add(file).catch(() => undefined)
-      })
-    )
-  }
+/** Cached responses never depend on request headers, so Vary is ignored. */
+const MATCH = { ignoreSearch: true, ignoreVary: true }
+
+let filling = null
+
+/**
+ * Downloads whatever is missing a few files at a time, so it never crowds out what the
+ * user is doing, then tells open pages when Glance can run with no network.
+ */
+function fillCache() {
+  filling ??= (async () => {
+    const cache = await caches.open(CACHE)
+    const files = [...CORE, ...REST]
+    let missing = 0
+    for (let i = 0; i < files.length; i += 6) {
+      await Promise.all(
+        files.slice(i, i + 6).map(async (file) => {
+          if (await cache.match(file, MATCH)) return
+          await cache.add(file).catch(() => missing++)
+        })
+      )
+    }
+    if (missing) return
+    for (const client of await self.clients.matchAll({ type: 'window' })) client.postMessage({ type: 'offline-ready' })
+  })().finally(() => (filling = null))
+  return filling
 }
 
 self.addEventListener('message', (event) => {
   if (event.data === 'skip-waiting') void self.skipWaiting()
+  if (event.data === 'fill') event.waitUntil(fillCache())
 })
+
+/** Safari refuses a page that a service worker answers with a redirected response. */
+async function unredirect(res) {
+  if (!res.redirected) return res
+  return new Response(await res.blob(), { status: res.status, statusText: res.statusText, headers: res.headers })
+}
 
 async function receiveShare(request) {
   const form = await request.formData()
@@ -77,23 +105,23 @@ self.addEventListener('fetch', (event) => {
     return
   }
   if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return
+  if (request.mode === 'navigate') {
+    // Glance is one page: every launch (Home Screen, Share, Open with) gets the stored
+    // copy, so it opens the same way with or without a connection.
+    event.respondWith(caches.match('./', MATCH).then((hit) => hit ?? fetch(request)).then(unredirect))
+    return
+  }
   event.respondWith(
-    caches.match(request, { ignoreSearch: true }).then((hit) => {
+    caches.match(request, MATCH).then((hit) => {
       if (hit) return hit
-      return fetch(request)
-        .then((res) => {
-          // Keep what the app loads on demand, so the same file works offline next time.
-          if (res.ok && res.type === 'basic') {
-            const copy = res.clone()
-            void caches.open(CACHE).then((cache) => cache.put(request, copy))
-          }
-          return res
-        })
-        .catch(() => {
-          // An offline navigation to any path still opens the app.
-          if (request.mode === 'navigate') return caches.match('./', { ignoreSearch: true })
-          throw new Error('offline')
-        })
+      return fetch(request).then((res) => {
+        // Keep what the app loads on demand, so the same file works offline next time.
+        if (res.ok && res.type === 'basic') {
+          const copy = res.clone()
+          void caches.open(CACHE).then((cache) => cache.put(request, copy))
+        }
+        return res
+      })
     })
   )
 })
