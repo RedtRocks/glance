@@ -14,11 +14,13 @@
 <p align="center">
   <a href="https://github.com/RedtRocks/glance/releases/latest"><b>⬇&nbsp; Download for Windows</b></a>
   &nbsp;·&nbsp;
+  <a href="https://redtrocks.github.io/glance/app/"><b>Open in your browser</b></a>
+  &nbsp;·&nbsp;
   <a href="https://redtrocks.github.io/glance/">Website</a>
   &nbsp;·&nbsp;
   <a href="#features">Features</a>
   &nbsp;·&nbsp;
-  <a href="docs/FORMATS.md">80+ formats</a>
+  <a href="docs/FORMATS.md">190+ file types</a>
   &nbsp;·&nbsp;
   <a href="#building-from-source">Build from source</a>
 </p>
@@ -30,7 +32,7 @@
 </picture>
 </p>
 
-**Glance is a free, open-source alternative to Apple's macOS Preview app for Windows 10 and 11.** It opens PDFs, images (including HEIC and camera RAW) and 3D models in one small app, and brings Preview's everyday superpowers to Windows: rearranging and merging PDF pages by dragging, dragging pages out to create new files, real redaction, markup and signatures, background removal, metadata scrubbing, batch processing, and more. It's built to feel native on Windows 11 (Fluent design, Mica, Explorer integration) while staying small and fast.
+**Glance is a free, open-source alternative to Apple's macOS Preview app for Windows 10 and 11.** It opens PDFs, images (including HEIC and camera RAW), 3D models, and Word, PowerPoint and Excel files in one small app, and brings Preview's everyday superpowers to Windows: rearranging and merging PDF pages by dragging, dragging pages out to create new files, real redaction, markup and signatures, background removal, metadata scrubbing, batch processing, and more. It's built to feel native on Windows 11 (Fluent design, Mica, Explorer integration) while staying small and fast. The same app also [runs in any browser](https://redtrocks.github.io/glance/app/), on phones too, and AI apps such as Claude and Codex can [use it as a tool](docs/AI-APPS.md).
 
 > **Status: early preview.** Viewing, PDF page management, markup, signatures, forms, redaction, OCR, image editing, batch editing and metadata tools work today. Everything else is on the roadmap below and in [`docs/adr`](docs/adr).
 
@@ -97,6 +99,8 @@
 | Context-aware toolbar (page controls only for multi-page documents), Customize Toolbar | ✅ |
 | Rebindable keyboard shortcuts (Windows conventions, Preview's shortcuts mapped, Photoshop-style single-key tools: V, H, Z, M, L, W, B, U, R, O, T, S, C, [ ], Space to pan) | ✅ |
 | Formats: PDF, AI, EPS/PS (via Ghostscript), XPS/OXPS, JPEG, PNG, GIF, WebP, AVIF, BMP, ICO, SVG, TIFF, HEIC, JPEG 2000, JPEG XL, JPEG XR, EXR, HDR, TGA, DDS, QOI, PNM, ICNS, PSD, CBZ, camera RAW ([full list](docs/FORMATS.md)); Open With another app for PSD, AI and RAW | ✅ |
+| Read-only previews of Word, PowerPoint, Excel and CSV files, with Open with… to edit them in Office | ✅ |
+| Previews of text and code (syntax colours), Markdown, video, audio, EPUB e-books, fonts and email (.eml, .msg); nothing in them loads from the internet | ✅ |
 | Markup: sketch (shape recognition), draw, rectangle, rounded rectangle, oval, line, arrow, star, polygon, speech bubble, loupe (magnifier), text boxes in any installed font, notes, highlight (any color), underline, strikethrough, squiggly underline | ✅ |
 | Markup saved as standard, editable PDF annotations (reopen in Glance to keep editing) | ✅ |
 | Signatures: draw with mouse/pen (pressure), capture with the camera, or import a photo; stored encrypted with Windows DPAPI | ✅ |
@@ -121,9 +125,11 @@
 | Password-protected PDF export (AES-256, permissions), Reduce File Size, New from Clipboard, Import from Scanner | ✅ |
 | Page numbers, headers, footers and text or image watermarks on PDFs (Pages → Header, Footer & Watermark, with live preview) | ✅ |
 | Touchpad gestures: pinch to zoom smoothly; two-finger orbit and Shift + two-finger pan for 3D models | ✅ |
+| Touchscreen gestures: pinch to zoom around your fingers, double-tap to zoom, swipe to turn pages or move between photos | ✅ |
 | Interface follows the Windows display language, with a Language setting (English only so far; translations welcome) | ✅ |
 | Explorer right-click menu: Open in Glance, Combine into PDF, Remove Location Info (on Windows 11 under "Show more options") | ✅ |
 | AI apps (Claude Code, Claude Desktop, Codex, Antigravity, Muse Code, Cursor, VS Code and any MCP app) can view any format, read text with OCR, convert, combine, split and redact files, and see and control what's open in Glance; one-click setup in Settings → AI apps ([how it works](docs/AI-APPS.md)) | ✅ |
+| Web version at [redtrocks.github.io/glance/app](https://redtrocks.github.io/glance/app/): the same app in any modern browser, installable, works offline, files never leave the device ([what it can't do](#faq)) | ✅ |
 | Windows 11 top-level context menu (needs a signed build) | Milestone 6 |
 
 Signing on an iPhone or iPad (Preview's Continuity feature) isn't possible on Windows; use the camera or a photo of your signature instead.
@@ -149,7 +155,13 @@ It can reorder, rotate, delete, split and merge pages, fill forms, add text, sha
 No. There's no telemetry and no account. Text recognition and background removal run on your PC, and the only network request is an optional update check. See [PRIVACY.md](PRIVACY.md).
 
 **What file types does it open?**
-PDF, XPS, EPS and AI files, JPEG, PNG, WebP, AVIF, HEIC, JPEG XL, TIFF, PSD, OpenEXR, SVG, camera RAW, comic book archives, and 3D models such as GLB, OBJ, STL and USDZ. The full list is in [docs/FORMATS.md](docs/FORMATS.md).
+PDF, XPS, EPS and AI files, JPEG, PNG, WebP, AVIF, HEIC, JPEG XL, TIFF, PSD, OpenEXR, SVG, camera RAW, comic book archives, 3D models such as GLB, OBJ, STL and USDZ, Word, PowerPoint and Excel files, CSV, Markdown, text and code, EPUB, email, fonts, video and audio. The full list is in [docs/FORMATS.md](docs/FORMATS.md).
+
+**Can I use Glance on a phone, a Mac or a Chromebook?**
+Yes, in the browser: open [redtrocks.github.io/glance/app](https://redtrocks.github.io/glance/app/) and install it from the browser menu if you like. It works offline and your files stay on the device. A few things need the Windows app: text recognition, scanning, Explorer integration, the Windows share sheet, certificate signatures, PostScript and XPS files, and autosave (in the browser, saving downloads the file).
+
+**Can AI apps like Claude or Codex use Glance?**
+Yes. Connect them in **Settings → AI apps** and they can view, read, convert, combine, split and redact your files through Glance, and see the page you have open. See [docs/AI-APPS.md](docs/AI-APPS.md).
 
 ## Building from source
 

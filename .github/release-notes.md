@@ -1,6 +1,13 @@
-Glance is a free, open-source, lightweight viewer and editor for PDFs, images and camera RAW and 3D models on Windows, inspired by macOS Preview.
+Glance is a free, open-source, lightweight viewer and editor for PDFs, images, camera RAW and 3D models on Windows, inspired by macOS Preview. It also previews Word, PowerPoint and Excel files, and runs in any browser at https://redtrocks.github.io/glance/app/.
 
 > **Early preview.** Most of Preview's everyday features work, plus version history, 3D models, certificate signatures and more. Glance's entries in Explorer's right-click menu are under **Show more options** on Windows 11; the top-level entry comes once releases are code-signed. See the [README](https://github.com/RedtRocks/glance#features) for the full list.
+
+## New in 0.5.0
+
+- **Let your AI apps use Glance.** Claude Code, Claude Desktop, Codex, Cursor, VS Code, Windsurf, Gemini CLI, LM Studio and any other MCP app can view every format Glance opens, read text (scanned pages through Windows OCR), convert, combine, split and redact files, remove a photo's location, and see or move to the page you have open in Glance. Turn it on with one **Connect** click in **Settings → AI apps**. Edits always go to new files, so your originals stay as they were. [How it works](https://github.com/RedtRocks/glance/blob/main/docs/AI-APPS.md)
+- **Word, PowerPoint and Excel files open in Glance.** Documents, slides and spreadsheets (and CSV) show as a read-only preview, with an **Open with…** bar to edit them in Office or another app.
+- **Previews for much more:** text and code with syntax colours, Markdown, video and audio, EPUB e-books, font sample sheets, and .eml and .msg email with attachments. Nothing in these files loads from the internet, and HTML email can't run scripts or tracking images.
+- **Glance in your browser.** The same app runs on phones, tablets, Macs and Chromebooks at https://redtrocks.github.io/glance/app/. It can be installed, works offline, and your files never leave the device. On phones it gets a bottom dock, pinch to zoom, double-tap and swipe between pages.
 
 ## New in 0.4.2
 
