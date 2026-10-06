@@ -61,10 +61,10 @@ export const welcomed = signal<boolean>(prefs().welcomed ?? false)
 export const savedChats = signal<Chat[]>(loadChats())
 /**
  * Companies whose own sign-in for their helper app no longer works for personal accounts,
- * so the sidebar opens their website instead. Google moved Gemini CLI's free sign-in to
- * its Antigravity products in 2026, which have no Agent Client Protocol mode.
+ * so the sidebar opens their website instead. (Gemini was here until Google shipped
+ * Antigravity's Agent Client Protocol server, which Glance now runs for Gemini.)
  */
-export const WEBSITE_FIRST = new Set(['gemini'])
+export const WEBSITE_FIRST = new Set<string>()
 /** Showing the company's own website instead of Glance's chat. */
 export const siteView = signal(WEBSITE_FIRST.has(agentId.peek()))
 

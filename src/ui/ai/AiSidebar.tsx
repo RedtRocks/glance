@@ -41,7 +41,7 @@ function hint(id: string): string {
     case 'chatgpt':
       return t('Sign in with your ChatGPT account, free or paid.')
     case 'gemini':
-      return t('Opens the Gemini website, where you sign in with your Google account. Google no longer lets its Gemini helper app sign in with a personal account.')
+      return t('Sign in with your Google account through Google Antigravity, which Glance downloads the first time.')
     case 'copilot':
       return t('Sign in with your GitHub account that has Copilot.')
     case 'qwen':
