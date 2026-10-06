@@ -257,6 +257,8 @@ ${ftas}
   </Applications>
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
+    <!-- The Ask AI sidebar's mic (Windows speech recognition). -->
+    <DeviceCapability Name="microphone" />
   </Capabilities>
 </Package>
 `

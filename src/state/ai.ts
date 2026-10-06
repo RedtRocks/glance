@@ -7,6 +7,7 @@ import { signal } from '@preact/signals'
 import type * as acp from '@agentclientprotocol/sdk'
 import * as platform from '../platform'
 import { applyUpdate, chatTitle, modelOption, preamble, type Choice, type Part } from '../core/ai/transcript'
+import { changeCount, changesSince, keep as keepChanges, undoChanges } from './aiChanges'
 import { activeDoc, ImageDoc, PdfDoc, type Doc } from './documents'
 import { settings } from './settings'
 import { toast } from './ui'
@@ -60,10 +61,10 @@ export const welcomed = signal<boolean>(prefs().welcomed ?? false)
 export const savedChats = signal<Chat[]>(loadChats())
 /**
  * Companies whose own sign-in for their helper app no longer works for personal accounts,
- * so the sidebar opens their website instead. Google moved Gemini CLI's free sign-in to
- * its Antigravity products in 2026, which have no Agent Client Protocol mode.
+ * so the sidebar opens their website instead. (Gemini was here until Google shipped
+ * Antigravity's Agent Client Protocol server, which Glance now runs for Gemini.)
  */
-export const WEBSITE_FIRST = new Set(['gemini'])
+export const WEBSITE_FIRST = new Set<string>()
 /** Showing the company's own website instead of Glance's chat. */
 export const siteView = signal(WEBSITE_FIRST.has(agentId.peek()))
 
@@ -484,6 +485,7 @@ export async function send(text: string): Promise<void> {
   attachments.value = []
   chat.value = { ...c, parts: [...c.parts, { kind: 'user', text, context: files.map((a) => a.label) }], updatedAt: Date.now() }
   status.value = 'working'
+  const mark = changeCount()
   workingChat = c.id
   // Once the user moves to another chat, this prompt's outcome is no longer theirs to see.
   const here = (): boolean => chat.peek().id === c.id
@@ -501,10 +503,24 @@ export async function send(text: string): Promise<void> {
       addNotice(errorText(e), true, c.id)
     }
   } finally {
+    const made = changesSince(mark)
+    if (made.length && here()) chat.value = { ...chat.peek(), parts: [...chat.peek().parts, { kind: 'edits', changes: made.map((x) => x.id) }] }
     if (workingChat === c.id) workingChat = null
     const done = chat.peek()
     if (done.id === c.id) storeChat({ ...done, updatedAt: Date.now() })
   }
+}
+
+/** Keeps or undoes the changes in an edits card, and remembers which. */
+export function settleEdits(index: number, how: 'kept' | 'undone'): void {
+  const c = chat.peek()
+  const part = c.parts[index]
+  if (part?.kind !== 'edits') return
+  if (how === 'kept') keepChanges(part.changes)
+  else undoChanges(part.changes)
+  const next = { ...c, parts: c.parts.map((p, i) => (i === index ? { ...part, state: how } : p)) }
+  chat.value = next
+  storeChat(next)
 }
 
 /** Adds a notice to the open chat (or only to `chatId`, if that's still the open one). */

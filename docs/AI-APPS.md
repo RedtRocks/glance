@@ -39,6 +39,12 @@ The Microsoft Store version installs `glance-mcp.exe` as an app alias in `%LOCAL
 | `glance_current_view` | The page you're looking at, as an image with its text, unsaved markup included |
 | `glance_go_to_page` | Shows a page in an open document |
 | `glance_mark_redactions` | Marks text for redaction in an open PDF, for you to review and apply |
+| `glance_text_layout` | Paragraphs on a page of an open PDF or image, with where each is and its font, size, colour and line spacing |
+| `glance_edit_text` | Changes or deletes text in an open PDF or image in the same style; the words after it move along |
+| `glance_add_text` | Writes new text after or before a paragraph, or at a point, in the page's own style |
+| `glance_erase` | Removes a paragraph or an area by covering it with its background |
+
+The four editing tools add markup to the open document, so you can see, undo or keep each change before saving ([ADR 0015](adr/0015-ai-edits-as-matching-markup.md)).
 
 Tools never change the files they're given. Every edit writes a new file, and Glance refuses to overwrite an existing file unless the AI app asks for it explicitly (never the input itself, and never a file with unsaved changes open in Glance). Marked redactions in the window stay pending until you choose Apply Redactions.
 

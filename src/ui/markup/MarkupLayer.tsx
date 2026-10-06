@@ -8,6 +8,7 @@ import {
   normRect,
   recognizeSketch,
   resize,
+  textBoxLayout,
   translate,
   type Markup,
   type Pt,
@@ -30,6 +31,8 @@ import {
 } from '../../state/markupState'
 import { RedactionMark, Shape, cssBox } from './Shape'
 import { SelectionActions } from './SelectionActions'
+import { Icon } from '../Icon'
+import { isLive, pending as aiPending } from '../../state/aiChanges'
 import { t } from '../../i18n'
 
 interface Props {
@@ -407,7 +410,29 @@ export function MarkupLayer({ doc, index, vp, interactive = true }: Props) {
         items
           .filter((m): m is Extract<Markup, { type: 'note' }> => m.type === 'note' && editingId.value === m.id)
           .map((m) => <NoteEditor key={m.id} doc={doc} m={m} vp={vp} />)}
+      {interactive && <AiOutlines doc={doc} index={index} vp={vp} />}
     </div>
+    </>
+  )
+}
+
+/** Changes the AI made that the user hasn't kept or undone yet, outlined on the page. */
+function AiOutlines({ doc, index, vp }: { doc: MarkupHost; index: number; vp: PageViewport }) {
+  // A change a later edit redrew has no markup of its own left; the later one is outlined.
+  void doc.markup.value
+  const list = aiPending.value.filter((c) => c.doc === doc && c.page === index && isLive(c))
+  return (
+    <>
+      {list.map((c) => {
+        const b = cssBox(vp, c.rect)
+        return (
+          <div key={c.id} class="ai-outline" style={{ left: b.left - 3, top: b.top - 3, width: b.right - b.left + 6, height: b.bottom - b.top + 6 }} title={c.label}>
+            <span class="ai-outline-tag" aria-hidden="true">
+              <Icon name="sparkle" size={12} />
+            </span>
+          </div>
+        )
+      })}
     </>
   )
 }
@@ -458,14 +483,17 @@ function TextBox({ doc, m, vp, editing }: { doc: MarkupHost; m: Extract<Markup, 
   const ref = useRef<HTMLTextAreaElement>(null)
   const [x, y] = vp.convertToViewportPoint(m.rect[0], m.rect[3])
   const s = vp.scale
+  const lay = textBoxLayout(m)
+  const width = (m.rect[2] - m.rect[0]) * s
+  const height = (m.rect[3] - m.rect[1]) * s
   const boxStyle = {
     left: x,
     top: y,
-    width: (m.rect[2] - m.rect[0]) * s,
-    height: (m.rect[3] - m.rect[1]) * s,
+    width,
+    height,
     transform: `rotate(${vp.rotation}deg)`,
-    font: `${m.fontSize * s}px/1.2 ${fontStack(m.font)}`,
-    padding: 4 * s,
+    font: `${m.italic ? 'italic ' : ''}${m.bold ? 'bold ' : ''}${m.fontSize * s}px/${lay.lineHeight / m.fontSize} ${fontStack(m.font)}`,
+    padding: lay.inset * s,
     color: css(m.color)
   }
   useEffect(() => {
@@ -495,11 +523,52 @@ function TextBox({ doc, m, vp, editing }: { doc: MarkupHost; m: Extract<Markup, 
       />
     )
   }
+  if (lay.baseline !== null) {
+    // Text matched to the page (AI edits): each line on its exact baseline.
+    return (
+      <div class="text-box" style={{ ...boxStyle, padding: 0 }}>
+        <svg width={width} height={height} aria-label={m.text} role="img">
+          <text fill={css(m.color)} style={{ font: `${m.italic ? 'italic ' : ''}${m.bold ? 'bold ' : ''}${m.fontSize * s}px ${fontStack(m.font)}`, whiteSpace: 'pre' }}>
+            {wrapForBox(m, lay.font).map((line, i) => (
+              <tspan key={i} x={lay.inset * s} y={(lay.baseline! + i * lay.lineHeight) * s}>
+                {line}
+              </tspan>
+            ))}
+          </text>
+        </svg>
+      </div>
+    )
+  }
   return (
     <div class="text-box" style={boxStyle}>
       {m.text}
     </div>
   )
+}
+
+let measurer: CanvasRenderingContext2D | null = null
+
+/** The box's lines, wrapped the way image export and PDF save wrap them. */
+function wrapForBox(m: Extract<Markup, { type: 'text' }>, font: string): string[] {
+  measurer ??= document.createElement('canvas').getContext('2d')
+  if (!measurer) return m.text.split('\n')
+  measurer.font = font
+  const g = measurer
+  const lay = textBoxLayout(m)
+  const width = m.rect[2] - m.rect[0] - lay.inset * 2
+  const out: string[] = []
+  for (const para of m.text.split(/\r?\n/)) {
+    let line = ''
+    for (const word of para.split(/(\s+)/)) {
+      const next = line + word
+      if (line && g.measureText(next.trimEnd()).width > width) {
+        out.push(line.trimEnd())
+        line = word.trimStart()
+      } else line = next
+    }
+    out.push(line.trimEnd())
+  }
+  return out
 }
 
 function NoteEditor({ doc, m, vp }: { doc: MarkupHost; m: Extract<Markup, { type: 'note' }>; vp: PageViewport }) {

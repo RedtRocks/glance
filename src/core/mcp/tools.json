@@ -1,5 +1,5 @@
 {
-  "instructions": "Glance is the user's document and image viewer on Windows. Use it to look at and work with local files: see any page or image (PDF, camera RAW, HEIC, PSD, JPEG XL, EPS, XPS, TIFF, comics and 40+ other formats), read text with OCR, combine, split, rotate and reorder PDF pages, convert images, and redact text so it is really removed. Paths are absolute Windows paths and pages are numbered from 1. Tools never change the files you pass in: every edit writes a new file at output_path. The glance_open, glance_list_open, glance_current_view, glance_go_to_page and glance_mark_redactions tools work with what the user has open in the Glance window. Use these tools whenever the user asks about a local document or image, or about what they're looking at, even if they don't mention Glance. Glance starts in the background by itself when a tool needs it, so never ask the user to open it first.",
+  "instructions": "Glance is the user's document and image viewer on Windows. Use it to look at and work with local files: see any page or image (PDF, camera RAW, HEIC, PSD, JPEG XL, EPS, XPS, TIFF, comics and 40+ other formats), read text with OCR, combine, split, rotate and reorder PDF pages, convert images, and redact text so it is really removed. Paths are absolute Windows paths and pages are numbered from 1. Tools never change the files you pass in: every edit writes a new file at output_path. The glance_open, glance_list_open, glance_current_view, glance_go_to_page, glance_mark_redactions, glance_text_layout, glance_edit_text, glance_add_text and glance_erase tools work with what the user has open in the Glance window; the editing ones change the open document in its own style, for the user to review and save. Use these tools whenever the user asks about a local document or image, or about what they're looking at, even if they don't mention Glance. Glance starts in the background by itself when a tool needs it, so never ask the user to open it first.",
   "tools": [
     {
       "name": "glance_info",
@@ -197,6 +197,108 @@
           "match_case": { "type": "boolean" },
           "whole_word": { "type": "boolean" },
           "pages": { "type": "string" }
+        },
+        "required": []
+      },
+      "annotations": { "readOnlyHint": false, "destructiveHint": false, "openWorldHint": false }
+    },
+    {
+      "name": "glance_text_layout",
+      "title": "Page text and style",
+      "description": "Lists the paragraphs on a page of the PDF or image open in Glance, with an id for each, its text, where it is, and its look: font, size, bold, italic, colour and line spacing. Images are read with Windows OCR. Call it before glance_edit_text or glance_add_text to see the exact wording and style. Edits the AI already made are included.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tab": { "type": "string", "description": "Tab id or path from glance_list_open. Default: the active tab." },
+          "page": { "type": "integer", "minimum": 1, "description": "Page number, from 1. Default: the page the user is on." }
+        },
+        "required": []
+      },
+      "annotations": { "readOnlyHint": true, "openWorldHint": false }
+    },
+    {
+      "name": "glance_edit_text",
+      "title": "Edit text",
+      "description": "Changes text in the PDF or image open in Glance, in the same font, size, colour and line spacing as the text around it. The words after the change move along, and the paragraph is laid out again when it gets longer or shorter. An empty replace deletes the text. Give find (exact text within one paragraph, as glance_text_layout shows it) or paragraph (an id, to replace the whole paragraph). Without page, the page the user is on is searched first, then the others. The change is drawn over the original as markup the user can review and undo; nothing is saved to disk until they save. For several separate changes, call it once per change.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tab": { "type": "string", "description": "Tab id or path from glance_list_open. Default: the active tab." },
+          "page": { "type": "integer", "minimum": 1, "description": "Page number, from 1. Default: the page the user is on." },
+          "find": { "type": "string", "description": "Exact text to change, within one paragraph." },
+          "paragraph": { "type": "string", "description": "Paragraph id from glance_text_layout, to replace the whole paragraph." },
+          "replace": { "type": "string", "description": "New text. Empty deletes." },
+          "occurrence": {
+            "description": "Which match to change, from 1, or \"all\". Default 1.",
+            "anyOf": [
+              { "type": "integer", "minimum": 1 },
+              { "type": "string", "enum": ["all"] }
+            ]
+          },
+          "make_room": { "type": "boolean", "description": "Move the text below down when the new text needs more room. Default true." },
+          "font": { "type": "string", "description": "Font family to use instead of the page's (an installed Windows font)." },
+          "size": { "type": "number", "description": "Font size in points, instead of the page's." },
+          "bold": { "type": "boolean" },
+          "italic": { "type": "boolean" },
+          "color": { "type": "string", "description": "Text colour as #rrggbb, instead of the page's." }
+        },
+        "required": ["replace"]
+      },
+      "annotations": { "readOnlyHint": false, "destructiveHint": false, "openWorldHint": false }
+    },
+    {
+      "name": "glance_add_text",
+      "title": "Add text",
+      "description": "Writes new text into the PDF or image open in Glance in the page's own style: after or before a paragraph (same left edge, width, font, size, colour and spacing), or at a point. like copies the look of another paragraph (for example a heading). Lines wrap like the page's. The text is markup the user can review, move and undo.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tab": { "type": "string", "description": "Tab id or path from glance_list_open. Default: the active tab." },
+          "page": { "type": "integer", "minimum": 1, "description": "Page number, from 1. Default: the page the user is on." },
+          "text": { "type": "string", "description": "The text to add. New lines start new lines." },
+          "after": { "type": "string", "description": "Paragraph id, or text in the paragraph, to put it after." },
+          "before": { "type": "string", "description": "Paragraph id, or text in the paragraph, to put it before." },
+          "at": {
+            "type": "object",
+            "description": "Where its top-left corner goes, as fractions of the page from the top-left (0 to 1), and how wide it is.",
+            "properties": {
+              "x": { "type": "number" },
+              "y": { "type": "number" },
+              "width": { "type": "number" }
+            }
+          },
+          "like": { "type": "string", "description": "Paragraph id, or text in it, whose look to copy." },
+          "make_room": { "type": "boolean", "description": "Move the text below down when the new text needs more room. Default true." },
+          "font": { "type": "string", "description": "Font family to use instead of the page's (an installed Windows font)." },
+          "size": { "type": "number", "description": "Font size in points, instead of the page's." },
+          "bold": { "type": "boolean" },
+          "italic": { "type": "boolean" },
+          "color": { "type": "string", "description": "Text colour as #rrggbb, instead of the page's." }
+        },
+        "required": ["text"]
+      },
+      "annotations": { "readOnlyHint": false, "destructiveHint": false, "openWorldHint": false }
+    },
+    {
+      "name": "glance_erase",
+      "title": "Erase",
+      "description": "Removes a paragraph or an area from the PDF or image open in Glance by covering it with its background: the surrounding colour on plain backgrounds, or a fill blended from the surrounding pixels on photos and textured backgrounds. The user can review and undo it. To remove sensitive text for good, use glance_mark_redactions instead.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tab": { "type": "string", "description": "Tab id or path from glance_list_open. Default: the active tab." },
+          "page": { "type": "integer", "minimum": 1, "description": "Page number, from 1. Default: the page the user is on." },
+          "paragraph": { "type": "string", "description": "Paragraph id, or text in it." },
+          "area": {
+            "type": "object",
+            "description": "Fractions of the page from the top-left (0 to 1).",
+            "properties": {
+              "x": { "type": "number" },
+              "y": { "type": "number" },
+              "width": { "type": "number" },
+              "height": { "type": "number" }
+            }
+          }
         },
         "required": []
       },

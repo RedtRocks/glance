@@ -22,6 +22,9 @@ pub struct FontFamily {
     path: PathBuf,
     #[serde(skip)]
     index: u32,
+    /// Every face of the family (weight, italic, file, index), for bold and italic text.
+    #[serde(skip)]
+    faces: Vec<(u16, bool, PathBuf, u32)>,
 }
 
 fn font_dirs() -> Vec<PathBuf> {
@@ -102,8 +105,19 @@ fn scan() -> Vec<FontFamily> {
             }
             let score = regular_score(&face);
             let key = family.to_lowercase();
-            if best.get(&key).is_none_or(|(s, _)| score < *s) {
-                best.insert(key, (score, FontFamily { family, path: path.clone(), index }));
+            let member = (face.weight().to_number(), face.is_italic() || face.is_oblique(), path.clone(), index);
+            match best.get_mut(&key) {
+                Some((s, f)) => {
+                    f.faces.push(member);
+                    if score < *s {
+                        *s = score;
+                        f.path = path.clone();
+                        f.index = index;
+                    }
+                }
+                None => {
+                    best.insert(key, (score, FontFamily { family, path: path.clone(), index, faces: vec![member] }));
+                }
             }
         }
     }
@@ -143,17 +157,28 @@ fn extract_face(data: &[u8], index: u32) -> Option<Vec<u8>> {
     Some(out)
 }
 
+/// The family's face closest to the wanted weight and slant (the regular face when it has no other).
+fn pick_face(f: &FontFamily, bold: bool, italic: bool) -> (&Path, u32) {
+    let weight: i32 = if bold { 700 } else { 400 };
+    f.faces
+        .iter()
+        .min_by_key(|(w, i, _, _)| (*w as i32 - weight).unsigned_abs() + if *i != italic { 1000 } else { 0 })
+        .map(|(_, _, p, i)| (p.as_path(), *i))
+        .unwrap_or((f.path.as_path(), f.index))
+}
+
 #[tauri::command]
 pub async fn fonts_list() -> Result<Vec<FontFamily>, String> {
     tauri::async_runtime::spawn_blocking(|| families().to_vec()).await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub async fn font_bytes(family: String) -> Result<Response, String> {
+pub async fn font_bytes(family: String, bold: Option<bool>, italic: Option<bool>) -> Result<Response, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let f = families().iter().find(|f| f.family.eq_ignore_ascii_case(&family)).ok_or_else(|| format!("Font {family} is not installed"))?;
-        let data = std::fs::read(&f.path).map_err(|e| e.to_string())?;
-        extract_face(&data, f.index).map(Response::new).ok_or_else(|| "Unreadable font collection".to_string())
+        let (path, index) = pick_face(f, bold.unwrap_or(false), italic.unwrap_or(false));
+        let data = std::fs::read(path).map_err(|e| e.to_string())?;
+        extract_face(&data, index).map(Response::new).ok_or_else(|| "Unreadable font collection".to_string())
     })
     .await
     .map_err(|e| e.to_string())?

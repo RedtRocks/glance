@@ -119,7 +119,9 @@ pub fn builtins() -> Vec<Agent> {
     vec![
         builtin("claude", "Claude", vec![launch("claude-agent-acp", &[]), npx("@agentclientprotocol/claude-agent-acp", &[])], "https://claude.ai", NODE),
         builtin("chatgpt", "ChatGPT", vec![launch("codex-acp", &[]), npx("@agentclientprotocol/codex-acp", &[])], "https://chatgpt.com", NODE),
-        builtin("gemini", "Gemini", vec![launch("gemini", &["--acp"]), npx("@google/gemini-cli", &["--acp"])], "https://gemini.google.com", NODE),
+        // Runs Google's Antigravity agent, which Glance downloads (see `antigravity`); Gemini CLI
+        // is the fallback, and only signs in with a Google Cloud account or a paid API key.
+        builtin("gemini", "Gemini", vec![launch("gemini", &["--acp"]), npx("@google/gemini-cli", &["--acp"])], "https://gemini.google.com", antigravity::DOCS),
         builtin("copilot", "GitHub Copilot", vec![launch("copilot", &["--acp"]), npx("@github/copilot", &["--acp"])], "https://github.com/copilot", NODE),
         builtin("qwen", "Qwen", vec![launch("qwen", &["--acp"]), npx("@qwen-code/qwen-code", &["--acp"])], "https://chat.qwen.ai", NODE),
         builtin("kimi", "Kimi", vec![launch("kimi", &["acp"]), launch("uvx", &["--from", "kimi-cli", "kimi", "acp"])], "https://www.kimi.com", UV),
@@ -238,6 +240,10 @@ pub fn agents_list(app: AppHandle) -> Vec<AgentInfo> {
     all_agents(&app)
         .into_iter()
         .map(|agent| {
+            if agent.id == antigravity::AGENT && antigravity::available() {
+                let command = antigravity::installed(&app).map(|p| p.to_string_lossy().into_owned()).unwrap_or_else(|| antigravity::ARCHIVE_NAME.into());
+                return AgentInfo { ready: true, command, agent };
+            }
             let picked = pick(&agent);
             let command = picked.as_ref().map(|(_, l)| l).or(agent.launch.last()).map(shown).unwrap_or_default();
             AgentInfo { ready: picked.is_some(), command, agent }
@@ -370,12 +376,24 @@ pub struct Started {
     cwd: String,
 }
 
+/// The program and arguments that start `agent`, downloading Antigravity the first time.
+async fn program_for(app: &AppHandle, agent: &Agent) -> Result<(PathBuf, Launch), String> {
+    if agent.id == antigravity::AGENT && antigravity::available() {
+        let a = app.clone();
+        let fetched = tauri::async_runtime::spawn_blocking(move || antigravity::ensure(&a)).await.map_err(|e| e.to_string())?;
+        match fetched {
+            Ok(l) => return Ok((PathBuf::from(&l.program), l)),
+            // Offline or blocked: fall back to Gemini CLI if it's installed.
+            Err(e) => return pick(agent).ok_or_else(|| format!("couldn’t download Google Antigravity: {e}")),
+        }
+    }
+    pick(agent).ok_or_else(|| format!("not-installed:{}", agent.install.clone().unwrap_or_default()))
+}
+
 #[tauri::command]
-pub fn agent_start(app: AppHandle, state: State<'_, Agents>, id: String) -> Result<Started, String> {
+pub async fn agent_start(app: AppHandle, state: State<'_, Agents>, id: String) -> Result<Started, String> {
     let agent = find(&app, &id)?;
-    let Some((program, l)) = pick(&agent) else {
-        return Err(format!("not-installed:{}", agent.install.clone().unwrap_or_default()));
-    };
+    let (program, l) = program_for(&app, &agent).await?;
     let cwd = work_dir(&app)?;
     let mut agent = agent;
     if let Some(api) = &agent.api {
@@ -461,7 +479,7 @@ pub fn stop_all(app: &AppHandle) {
 #[tauri::command]
 pub async fn agent_login(app: AppHandle, id: String, args: Vec<String>, env: BTreeMap<String, String>) -> Result<(), String> {
     let mut agent = find(&app, &id)?;
-    let (program, l) = pick(&agent).ok_or("not installed")?;
+    let (program, l) = program_for(&app, &agent).await?;
     agent.env.extend(env);
     let cwd = work_dir(&app)?;
     let mut all = l.args.clone();
@@ -480,6 +498,122 @@ pub async fn agent_login(app: AppHandle, id: String, args: Vec<String>, env: BTr
     }
     #[allow(unreachable_code)]
     tauri::async_runtime::spawn_blocking(move || cmd.status().map(|_| ()).map_err(|e| e.to_string())).await.map_err(|e| e.to_string())?
+}
+
+mod antigravity {
+    //! Google's Antigravity agent. Google stopped Gemini CLI's personal Google sign-in in June
+    //! 2026; Antigravity's Agent Client Protocol server replaces it. Google ships it as a zip
+    //! per platform rather than an npm package (the ACP registry's "antigravity-acp" entry),
+    //! so Glance downloads it once into its local app data, as Zed does.
+    use super::Launch;
+    use std::path::{Path, PathBuf};
+    use std::process::Command;
+    use tauri::{AppHandle, Manager};
+
+    pub const AGENT: &str = "gemini";
+    pub const DOCS: &str = "https://antigravity.google/docs/ide/extensions";
+    const VERSION: &str = "1.3.0";
+    const BASE: &str = "https://dl.google.com/agy-extensions/releases";
+
+    #[cfg(windows)]
+    pub const ARCHIVE_NAME: &str = "agy_acp_server.exe";
+    #[cfg(not(windows))]
+    pub const ARCHIVE_NAME: &str = "agy_acp_server.par";
+
+    /// The archive for this PC, and the arguments the server takes here.
+    fn archive() -> Option<(String, &'static [&'static str])> {
+        let (dir, platform, args): (&str, &str, &'static [&'static str]) = match (std::env::consts::OS, std::env::consts::ARCH) {
+            ("windows", "x86_64") => ("windows", "windows-x86_64", &[]),
+            ("windows", "aarch64") => ("windows", "windows-arm64", &[]),
+            ("macos", "x86_64") => ("macos", "darwin-x86_64", &[]),
+            ("macos", "aarch64") => ("macos", "darwin-arm64", &[]),
+            ("linux", "x86_64") => ("linux", "linux-x86_64", &["--uid="]),
+            ("linux", "aarch64") => ("linux", "linux-arm64", &["--uid="]),
+            _ => return None,
+        };
+        Some((format!("{BASE}/{dir}/agy-acp-server-{VERSION}-{platform}.zip"), args))
+    }
+
+    pub fn available() -> bool {
+        archive().is_some()
+    }
+
+    fn dir(app: &AppHandle) -> Option<PathBuf> {
+        Some(app.path().app_local_data_dir().ok()?.join("agents").join(format!("antigravity-{VERSION}")))
+    }
+
+    pub fn installed(app: &AppHandle) -> Option<PathBuf> {
+        dir(app).map(|d| d.join(ARCHIVE_NAME)).filter(|p| p.is_file())
+    }
+
+    /// The server's launch, downloading it first if it isn't here yet.
+    pub fn ensure(app: &AppHandle) -> Result<Launch, String> {
+        let (url, args) = archive().ok_or("Google Antigravity isn’t available for this PC")?;
+        let program = match installed(app) {
+            Some(p) => p,
+            None => fetch(&url, &dir(app).ok_or("no app data folder")?)?,
+        };
+        Ok(Launch { program: program.to_string_lossy().into_owned(), args: args.iter().map(|a| a.to_string()).collect() })
+    }
+
+    fn fetch(url: &str, dest: &Path) -> Result<PathBuf, String> {
+        let parent = dest.parent().ok_or("bad folder")?;
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        let zip_path = parent.join(format!("antigravity-{VERSION}.zip"));
+        let tmp = parent.join(format!("antigravity-{VERSION}.partial"));
+        let _ = std::fs::remove_dir_all(&tmp);
+        download(url, &zip_path)?;
+        let unpacked = (|| -> Result<(), String> {
+            let file = std::fs::File::open(&zip_path).map_err(|e| e.to_string())?;
+            let mut zip = zip::ZipArchive::new(file).map_err(|e| e.to_string())?;
+            zip.extract(&tmp).map_err(|e| e.to_string())
+        })();
+        let _ = std::fs::remove_file(&zip_path);
+        unpacked?;
+        // Some archives wrap everything in one folder.
+        let root = if tmp.join(ARCHIVE_NAME).is_file() {
+            tmp.clone()
+        } else {
+            std::fs::read_dir(&tmp)
+                .map_err(|e| e.to_string())?
+                .flatten()
+                .map(|e| e.path())
+                .find(|p| p.join(ARCHIVE_NAME).is_file())
+                .ok_or_else(|| format!("{ARCHIVE_NAME} isn’t in the download"))?
+        };
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let _ = std::fs::set_permissions(root.join(ARCHIVE_NAME), std::fs::Permissions::from_mode(0o755));
+        }
+        let _ = std::fs::remove_dir_all(dest);
+        std::fs::rename(&root, dest).map_err(|e| e.to_string())?;
+        let _ = std::fs::remove_dir_all(&tmp);
+        Ok(dest.join(ARCHIVE_NAME))
+    }
+
+    /// Downloads with the curl that ships with Windows 10 and later (and every Mac and Linux).
+    fn download(url: &str, to: &Path) -> Result<(), String> {
+        #[cfg(windows)]
+        let curl = std::env::var_os("SystemRoot").map(|r| PathBuf::from(r).join("System32").join("curl.exe")).filter(|p| p.is_file()).unwrap_or_else(|| "curl.exe".into());
+        #[cfg(not(windows))]
+        let curl = PathBuf::from("curl");
+        let mut cmd = Command::new(curl);
+        cmd.args(["-fsSL", "--retry", "2", "-o"]).arg(to).arg(url);
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+            cmd.creation_flags(CREATE_NO_WINDOW);
+        }
+        let out = cmd.output().map_err(|e| e.to_string())?;
+        if out.status.success() {
+            Ok(())
+        } else {
+            let _ = std::fs::remove_file(to);
+            Err(String::from_utf8_lossy(&out.stderr).trim().to_string())
+        }
+    }
 }
 
 #[cfg(windows)]
