@@ -8,6 +8,17 @@ import { cleanFragment, adopt, keepImagesLocal } from '../../preview/sanitize'
 import * as platform from '../../platform'
 import { Icon } from '../Icon'
 import { intlLocale, t } from '../../i18n'
+import claude from './logos/claude.svg?raw'
+import chatgpt from './logos/chatgpt.svg?raw'
+import gemini from './logos/gemini.svg?raw'
+import copilot from './logos/copilot.svg?raw'
+import qwen from './logos/qwen.svg?raw'
+import kimi from './logos/kimi.svg?raw'
+import mistral from './logos/mistral.svg?raw'
+import opencode from './logos/opencode.svg?raw'
+
+/** Each company's logo (see logos/README.md); others get a letter on their colour. */
+const LOGOS: Record<string, string> = { claude, chatgpt, gemini, copilot, qwen, kimi, mistral, opencode }
 
 /** Each company's colour, for its badge (custom agents are grey). */
 const COLORS: Record<string, string> = {
@@ -28,7 +39,7 @@ function hint(id: string): string {
     case 'chatgpt':
       return t('Sign in with your ChatGPT account, free or paid.')
     case 'gemini':
-      return t('Sign in with your Google account.')
+      return t('Opens the Gemini website, where you sign in with your Google account. Google no longer lets its Gemini helper app sign in with a personal account.')
     case 'copilot':
       return t('Sign in with your GitHub account that has Copilot.')
     case 'qwen':
@@ -45,6 +56,8 @@ function hint(id: string): string {
 }
 
 function Badge({ id, size = 20 }: { id: string; size?: number }) {
+  const logo = LOGOS[id]
+  if (logo) return <span class="ai-badge ai-logo" style={{ width: size, height: size, padding: size * 0.16 }} aria-hidden="true" dangerouslySetInnerHTML={{ __html: logo }} />
   const name = ai.agentName(id)
   return (
     <span class="ai-badge" style={{ width: size, height: size, background: COLORS[id] ?? '#888', fontSize: size * 0.55 }} aria-hidden="true">
@@ -370,6 +383,12 @@ function StatusCard() {
           </button>
         ))}
         {!methods.length && <p class="muted">{t('{agent} has no sign-in Glance can start. Sign in with its own app, then try again.', { agent: name })}</p>}
+        {ai.agents.value.find((a) => a.id === agent)?.website && (
+          <button class="btn" onClick={() => (ai.siteView.value = true)}>
+            <Icon name="globe" size={16} />
+            {t('Use the {agent} website instead', { agent: name })}
+          </button>
+        )}
         {methods.some((m) => 'type' in m && m.type === 'terminal') && (
           <p class="muted small">{t('A window opens for signing in. Follow the steps there, then close it to come back here.')}</p>
         )}
@@ -545,6 +564,29 @@ function SiteFrame({ id }: { id: string }) {
   )
 }
 
+/** Above the website: a way back from wherever a sign-in or a link led. */
+function SiteNav({ id }: { id: string }) {
+  const host = ai.agents.value.find((a) => a.id === id)?.website?.replace(/^https:\/\//, '') ?? ''
+  return (
+    <div class="ai-site-nav">
+      <button class="icon-button" aria-label={t('Back')} title={t('Back')} onClick={() => void platform.websiteBack(id).catch(() => undefined)}>
+        <Icon name="back" size={16} />
+      </button>
+      <button class="icon-button" aria-label={t('Go to {site}', { site: host })} title={t('Go to {site}', { site: host })} onClick={() => void platform.websiteHome(id).catch(() => undefined)}>
+        <Icon name="home" size={16} />
+      </button>
+      <button class="icon-button" aria-label={t('Reload')} title={t('Reload')} onClick={() => void platform.websiteReload(id).catch(() => undefined)}>
+        <Icon name="rotateRight" size={16} />
+      </button>
+      <span class="ai-site-host">{host}</span>
+      <div class="tb-spacer" />
+      <button class="ai-tool-button" onClick={() => (ai.siteView.value = false)}>
+        {t('Back to Glance chat')}
+      </button>
+    </div>
+  )
+}
+
 /** Under the website: show the AI the page or an area by copying it, to paste into the site's chat. */
 function SiteBar({ doc, id }: { doc: Doc; id: string }) {
   const canShow = doc.kind === 'pdf' || doc.kind === 'image'
@@ -571,11 +613,6 @@ function SiteBar({ doc, id }: { doc: Doc; id: string }) {
             {t('Copy this page')}
           </button>
         )}
-        <div class="tb-spacer" />
-        <button class="ai-tool-button" onClick={() => void platform.websiteReload(id).catch(() => undefined)}>
-          <Icon name="rotateRight" size={16} />
-          {t('Reload')}
-        </button>
       </div>
     </div>
   )
@@ -658,6 +695,7 @@ export function AiSidebar({ doc }: { doc: Doc }) {
           </select>
         </div>
       )}
+      {site && <SiteNav id={c.agentId} />}
       {site ? (
         // Windows draws the site above everything, so it steps aside while a dialog or menu is open.
         dialog.value || settingsOpen.value || menuOpen.value ? <div class="ai-site" /> : <SiteFrame id={c.agentId} />

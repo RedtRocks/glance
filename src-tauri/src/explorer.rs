@@ -105,7 +105,7 @@ pub fn enqueue(app: &AppHandle, action: Action, files: Vec<String>) {
 /// Called by the main window once it listens for "shell-request": returns anything that
 /// settled before then, and later requests arrive as events.
 #[tauri::command]
-pub fn take_shell_requests(window: tauri::WebviewWindow, queue: tauri::State<'_, Queue>) -> Vec<Request> {
+pub fn take_shell_requests(window: tauri::Window, queue: tauri::State<'_, Queue>) -> Vec<Request> {
     // Document windows opened later run the same UI; only the main window handles verbs.
     if window.label() != "main" {
         return Vec::new();

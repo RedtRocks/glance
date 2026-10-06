@@ -54,7 +54,7 @@ pub(crate) fn store_package_now() -> bool {
     }
 }
 
-fn apply_backdrop(window: &tauri::WebviewWindow) {
+fn apply_backdrop(window: &tauri::Window) {
     #[cfg(windows)]
     {
         if window_vibrancy::apply_mica(window, None).is_ok() {
@@ -79,7 +79,7 @@ pub fn run() {
                 let p = std::path::Path::new(&a);
                 if p.is_relative() { std::path::Path::new(&cwd).join(p).to_string_lossy().into_owned() } else { a }
             }));
-            if let Some(win) = app.get_webview_window("main") {
+            if let Some(win) = app.get_window("main") {
                 let _ = win.unminimize();
                 let _ = win.set_focus();
             }
@@ -110,7 +110,7 @@ pub fn run() {
             }
         })
         .setup(|app| {
-            if let Some(win) = app.get_webview_window("main") {
+            if let Some(win) = app.get_window("main") {
                 apply_backdrop(&win);
             }
             let args: Vec<String> = std::env::args().skip(1).collect();
@@ -179,6 +179,9 @@ pub fn run() {
             website::website_show,
             website::website_hide,
             website::website_reload,
+            website::website_close_all,
+            website::website_back,
+            website::website_home,
             agents::agent_start,
             agents::agent_send,
             agents::agent_stop,

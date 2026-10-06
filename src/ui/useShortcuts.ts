@@ -1,6 +1,7 @@
 import { useEffect } from 'preact/hooks'
 import { comboFromEvent } from '../core/shortcuts'
-import { isPageZoomKey } from '../core/pageZoom'
+import { isPageReloadKey, isPageZoomKey } from '../core/pageZoom'
+import { isTauri } from '../platform'
 import { commandForCombo, runCommand } from '../state/commands'
 import { dialog, settingsOpen, customizeOpen, slideshow } from '../state/ui'
 import { editingId, selectedId, setTool, signatureDialog, spaceHeld, tool } from '../state/markupState'
@@ -55,7 +56,7 @@ export function useShortcuts(): void {
     // Touchpad pinch needs WebView2's zoom controls on (see core/pageZoom); keep them
     // from zooming the whole window. Views that zoom handle Ctrl+wheel before this.
     const noPageZoomKey = (e: KeyboardEvent): void => {
-      if (isPageZoomKey(e)) e.preventDefault()
+      if (isPageZoomKey(e) || (isTauri && isPageReloadKey(e))) e.preventDefault()
     }
     const noPageZoomWheel = (e: WheelEvent): void => {
       if (e.ctrlKey) e.preventDefault()

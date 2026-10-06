@@ -52,13 +52,20 @@ export const problem = signal<{ text: string; install?: string } | null>(null)
 export const signInMethods = signal<acp.AuthMethod[]>([])
 export const permission = signal<PermissionAsk | null>(null)
 export const model = signal<{ id: string; current: string; choices: Choice[] } | null>(null)
+type ModelOption = NonNullable<typeof model.value>
 export const attachments = signal<Attachment[]>([])
 /** Drawing a rectangle on the document for "Select area". */
 export const selectingArea = signal(false)
 export const welcomed = signal<boolean>(prefs().welcomed ?? false)
 export const savedChats = signal<Chat[]>(loadChats())
+/**
+ * Companies whose own sign-in for their helper app no longer works for personal accounts,
+ * so the sidebar opens their website instead. Google moved Gemini CLI's free sign-in to
+ * its Antigravity products in 2026, which have no Agent Client Protocol mode.
+ */
+export const WEBSITE_FIRST = new Set(['gemini'])
 /** Showing the company's own website instead of Glance's chat. */
-export const siteView = signal(false)
+export const siteView = signal(WEBSITE_FIRST.has(agentId.peek()))
 
 // ---------------------------------------------------------------------------
 // Preferences and saved chats (on this PC only)
@@ -248,7 +255,9 @@ function client(): acp.Client {
   return {
     async sessionUpdate({ sessionId, update }) {
       if (update.sessionUpdate === 'config_option_update') {
-        if (chat.peek().sessionId === sessionId) model.value = modelOption(update.configOptions)
+        const option = modelOption(update.configOptions)
+        sessionModels.set(sessionId, option)
+        if (chat.peek().sessionId === sessionId) model.value = option
         return
       }
       if (replaying.has(sessionId)) return
@@ -325,27 +334,31 @@ export async function ensureSession(): Promise<boolean> {
     const servers = await mcpServers()
     const cwd = sessionCwd(l)
     if (c.sessionId && l.sessions.has(c.sessionId)) {
-      // Already live.
+      // Already live: show its models again (switching company cleared them).
+      setModel(c.id, sessionModels.get(c.sessionId) ?? null)
     } else if (c.sessionId && l.init.agentCapabilities?.loadSession) {
       replaying.add(c.sessionId)
       try {
         const res = await l.conn.loadSession({ sessionId: c.sessionId, cwd, mcpServers: servers })
         l.sessions.add(c.sessionId)
-        model.value = modelOption(res.configOptions)
+        setModel(c.id, modelOption(res.configOptions), c.sessionId)
       } catch (e) {
         if (isAuthRequired(e)) throw e
         // The agent forgot it (or can't load): continue in a new session, carrying the chat over.
-        await startSession(l, cwd, servers, true)
+        await startSession(l, c.id, cwd, servers, true)
       } finally {
         replaying.delete(c.sessionId)
       }
     } else {
-      await startSession(l, cwd, servers, !!c.sessionId)
+      await startSession(l, c.id, cwd, servers, !!c.sessionId)
     }
+    // The user switched company or chat meanwhile; that chat's own start owns the status.
+    if (chat.peek().id !== c.id) return false
     signInMethods.value = []
     status.value = 'ready'
     return true
   } catch (e) {
+    if (chat.peek().id !== c.id) return false
     if (isAuthRequired(e)) {
       signInMethods.value = usableMethods(l.init.authMethods)
       status.value = 'signIn'
@@ -360,13 +373,26 @@ export async function ensureSession(): Promise<boolean> {
 /** Chats moved to a new session start by retelling the earlier messages. */
 const carryOver = new Set<string>()
 
-async function startSession(l: Link, cwd: string, servers: acp.McpServer[], carry: boolean): Promise<void> {
+/** Each session's model choices, to show again when the user comes back to it. */
+const sessionModels = new Map<string, ModelOption | null>()
+
+/** Shows `option` if chat `chatId` is still the open one. */
+function setModel(chatId: string, option: ModelOption | null, sessionId?: string): void {
+  if (sessionId) sessionModels.set(sessionId, option)
+  if (chat.peek().id === chatId) model.value = option
+}
+
+async function startSession(l: Link, chatId: string, cwd: string, servers: acp.McpServer[], carry: boolean): Promise<void> {
   const res = await l.conn.newSession({ cwd, mcpServers: servers })
   l.sessions.add(res.sessionId)
+  const option = modelOption(res.configOptions)
+  sessionModels.set(res.sessionId, option)
+  // A slow start must not hand its session to a chat with another company opened since.
   const c = chat.peek()
+  if (c.id !== chatId) return
   chat.value = { ...c, sessionId: res.sessionId }
   if (carry) carryOver.add(c.id)
-  model.value = modelOption(res.configOptions)
+  model.value = option
 }
 
 function errorText(e: unknown): string {
@@ -484,9 +510,9 @@ export async function chooseModel(value: string): Promise<void> {
   try {
     const l = await link(c.agentId)
     const res = await l.conn.setSessionConfigOption({ sessionId: c.sessionId, configId: m.id, value })
-    model.value = modelOption(res.configOptions) ?? model.peek()
+    setModel(c.id, modelOption(res.configOptions) ?? { ...m, current: value }, c.sessionId)
   } catch (e) {
-    model.value = m
+    setModel(c.id, m)
     addNotice(errorText(e), true)
   }
 }
@@ -494,6 +520,7 @@ export async function chooseModel(value: string): Promise<void> {
 /** Switches company; the chat starts fresh (earlier chats stay under Past chats). */
 export function chooseAgent(id: string): void {
   agentId.value = id
+  if (WEBSITE_FIRST.has(id)) siteView.value = true
   savePrefs()
   if (chat.peek().agentId !== id || chat.peek().parts.length) chat.value = newChat(id)
   model.value = null

@@ -34,10 +34,10 @@ function tip(label: string, command?: string): string {
   return k ? t('{label} ({shortcut})', { label, shortcut: displayCombo(k) }) : label
 }
 
-function Btn({ icon, label, command, onClick, pressed }: { icon: IconName; label: string; command?: string; onClick?: () => void; pressed?: boolean }) {
+function Btn({ icon, label, command, onClick, pressed, extra = '' }: { icon: IconName; label: string; command?: string; onClick?: () => void; pressed?: boolean; extra?: string }) {
   return (
     <button
-      class={`tb-button ${pressed ? 'pressed' : ''}`}
+      class={`tb-button ${extra} ${pressed ? 'pressed' : ''}`}
       title={tip(label, command)}
       aria-label={label}
       aria-pressed={pressed}
@@ -233,7 +233,7 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     id: 'askAi',
     label: msg('Ask AI'),
     applies: (c) => isShown(c) && platform.isTauri,
-    render: () => <Btn icon="sparkle" label={t('Ask AI')} command="view.askAi" pressed={aiOpen.value} />
+    render: () => <Btn icon="sparkle" label={t('Ask AI')} command="view.askAi" pressed={aiOpen.value} extra="ai-button" />
   },
   { id: 'search', label: msg('Search'), applies: isPdf, render: (c) => <SearchField doc={c.doc!} /> },
   { id: 'overflow', label: msg('More'), applies: () => true, render: () => <Overflow /> }
