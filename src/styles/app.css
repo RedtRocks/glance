@@ -3735,15 +3735,15 @@ input[type='range'] {
 }
 .ai-mic:hover { background: var(--subtle-hover); color: var(--text); }
 .ai-mic.on {
-  background: #c42b1c;
-  color: #fff;
+  background: var(--accent);
+  color: var(--on-accent);
 }
 .ai-mic.on::after {
   content: '';
   position: absolute;
   inset: -4px;
   border-radius: 50%;
-  border: 2px solid rgba(196, 43, 28, 0.45);
+  border: 2px solid var(--accent);
   animation: ai-mic-pulse 1.4s ease-out infinite;
 }
 @keyframes ai-mic-pulse {
@@ -3751,7 +3751,7 @@ input[type='range'] {
   to { transform: scale(1.35); opacity: 0; }
 }
 .ai-input.listening {
-  border-bottom-color: #c42b1c;
+  border-bottom-color: var(--accent);
 }
 .ai-heard {
   margin: 0;
@@ -3777,7 +3777,7 @@ input[type='range'] {
   width: 3px;
   height: 14px;
   border-radius: 2px;
-  background: #c42b1c;
+  background: var(--accent);
   animation: ai-wave 0.9s ease-in-out infinite;
 }
 .ai-wave i:nth-child(2) { animation-delay: 0.15s; }
