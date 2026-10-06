@@ -67,6 +67,12 @@ async function tool(name, args) {
   if (r.isError) throw new Error(`${name}: ${r.content.map((c) => c.text).join(' ')}`)
   return r
 }
+/** Where Glance writes its endpoint (src-tauri/src/mcp/endpoint.rs). */
+function endpointDir() {
+  if (process.env.GLANCE_MCP_DIR) return process.env.GLANCE_MCP_DIR
+  if (process.platform === 'win32') return join(process.env.LOCALAPPDATA, 'io.github.redtrocks.glance')
+  return join(process.env.XDG_RUNTIME_DIR || tmpdir(), `glance-${process.env.USER || process.env.USERNAME || ''}`)
+}
 const text = (r) => r.content.filter((c) => c.type === 'text').map((c) => c.text).join('\n')
 function check(ok, what) {
   if (!ok) throw new Error(`failed: ${what}`)
@@ -112,6 +118,15 @@ try {
   check((await tool('glance_info', { path: combined })).structuredContent.pages === 3, 'glance_combine adds PDFs and images')
 
   check(Array.isArray((await tool('glance_list_open', {})).structuredContent.tabs), 'glance_list_open answers')
+
+  // The user quits Glance mid-session: the next call starts it again.
+  const endpoint = join(endpointDir(), 'mcp-endpoint')
+  const pidOf = () => Number(readFileSync(endpoint, 'utf8').trim().split(/\s+/)[2])
+  const pid = pidOf()
+  process.kill(pid)
+  // (On Linux the killed Glance stays a zombie of glance-mcp, so don't wait for it to vanish.)
+  await new Promise((r) => setTimeout(r, 2000))
+  check((await tool('glance_info', { path: input })).structuredContent.pages === 2 && pidOf() !== pid, 'after Glance quits, the next call starts it again')
 
   if (live) {
     const opened = (await tool('glance_open', { paths: [input], page: 2 })).structuredContent.opened
