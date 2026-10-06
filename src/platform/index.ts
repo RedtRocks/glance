@@ -68,6 +68,21 @@ function extOf(path: string): string {
   return m ? m[1].toLowerCase() : ''
 }
 
+/**
+ * Counts a file event in the website's visitor statistics (Umami, added to the
+ * published site only). Browser version only: the Windows app sends nothing. Only
+ * the file type goes out, never the name or contents. See PRIVACY.md.
+ */
+export function trackFile(event: 'Open file' | 'Edit file' | 'Save file', name: string): void {
+  if (isTauri) return
+  const ext = extOf(name)
+  try {
+    ;(window as { umami?: { track(event: string, data: object): void } }).umami?.track(event, { type: /^[a-z0-9]{1,8}$/.test(ext) ? ext : 'other' })
+  } catch {
+    // Statistics never get in the way.
+  }
+}
+
 export function baseName(path: string): string {
   return path.split(/[\\/]/).pop() ?? path
 }
@@ -202,6 +217,7 @@ export async function writeFile(path: string, data: Uint8Array): Promise<void> {
     a.href = URL.createObjectURL(blob)
     a.download = baseName(path)
     a.click()
+    trackFile('Save file', path)
     setTimeout(() => URL.revokeObjectURL(a.href), 10_000)
     return
   }

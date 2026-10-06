@@ -97,7 +97,11 @@ function registerServiceWorker(offlineReady: () => void): void {
     // Finish any download iOS cut short when the app went to the background.
     void navigator.serviceWorker.ready.then((reg) => reg.active?.postMessage('fill'))
     // Ask the browser not to clear Glance's copy when the device runs low on space.
-    void navigator.storage?.persist?.().catch(() => false)
+    // Only once installed: Firefox asks the visitor about it, which is out of place
+    // on a first visit to the website.
+    if (window.matchMedia?.('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone) {
+      void navigator.storage?.persist?.().catch(() => false)
+    }
   }
   // After the page has loaded, so caching the app never slows down opening it.
   if (document.readyState === 'complete') register()
