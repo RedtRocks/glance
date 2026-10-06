@@ -3,9 +3,9 @@
  * Office files, text and code, Markdown, video and audio, e-books, fonts and email.
  * Kept in sync with PREVIEWS in src-tauri/src/decode/formats.rs.
  */
-export const WORD = ['docx', 'docm', 'dotx', 'dotm']
-export const SLIDES = ['pptx', 'pptm', 'ppsx', 'ppsm', 'potx', 'potm']
-export const SHEETS = ['xlsx', 'xlsm', 'xltx', 'xltm', 'csv', 'tsv']
+export const WORD = ['docx', 'docm', 'dotx', 'dotm', 'doc', 'dot']
+export const SLIDES = ['pptx', 'pptm', 'ppsx', 'ppsm', 'potx', 'potm', 'ppt', 'pps', 'pot']
+export const SHEETS = ['xlsx', 'xlsm', 'xltx', 'xltm', 'xls', 'xlt', 'csv', 'tsv']
 export const MARKDOWN = ['md', 'markdown', 'mdown', 'mkd']
 export const TEXT = [
   'txt', 'text', 'log', 'nfo', 'ini', 'cfg', 'conf', 'env', 'properties', 'toml', 'yaml', 'yml', 'json', 'jsonc', 'json5', 'xml', 'plist',

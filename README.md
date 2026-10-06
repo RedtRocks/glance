@@ -99,7 +99,7 @@
 | Context-aware toolbar (page controls only for multi-page documents), Customize Toolbar | ✅ |
 | Rebindable keyboard shortcuts (Windows conventions, Preview's shortcuts mapped, Photoshop-style single-key tools: V, H, Z, M, L, W, B, U, R, O, T, S, C, [ ], Space to pan) | ✅ |
 | Formats: PDF, AI, EPS/PS (via Ghostscript), XPS/OXPS, JPEG, PNG, GIF, WebP, AVIF, BMP, ICO, SVG, TIFF, HEIC, JPEG 2000, JPEG XL, JPEG XR, EXR, HDR, TGA, DDS, QOI, PNM, ICNS, PSD, CBZ, camera RAW ([full list](docs/FORMATS.md)); Open With another app for PSD, AI and RAW | ✅ |
-| Read-only previews of Word, PowerPoint, Excel and CSV files, with Open with… to edit them in Office | ✅ |
+| Read-only previews of Word, PowerPoint, Excel and CSV files (old 97-2003 .doc, .ppt and .xls too), with Open with… to edit them in Office | ✅ |
 | Previews of text and code (syntax colours), Markdown, video, audio, EPUB e-books, fonts and email (.eml, .msg); nothing in them loads from the internet | ✅ |
 | Markup: sketch (shape recognition), draw, rectangle, rounded rectangle, oval, line, arrow, star, polygon, speech bubble, loupe (magnifier), text boxes in any installed font, notes, highlight (any color), underline, strikethrough, squiggly underline | ✅ |
 | Markup saved as standard, editable PDF annotations (reopen in Glance to keep editing) | ✅ |

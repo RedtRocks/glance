@@ -9,6 +9,14 @@ import { resolvePath } from '../src/preview/ebook'
 import { fontNames } from '../src/preview/font'
 import { readEml } from '../src/preview/email'
 import { decode as iconvDecode } from '../src/preview/iconvShim'
+import { gunzipSync } from 'node:zlib'
+import { readDoc, type DocBlock } from '../src/preview/doc'
+import { readXls } from '../src/preview/xls'
+import { readPpt } from '../src/preview/ppt'
+
+/** Office 97-2003 samples saved by LibreOffice, gzipped to stay small. */
+const office = (name: string) => new Uint8Array(gunzipSync(readFileSync(`tests/office/${name}.gz`)))
+const plain = (b: DocBlock) => (b.type === 'p' ? b.runs.map((r) => r.text).join('') : b.type)
 
 describe('preview files', () => {
   it('sorts extensions into the right view', () => {
@@ -22,7 +30,8 @@ describe('preview files', () => {
     expect(previewFlavor('epub')).toBe('ebook')
     expect(previewFlavor('woff2')).toBe('font')
     expect(previewFlavor('msg')).toBe('email')
-    expect(previewFlavor('doc')).toBeNull()
+    expect(previewFlavor('doc')).toBe('word')
+    expect(previewFlavor('pdf')).toBeNull()
   })
 
   it('reads extensions, and names like Dockerfile', () => {
@@ -101,6 +110,64 @@ describe('books, fonts and email', () => {
     expect(mail.text?.trim()).toBe('See you Monday.')
     expect(mail.date?.toISOString()).toBe('2026-10-05T08:14:00.000Z')
     expect(mail.attachments.map((a) => [a.name, new TextDecoder().decode(a.data)])).toEqual([['orders.csv', 'a,b\n1,2\n']])
+  })
+})
+
+describe('Office 97-2003', () => {
+  it('reads a Word document’s text, formatting, tables and page breaks', () => {
+    const blocks = readDoc(office('report.doc'))
+    expect(blocks.map(plain)).toEqual(['Quarterly Report', 'This is bold, italic and underlined text. Café — “quotes” ☕.', 'Centred line', 'Numbers', 'table', 'See the site.', 'break', 'Second page text.'])
+    expect(blocks[0]).toMatchObject({ heading: 1 })
+    expect(blocks[2]).toMatchObject({ align: 'center' })
+    const runs = blocks[1].type === 'p' ? blocks[1].runs : []
+    expect(runs.filter((r) => r.bold || r.italic || r.underline).map((r) => [r.text, !!r.bold, !!r.italic, !!r.underline])).toEqual([
+      ['bold', true, false, false],
+      ['italic', false, true, false],
+      ['underlined', false, false, true]
+    ])
+    const table = blocks[4].type === 'table' ? blocks[4].rows : []
+    expect(table.map((row) => row.map((cell) => cell.map(plain).join('')))).toEqual([['Region', 'Sales'], ['North', ''], ['South', '42']])
+    expect(blocks[5].type === 'p' && blocks[5].runs.find((r) => r.link)).toMatchObject({ text: 'the site', link: 'https://example.com/' })
+  })
+
+  it('numbers a Word document’s lists', () => {
+    const lists = readDoc(office('lists.doc')).filter((b) => b.type === 'p' && b.marker)
+    expect(lists.map((b) => [b.type === 'p' && b.marker, plain(b)])).toEqual([
+      ['•', 'bullet one'],
+      ['•', 'bullet two'],
+      ['1.', 'first'],
+      // LibreOffice saves the second item as a list of its own.
+      ['1.', 'second']
+    ])
+  })
+
+  it('reads an Excel workbook’s values and formats', () => {
+    const [sales, notes] = readXls(office('sales.xls'))
+    const text = (r: number, c: number) => sales.cells.get(`${r}:${c}`)?.text
+    expect([sales.name, notes.name]).toEqual(['Sales', 'Notes'])
+    expect([text(0, 0), text(1, 1), text(1, 2), text(2, 0), text(2, 1), text(2, 2), text(4, 1)]).toEqual(['Region', '1234.5', '2469', 'Söuth ☕', '25%', 'Söuth ☕!', '3/15/2023'])
+    expect(sales.cells.get('0:0')?.style.bold).toBe(true)
+    expect(sales.merges).toEqual([{ r: 3, c: 0, rows: 1, cols: 3 }])
+    expect(Math.round(sales.widths.get(0) ?? 0)).toBe(25)
+    // Shared strings run on past one record into the next.
+    expect(text(398, 0)).toBe('row text number 399 with some padding to exceed limits')
+    expect([notes.cells.get('0:0')?.text, notes.cells.get('1:1')?.text]).toEqual(['TRUE', '#DIV/0!'])
+  })
+
+  it('reads the text on each PowerPoint slide', () => {
+    const deck = readPpt(office('deck.ppt'))
+    expect([deck.width, deck.height]).toEqual([720, 405])
+    expect(deck.slides.map((s) => s.texts.map((t) => [t.title, t.paragraphs]))).toEqual([
+      [[true, ['First Slide Title']], [false, ['Bullet A', 'Bullet B with café']]],
+      [[true, ['Second Slide']], [false, ['Plain paragraph text here.']]],
+      [[true, ['Third']]]
+    ])
+  })
+
+  it('says what’s wrong with a file that isn’t one', () => {
+    expect(() => readDoc(office('sales.xls'))).toThrow('not-word')
+    expect(() => readPpt(office('report.doc'))).toThrow('not-ppt')
+    expect(() => readXls(new Uint8Array(512))).toThrow()
   })
 })
 

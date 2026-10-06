@@ -2758,8 +2758,106 @@ input[type='range'] {
   box-shadow: var(--page-shadow);
   margin-bottom: 24px;
 }
+/* Word 97-2003 pages (preview/doc.ts), drawn without docx-preview's own styles. */
+.office-word .doc-legacy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.office-word .doc-legacy > section.docx {
+  box-sizing: border-box;
+  width: 816px;
+  min-height: 1056px;
+  padding: 96px;
+  background: #fff;
+  color: #000;
+  font: 11pt/1.4 Calibri, 'Segoe UI', Arial, sans-serif;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  tab-size: 4;
+}
+.doc-legacy p,
+.doc-legacy h1,
+.doc-legacy h2,
+.doc-legacy h3,
+.doc-legacy h4,
+.doc-legacy h5,
+.doc-legacy h6 {
+  margin: 0 0 8px;
+}
+.doc-legacy h1 {
+  font-size: 18pt;
+  color: #2f5496;
+  margin-top: 12px;
+}
+.doc-legacy h2 {
+  font-size: 14pt;
+  color: #2f5496;
+  margin-top: 10px;
+}
+.doc-legacy h3,
+.doc-legacy h4,
+.doc-legacy h5,
+.doc-legacy h6 {
+  font-size: 12pt;
+  color: #1f3763;
+}
+.doc-legacy p.list {
+  position: relative;
+}
+.doc-legacy .marker {
+  display: inline-block;
+  min-width: 1.5em;
+  margin-left: -1.5em;
+}
+.doc-legacy table {
+  border-collapse: collapse;
+  margin: 0 0 8px;
+}
+.doc-legacy td {
+  border: 1px solid #000;
+  padding: 2px 6px;
+  vertical-align: top;
+}
+.doc-legacy td p {
+  margin: 0;
+}
+.doc-legacy a {
+  color: #0563c1;
+}
 .office-slides {
   padding: 16px 0;
+}
+/* PowerPoint 97-2003 slides (preview/ppt.ts): text on blank slides. */
+.ppt-legacy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 16px 96px;
+}
+.ppt-slide {
+  box-sizing: border-box;
+  max-width: none;
+  padding: 48px 64px;
+  overflow: hidden;
+  background: #fff;
+  color: #000;
+  box-shadow: var(--page-shadow);
+  font: 20px/1.4 Calibri, 'Segoe UI', Arial, sans-serif;
+  white-space: pre-wrap;
+}
+.ppt-slide h2 {
+  margin: 0 0 24px;
+  font-size: 36px;
+  font-weight: 600;
+}
+.ppt-slide ul {
+  margin: 0 0 16px;
+  padding-left: 1.2em;
+}
+.ppt-slide li.blank {
+  list-style: none;
 }
 .office-sheets {
   display: inline-block;
