@@ -1683,6 +1683,7 @@ dependencies = [
  "base64 0.22.1",
  "blake3",
  "fastcdc",
+ "glance-mcp",
  "hayro-jpeg2000 0.4.0",
  "icns",
  "image",
@@ -1709,6 +1710,13 @@ dependencies = [
  "windows 0.62.2",
  "windows-collections 0.3.2",
  "zip",
+]
+
+[[package]]
+name = "glance-mcp"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
 ]
 
 [[package]]
