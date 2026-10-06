@@ -3750,3 +3750,12 @@ input[type='range'] {
   color: var(--text);
   font: 14px var(--font);
 }
+.ai-site {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card);
+}
+.ai-site-bar p { margin: 0; }

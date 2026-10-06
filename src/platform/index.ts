@@ -945,3 +945,16 @@ export async function onAgent(cb: (e: AgentEvent) => void): Promise<() => void> 
   const { listen } = await import('@tauri-apps/api/event')
   return listen<AgentEvent>('agent', (e) => cb(e.payload))
 }
+
+/** Shows an AI company's own website over the sidebar (see src-tauri/src/website.rs). */
+export async function websiteShow(id: string, rect: { x: number; y: number; width: number; height: number }): Promise<void> {
+  await invoke('website_show', { id, ...rect })
+}
+
+export async function websiteHide(): Promise<void> {
+  if (isTauri) await invoke('website_hide')
+}
+
+export async function websiteReload(id: string): Promise<void> {
+  await invoke('website_reload', { id })
+}
