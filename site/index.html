@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Glance: Free macOS Preview Alternative for Windows (PDF, Image &amp; 3D Viewer)</title>
-<meta name="description" content="Glance is a free, open-source alternative to macOS Preview for Windows 10 and 11. View and edit PDFs, images, camera RAW and 3D models: merge and reorder PDF pages, mark up, sign, redact and fix photos.">
+<title>Glance: Free macOS Preview Alternative for Windows and the Web (PDF, Image, Office &amp; 3D Viewer)</title>
+<meta name="description" content="Glance is a free, open-source alternative to macOS Preview for Windows and any browser. Open PDFs, photos, Word, Excel and PowerPoint files, camera RAW and 3D models: merge and reorder PDF pages, mark up, sign, redact and fix photos.">
 <meta name="google-site-verification" content="96tj_FfX9T69s-mFBi2QReEL31gh2kPeXZ-IXur5zYQ">
 <link rel="canonical" href="https://redtrocks.github.io/glance/">
 <meta name="robots" content="index, follow, max-image-preview:large">
@@ -17,14 +17,14 @@
 <meta property="og:site_name" content="Glance">
 <meta property="og:url" content="https://redtrocks.github.io/glance/">
 <meta property="og:title" content="Glance: Preview's best tricks, built for Windows">
-<meta property="og:description" content="A free, open-source viewer and editor for PDFs, images, camera RAW and 3D models on Windows 10 and 11, inspired by macOS Preview.">
+<meta property="og:description" content="A free, open-source viewer and editor for PDFs, photos, Office files, camera RAW and 3D models on Windows and in any browser, inspired by macOS Preview.">
 <meta property="og:image" content="https://redtrocks.github.io/glance/assets/og.jpg">
 <meta property="og:image:width" content="1920">
 <meta property="og:image:height" content="1080">
 <meta property="og:image:alt" content="Glance: Preview's best tricks, built for Windows 11">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Glance: Preview's best tricks, built for Windows">
-<meta name="twitter:description" content="A free, open-source viewer and editor for PDFs, images, camera RAW and 3D models on Windows 10 and 11.">
+<meta name="twitter:description" content="A free, open-source viewer and editor for PDFs, photos, Office files, camera RAW and 3D models on Windows and in any browser.">
 <meta name="twitter:image" content="https://redtrocks.github.io/glance/assets/og.jpg">
 <script type="application/ld+json">{
  "@context": "https://schema.org",
@@ -34,7 +34,7 @@
  "description": "A free, open-source viewer and editor for PDFs, images, camera RAW and 3D models on Windows 10 and 11, inspired by macOS Preview. Rearrange and merge PDF pages, mark up, sign and redact, adjust photos and remove backgrounds locally.",
  "applicationCategory": "MultimediaApplication",
  "applicationSubCategory": "PDF and image viewer",
- "operatingSystem": "Windows 10, Windows 11",
+ "operatingSystem": "Windows 10, Windows 11, Web browser",
  "processorRequirements": "x64, ARM64",
  "softwareVersion": "0.5.0",
  "license": "https://www.apache.org/licenses/LICENSE-2.0",
@@ -57,6 +57,8 @@
  ],
  "featureList": [
   "View PDF, images, camera RAW and 3D models",
+  "Preview Word, Excel, PowerPoint, EPUB, email, fonts, code and 190+ file types",
+  "Runs in any browser and offline as an installable web app, with nothing uploaded",
   "Reorder, rotate, split and merge PDF pages by dragging",
   "Annotate, sign and permanently redact PDFs",
   "Adjust Color, straighten, resize and remove image backgrounds on-device",
@@ -117,7 +119,7 @@ a{color:var(--ink);text-underline-offset:4px}a:hover{color:var(--accent)}
 .btn-violet{background:#6312f6;color:#ffffff}.btn-violet:hover{color:#ffffff;background:#5410d6}
 .btn-sec{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--divider)}.btn-sec:hover{color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
 .btn-ghost{background:transparent;color:#ffffff;box-shadow:inset 0 0 0 1px #ffffff}.btn-ghost:hover{color:#ffffff;background:rgba(255,255,255,.12)}
-.navlink{text-decoration:none;font-size:15px;line-height:20px;padding:12px 4px}
+.navlink{white-space:nowrap;text-decoration:none;font-size:15px;line-height:20px;padding:12px 4px}
 .chip{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;width:136px;height:68px;border-radius:9999px;overflow:hidden;margin:0 8px;position:relative;top:-6px}
 .chip img{width:100%;height:100%;object-fit:cover;display:block}
 .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
@@ -179,6 +181,33 @@ a{color:var(--ink);text-underline-offset:4px}a:hover{color:var(--accent)}
 .slab>div:nth-child(3){padding:24px 16px 0 !important;border-radius:28px !important}
 .slab>div>div{border-radius:28px !important}
 }
+
+@media (max-width:1180px){.hide-md{display:none !important}}
+.show-sm{display:none !important}@media (max-width:960px){.show-sm{display:inline-flex !important}}
+/* Phones in the hero and the Everywhere cards */
+.phone{border-radius:34px;padding:7px;background:#0a0a0a;box-shadow:0 30px 60px -20px rgba(10,10,10,.45)}
+.phone img{display:block;width:100%;height:auto;border-radius:28px}
+.duo-eq{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.ticks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.ticks li{display:flex;gap:10px;align-items:flex-start;font-size:17px;line-height:24px}
+.ticks li::before{content:"";flex:none;width:8px;height:8px;margin-top:8px;border-radius:9999px;background:currentColor}
+.fmt-row{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px;align-items:start;padding:20px 0;border-top:1px solid var(--divider)}
+.fmt-row .title{padding-top:10px}
+a.fchip{text-decoration:none;color:var(--ink);transition:background-color 150ms,transform 150ms cubic-bezier(.16,1,.3,1)}
+a.fchip:hover{background:var(--backdrop);color:var(--ink);transform:translateY(-1px)}
+a.fchip::after{content:"\2197";font-size:14px;color:var(--ink-muted)}
+.seg-scroll{max-width:100%;overflow-x:auto;scrollbar-width:none}
+.seg-scroll::-webkit-scrollbar{display:none}
+.appchip{display:inline-flex;align-items:center;padding:8px 14px;border-radius:9999px;background:rgba(255,255,255,.1);color:#ffffff;font-size:15px;line-height:20px}
+.term{font-family:Consolas,ui-monospace,monospace;font-size:14px;line-height:22px;background:#0a0a0a;color:#e8e6ef;border-radius:16px;padding:20px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);overflow:hidden}
+.term .p{color:#f8d32c}.term .d{color:#a9a6b3}.term .ok{color:#7ee2a8}
+@media (max-width:960px){
+.duo-eq{grid-template-columns:minmax(0,1fr)}
+.fmt-row{grid-template-columns:minmax(0,1fr);gap:8px}
+.fmt-row .title{padding-top:0}
+.hero-phone{width:30% !important;right:4% !important;bottom:-24px !important}
+.phone{border-radius:20px;padding:4px}.phone img{border-radius:16px}
+}
 </style>
 </head>
 <body>
@@ -192,17 +221,19 @@ a{color:var(--ink);text-underline-offset:4px}a:hover{color:var(--accent)}
 <img src="assets/icon.svg" alt="Glance logo" style="width: 30px; height: 30px">
 <span>glance</span>
 </a>
-<div class="hide-sm" style="display: flex; gap: 28px">
-<a class="navlink" href="#features">Features</a>
+<div class="hide-sm hide-md" style="display: flex; gap: 24px">
+<a class="navlink" href="#everywhere">Web App</a>
 <a class="navlink" href="#tour">Tour</a>
-<a class="navlink" href="#light">Why It's Light</a>
+<a class="navlink" href="#formats">File Types</a>
+<a class="navlink" href="#ai">AI Apps</a>
 <a class="navlink" href="#privacy">Privacy</a>
 </div>
 <div style="display: flex; gap: 8px">
 <button type="button" class="btn btn-sec theme-toggle" id="theme-toggle" aria-label="Switch to dark mode" title="Switch theme" style="min-height: 44px; width: 44px; padding: 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="i-moon" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path><g class="i-sun"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></g></svg></button>
 <a class="btn btn-sec hide-sm" href="app/" style="min-height: 44px; padding: 0 18px">Open in Browser</a>
-<a class="btn btn-sec hide-sm" href="https://github.com/RedtRocks/glance" style="min-height: 44px; padding: 0 18px">GitHub</a>
-<a class="btn btn-ink" href="https://github.com/RedtRocks/glance/releases/latest" style="min-height: 44px; padding: 0 18px">Download</a>
+<a class="btn btn-sec hide-sm hide-md" href="https://github.com/RedtRocks/glance" style="min-height: 44px; padding: 0 18px">GitHub</a>
+<a class="btn btn-ink hide-sm" href="https://github.com/RedtRocks/glance/releases/latest" style="min-height: 44px; padding: 0 18px">Download</a>
+<a class="btn btn-ink show-sm" href="app/" style="min-height: 44px; padding: 0 18px">Open App</a>
 </div>
 </nav>
 </div>
@@ -211,20 +242,19 @@ a{color:var(--ink);text-underline-offset:4px}a:hover{color:var(--accent)}
 <!-- HERO -->
 <section id="top" style="padding-top: 64px">
 <div class="wrap" style="display: flex; flex-direction: column; align-items: center; gap: 24px">
-<h1 class="h1" style="max-width: 880px">Preview's Best Tricks, Built for Windows 11</h1>
-<p class="body" style="max-width: 600px; text-align: center; color: var(--ink-muted)">A free, open-source viewer and editor for PDFs, images, camera RAW and 3D models. Drag pages between files, redact for real and fix photos, in an installer under 20 MB.</p>
+<h1 class="h1" style="max-width: 920px">Preview's Best Tricks, for Windows and Any Browser</h1>
+<p class="body" style="max-width: 640px; text-align: center; color: var(--ink-muted)">A free, open-source viewer and editor for PDFs, photos, Office files, camera RAW and 3D models. Install it on Windows, or open it in your browser, even on a phone. Your files never leave your device.</p>
 <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center">
 <a class="btn btn-ink" href="https://github.com/RedtRocks/glance/releases/latest">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M6 11l6 6 6-6M4 21h16"></path></svg>
 Download for Windows
 </a>
-<a class="btn btn-sec" href="app/">
+<a class="btn btn-violet" href="app/">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"></path></svg>
 Open in Your Browser
 </a>
-<a class="btn btn-sec" href="https://github.com/RedtRocks/glance">View Source on GitHub</a>
 </div>
-<p style="margin: 0; font-size: 13px; line-height: 18px; color: var(--ink-muted)">Windows 10 and 11 · x64 and ARM64 · Apache-2.0 · <a href="app/" style="color: inherit">Works on phones too</a></p>
+<p style="margin: 0; font-size: 13px; line-height: 18px; color: var(--ink-muted); text-align: center">Windows 10 and 11, x64 and ARM64 · iPhone, Android, Mac and Chromebook browsers · Apache-2.0</p>
 </div>
 
 <div class="wrap" style="margin-top: 64px">
@@ -236,25 +266,30 @@ Open in Your Browser
 <div class="deal-p" style="width: 100%; height: 100%; background: #f258a8; border-radius: 48px; transform: rotate(2.5deg)"></div>
 </div>
 <div style="position: absolute; inset: 0; background: #4408b1; border-radius: 48px; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; padding: 64px 48px 0">
-<div data-hero="-70" style="width: 100%; max-width: 1000px">
+<div data-hero="-70" style="width: 100%; max-width: 1000px; margin-right: 12%">
 <div class="rise-shot" style="border-radius: 20px 20px 0 0; overflow: hidden; background: #ffffff">
-<picture><source srcset="assets/dark.webp" media="(prefers-color-scheme: dark)" data-dark-src><img src="assets/pdf.webp" alt="Glance with a four-page PDF catalogue open and page thumbnails in the sidebar" style="display: block; width: 100%; height: auto"></picture>
+<picture><source srcset="assets/dark.webp" media="(prefers-color-scheme: dark)" data-dark-src><img src="assets/pdf.webp" alt="Glance for Windows with a four-page PDF catalogue open and page thumbnails in the sidebar" style="display: block; width: 100%; height: auto"></picture>
 </div>
+</div>
+</div>
+<div class="hero-phone" data-hero="-150" data-hero-rot="4" style="position: absolute; right: 2%; bottom: -40px; width: 250px; z-index: 2">
+<div class="tag-in" style="transform: rotate(5deg)">
+<div class="phone"><picture><source srcset="assets/phone-start-dark.webp" media="(prefers-color-scheme: dark)" data-dark-src><img src="assets/phone-start.webp" alt="The Glance web app on a phone, with a Choose a File button" width="600" height="1298"></picture></div>
 </div>
 </div>
 <div class="hide-sm" data-hero="-170" data-hero-rot="-10" style="position: absolute; left: -28px; top: 132px; z-index: 3">
 <div class="tag-in" style="transform: rotate(-8deg)">
 <div style="background: #f8d32c; color: var(--on-block); border-radius: 6px; padding: 14px 18px; display: flex; flex-direction: column; gap: 4px">
-<span style="font-size: 52px; line-height: 1">~18MB</span>
-<span style="font-size: 13px; line-height: 18px">Installer Size</span>
+<span style="font-size: 52px; line-height: 1">190+</span>
+<span style="font-size: 13px; line-height: 18px">File Types</span>
 </div>
 </div>
 </div>
-<div class="hide-sm" data-hero="-95" data-hero-rot="8" style="position: absolute; right: -32px; top: 300px; z-index: 3">
+<div class="hide-sm" data-hero="-95" data-hero-rot="8" style="position: absolute; right: 250px; top: -24px; z-index: 3">
 <div class="tag-in" style="transform: rotate(8deg)">
 <div style="background: #f47933; color: var(--on-block); border-radius: 6px; padding: 14px 18px; display: flex; flex-direction: column; gap: 4px">
 <span style="font-size: 52px; line-height: 1">0</span>
-<span style="font-size: 13px; line-height: 18px">Accounts or Telemetry</span>
+<span style="font-size: 13px; line-height: 18px">Uploads, Accounts or Telemetry</span>
 </div>
 </div>
 </div>
@@ -265,14 +300,48 @@ Open in Your Browser
 <!-- MANIFESTO -->
 <section style="padding-top: 160px">
 <div class="wrap">
-<p class="display" data-reveal="0" style="max-width: 1000px; margin: 0 auto; text-wrap: balance">Open PDFs, Photos and 3D Models in One Light App</p>
+<p class="display" data-reveal="0" style="max-width: 1040px; margin: 0 auto; text-wrap: balance">PDFs, Photos, Office Files and 3D Models in One Light App</p>
+</div>
+</section>
+
+<!-- EVERYWHERE: Windows app and web app -->
+<section id="everywhere" style="padding-top: 160px">
+<div class="wrap" style="display: flex; flex-direction: column; gap: 64px">
+<h2 class="h2" style="max-width: 820px; margin: 0 auto">Install It on Windows, or Open It in Any Browser</h2>
+<div class="duo-eq">
+<div data-reveal="0" style="background: #6312f6; color: #ffffff; border-radius: 28px; padding: 40px 40px 0; display: flex; flex-direction: column; gap: 24px; overflow: hidden">
+<p class="h3">Glance for Windows</p>
+<p class="body" style="color: #e9e2ff">The full app, about 18 MB to install, with no bundled browser. It feels at home in Windows 11.</p>
+<ul class="ticks">
+<li>Thumbnails in File Explorer for PDF, RAW, PSD and more</li>
+<li>Make Glance the default app in one click</li>
+<li>Text recognition, scanning and signatures</li>
+</ul>
+<div><a class="btn" href="https://github.com/RedtRocks/glance/releases/latest" style="background: #ffffff; color: #0a0a0a">Download for Windows</a></div>
+<div style="margin-top: auto; border-radius: 16px 16px 0 0; overflow: hidden; background: #ffffff"><img src="assets/dark.webp" alt="Glance for Windows in dark mode, showing a price table in a PDF" loading="lazy" style="display: block; width: 100%; height: auto"></div>
+</div>
+<div data-reveal="120" style="background: #f258a8; color: var(--on-block); border-radius: 28px; padding: 40px 40px 0; display: flex; flex-direction: column; gap: 24px; overflow: hidden">
+<p class="h3">Glance on the Web</p>
+<p class="body">The same viewer in your browser, on iPhone, Android, a Mac or a Chromebook. Install it from the browser and it works offline.</p>
+<ul class="ticks">
+<li>Opens Word, Excel, PowerPoint, HEIC and RAW files</li>
+<li>Share files to Glance from other apps</li>
+<li>Files open on your device and are never uploaded</li>
+</ul>
+<div><a class="btn btn-ink" href="app/">Open in Your Browser</a></div>
+<div style="margin-top: auto; display: flex; justify-content: center; gap: 16px; padding: 0 8px; height: 300px; align-items: flex-start">
+<div class="phone" data-py="-30" style="width: 42%; transform: rotate(-4deg); margin-top: 24px"><picture><source srcset="assets/phone-start-dark.webp" media="(prefers-color-scheme: dark)" data-dark-src><img src="assets/phone-start.webp" alt="The Glance web app's start screen on a phone" loading="lazy" width="600" height="1298"></picture></div>
+<div class="phone" data-py="40" style="width: 42%; transform: rotate(3deg)"><picture><source srcset="assets/phone-pdf-dark.webp" media="(prefers-color-scheme: dark)" data-dark-src><img src="assets/phone-pdf.webp" alt="A travel PDF open in the Glance web app on a phone, with the bottom toolbar" loading="lazy" width="600" height="1298"></picture></div>
+</div>
+</div>
+</div>
 </div>
 </section>
 
 <!-- FEATURE CARDS -->
 <section id="features" style="padding-top: 160px">
 <div class="wrap" style="display: flex; flex-direction: column; gap: 64px">
-<h2 class="h2" style="max-width: 760px; margin: 0 auto">Everything Preview Does, Now on Windows</h2>
+<h2 class="h2" style="max-width: 760px; margin: 0 auto">Everything Preview Does, Now Off the Mac</h2>
 <div class="cards">
 <div class="stagger" data-py="-50" style="margin-top: 72px">
 <div data-reveal="0" style="background: #f47933; color: var(--on-block); border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
@@ -282,7 +351,7 @@ Open in Your Browser
 </div>
 </div>
 <div class="stagger" data-py="90" style="margin-top: 0">
-<div data-reveal="100" style="background: #f258a8; color: var(--on-block); border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<div data-reveal="100" style="background: #f8d32c; color: var(--on-block); border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
 <p class="title">Mark Up, Sign and Redact</p>
 <p class="body">Annotations save as standard PDF markup. Redaction removes what's underneath, not just a black box on top.</p>
 <div class="card-shot"><img src="assets/markup.webp" alt="Glance markup toolbar above a PDF page" loading="lazy"></div>
@@ -305,20 +374,117 @@ Open in Your Browser
 <div style="background: var(--surface-subtle); border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 24px">
 <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; padding: 8px 8px 0">
 <h3 class="h3">One Window for Every File</h3>
+<div class="seg-scroll">
 <div class="seg" role="group" aria-label="Choose a file type">
 <button type="button" class="on" aria-pressed="true" data-tab="pdf" data-caption="Thumbnails, table of contents, search and two-page view. Page controls show up only for documents that have pages.">PDF</button>
-<button type="button" class="" aria-pressed="false" data-tab="dark" data-caption="Dark appearance follows Windows, and can darken the PDF pages too for reading at night.">Dark</button>
-<button type="button" class="" aria-pressed="false" data-tab="image" data-caption="Adjust Color with a live histogram, plus Instant Alpha, Straighten, Adjust Size and batch edits.">Image</button>
-<button type="button" class="" aria-pressed="false" data-tab="model" data-caption="GLB, OBJ, STL, USDZ and more, with orbit, wireframe, clay and X-ray materials, and snapshots.">3D Model</button>
+<button type="button" class="" aria-pressed="false" data-tab="docx" data-caption="Word documents with their pictures, tables and styles. Glance shows a preview, with a button to open the file in Word.">Word</button>
+<button type="button" class="" aria-pressed="false" data-tab="pptx" data-caption="PowerPoint slides in order, with zoom and page controls.">PowerPoint</button>
+<button type="button" class="" aria-pressed="false" data-tab="xlsx" data-caption="Every sheet of an Excel workbook, with tabs to switch between them. CSV and TSV files open as tables too.">Excel</button>
+<button type="button" class="" aria-pressed="false" data-tab="eml" data-caption="Email saved as .eml or Outlook .msg, with attachments you can open in Glance.">Email</button>
+<button type="button" class="" aria-pressed="false" data-tab="epub" data-caption="EPUB books with pictures and a table of contents that works.">E-book</button>
+<button type="button" class="" aria-pressed="false" data-tab="image" data-caption="Adjust Color with a live histogram, plus Instant Alpha, Straighten, Adjust Size and batch edits.">Photo</button>
+<button type="button" class="" aria-pressed="false" data-tab="model" data-caption="GLB, OBJ, STL, USDZ and more, with orbit, wireframe, clay and X-ray materials, and snapshots.">3D</button>
+</div>
 </div>
 </div>
 <div class="viewer">
 <img class="on" data-shot="pdf" src="assets/pdf.webp" alt="Glance showing a PDF with page thumbnails" loading="lazy">
-<img class="" data-shot="dark" src="assets/dark.webp" alt="Glance in dark mode showing a price table in a PDF" loading="lazy">
+<img class="" data-shot="docx" src="assets/formats/docx-viewer.webp" alt="Glance showing a Word document with a photo and a table" loading="lazy">
+<img class="" data-shot="pptx" src="assets/formats/pptx-viewer.webp" alt="Glance showing the title slide of a PowerPoint presentation" loading="lazy">
+<img class="" data-shot="xlsx" src="assets/formats/xlsx-viewer.webp" alt="Glance showing an Excel sheet of monthly sales" loading="lazy">
+<img class="" data-shot="eml" src="assets/formats/eml-msg-viewer.webp" alt="Glance showing an email with its attachments" loading="lazy">
+<img class="" data-shot="epub" src="assets/formats/epub-reader.webp" alt="Glance showing the contents page of an EPUB book" loading="lazy">
 <img class="" data-shot="image" src="assets/image.webp" alt="Glance editing a photo with the Adjust Color pane" loading="lazy">
 <img class="" data-shot="model" src="assets/model.webp" alt="Glance showing a 3D model with the 3D toolbar" loading="lazy">
 </div>
 <p class="body" id="tour-caption" style="padding: 0 8px 8px; color: var(--ink-muted); max-width: 720px">Thumbnails, table of contents, search and two-page view. Page controls show up only for documents that have pages.</p>
+</div>
+</div>
+</section>
+
+<!-- FORMATS -->
+<section id="formats" style="padding-top: 160px">
+<div class="wrap" style="display: flex; flex-direction: column; gap: 48px">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 16px">
+<h2 class="h2">Opens 190+ File Types</h2>
+<p class="body" style="max-width: 600px; text-align: center; color: var(--ink-muted)">Windows' own codecs first, then the app's Rust decoders, which also run in your browser as WebAssembly. Pick a type to see what Glance does with it.</p>
+</div>
+<div>
+<div class="fmt-row" data-reveal="0">
+<p class="title">Documents</p>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<a class="fchip" href="pdf-viewer/"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>PDF</a>
+<a class="fchip" href="docx-viewer/"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Word</a>
+<a class="fchip" href="pptx-viewer/"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>PowerPoint</a>
+<a class="fchip" href="xlsx-viewer/"><span class="dots" style="color: #f8d32c" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Excel</a>
+<a class="fchip" href="csv-viewer/"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>CSV</a>
+<a class="fchip" href="markdown-viewer/"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Markdown</a>
+<a class="fchip" href="code-viewer/"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Code and Text</a>
+</div>
+</div>
+<div class="fmt-row" data-reveal="60">
+<p class="title">Photos</p>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<a class="fchip" href="heic-viewer/"><span class="dots" style="color: #f8d32c" aria-hidden="true"><i></i><i></i><i></i><i></i></span>HEIC</a>
+<a class="fchip" href="webp-viewer/"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>WebP and AVIF</a>
+<a class="fchip" href="jxl-viewer/"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>JPEG XL</a>
+<a class="fchip" href="tiff-viewer/"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>TIFF</a>
+<a class="fchip" href="svg-viewer/"><span class="dots" style="color: #f8d32c" aria-hidden="true"><i></i><i></i><i></i><i></i></span>SVG</a>
+<span class="fchip"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>JPEG, PNG, GIF</span>
+</div>
+</div>
+<div class="fmt-row" data-reveal="120">
+<p class="title">Pro Images</p>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<a class="fchip" href="raw-viewer/"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Camera RAW</a>
+<a class="fchip" href="psd-viewer/"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Photoshop PSD</a>
+<span class="fchip"><span class="dots" style="color: #f8d32c" aria-hidden="true"><i></i><i></i><i></i><i></i></span>OpenEXR</span>
+<span class="fchip"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>JPEG 2000</span>
+<span class="fchip"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>DDS</span>
+<span class="fchip"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>EPS and AI</span>
+</div>
+</div>
+<div class="fmt-row" data-reveal="180">
+<p class="title">And More</p>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<a class="fchip" href="3d-model-viewer/"><span class="dots" style="color: #f8d32c" aria-hidden="true"><i></i><i></i><i></i><i></i></span>3D Models</a>
+<a class="fchip" href="epub-reader/"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>EPUB Books</a>
+<a class="fchip" href="cbz-reader/"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>CBZ Comics</a>
+<a class="fchip" href="eml-msg-viewer/"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Email</a>
+<a class="fchip" href="font-viewer/"><span class="dots" style="color: #f8d32c" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Fonts</a>
+<a class="fchip" href="video-player/"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Video and Audio</a>
+</div>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 16px">
+<a class="btn btn-ink" href="file-viewer/">Open Any File in Your Browser</a>
+<a href="https://github.com/RedtRocks/glance/blob/main/docs/FORMATS.md" style="font-size: 17px; line-height: 26px">See How Each Format Is Decoded</a>
+</div>
+</div>
+</section>
+
+<!-- AI APPS -->
+<section id="ai" style="padding-top: 160px">
+<div class="wrap">
+<div style="background: var(--night); color: #ffffff; border-radius: 28px; padding: 48px 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; align-items: center">
+<div style="display: flex; flex-direction: column; gap: 20px">
+<span style="align-self: flex-start; background: #f8d32c; color: #0a0a0a; border-radius: 6px; padding: 6px 10px; font-size: 13px; line-height: 18px">New in the Windows App</span>
+<p class="h2" style="text-align: left; color: #ffffff">Let Your AI Apps Use Glance</p>
+<p class="body" style="color: #d4d4d4; max-width: 520px">Connect Claude, Codex, Cursor and other MCP apps from Settings. They can read any page or photo, recognise text, convert, combine, split and redact files, and see what you have open. Every edit goes to a new file, and nothing leaves your PC.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<span class="appchip">Claude Code</span><span class="appchip">Claude Desktop</span><span class="appchip">Codex</span><span class="appchip">Cursor</span><span class="appchip">VS Code</span><span class="appchip">Windsurf</span><span class="appchip">Gemini CLI</span><span class="appchip">LM Studio</span>
+</div>
+<a href="https://github.com/RedtRocks/glance/blob/main/docs/AI-APPS.md" style="color: #ffffff; font-size: 17px">How AI Apps Connect</a>
+</div>
+<div class="term" data-reveal="100" aria-label="Example of an AI app using Glance">
+<div><span class="p">you</span> redact the account numbers in statement.pdf</div>
+<div class="d">&nbsp;</div>
+<div class="d">glance_read_text statement.pdf (3 pages)</div>
+<div class="d">glance_redact 6 account numbers</div>
+<div class="ok">✓ saved a redacted copy</div>
+<div class="d">&nbsp;</div>
+<div><span class="p">ai</span> Done. I removed 6 account numbers for good, and the original is untouched.</div>
+</div>
 </div>
 </div>
 </section>
@@ -341,7 +507,7 @@ Open in Your Browser
 <div data-reveal="0" style="padding: 32px 24px 0 0; display: flex; flex-direction: column; gap: 12px">
 <span style="font-size: 52px; line-height: 1">~35KB</span>
 <span class="title">Startup Bundle</span>
-<span class="body" style="color: var(--ink-muted)">Gzipped. PDF.js loads with your first PDF, pdf-lib with your first edit.</span>
+<span class="body" style="color: var(--ink-muted)">Gzipped. PDF.js loads with your first PDF, the Office and e-book readers only when you open one.</span>
 </div>
 <div data-reveal="120" style="padding: 32px 24px 0; display: flex; flex-direction: column; gap: 12px; border-left: 1px solid var(--divider)">
 <span style="font-size: 52px; line-height: 1">0</span>
@@ -349,51 +515,11 @@ Open in Your Browser
 <span class="body" style="color: var(--ink-muted)">The UI runs in WebView2 through Tauri 2, so nothing extra ships.</span>
 </div>
 <div data-reveal="240" style="padding: 32px 0 0 24px; display: flex; flex-direction: column; gap: 12px; border-left: 1px solid var(--divider)">
-<span style="font-size: 52px; line-height: 1">30+</span>
-<span class="title">Formats, Native First</span>
-<span class="body" style="color: var(--ink-muted)">A Rust backend decodes through Windows' own codecs, so HEIC and camera RAW just open.</span>
+<span style="font-size: 52px; line-height: 1">1</span>
+<span class="title">App, Two Places</span>
+<span class="body" style="color: var(--ink-muted)">The web version is the same app and the same Rust decoders, compiled to WebAssembly.</span>
 </div>
 </div>
-</div>
-</section>
-
-<!-- FORMATS -->
-<section style="padding-top: 160px">
-<div class="wrap" style="display: flex; flex-direction: column; gap: 32px; align-items: center">
-<h2 class="h2">Opens What You Throw at It</h2>
-<div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 1000px">
-<span class="fchip" data-reveal="0"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>PDF</span>
-<span class="fchip" data-reveal="30"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>AI</span>
-<span class="fchip" data-reveal="60"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>EPS</span>
-<span class="fchip" data-reveal="90"><span class="dots" style="color: #f8d32c" aria-hidden="true"><i></i><i></i><i></i><i></i></span>XPS</span>
-<span class="fchip" data-reveal="120"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>JPEG</span>
-<span class="fchip" data-reveal="150"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>PNG</span>
-<span class="fchip" data-reveal="180"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>WebP</span>
-<span class="fchip" data-reveal="210"><span class="dots" style="color: #f8d32c" aria-hidden="true"><i></i><i></i><i></i><i></i></span>AVIF</span>
-<span class="fchip" data-reveal="240"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>HEIC</span>
-<span class="fchip" data-reveal="270"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>JPEG XL</span>
-<span class="fchip" data-reveal="300"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>JPEG 2000</span>
-<span class="fchip" data-reveal="330"><span class="dots" style="color: #f8d32c" aria-hidden="true"><i></i><i></i><i></i><i></i></span>TIFF</span>
-<span class="fchip" data-reveal="360"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>PSD</span>
-<span class="fchip" data-reveal="390"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>OpenEXR</span>
-<span class="fchip" data-reveal="420"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>HDR</span>
-<span class="fchip" data-reveal="450"><span class="dots" style="color: #f8d32c" aria-hidden="true"><i></i><i></i><i></i><i></i></span>SVG</span>
-<span class="fchip" data-reveal="480"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>DDS</span>
-<span class="fchip" data-reveal="510"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>QOI</span>
-<span class="fchip" data-reveal="540"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>ICNS</span>
-<span class="fchip" data-reveal="570"><span class="dots" style="color: #f8d32c" aria-hidden="true"><i></i><i></i><i></i><i></i></span>CBZ</span>
-<span class="fchip" data-reveal="600"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Camera RAW</span>
-<span class="fchip" data-reveal="600"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>GLB</span>
-<span class="fchip" data-reveal="600"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>glTF</span>
-<span class="fchip" data-reveal="600"><span class="dots" style="color: #f8d32c" aria-hidden="true"><i></i><i></i><i></i><i></i></span>OBJ</span>
-<span class="fchip" data-reveal="600"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>STL</span>
-<span class="fchip" data-reveal="600"><span class="dots" style="color: #f258a8" aria-hidden="true"><i></i><i></i><i></i><i></i></span>3MF</span>
-<span class="fchip" data-reveal="600"><span class="dots" style="color: #f47933" aria-hidden="true"><i></i><i></i><i></i><i></i></span>FBX</span>
-<span class="fchip" data-reveal="600"><span class="dots" style="color: #f8d32c" aria-hidden="true"><i></i><i></i><i></i><i></i></span>USDZ</span>
-<span class="fchip" data-reveal="600"><span class="dots" style="color: #6312f6" aria-hidden="true"><i></i><i></i><i></i><i></i></span>3DS</span>
-</div>
-<a class="btn btn-ink" href="file-viewer/">Open Any File in Your Browser</a>
-<a href="https://github.com/RedtRocks/glance/blob/main/docs/FORMATS.md" style="font-size: 17px; line-height: 26px">See How Each Format Is Decoded</a>
 </div>
 </section>
 
@@ -402,8 +528,8 @@ Open in Your Browser
 <div class="wrap">
 <div class="duo">
 <div style="background: #f8d32c; color: var(--on-block); border-radius: 28px; padding: 40px; display: flex; flex-direction: column; gap: 20px; min-height: 380px; justify-content: flex-end">
-<p class="h2" style="text-align: left; max-width: 640px">No Telemetry. No Accounts. Your Files Stay on Your PC.</p>
-<p class="body" style="max-width: 560px">The only network request is an optional daily check for a newer release, and you can turn it off. Background removal and text recognition run locally.</p>
+<p class="h2" style="text-align: left; max-width: 640px">No Telemetry. No Accounts. No Uploads.</p>
+<p class="body" style="max-width: 560px">In the browser, files open on your device and are never sent anywhere. On Windows, the only network request is an optional daily check for a newer release, and background removal and text recognition run on your PC.</p>
 </div>
 <div style="background: var(--night); color: #ffffff; border-radius: 28px; padding: 40px; display: flex; flex-direction: column; gap: 16px; justify-content: flex-end">
 <p class="h3">Signatures Encrypted With Windows DPAPI</p>
@@ -420,11 +546,12 @@ Open in Your Browser
 <div style="background: #7182e7; border-radius: 48px; padding: 96px 32px; display: flex; flex-direction: column; align-items: center; gap: 28px; text-align: center">
 <div data-py="-60" data-rot="24"><img src="assets/icon.svg" alt="" style="width: 88px; height: 88px; display: block"></div>
 <h2 class="h2" style="color: #ffffff; max-width: 720px">Open Anything, at a Glance</h2>
-<p style="margin: 0; color: #ffffff; font-size: 24px; line-height: 32px">Free for Windows 10 and 11.</p>
+<p style="margin: 0; color: #ffffff; font-size: 24px; line-height: 32px">Free for Windows 10 and 11, and in any browser.</p>
 <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center">
-<a class="btn btn-ink" href="https://github.com/RedtRocks/glance/releases/latest">Download the Latest Release</a>
-<a class="btn btn-ghost" href="https://github.com/RedtRocks/glance">Star on GitHub</a>
+<a class="btn btn-ink" href="https://github.com/RedtRocks/glance/releases/latest">Download for Windows</a>
+<a class="btn btn-ghost" href="app/">Open in Your Browser</a>
 </div>
+<a href="https://github.com/RedtRocks/glance" style="color: #ffffff; font-size: 17px">Star Glance on GitHub</a>
 <!-- winget (restore once RedtRocks.Glance is in winget-pkgs):
 <div style="display: flex; align-items: center; gap: 8px; background: #0a0a0a; color: #ffffff; border-radius: 9999px; padding: 4px 4px 4px 22px; max-width: 100%">
 <code style="font-family: Consolas, ui-monospace, monospace; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">winget install RedtRocks.Glance</code>
@@ -443,6 +570,8 @@ Open in Your Browser
 <span>glance</span>
 </a>
 <div style="display: flex; flex-wrap: wrap; gap: 24px; font-size: 20px; line-height: 24px">
+<a href="app/" style="text-decoration: none">Open in Browser</a>
+<a href="file-viewer/" style="text-decoration: none">File Types</a>
 <a href="https://github.com/RedtRocks/glance" style="text-decoration: none">GitHub</a>
 <a href="https://github.com/RedtRocks/glance/releases" style="text-decoration: none">Releases</a>
 <a href="https://github.com/RedtRocks/glance/tree/main/docs/adr" style="text-decoration: none">Design Decisions</a>
@@ -456,12 +585,12 @@ Open in Your Browser
 (function () {
   // Theme: follows Windows unless the visitor picks one; the choice is remembered
   var root = document.documentElement, mq = window.matchMedia('(prefers-color-scheme: dark)');
-  var tbtn = document.getElementById('theme-toggle'), heroSrc = document.querySelector('source[data-dark-src]');
+  var tbtn = document.getElementById('theme-toggle'), darkSrcs = document.querySelectorAll('source[data-dark-src]');
   var isDark = function () { var t = root.getAttribute('data-theme'); return t ? t === 'dark' : mq.matches; };
   var sync = function () {
     var d = isDark(); root.classList.toggle('dark', d);
     tbtn.setAttribute('aria-label', d ? 'Switch to light mode' : 'Switch to dark mode');
-    heroSrc.media = d ? 'all' : 'not all';
+    darkSrcs.forEach(function (s) { s.media = d ? 'all' : 'not all'; });
   };
   tbtn.addEventListener('click', function () {
     var next = isDark() ? 'light' : 'dark'; root.setAttribute('data-theme', next);
