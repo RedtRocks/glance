@@ -887,6 +887,8 @@ export interface AgentInfo {
   /** Where to get the agent's program (Node.js or uv) when it isn't installed. */
   install?: string
   custom: boolean
+  /** Set when it uses an API key (kept in Windows Credential Manager) instead of a sign-in. */
+  api?: { kind: 'anthropic' | 'openai'; baseUrl: string }
   /** One of its programs is installed. */
   ready: boolean
   /** The command Glance runs. */
@@ -927,6 +929,11 @@ export async function agentAdd(name: string, command: string): Promise<string | 
     confirm: t('Add'),
     cancel: t('Cancel')
   })
+}
+
+/** Saves an API key for an Anthropic- or OpenAI-compatible service; resolves with the new agent's id. */
+export async function agentAddKey(name: string, kind: 'anthropic' | 'openai', baseUrl: string, key: string): Promise<string> {
+  return invoke<string>('agent_add_key', { name, kind, baseUrl, key })
 }
 
 export async function agentRemove(id: string): Promise<void> {

@@ -16,6 +16,8 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager, State};
 
+mod secrets;
+
 /// One way to start an agent: a program and its arguments.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Launch {
@@ -41,6 +43,49 @@ pub struct Agent {
     pub install: Option<String>,
     #[serde(default)]
     pub custom: bool,
+    /// Set for agents that use an API key instead of signing in; the key itself is in
+    /// Windows Credential Manager.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub api: Option<ApiKey>,
+}
+
+/// Which kind of API the key is for, and where it is.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ApiKey {
+    /// "anthropic" (Anthropic-compatible: Anthropic, Z.ai, Kimi, DeepSeek…) or "openai"
+    /// (OpenAI-compatible: OpenAI, OpenRouter, Mistral, local servers…).
+    pub kind: String,
+    /// Empty for the company's own default address.
+    #[serde(default)]
+    pub base_url: String,
+}
+
+/// The settings that make Claude's or Codex's agent use `api` with `secret`.
+pub fn key_env(api: &ApiKey, secret: &str) -> BTreeMap<String, String> {
+    let mut env = BTreeMap::new();
+    let url = api.base_url.trim();
+    if api.kind == "anthropic" {
+        if !url.is_empty() {
+            env.insert("ANTHROPIC_BASE_URL".into(), url.into());
+        }
+        env.insert("ANTHROPIC_AUTH_TOKEN".into(), secret.into());
+        env.insert("ANTHROPIC_API_KEY".into(), secret.into());
+    } else {
+        env.insert("CODEX_API_KEY".into(), secret.into());
+        env.insert("DEFAULT_AUTH_REQUEST".into(), r#"{"methodId":"api-key"}"#.into());
+        // Hides the ChatGPT sign-in: this agent is the key's.
+        env.insert("NO_BROWSER".into(), "1".into());
+        if !url.is_empty() {
+            let config = serde_json::json!({
+                "model_provider": "glance",
+                "model_providers": { "glance": { "name": "Custom", "base_url": url, "env_key": "CODEX_API_KEY" } }
+            });
+            env.insert("CODEX_CONFIG".into(), config.to_string());
+            env.insert("MODEL_PROVIDER".into(), "glance".into());
+        }
+    }
+    env
 }
 
 fn launch(program: &str, args: &[&str]) -> Launch {
@@ -65,6 +110,7 @@ fn builtin(id: &str, name: &str, launch: Vec<Launch>, website: &str, install: &s
         website: Some(website.into()),
         install: Some(install.into()),
         custom: false,
+        api: None,
     }
 }
 
@@ -219,21 +265,59 @@ pub async fn agent_add(app: AppHandle, name: String, command: String, title: Str
     }
     let path = store_path(&app)?;
     let mut custom = load_custom(&path);
-    let taken: Vec<String> = all_agents(&app).into_iter().map(|a| a.id).collect();
-    let base = slug(&name);
+    let id = unique_id(&app, &name);
+    custom.push(Agent { id: id.clone(), name, launch: vec![launch], env: BTreeMap::new(), website: None, install: None, custom: true, api: None });
+    save_custom(&path, &custom)?;
+    Ok(Some(id))
+}
+
+fn unique_id(app: &AppHandle, name: &str) -> String {
+    let taken: Vec<String> = all_agents(app).into_iter().map(|a| a.id).collect();
+    let base = slug(name);
     let mut id = base.clone();
     let mut n = 2;
     while taken.contains(&id) {
         id = format!("{base}-{n}");
         n += 1;
     }
-    custom.push(Agent { id: id.clone(), name, launch: vec![launch], env: BTreeMap::new(), website: None, install: None, custom: true });
+    id
+}
+
+/// Adds an AI that uses an API key: Claude's agent for Anthropic-compatible APIs, Codex's for
+/// OpenAI-compatible ones, pointed at `base_url`. Runs no command the user typed, so it needs
+/// no confirmation. The key goes to Windows Credential Manager.
+#[tauri::command]
+pub fn agent_add_key(app: AppHandle, name: String, kind: String, base_url: String, key: String) -> Result<String, String> {
+    let name = name.trim().to_string();
+    let key = key.trim().to_string();
+    if name.is_empty() {
+        return Err("give it a name".into());
+    }
+    if key.is_empty() {
+        return Err("paste the API key".into());
+    }
+    let base_url = base_url.trim().to_string();
+    if !base_url.is_empty() && !(base_url.starts_with("https://") || base_url.starts_with("http://localhost") || base_url.starts_with("http://127.0.0.1")) {
+        return Err("the address must start with https:// (or http://localhost for a server on this PC)".into());
+    }
+    let template = match kind.as_str() {
+        "anthropic" => "claude",
+        "openai" => "chatgpt",
+        _ => return Err(format!("unknown API kind {kind}")),
+    };
+    let base = builtins().into_iter().find(|a| a.id == template).ok_or("missing built-in agent")?;
+    let path = store_path(&app)?;
+    let mut custom = load_custom(&path);
+    let id = unique_id(&app, &name);
+    secrets::save(&id, &key)?;
+    custom.push(Agent { id: id.clone(), name, launch: base.launch, env: BTreeMap::new(), website: None, install: base.install, custom: true, api: Some(ApiKey { kind, base_url }) });
     save_custom(&path, &custom)?;
-    Ok(Some(id))
+    Ok(id)
 }
 
 #[tauri::command]
 pub fn agent_remove(app: AppHandle, id: String) -> Result<(), String> {
+    secrets::delete(&id);
     let path = store_path(&app)?;
     let custom: Vec<Agent> = load_custom(&path).into_iter().filter(|a| a.id != id).collect();
     save_custom(&path, &custom)
@@ -293,6 +377,11 @@ pub fn agent_start(app: AppHandle, state: State<'_, Agents>, id: String) -> Resu
         return Err(format!("not-installed:{}", agent.install.clone().unwrap_or_default()));
     };
     let cwd = work_dir(&app)?;
+    let mut agent = agent;
+    if let Some(api) = &agent.api {
+        let secret = secrets::load(&agent.id).ok_or_else(|| format!("the API key for {} is missing; remove it and add it again", agent.name))?;
+        agent.env.extend(key_env(api, &secret));
+    }
     let mut cmd = command(&program, &l.args, &agent, &cwd);
     cmd.stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
     #[cfg(windows)]
@@ -461,7 +550,7 @@ mod tests {
     fn custom_agents_round_trip() {
         let dir = std::env::temp_dir().join(format!("glance-agents-{}", std::process::id()));
         let path = dir.join("agents.json");
-        let a = Agent { id: slug("My Agent!"), name: "My Agent!".into(), launch: vec![launch("my-agent", &["acp"])], env: BTreeMap::new(), website: None, install: None, custom: false };
+        let a = Agent { id: slug("My Agent!"), name: "My Agent!".into(), launch: vec![launch("my-agent", &["acp"])], env: BTreeMap::new(), website: None, install: None, custom: false, api: None };
         save_custom(&path, &[a]).unwrap();
         let back = load_custom(&path);
         assert_eq!(back.len(), 1);
@@ -472,8 +561,32 @@ mod tests {
     }
 
     #[test]
+    fn api_keys_become_agent_settings() {
+        let z = key_env(&ApiKey { kind: "anthropic".into(), base_url: "https://api.z.ai/api/anthropic".into() }, "k1");
+        assert_eq!(z["ANTHROPIC_BASE_URL"], "https://api.z.ai/api/anthropic");
+        assert_eq!(z["ANTHROPIC_AUTH_TOKEN"], "k1");
+        let openai = key_env(&ApiKey { kind: "openai".into(), base_url: String::new() }, "k2");
+        assert_eq!(openai["CODEX_API_KEY"], "k2");
+        assert!(!openai.contains_key("CODEX_CONFIG"));
+        let router = key_env(&ApiKey { kind: "openai".into(), base_url: "https://openrouter.ai/api/v1".into() }, "k3");
+        let config: serde_json::Value = serde_json::from_str(&router["CODEX_CONFIG"]).unwrap();
+        assert_eq!(config["model_providers"]["glance"]["base_url"], "https://openrouter.ai/api/v1");
+        assert_eq!(router["MODEL_PROVIDER"], "glance");
+    }
+
+    #[test]
+    fn keys_are_stored_apart_from_the_agent_list() {
+        secrets::save("custom-test-key", "secret").unwrap();
+        assert_eq!(secrets::load("custom-test-key").as_deref(), Some("secret"));
+        secrets::delete("custom-test-key");
+        assert_eq!(secrets::load("custom-test-key"), None);
+        let a = Agent { id: "x".into(), name: "X".into(), launch: vec![], env: BTreeMap::new(), website: None, install: None, custom: true, api: Some(ApiKey { kind: "openai".into(), base_url: String::new() }) };
+        assert!(!serde_json::to_string(&a).unwrap().contains("secret"));
+    }
+
+    #[test]
     fn missing_programs_are_reported() {
-        let a = Agent { id: "x".into(), name: "X".into(), launch: vec![launch("glance-no-such-program-xyz", &[])], env: BTreeMap::new(), website: None, install: None, custom: true };
+        let a = Agent { id: "x".into(), name: "X".into(), launch: vec![launch("glance-no-such-program-xyz", &[])], env: BTreeMap::new(), website: None, install: None, custom: true, api: None };
         assert!(pick(&a).is_none());
     }
 }
