@@ -592,28 +592,39 @@ const openTabs: ToolHandler = async ({ paths, page }) => {
 
 const listOpen: ToolHandler = async () => json({ tabs: docs.value.map(describeTab) })
 
-const currentView: ToolHandler = async ({ tab, max_size }) => {
-  const d = findTab(tab)
-  const max = Number(max_size ?? VIEW_SIZE)
-  const head = (page: number, pages: number) => `${d.name.peek()}, page ${page + 1} of ${pages}${d.dirty.peek() ? ' (unsaved changes included)' : ''}`
+/** Renders page `index` of an open tab as the user sees it (unsaved edits included), with its text for PDFs. */
+export async function renderTab(d: Doc, index: number, max: number): Promise<{ canvas: Canvas; text: string; pages: number; png: boolean }> {
   if (d instanceof PdfDoc) {
     const proxy = await openPdf(await serialize(d), d.password)
     try {
-      const i = d.current.peek()
-      const { canvas: c } = await renderPdfPage(proxy, i, { maxSide: max })
-      const text = itemsText(await pageItems(proxy, i))
-      return { content: [{ type: 'text', text: `${head(i, proxy.numPages)}\n\n${text || '(no selectable text on this page)'}` }, await imageContent(c, true)] }
+      const { canvas: c } = await renderPdfPage(proxy, index, { maxSide: max })
+      return { canvas: c, text: itemsText(await pageItems(proxy, index)), pages: proxy.numPages, png: true }
     } finally {
       await proxy.loadingTask.destroy()
     }
   }
   if (d instanceof ImageDoc) {
-    const i = d.current.peek()
     const edited = d.editable && (d.raster.peek() || d.markup.peek().length)
-    const c = edited ? fit(engine.toCanvas(await engine.flatten(d)), max) : await renderImage(d.probe, i, max)
-    return { content: [{ type: 'text', text: head(i, d.pageCount.peek()) }, await imageContent(c, hasAlpha(d.probe.path))] }
+    const c = edited ? fit(engine.toCanvas(await engine.flatten(d)), max) : await renderImage(d.probe, index, max)
+    return { canvas: c, text: '', pages: d.pageCount.peek(), png: hasAlpha(d.probe.path) }
   }
   throw new ToolError(`${d.name.peek()} is a ${d.kind === 'model' ? '3D model' : 'notice'}; only documents and images can be captured`)
+}
+
+/** PNG or JPEG for an AI agent, as base64. */
+export async function encodeForAi(c: Canvas, png: boolean): Promise<{ data: string; mimeType: string }> {
+  const { data, mimeType } = (await imageContent(c, png)) as { data: string; mimeType: string }
+  return { data, mimeType }
+}
+
+const currentView: ToolHandler = async ({ tab, max_size }) => {
+  const d = findTab(tab)
+  const max = Number(max_size ?? VIEW_SIZE)
+  const i = 'current' in d ? d.current.peek() : 0
+  const r = await renderTab(d, i, max)
+  const head = `${d.name.peek()}, page ${i + 1} of ${r.pages}${d.dirty.peek() ? ' (unsaved changes included)' : ''}`
+  const text = d instanceof PdfDoc ? `${head}\n\n${r.text || '(no selectable text on this page)'}` : head
+  return { content: [{ type: 'text', text }, await imageContent(r.canvas, r.png)] }
 }
 
 const goToPage: ToolHandler = async ({ tab, page }) => {

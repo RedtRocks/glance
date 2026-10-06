@@ -32,7 +32,7 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'preview' | 'not
       '#Sidebar', 'view.hideSidebar', 'view.thumbnails', 'view.toc', 'view.notes', 'view.bookmarks', '-',
       '#Page layout', 'view.continuous', 'view.single', 'view.two', 'view.contactSheet', '-',
       ...ZOOM, '-',
-      'view.darkPdf', 'view.fullscreen', 'view.slideshow', '-', 'view.inspector', 'view.signatures', 'view.customizeToolbar'
+      'view.darkPdf', 'view.fullscreen', 'view.slideshow', '-', 'view.inspector', 'view.askAi', 'view.signatures', 'view.customizeToolbar'
     ],
     Go: ['go.previous', 'go.next', 'go.first', 'go.last', 'go.page', '-', 'go.nextTab', 'go.previousTab'],
     Pages: [
@@ -49,7 +49,7 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'preview' | 'not
     File: ['file.open', 'file.openWith', 'file.newFromClipboard', 'file.scan', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.versions', 'file.export', '-', 'image.setWallpaper', 'image.setLockScreen', '-', 'file.batch', 'file.collage', '-', 'file.share', 'file.print', '-', 'file.close', '-', 'file.makeDefault', 'file.settings'],
     Edit: ['edit.undo', 'edit.redo', '-', 'edit.delete', 'edit.invertSelection', '-', 'tools.copyImageText'],
     // Multi-page images (TIFF, comic archives) also get the sidebar and Go menu.
-    View: ['view.hideSidebar', 'view.thumbnails', '-', ...ZOOM, '-', 'view.fullscreen', 'view.slideshow', '-', 'view.inspector', 'view.customizeToolbar'],
+    View: ['view.hideSidebar', 'view.thumbnails', '-', ...ZOOM, '-', 'view.fullscreen', 'view.slideshow', '-', 'view.inspector', 'view.askAi', 'view.customizeToolbar'],
     Go: ['go.previous', 'go.next', 'go.first', 'go.last', 'go.page', '-', 'go.nextTab', 'go.previousTab'],
     Image: [
       'tools.adjustColor', 'tools.adjustSize', '-',
@@ -61,13 +61,13 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'preview' | 'not
   },
   model: {
     File: ['file.open', 'file.openWith', 'file.newFromClipboard', 'file.scan', 'file.newWindow', '-', 'file.export', '-', 'file.share', '-', 'file.close', '-', 'file.makeDefault', 'file.settings'],
-    View: [...ZOOM, 'model.resetView', '-', 'model.view.front', 'model.view.back', 'model.view.left', 'model.view.right', 'model.view.top', 'model.view.bottom', '-', 'model.wireframe', 'model.autoRotate', 'model.shadow', 'model.grid', '-', 'view.fullscreen', '-', 'view.inspector', 'view.customizeToolbar'],
+    View: [...ZOOM, 'model.resetView', '-', 'model.view.front', 'model.view.back', 'model.view.left', 'model.view.right', 'model.view.top', 'model.view.bottom', '-', 'model.wireframe', 'model.autoRotate', 'model.shadow', 'model.grid', '-', 'view.fullscreen', '-', 'view.inspector', 'view.askAi', 'view.customizeToolbar'],
     Go: ['go.nextTab', 'go.previousTab'],
     Help: HELP
   },
   preview: {
     File: ['file.open', 'file.openWith', 'file.newWindow', '-', 'file.share', '-', 'file.close', '-', 'file.makeDefault', 'file.settings'],
-    View: [...ZOOM, '-', 'view.fullscreen'],
+    View: [...ZOOM, '-', 'view.fullscreen', '-', 'view.askAi'],
     Go: ['go.previous', 'go.next', 'go.first', 'go.last', '-', 'go.nextTab', 'go.previousTab'],
     Help: HELP
   },
