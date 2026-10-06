@@ -16,6 +16,7 @@ mod protocol;
 mod shell;
 mod signatures;
 mod subject;
+mod website;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{Emitter, Manager};
@@ -175,6 +176,9 @@ pub fn run() {
             agents::agent_add,
             agents::agent_remove,
             agents::agent_add_key,
+            website::website_show,
+            website::website_hide,
+            website::website_reload,
             agents::agent_start,
             agents::agent_send,
             agents::agent_stop,

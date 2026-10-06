@@ -16,7 +16,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
+tauri = { version = "2", features = ["unstable"] }
 tauri-plugin-dialog = "2"
 tauri-plugin-clipboard-manager = "2"
 tauri-plugin-opener = "2"
@@ -31,6 +31,7 @@ jxl-oxide = { version = "0.12", features = ["image"] }
 hayro-jpeg2000 = "0.4"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 which = "7"
+url = "2"
 base64 = "0.22"
 kamadak-exif = "0.6"
 fastcdc = "3"

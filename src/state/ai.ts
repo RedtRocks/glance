@@ -9,6 +9,7 @@ import * as platform from '../platform'
 import { applyUpdate, chatTitle, modelOption, preamble, type Choice, type Part } from '../core/ai/transcript'
 import { activeDoc, ImageDoc, PdfDoc, type Doc } from './documents'
 import { settings } from './settings'
+import { toast } from './ui'
 import { t } from '../i18n'
 
 // ---------------------------------------------------------------------------
@@ -56,6 +57,8 @@ export const attachments = signal<Attachment[]>([])
 export const selectingArea = signal(false)
 export const welcomed = signal<boolean>(prefs().welcomed ?? false)
 export const savedChats = signal<Chat[]>(loadChats())
+/** Showing the company's own website instead of Glance's chat. */
+export const siteView = signal(false)
 
 // ---------------------------------------------------------------------------
 // Preferences and saved chats (on this PC only)
@@ -541,7 +544,7 @@ export async function removeAgent(id: string): Promise<void> {
 
 const SIZE = 1600
 
-async function capture(doc: Doc, index: number, crop?: { x: number; y: number; w: number; h: number }): Promise<Attachment['image'] & { text: string }> {
+async function capture(doc: Doc, index: number, crop?: { x: number; y: number; w: number; h: number }, png = false): Promise<Attachment['image'] & { text: string }> {
   const { renderTab, encodeForAi } = await import('./mcpTools')
   const r = await renderTab(doc, index, crop ? SIZE * 2 : SIZE)
   let c: HTMLCanvasElement | OffscreenCanvas = r.canvas
@@ -554,11 +557,12 @@ async function capture(doc: Doc, index: number, crop?: { x: number; y: number; w
     out.getContext('2d')!.drawImage(c, sx, sy, out.width, out.height, 0, 0, out.width, out.height)
     c = out
   }
-  return { ...(await encodeForAi(c, r.png)), text: crop ? '' : r.text }
+  return { ...(await encodeForAi(c, png || r.png)), text: crop ? '' : r.text }
 }
 
 export async function attachPage(doc: Doc): Promise<void> {
   if (!(doc instanceof PdfDoc || doc instanceof ImageDoc)) return
+  if (siteView.peek()) return copyForSite(doc)
   const index = doc.current.peek()
   const shot = await capture(doc, index)
   const label = t('Page {page}', { page: index + 1 })
@@ -569,10 +573,19 @@ export async function attachPage(doc: Doc): Promise<void> {
 /** `rect` is a fraction of page `index` (0 to 1 on each side). */
 export async function attachArea(doc: Doc, index: number, rect: { x: number; y: number; w: number; h: number }): Promise<void> {
   if (!(doc instanceof PdfDoc || doc instanceof ImageDoc)) return
+  if (siteView.peek()) return copyForSite(doc, { index, rect })
   const shot = await capture(doc, index, rect)
   const label = t('Selected area · page {page}', { page: index + 1 })
   // i18n-ignore: for the agent, not the user
   attachments.value = [...attachments.peek(), { label, image: { data: shot.data, mimeType: shot.mimeType }, text: `An area the user selected on ${doc.name.peek()}, page ${index + 1}` }]
+}
+
+/** For the website view: puts what the user would attach on the clipboard, to paste there. */
+export async function copyForSite(doc: Doc, area?: { index: number; rect: { x: number; y: number; w: number; h: number } }): Promise<void> {
+  if (!(doc instanceof PdfDoc || doc instanceof ImageDoc)) return
+  const shot = await capture(doc, area?.index ?? doc.current.peek(), area?.rect, true)
+  await platform.copyPngToClipboard(Uint8Array.from(atob(shot.data), (c) => c.charCodeAt(0)))
+  toast(t('Copied. Click the chat on the website and press Ctrl+V to paste it.'))
 }
 
 export function removeAttachment(i: number): void {

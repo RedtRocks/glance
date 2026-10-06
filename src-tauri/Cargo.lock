@@ -1703,6 +1703,7 @@ dependencies = [
  "tract-linalg",
  "tract-onnx",
  "ttf-parser",
+ "url",
  "which",
  "window-vibrancy",
  "windows 0.62.2",

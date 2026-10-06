@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { marked } from 'marked'
 import type { Doc } from '../../state/documents'
-import { aiOpen, toast } from '../../state/ui'
+import { aiOpen, dialog, menuOpen, settingsOpen, toast } from '../../state/ui'
 import * as ai from '../../state/ai'
 import type { Part } from '../../core/ai/transcript'
 import { cleanFragment, adopt, keepImagesLocal } from '../../preview/sanitize'
@@ -509,6 +509,78 @@ function Composer({ doc }: { doc: Doc }) {
   )
 }
 
+/**
+ * The company's own website, drawn by Windows over this box (a separate web view can't live
+ * inside the page), so the box only reports where it is.
+ */
+function SiteFrame({ id }: { id: string }) {
+  const box = useRef<HTMLDivElement>(null)
+  const [error, setError] = useState('')
+  useEffect(() => {
+    const el = box.current
+    if (!el) return
+    let frame = 0
+    const place = (): void => {
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => {
+        const r = el.getBoundingClientRect()
+        platform.websiteShow(id, { x: r.left, y: r.top, width: r.width, height: r.height }).catch((e) => setError(String(e)))
+      })
+    }
+    place()
+    const ro = new ResizeObserver(place)
+    ro.observe(el)
+    addEventListener('resize', place)
+    return () => {
+      ro.disconnect()
+      removeEventListener('resize', place)
+      cancelAnimationFrame(frame)
+      void platform.websiteHide()
+    }
+  }, [id])
+  return (
+    <div ref={box} class="ai-site">
+      {error ? <p class="ai-notice error">{error}</p> : <span class="spinner" aria-hidden="true" />}
+    </div>
+  )
+}
+
+/** Under the website: show the AI the page or an area by copying it, to paste into the site's chat. */
+function SiteBar({ doc, id }: { doc: Doc; id: string }) {
+  const canShow = doc.kind === 'pdf' || doc.kind === 'image'
+  const copyPage = async (): Promise<void> => {
+    try {
+      await ai.copyForSite(doc)
+    } catch (e) {
+      toast(String(e), 'error')
+    }
+  }
+  return (
+    <div class="ai-composer ai-site-bar">
+      <p class="muted small">{t('You’re using the {agent} website, signed in with your own account. To show it your document, copy a part and paste it into its chat.', { agent: ai.agentName(id) })}</p>
+      <div class="ai-input-row">
+        {canShow && (
+          <button class="ai-tool-button" onClick={() => (ai.selectingArea.value = true)} aria-pressed={ai.selectingArea.value}>
+            <Icon name="selectArea" size={16} />
+            {t('Copy an area')}
+          </button>
+        )}
+        {canShow && (
+          <button class="ai-tool-button" onClick={() => void copyPage()}>
+            <Icon name="onePage" size={16} />
+            {t('Copy this page')}
+          </button>
+        )}
+        <div class="tb-spacer" />
+        <button class="ai-tool-button" onClick={() => void platform.websiteReload(id).catch(() => undefined)}>
+          <Icon name="rotateRight" size={16} />
+          {t('Reload')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 /** Ask AI: a chat with the user's chosen AI company about the open document. */
 export function AiSidebar({ doc }: { doc: Doc }) {
   const [view, setView] = useState<'chat' | 'companies' | 'history' | 'apiKey'>('chat')
@@ -516,6 +588,7 @@ export function AiSidebar({ doc }: { doc: Doc }) {
   const c = ai.chat.value
   const model = ai.model.value
   const welcomed = ai.welcomed.value
+  const site = ai.siteView.value && !!ai.agents.value.find((a) => a.id === c.agentId)?.website && view === 'chat'
 
   useEffect(() => {
     void ai.refreshAgents().then(() => {
@@ -541,6 +614,20 @@ export function AiSidebar({ doc }: { doc: Doc }) {
           <Icon name="chevronSmall" size={12} />
         </button>
         <div class="tb-spacer" />
+        {agent?.website && welcomed && (
+          <button
+            class={`icon-button${site ? ' pressed' : ''}`}
+            aria-pressed={site}
+            aria-label={site ? t('Back to Glance chat') : t('Use the {agent} website instead', { agent: agent.name })}
+            title={site ? t('Back to Glance chat') : t('Use the {agent} website instead', { agent: agent.name })}
+            onClick={() => {
+              ai.siteView.value = !site
+              setView('chat')
+            }}
+          >
+            <Icon name="globe" size={16} />
+          </button>
+        )}
         <button class={`icon-button${view === 'history' ? ' pressed' : ''}`} aria-label={t('Past chats')} title={t('Past chats')} onClick={() => setView(view === 'history' ? 'chat' : 'history')}>
           <Icon name="history" size={16} />
         </button>
@@ -559,7 +646,7 @@ export function AiSidebar({ doc }: { doc: Doc }) {
           <Icon name="close" size={16} />
         </button>
       </header>
-      {model && view === 'chat' && (
+      {model && view === 'chat' && !site && (
         <div class="ai-model">
           <label for="ai-model">{t('Model')}</label>
           <select id="ai-model" value={model.current} disabled={ai.status.value === 'working'} onChange={(e) => void ai.chooseModel((e.target as HTMLSelectElement).value)}>
@@ -571,6 +658,10 @@ export function AiSidebar({ doc }: { doc: Doc }) {
           </select>
         </div>
       )}
+      {site ? (
+        // Windows draws the site above everything, so it steps aside while a dialog or menu is open.
+        dialog.value || settingsOpen.value || menuOpen.value ? <div class="ai-site" /> : <SiteFrame id={c.agentId} />
+      ) : (
       <div class="ai-body" ref={scroller}>
         {!welcomed ? (
           <Welcome />
@@ -602,7 +693,8 @@ export function AiSidebar({ doc }: { doc: Doc }) {
           </>
         )}
       </div>
-      {welcomed && view === 'chat' && <Composer doc={doc} />}
+      )}
+      {site ? <SiteBar doc={doc} id={c.agentId} /> : welcomed && view === 'chat' && <Composer doc={doc} />}
     </aside>
   )
 }
