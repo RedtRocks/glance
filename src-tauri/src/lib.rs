@@ -11,6 +11,7 @@ mod history;
 mod mcp;
 mod metadata;
 mod ocr;
+mod speech;
 mod scan;
 mod protocol;
 mod shell;
@@ -150,6 +151,8 @@ pub fn run() {
             metadata::image_metadata,
             metadata::remove_location,
             ocr::ocr_image,
+            speech::speech_start,
+            speech::speech_stop,
             ocr::ocr_max_dimension,
             scan::scanners_list,
             scan::scan,
