@@ -32,7 +32,7 @@
         "default-src": "'self' customprotocol: asset:",
         "img-src": "'self' blob: data: glance: http://glance.localhost",
         "media-src": "'self' blob: glance: http://glance.localhost",
-        "connect-src": "'self' ipc: http://ipc.localhost glance: http://glance.localhost blob: data: https://api.github.com",
+        "connect-src": "'self' ipc: http://ipc.localhost glance: http://glance.localhost blob: data: https://api.github.com https://cloud.umami.is",
         "script-src": "'self' 'wasm-unsafe-eval'",
         "worker-src": "'self' blob:",
         "style-src": "'self' 'unsafe-inline'",

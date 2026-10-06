@@ -88,7 +88,7 @@ Requires Windows 10 (1809+) or Windows 11. The installer downloads the WebView2 
 
 ## Privacy
 
-No telemetry and no account. The only network request is an optional daily update check (Settings). Background removal and text recognition run on your PC. Saved signatures are encrypted with your Windows account.
+No account and nothing you open leaves your PC. Glance makes two optional daily requests, both with a switch in Settings: an update check, and an anonymous count of installs (version number only, no ID). Background removal and text recognition run on your PC. Saved signatures are encrypted with your Windows account.
 
 ## Verify your download
 

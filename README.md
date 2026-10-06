@@ -142,7 +142,7 @@ Glance deliberately has no quick-look popup: pair it with [PowerToys Peek](https
 
 ## Privacy
 
-No telemetry and no accounts. The only network request is an optional daily check for a newer release on GitHub (turn it off in Settings; the Microsoft Store version leaves updates to the Store). Background removal and text recognition run on your PC. AI apps you connect in Settings → AI apps send what they read through Glance to their own AI provider, and Ask AI sends what you share in the sidebar to the AI company you pick there.
+No accounts. Glance sends two optional things, both off with a switch in Settings: a daily check for a newer release on GitHub (the Microsoft Store version leaves updates to the Store), and an anonymous daily count of installs that adds up to how many copies are in use (version number only, no ID and nothing you open). Background removal and text recognition run on your PC. AI apps you connect in Settings → AI apps send what they read through Glance to their own AI provider, and Ask AI sends what you share in the sidebar to the AI company you pick there.
 
 ## FAQ
 
@@ -156,7 +156,7 @@ Yes. It's free and open source under the Apache-2.0 license, with no ads, accoun
 It can reorder, rotate, delete, split and merge pages, fill forms, add text, shapes, highlights, notes and signatures, sign with a certificate, and permanently redact text. It doesn't rewrite a PDF's existing body text like a word processor.
 
 **Does Glance send my files anywhere?**
-No. There's no telemetry and no account. Text recognition and background removal run on your PC, and the only network request is an optional update check. See [PRIVACY.md](PRIVACY.md).
+No. There's no account and nothing you open leaves your PC. Text recognition and background removal run on your PC. Besides an optional update check, Glance sends one anonymous daily count of installs (version number only), which you can turn off in Settings. See [PRIVACY.md](PRIVACY.md).
 
 **What file types does it open?**
 PDF, XPS, EPS and AI files, JPEG, PNG, WebP, AVIF, HEIC, JPEG XL, TIFF, PSD, OpenEXR, SVG, camera RAW, comic book archives, 3D models such as GLB, OBJ, STL and USDZ, Word, PowerPoint and Excel files, CSV, Markdown, text and code, EPUB, email, fonts, video and audio. The full list is in [docs/FORMATS.md](docs/FORMATS.md).
