@@ -522,6 +522,13 @@ export async function addAgent(name: string, command: string): Promise<boolean> 
   return !!id
 }
 
+/** Adds an AI that uses the user's API key. */
+export async function addKeyAgent(name: string, kind: 'anthropic' | 'openai', baseUrl: string, key: string): Promise<void> {
+  const id = await platform.agentAddKey(name, kind, baseUrl, key)
+  await refreshAgents()
+  chooseAgent(id)
+}
+
 export async function removeAgent(id: string): Promise<void> {
   await restart(id)
   await platform.agentRemove(id)

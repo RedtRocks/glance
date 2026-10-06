@@ -174,6 +174,7 @@ pub fn run() {
             agents::agents_list,
             agents::agent_add,
             agents::agent_remove,
+            agents::agent_add_key,
             agents::agent_start,
             agents::agent_send,
             agents::agent_stop,

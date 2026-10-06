@@ -156,7 +156,101 @@ function Welcome() {
   )
 }
 
-function Companies({ onDone }: { onDone: () => void }) {
+const URL_HINT = 'https://'
+
+/** Ready-made addresses; the user can change any of them. */
+const PRESETS: { name: string; kind: 'anthropic' | 'openai'; url: string }[] = [
+  { name: 'OpenAI', kind: 'openai', url: '' },
+  { name: 'Anthropic', kind: 'anthropic', url: '' },
+  { name: 'OpenRouter', kind: 'openai', url: 'https://openrouter.ai/api/v1' },
+  { name: 'Z.ai', kind: 'anthropic', url: 'https://api.z.ai/api/anthropic' },
+  { name: 'Kimi', kind: 'anthropic', url: 'https://api.moonshot.ai/anthropic' },
+  { name: 'DeepSeek', kind: 'anthropic', url: 'https://api.deepseek.com/anthropic' },
+  { name: 'Mistral', kind: 'openai', url: 'https://api.mistral.ai/v1' }
+]
+
+/** Use an API key: pick a service (or type an address), paste the key. */
+function ApiKeyForm({ onDone }: { onDone: () => void }) {
+  const [preset, setPreset] = useState(0)
+  const [name, setName] = useState(PRESETS[0].name)
+  const [kind, setKind] = useState<'anthropic' | 'openai'>(PRESETS[0].kind)
+  const [url, setUrl] = useState(PRESETS[0].url)
+  const [key, setKey] = useState('')
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
+  const choose = (i: number): void => {
+    setPreset(i)
+    if (i < PRESETS.length) {
+      setName(PRESETS[i].name)
+      setKind(PRESETS[i].kind)
+      setUrl(PRESETS[i].url)
+    } else {
+      setName('')
+      setUrl('')
+    }
+  }
+  const save = async (e: Event): Promise<void> => {
+    e.preventDefault()
+    setSaving(true)
+    setError('')
+    try {
+      await ai.addKeyAgent(name, kind, url, key)
+      onDone()
+    } catch (err) {
+      setError(String(err))
+    } finally {
+      setSaving(false)
+    }
+  }
+  return (
+    <form class="ai-key-form" onSubmit={(e) => void save(e)}>
+      <h3>{t('Use an API key')}</h3>
+      <p class="muted small">{t('Optional. Signing in is easier; an API key is for when you pay a company per use, or run your own server.')}</p>
+      <label class="field">
+        <span>{t('Service')}</span>
+        <select value={preset} onChange={(e) => choose(Number((e.target as HTMLSelectElement).value))}>
+          {PRESETS.map((p, i) => (
+            <option key={p.name} value={i}>
+              {p.name}
+            </option>
+          ))}
+          <option value={PRESETS.length}>{t('Other…')}</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>{t('Name in Glance')}</span>
+        <input value={name} onInput={(e) => setName((e.target as HTMLInputElement).value)} required />
+      </label>
+      <label class="field">
+        <span>{t('Kind of API')}</span>
+        <select value={kind} onChange={(e) => setKind((e.target as HTMLSelectElement).value as 'anthropic' | 'openai')}>
+          <option value="openai">{t('OpenAI-compatible')}</option>
+          <option value="anthropic">{t('Anthropic-compatible')}</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>{t('Address (leave empty for the company’s own)')}</span>
+        <input value={url} placeholder={URL_HINT} onInput={(e) => setUrl((e.target as HTMLInputElement).value)} spellcheck={false} />
+      </label>
+      <label class="field">
+        <span>{t('API key')}</span>
+        <input type="password" value={key} onInput={(e) => setKey((e.target as HTMLInputElement).value)} required autocomplete="off" />
+      </label>
+      <p class="muted small">{t('The key is kept in Windows Credential Manager on this PC and only given to the AI helper when it starts.')}</p>
+      {error && <p class="ai-notice error">{error}</p>}
+      <div class="ai-permission-buttons">
+        <button class="btn primary" type="submit" disabled={saving || !key.trim() || !name.trim()}>
+          {t('Save')}
+        </button>
+        <button class="btn" type="button" onClick={onDone}>
+          {t('Cancel')}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+function Companies({ onDone, onKey }: { onDone: () => void; onKey: () => void }) {
   const list = ai.agents.value
   const current = ai.agentId.value
   const add = async (): Promise<void> => {
@@ -188,7 +282,9 @@ function Companies({ onDone }: { onDone: () => void }) {
             <Badge id={a.id} size={28} />
             <span class="ai-company-text">
               <span class="ai-company-name">{a.name}</span>
-              <span class="ai-company-hint">{a.ready ? hint(a.id) : t('Needs a free helper app first. Pick it to see how.')}</span>
+              <span class="ai-company-hint">
+                {!a.ready ? t('Needs a free helper app first. Pick it to see how.') : a.api ? t('Uses your API key{address}', { address: a.api.baseUrl ? ` · ${a.api.baseUrl}` : '' }) : hint(a.id)}
+              </span>
             </span>
           </button>
           {a.custom && (
@@ -201,6 +297,10 @@ function Companies({ onDone }: { onDone: () => void }) {
       <button class="btn ai-add" onClick={() => void add()}>
         <Icon name="add" size={16} />
         {t('Add your own agent…')}
+      </button>
+      <button class="btn ai-add" onClick={onKey}>
+        <Icon name="lock" size={16} />
+        {t('Use an API key…')}
       </button>
       <p class="muted small">{t('Any agent that speaks the Agent Client Protocol works, from any company.')}</p>
     </div>
@@ -411,7 +511,7 @@ function Composer({ doc }: { doc: Doc }) {
 
 /** Ask AI: a chat with the user's chosen AI company about the open document. */
 export function AiSidebar({ doc }: { doc: Doc }) {
-  const [view, setView] = useState<'chat' | 'companies' | 'history'>('chat')
+  const [view, setView] = useState<'chat' | 'companies' | 'history' | 'apiKey'>('chat')
   const scroller = useRef<HTMLDivElement>(null)
   const c = ai.chat.value
   const model = ai.model.value
@@ -475,7 +575,9 @@ export function AiSidebar({ doc }: { doc: Doc }) {
         {!welcomed ? (
           <Welcome />
         ) : view === 'companies' ? (
-          <Companies onDone={() => setView('chat')} />
+          <Companies onDone={() => setView('chat')} onKey={() => setView('apiKey')} />
+        ) : view === 'apiKey' ? (
+          <ApiKeyForm onDone={() => setView('chat')} />
         ) : view === 'history' ? (
           <History onDone={() => setView('chat')} />
         ) : (

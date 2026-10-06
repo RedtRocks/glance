@@ -3728,3 +3728,25 @@ input[type='range'] {
     z-index: 20;
   }
 }
+.ai-key-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ai-key-form h3 {
+  margin: 0;
+  font: 600 15px/22px var(--font);
+}
+.ai-key-form p { margin: 0; }
+.ai-key-form .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.ai-key-form .field input,
+.ai-key-form .field select {
+  color: var(--text);
+  font: 14px var(--font);
+}
