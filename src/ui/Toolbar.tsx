@@ -4,7 +4,8 @@ import { settings } from '../state/settings'
 import { runCommand, keysFor } from '../state/commands'
 import { displayCombo } from '../core/shortcuts'
 import { parsePageInput, showPageButtons, showPageNumberField } from '../core/pageControls'
-import { findOpen, findQuery, menuOpen, sidebarVisible } from '../state/ui'
+import { aiOpen, findOpen, findQuery, menuOpen, sidebarVisible } from '../state/ui'
+import * as platform from '../platform'
 import { hits, hitIndex, runSearch, searching, stepHit } from '../pdf/search'
 import { MenuItems } from './MenuBar'
 import { OVERFLOW_ITEMS, OVERFLOW_MENU } from '../core/menus'
@@ -228,6 +229,12 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
   },
   { id: 'slideshow', label: msg('Slideshow'), applies: isViewable, render: () => <Btn icon="slideshow" label={t('Slideshow')} command="view.slideshow" /> },
   { id: 'print', label: msg('Print'), applies: isViewable, render: () => <Btn icon="print" label={t('Print')} command="file.print" /> },
+  {
+    id: 'askAi',
+    label: msg('Ask AI'),
+    applies: (c) => isShown(c) && platform.isTauri,
+    render: () => <Btn icon="sparkle" label={t('Ask AI')} command="view.askAi" pressed={aiOpen.value} />
+  },
   { id: 'search', label: msg('Search'), applies: isPdf, render: (c) => <SearchField doc={c.doc!} /> },
   { id: 'overflow', label: msg('More'), applies: () => true, render: () => <Overflow /> }
 ]

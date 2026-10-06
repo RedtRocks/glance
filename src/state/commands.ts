@@ -14,7 +14,7 @@ import { makeDefault } from './defaultApp'
 import { versionsOpen } from './versions'
 import { activeDoc, activeId, docs, type Doc, type ViewMode } from './documents'
 import { settings, updateSettings } from './settings'
-import { cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, findOpen, inspectorOpen, signaturesOpen, promptText, redactTextOpen, toast, settingsOpen, sidebarVisible, slideshow } from './ui'
+import { cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, findOpen, inspectorOpen, aiOpen, signaturesOpen, promptText, redactTextOpen, toast, settingsOpen, sidebarVisible, slideshow } from './ui'
 import { parsePageInput } from '../core/pageControls'
 import { printDoc } from './print'
 import { applyRedactions } from './actions'
@@ -241,6 +241,7 @@ export const COMMANDS: Command[] = [
     run: () => void (model() && (model()!.viewRequest.value = { kind: 'view', view }))
   })),
   { id: 'view.inspector', label: msg('Inspector'), keys: ['Ctrl+I'], run: () => void (inspectorOpen.value = !inspectorOpen.value), checked: () => inspectorOpen.value },
+  { id: 'view.askAi', label: msg('Ask AI'), keys: ['Ctrl+J'], run: () => void (aiOpen.value = !aiOpen.value), checked: () => aiOpen.value, visible: () => platform.isTauri },
   { id: 'view.signatures', label: msg('Signatures'), run: () => void (signaturesOpen.value = !signaturesOpen.value), checked: () => signaturesOpen.value },
   { id: 'view.customizeToolbar', label: msg('Customize Toolbar…'), run: () => void (customizeOpen.value = true) },
   // Go

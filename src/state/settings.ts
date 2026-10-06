@@ -29,7 +29,7 @@ export interface Settings {
   aiApps: boolean
 }
 
-export const DEFAULT_TOOLBAR = ['sidebar', 'pageControls', 'spacer', 'zoomOut', 'zoomIn', 'rotate', 'highlight', 'markup', 'search', 'overflow']
+export const DEFAULT_TOOLBAR = ['sidebar', 'pageControls', 'spacer', 'zoomOut', 'zoomIn', 'rotate', 'highlight', 'markup', 'askAi', 'search', 'overflow']
 
 const DEFAULTS: Settings = {
   theme: 'system',
@@ -48,7 +48,7 @@ const DEFAULTS: Settings = {
 const KEY = 'glance.settings.v1'
 
 /** Toolbar items added in later versions are appended for users with a saved toolbar. */
-const ADDED_ITEMS: Record<string, string> = { highlight: 'rotate', markup: 'highlight' }
+const ADDED_ITEMS: Record<string, string> = { highlight: 'rotate', markup: 'highlight', askAi: 'markup' }
 
 function load(): Settings {
   try {

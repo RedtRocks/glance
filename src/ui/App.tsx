@@ -1,7 +1,7 @@
 import { useEffect } from 'preact/hooks'
 import { activeDoc, activeId, docs, findByPath } from '../state/documents'
 import { isDark, settings } from '../state/settings'
-import { cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, inspectorOpen, narrowWindow, signaturesOpen, redactTextOpen, findOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
+import { cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, inspectorOpen, aiOpen, narrowWindow, signaturesOpen, redactTextOpen, findOpen, settingsOpen, sidebarVisible, slideshow } from '../state/ui'
 import { confirmCloseWindow, openFiles } from '../state/actions'
 import { startAutosave } from '../state/autosave'
 import { restoreSession } from '../state/session'
@@ -48,6 +48,9 @@ import { InspectorPane } from './InspectorPane'
 import { ConflictBar } from './ConflictBar'
 import { SignatureBar } from './SignatureBar'
 import { SignaturesPane } from './SignaturesPane'
+import { AiSidebar } from './ai/AiSidebar'
+import { AreaSelect } from './ai/AreaSelect'
+import { selectingArea } from '../state/ai'
 import { signatureDialog } from '../state/markupState'
 import { adjustColorOpen, adjustSizeOpen, exportOpen, imageSelection } from '../state/imageState'
 import { ImageDoc, PdfDoc } from '../state/documents'
@@ -82,12 +85,14 @@ function Viewer() {
           {doc.kind === 'model' && <ModelView key={doc.id} doc={doc} />}
           {doc.kind === 'preview' && <PreviewView key={doc.id} doc={doc} />}
         </div>
+        {aiOpen.value && selectingArea.value && <AreaSelect doc={doc} />}
         {phone && <PageCounter doc={doc} />}
         {phone && <PhoneDock doc={doc} />}
       </main>
       {doc instanceof ImageDoc && doc.editable && adjustColorOpen.value && <AdjustColorPanel key={doc.id} doc={doc} />}
       {inspectorOpen.value && doc.kind !== 'notice' && <InspectorPane key={doc.id} doc={doc} />}
       {signaturesOpen.value && doc.kind === 'pdf' && <SignaturesPane key={doc.id} doc={doc} />}
+      {aiOpen.value && platform.isTauri && <AiSidebar doc={doc} />}
     </div>
   )
 }
