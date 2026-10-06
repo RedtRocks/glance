@@ -150,8 +150,8 @@ fn serve(app: AppHandle, stream: TcpStream, token: &str) {
         // Give a restarting AI app a moment to reconnect before quitting.
         std::thread::sleep(Duration::from_secs(3));
         let idle = hub.conns.lock().unwrap().is_empty();
-        let hidden = app.get_webview_window("main").map(|w| !w.is_visible().unwrap_or(true)).unwrap_or(true);
-        if idle && hidden && app.webview_windows().len() <= 1 {
+        let hidden = app.get_window("main").map(|w| !w.is_visible().unwrap_or(true)).unwrap_or(true);
+        if idle && hidden && app.windows().len() <= 1 {
             app.exit(0);
         }
     }
@@ -160,7 +160,7 @@ fn serve(app: AppHandle, stream: TcpStream, token: &str) {
 /// The main window starts handling AI requests: returns those that arrived before,
 /// later ones come as "mcp" events.
 #[tauri::command]
-pub fn mcp_take(window: tauri::WebviewWindow, hub: tauri::State<'_, Hub>) -> Vec<Event> {
+pub fn mcp_take(window: tauri::Window, hub: tauri::State<'_, Hub>) -> Vec<Event> {
     if window.label() != "main" {
         return Vec::new();
     }
@@ -190,7 +190,7 @@ pub fn mcp_launched_hidden(hub: tauri::State<'_, Hub>) -> bool {
 #[tauri::command]
 pub fn mcp_show(app: AppHandle) {
     app.state::<Hub>().hidden_launch.store(false, Ordering::SeqCst);
-    if let Some(win) = app.get_webview_window("main") {
+    if let Some(win) = app.get_window("main") {
         let _ = win.show();
         let _ = win.unminimize();
         let _ = win.set_focus();

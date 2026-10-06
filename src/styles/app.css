@@ -88,6 +88,13 @@ select {
   font: inherit;
   color: inherit;
 }
+/* Windows draws a select's list with the option colours; the controls' see-through
+   backgrounds would leave it white, with white text in dark mode. */
+select option,
+select optgroup {
+  background: var(--flyout);
+  color: var(--text);
+}
 :focus-visible {
   outline: 2px solid var(--text);
   outline-offset: 1px;
@@ -332,6 +339,17 @@ select {
 .tb-button.pressed {
   background: var(--subtle-hover);
   color: var(--accent);
+}
+/* Ask AI stands apart from the document tools: its sparkle is filled with a purple gradient. */
+.ai-gradient-defs {
+  position: absolute;
+}
+.tb-button.ai-button .icon svg,
+.tb-button.ai-button .icon path {
+  fill: url(#ai-gradient);
+}
+.tb-button.ai-button .icon {
+  filter: drop-shadow(0 0 3px rgba(139, 92, 246, 0.45));
 }
 .page-field {
   display: flex;
@@ -3349,6 +3367,20 @@ input[type='range'] {
   font-weight: 600;
   line-height: 1;
 }
+.ai-logo {
+  background: #ffffff;
+  color: #000000;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+.ai-logo svg {
+  width: 100%;
+  height: 100%;
+}
+:root[data-theme='dark'] .ai-logo {
+  background: #3a3a3a;
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
 .icon-button.pressed {
   background: var(--subtle-hover);
 }
@@ -3967,3 +3999,19 @@ input[type='range'] {
   background: var(--card);
 }
 .ai-site-bar p { margin: 0; }
+.ai-site-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--stroke);
+  min-width: 0;
+}
+.ai-site-host {
+  margin-left: 6px;
+  font-size: 12px;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

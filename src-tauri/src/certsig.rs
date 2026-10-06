@@ -93,7 +93,7 @@ pub async fn verify_pdf_signature(request: Request<'_>) -> Result<SignatureCheck
 
 /// Opens the standard Windows certificate dialog for a DER certificate (base64).
 #[tauri::command]
-pub async fn show_certificate(app: tauri::AppHandle, window: tauri::WebviewWindow, der: String) -> Result<(), String> {
+pub async fn show_certificate(app: tauri::AppHandle, window: tauri::Window, der: String) -> Result<(), String> {
     use base64::Engine;
     let der = base64::engine::general_purpose::STANDARD.decode(der).map_err(|e| e.to_string())?;
     #[cfg(windows)]
@@ -125,7 +125,7 @@ pub struct SigningCertificate {
 /// Lets the user pick one of their certificates (Personal store) in the Windows dialog.
 /// Ok(None) when they cancel.
 #[tauri::command]
-pub async fn pick_signing_certificate(app: tauri::AppHandle, window: tauri::WebviewWindow) -> Result<Option<SigningCertificate>, String> {
+pub async fn pick_signing_certificate(app: tauri::AppHandle, window: tauri::Window) -> Result<Option<SigningCertificate>, String> {
     #[cfg(windows)]
     {
         let hwnd = window.hwnd().map_err(|e| e.to_string())?.0 as isize;

@@ -959,6 +959,19 @@ export async function websiteReload(id: string): Promise<void> {
   await invoke('website_reload', { id })
 }
 
+export async function websiteBack(id: string): Promise<void> {
+  await invoke('website_back', { id })
+}
+
+export async function websiteHome(id: string): Promise<void> {
+  await invoke('website_home', { id })
+}
+
+/** Closes any website left over from before Glance's page reloaded. */
+export async function websiteCloseAll(): Promise<void> {
+  if (isTauri) await invoke('website_close_all')
+}
+
 // ---------------------------------------------------------------------------
 // Speech to text for the Ask AI sidebar's mic (see src-tauri/src/speech.rs)
 
