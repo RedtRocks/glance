@@ -16,7 +16,7 @@ export const MENU_TEXT = [
   msg('Sidebar'), msg('Page layout')
 ]
 
-const HELP: Entry[] = ['help.github', 'help.updates', 'help.about']
+const HELP: Entry[] = ['help.feedback', 'help.github', '-', 'help.updates', 'help.about']
 const ZOOM: Entry[] = ['view.zoomIn', 'view.zoomOut', 'view.actualSize', 'view.zoomToFit']
 
 /** Each kind of file gets its own menu bar, like separate apps would. */
