@@ -406,17 +406,6 @@ export async function revealInExplorer(path: string): Promise<void> {
   await revealItemInDir(path)
 }
 
-/** The installed app's version, or null in the browser. */
-export async function appVersion(): Promise<string | null> {
-  if (!isTauri) return null
-  try {
-    const { getVersion } = await import('@tauri-apps/api/app')
-    return await getVersion()
-  } catch {
-    return null
-  }
-}
-
 export async function openUrl(url: string): Promise<void> {
   if (!isTauri) {
     window.open(url, '_blank', 'noopener')
