@@ -27,8 +27,13 @@ import { flushAutosave } from './autosave'
 import { msg, t } from '../i18n'
 import { mayHaveSignatures } from '../core/signatureStatus'
 import { PREVIEWS } from '../core/previews'
+import { linuxInstallCommand } from '../core/packages'
 
-const GS_INSTALL = platform.isWindows ? 'winget install ArtifexSoftware.GhostScript' : 'sudo dnf install ghostscript'
+async function ghostscriptInstallCommand(): Promise<string> {
+  if (!platform.isTauri || platform.isWindows) return 'winget install ArtifexSoftware.GhostScript'
+  const osRelease = await platform.readFile('/etc/os-release').then((b) => new TextDecoder().decode(b), () => '')
+  return linuxInstallCommand('ghostscript', osRelease)
+}
 
 export const OPEN_FILTERS: platform.FileFilter[] = [
   {
@@ -189,9 +194,10 @@ async function openPostscript(probe: Probe): Promise<Doc | null> {
     addDoc(doc)
     return doc
   } catch (e) {
+    const install = await ghostscriptInstallCommand()
     const missing = String(e).includes('ghostscript-missing')
     const actions = [
-      { label: t('Copy install command'), run: () => void navigator.clipboard.writeText(GS_INSTALL).then(() => toast(t('Command copied. Paste it into Terminal.'))) },
+      { label: t('Copy install command'), run: () => void navigator.clipboard.writeText(install).then(() => toast(t('Command copied. Paste it into Terminal.'))) },
       { label: t('Ghostscript website'), run: () => void platform.openUrl('https://ghostscript.com/releases/gsdnld.html') }
     ]
     const why = missing
@@ -203,7 +209,7 @@ async function openPostscript(probe: Probe): Promise<Doc | null> {
       addDoc(doc)
       return doc
     }
-    return notice(probe, t('Ghostscript is needed for PostScript'), `${why}\n\n${GS_INSTALL}`, actions)
+    return notice(probe, t('Ghostscript is needed for PostScript'), `${why}\n\n${install}`, actions)
   }
 }
 

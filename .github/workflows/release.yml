@@ -1,6 +1,6 @@
 name: Release
 
-# Build Windows installers and Linux RPMs and publish a GitHub Release, either by pushing a tag like
+# Build Windows installers and Linux packages and publish a GitHub Release, either by pushing a tag like
 # v0.1.0, or from the Actions tab ("Run workflow") with a version: the release and its
 # tag are then created on the selected branch's commit.
 on:
@@ -103,8 +103,54 @@ jobs:
           cp src-tauri/target/release/bundle/rpm/*.rpm "dist-release/Glance-$tag-linux-${{ matrix.arch }}.rpm"
       - uses: actions/upload-artifact@v4
         with:
-          name: rpm-${{ matrix.arch }}
+          name: linux-rpm-${{ matrix.arch }}
           path: dist-release/*.rpm
+
+  linux-deb:
+    name: Linux ${{ matrix.arch }} (.deb)
+    runs-on: ${{ matrix.runner }}
+    container: ubuntu:22.04
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - name: Install build dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates curl git build-essential clang perl file pkg-config \
+            libwebkit2gtk-4.1-dev libssl-dev librsvg2-dev libxdo-dev
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            src-tauri
+            src-tauri/mcp-bridge
+          key: release-linux-deb-${{ matrix.arch }}
+      - run: npm ci
+      - name: Build .deb
+        run: npx tauri build --bundles deb
+      - name: Name .deb
+        shell: bash
+        run: |
+          tag="${{ github.event.inputs.tag || github.ref_name }}"
+          mkdir -p dist-release
+          cp src-tauri/target/release/bundle/deb/*.deb "dist-release/Glance-$tag-linux-${{ matrix.arch }}.deb"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-deb-${{ matrix.arch }}
+          path: dist-release/*.deb
 
   publish:
     name: Publish release
@@ -129,22 +175,27 @@ jobs:
             dist-release/SHA256SUMS.txt
 
   linux-publish:
-    name: Add Linux RPMs to the release
-    needs: [publish, linux-rpm]
+    name: Add Linux packages to the release
+    needs: [publish, linux-rpm, linux-deb]
+    if: ${{ !cancelled() && needs.publish.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
-          pattern: rpm-*
+          pattern: linux-*
           path: dist-release
           merge-multiple: true
-      - name: Upload RPMs and their checksums
+      - name: Upload Linux packages and their checksums
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cd dist-release
-          sha256sum *.rpm > SHA256SUMS-linux.txt && cat SHA256SUMS-linux.txt
-          gh release upload "${{ github.event.inputs.tag || github.ref_name }}" *.rpm SHA256SUMS-linux.txt --repo "$GITHUB_REPOSITORY"
+          mkdir -p dist-release && cd dist-release
+          shopt -s nullglob
+          pkgs=(*.rpm *.deb)
+          if [ ${#pkgs[@]} -eq 0 ]; then echo "::warning::No Linux packages were built, so none were added."; exit 0; fi
+          sha256sum "${pkgs[@]}" > SHA256SUMS-linux.txt && cat SHA256SUMS-linux.txt
+          gh release upload "${{ github.event.inputs.tag || github.ref_name }}" "${pkgs[@]}" SHA256SUMS-linux.txt --repo "$GITHUB_REPOSITORY"
 
   winget:
     name: winget
