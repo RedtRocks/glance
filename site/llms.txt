@@ -9,7 +9,7 @@ What it does:
 - Images: Adjust Color with a live histogram, Instant Alpha and on-device background removal, straighten, crop, resize, batch edits; HEIC and camera RAW decode through Windows' own codecs.
 - 3D models: GLB, glTF, OBJ, STL, 3MF, FBX, USDZ, 3DS with orbit, wireframe, clay and X-ray materials.
 - Office and more: read-only previews of Word, PowerPoint and Excel files (including 97-2003 .doc, .xls, .ppt), CSV, Markdown, text and code, EPUB, email, fonts, video and audio, with Open with… to edit in another app.
-- AI apps: Claude Code, Claude Desktop, Codex, Cursor, VS Code and other MCP apps can use Glance as a tool (glance-mcp.exe) to view, OCR, convert, combine, split and redact files. Setup: Settings → AI apps. Glance also has an Ask AI sidebar to chat with Claude, ChatGPT, Gemini and others about the open file, using the user's own account or API key. Docs: https://github.com/RedtRocks/glance/blob/main/docs/AI-APPS.md
+- AI apps: Claude Code, Claude Desktop, Codex, Cursor, VS Code and other MCP apps can use Glance as a tool (glance-mcp.exe) to view, OCR, convert, combine, split and redact files. Setup: Settings → AI apps. Glance also has an Ask AI sidebar to chat with Claude, ChatGPT, Gemini and others about the open file, using the user's own account or API key. The sidebar can also edit a PDF's text when asked by voice (Windows speech) or by typing: changes appear in the document's own font and style and can be kept or undone, and the user can switch AI company or model at any time. Docs: https://github.com/RedtRocks/glance/blob/main/docs/AI-APPS.md
 - Windows integration: default-app registration, Explorer thumbnails for PDF, RAW, PSD, JPEG XL and other types Windows can't preview, dark mode, x64 and ARM64 builds.
 
 ## In the browser
