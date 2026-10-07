@@ -6,6 +6,7 @@
  */
 import { signal } from '@preact/signals'
 import { isNewer } from '../core/version'
+import { countDownloads } from '../core/downloads'
 import * as platform from '../platform'
 import { settings } from './settings'
 
@@ -47,5 +48,16 @@ export async function checkForUpdates(opts: { force?: boolean } = {}): Promise<'
     return 'newer'
   } catch {
     return 'error'
+  }
+}
+
+/** Total downloads of Glance so far, shown in About. Null when GitHub can't be reached. */
+export async function downloadCount(): Promise<number | null> {
+  try {
+    const res = await fetch('https://api.github.com/repos/RedtRocks/glance/releases?per_page=100', { headers: { Accept: 'application/vnd.github+json' } })
+    if (!res.ok) return null
+    return countDownloads(await res.json())
+  } catch {
+    return null
   }
 }

@@ -1,5 +1,6 @@
 /** User-level operations shared by menus, toolbar, shortcuts and drag-and-drop. */
 import * as platform from '../platform'
+import { downloadCount } from './updates'
 import type { Probe } from '../platform'
 import type * as PageOps from '../core/pageOps'
 import { MARKER_KEY, newId, pageMaps, type Markup, type Rect } from '../core/markup'
@@ -686,7 +687,12 @@ export async function redo(doc = activeDoc.value): Promise<void> {
 }
 
 export async function showAbout(): Promise<void> {
-  await alertDialog(t('About Glance'), t('Glance 0.1.0: a free, open-source viewer for PDFs, images and 3D models. Apache-2.0.'))
+  const [version, downloads] = await Promise.all([platform.appVersion(), downloadCount()])
+  const intro = version
+    ? t('Glance {version}: a free, open-source viewer for PDFs, images and 3D models. Apache-2.0.', { version })
+    : t('Glance: a free, open-source viewer for PDFs, images and 3D models. Apache-2.0.')
+  const body = downloads === null ? intro : `${intro} ${t('{count, plural, one {# download} other {# downloads}} so far.', { count: downloads })}`
+  await alertDialog(t('About Glance'), body)
 }
 
 export function allDocs(): Doc[] {
