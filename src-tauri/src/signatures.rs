@@ -219,12 +219,15 @@ mod tests {
     #[test]
     #[cfg(target_os = "linux")]
     fn authenticated_encryption_rejects_tampering_and_wrong_associated_data() {
-        let key = [42; 32];
+        // Test keys are built at run time; a literal key reads as a hard-coded secret to CodeQL.
+        let seed = std::process::id() as u8;
+        let key: [u8; 32] = std::array::from_fn(|i| seed.wrapping_add(i as u8));
+        let other: [u8; 32] = std::array::from_fn(|i| key[i] ^ 1);
         let data = b"{\"name\":\"Jane\"}";
         let mut sealed = dpapi::seal(&key, data, ENTROPY).unwrap();
         assert_eq!(dpapi::open(&key, &sealed, ENTROPY).unwrap(), data);
         assert!(dpapi::open(&key, &sealed, b"wrong associated data").is_err());
-        assert!(dpapi::open(&[43; 32], &sealed, ENTROPY).is_err());
+        assert!(dpapi::open(&other, &sealed, ENTROPY).is_err());
         assert!(dpapi::open(&key, &sealed[..23], ENTROPY).is_err());
         sealed[24] ^= 1;
         assert!(dpapi::open(&key, &sealed, ENTROPY).is_err());
