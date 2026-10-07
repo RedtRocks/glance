@@ -4,6 +4,7 @@ Glance is a free, open-source, lightweight viewer and editor for PDFs, images, c
 
 ## New in 0.6.4
 
+- **Send feedback from Glance.** **Help → Send Feedback** opens a box for a bug report or an idea and sends it as an email from your own mail app, so you don't need a GitHub account to tell us.
 - **An anonymous count of installs.** Once a day Glance sends one check-in with its version number and whether it came from the Microsoft Store or GitHub, so there's a number for how many copies are in use. There's no ID, and nothing about you or the files you open. Turn it off in **Settings → Count this install**. The [privacy policy](https://github.com/RedtRocks/glance/blob/main/PRIVACY.md) has the details.
 
 ## New in 0.6.3
