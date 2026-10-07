@@ -45,6 +45,15 @@ tract-onnx = "0.23"
 # Matches tract-onnx's linalg; enables multithreaded matrix multiply (~1.7x faster).
 tract-linalg = { version = "=0.23.8", features = ["multithread-mm"] }
 
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+# async-io uses pure-Rust zbus; the synchronous backend requires native libdbus.
+keyring = { version = "3.6.3", default-features = false, features = ["async-secret-service", "async-io", "crypto-rust"] }
+chacha20poly1305 = "0.10"
+getrandom = "0.3"
+
 [target.'cfg(windows)'.dependencies]
 window-vibrancy = "0.6"
 windows = { version = "0.62", features = [
