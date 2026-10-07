@@ -2,6 +2,11 @@ Glance is a free, open-source, lightweight viewer and editor for PDFs, images, c
 
 > **Early preview.** Most of Preview's everyday features work, plus version history, 3D models, certificate signatures and more. Glance's entries in Explorer's right-click menu are under **Show more options** on Windows 11; the top-level entry comes once releases are code-signed. See the [README](https://github.com/RedtRocks/glance#features) for the full list.
 
+## New in 0.6.3
+
+- **The mic in Ask AI works.** **Open Settings** now opens the right Windows Settings page. If the microphone is blocked, Glance says so before listening. If Windows still hears nothing, the sidebar explains why and offers **Use Windows voice typing** (Win+H), which types into the message box.
+- **Glance is back on its way to the Microsoft Store.** The Store turned down the 0.6.2 package because of a hidden helper app inside it. AI apps now start Glance itself instead, so the package has just Glance, and connected AI apps keep working as before.
+
 ## New in 0.6.2
 
 - **Tell the AI what to change in your document.** In Ask AI, type or say things like "change the tenant to Jordan Ellis" or "add a sentence about renewing under Term". The AI changes, adds or deletes text in the open PDF or photo, in the same font, size, colour and line spacing as the page, and the words and paragraphs after it move along to make room. Each answer's changes show as a card with **Keep** and **Undo**, and nothing is saved until you save. It works with every AI company in the sidebar.
@@ -88,7 +93,7 @@ Requires Windows 10 (1809+) or Windows 11. The installer downloads the WebView2 
 
 ## Privacy
 
-No telemetry and no account. The only network request is an optional daily update check (Settings). Background removal and text recognition run on your PC. Saved signatures are encrypted with your Windows account.
+No account and nothing you open leaves your PC. Glance makes two optional daily requests, both with a switch in Settings: an update check, and an anonymous count of installs (version number only, no ID). Background removal and text recognition run on your PC. Saved signatures are encrypted with your Windows account.
 
 ## Verify your download
 

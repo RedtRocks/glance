@@ -20,6 +20,10 @@
     "clipboard-manager:allow-write-text",
     "opener:default",
     "opener:allow-reveal-item-in-dir",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "ms-settings:*" }]
+    },
     "drag:default"
   ]
 }

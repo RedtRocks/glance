@@ -8,6 +8,7 @@ import { restoreSession } from '../state/session'
 import { startMcp } from '../state/mcp'
 import { handleShellRequest } from '../state/shellActions'
 import { checkForUpdates } from '../state/updates'
+import { countInstall } from '../state/installCount'
 import { UpdateBar } from './UpdateBar'
 import { DefaultAppBar } from './DefaultAppBar'
 import { offerDefaultApp } from '../state/defaultApp'
@@ -150,7 +151,10 @@ export function App() {
     )
     const stopAutosave = startAutosave()
     // A few seconds after start, so it never competes with opening files.
-    const updateTimer = window.setTimeout(() => void checkForUpdates(), 5000)
+    const updateTimer = window.setTimeout(() => {
+      void checkForUpdates()
+      void countInstall()
+    }, 5000)
     const defaultAppTimer = window.setTimeout(() => void offerDefaultApp(), 3000)
     // Another window asked us to show a file this window already has open.
     let unactivate: (() => void) | undefined

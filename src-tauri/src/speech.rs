@@ -11,7 +11,8 @@ pub enum SpeechEvent {
     Partial { text: String },
     Final { text: String },
     End,
-    /// `code`: "privacy" (Online speech recognition is off), "no-mic", "language" or "other".
+    /// `code`: "privacy" (Online speech recognition is off), "no-mic", "no-audio" (the session
+    /// started but Windows heard nothing it could use), "language" or "other".
     Error { code: String, message: String },
 }
 
@@ -25,8 +26,8 @@ fn code_for(hresult: i32) -> &'static str {
     match hresult as u32 {
         // SPERR_SPEECH_PRIVACY_POLICY_NOT_ACCEPTED
         0x8004_5509 => "privacy",
-        // E_ACCESSDENIED (microphone blocked), no audio device
-        0x8007_0005 | 0x8004_5508 | 0x8004_5507 => "no-mic",
+        // E_ACCESSDENIED (microphone blocked), no audio device, MF_E_NO_CAPTURE_DEVICES_AVAILABLE
+        0x8007_0005 | 0x8004_5508 | 0x8004_5507 | 0xC00D_ABE0 => "no-mic",
         _ => "other",
     }
 }
@@ -43,6 +44,18 @@ pub async fn speech_start(app: AppHandle, language: String) -> Result<(), String
         let _ = (app, language);
         Err("Speech recognition is only available on Windows.".into())
     }
+}
+
+/// Opens Windows voice typing (Win+H) for the focused text box, for when Glance's own
+/// listening can't hear the microphone.
+#[tauri::command]
+pub fn voice_typing() -> Result<(), String> {
+    #[cfg(windows)]
+    {
+        win::voice_typing()
+    }
+    #[cfg(not(windows))]
+    Err("Voice typing is only available on Windows.".into())
 }
 
 /// Stops listening; an `end` event follows.
@@ -65,8 +78,10 @@ mod win {
     use windows::core::{Interface, HSTRING};
     use windows::Foundation::{TimeSpan, TypedEventHandler};
     use windows::Globalization::Language;
+    use windows::Media::Capture::{MediaCapture, MediaCaptureInitializationSettings, MediaCategory, StreamingCaptureMode};
     use windows::Media::SpeechRecognition::*;
     use windows::Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED};
+    use windows::Win32::UI::Input::KeyboardAndMouse::{SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYBD_EVENT_FLAGS, KEYEVENTF_KEYUP, VIRTUAL_KEY, VK_H, VK_LWIN};
 
     /// The recognizer that is listening, if any.
     static ACTIVE: Mutex<Option<SpeechRecognizer>> = Mutex::new(None);
@@ -75,11 +90,32 @@ mod win {
         emit(app, SpeechEvent::Error { code: code_for(e.code().0).into(), message: e.message() });
     }
 
+    /// Opens the microphone once, the way Microsoft's speech samples do. This asks for
+    /// microphone consent when Windows hasn't asked yet, and fails with "access denied" when
+    /// Glance may not use the microphone; without it, recognition starts and then stops with
+    /// status Unknown having heard nothing.
+    fn check_microphone() -> windows::core::Result<()> {
+        let settings = MediaCaptureInitializationSettings::new()?;
+        settings.SetStreamingCaptureMode(StreamingCaptureMode::Audio)?;
+        settings.SetMediaCategory(MediaCategory::Speech)?;
+        let capture = MediaCapture::new()?;
+        let opened = capture.InitializeWithSettingsAsync(&settings)?.join();
+        let _ = capture.Close();
+        opened
+    }
+
     pub fn start(app: AppHandle, language: &str) -> Result<(), String> {
         unsafe {
             let _ = CoInitializeEx(None, COINIT_MULTITHREADED);
         }
         stop(&app);
+        if let Err(e) = check_microphone() {
+            let code = match code_for(e.code().0) {
+                "other" => "no-mic",
+                c => c,
+            };
+            return Err(format!("{code}: {}", e.message()));
+        }
         let run = || -> windows::core::Result<Result<SpeechRecognizer, (String, String)>> {
             let recognizer = if language.is_empty() {
                 SpeechRecognizer::new()?
@@ -123,6 +159,11 @@ mod win {
                     match args.Status()? {
                         SpeechRecognitionResultStatus::Success | SpeechRecognitionResultStatus::UserCanceled | SpeechRecognitionResultStatus::TimeoutExceeded => {}
                         SpeechRecognitionResultStatus::MicrophoneUnavailable => emit(&a, SpeechEvent::Error { code: "no-mic".into(), message: "the microphone went away".into() }),
+                        // Unknown is what Windows reports when the microphone gave it nothing to
+                        // work with (blocked for desktop apps, muted, or another app holding it).
+                        SpeechRecognitionResultStatus::Unknown | SpeechRecognitionResultStatus::AudioQualityFailure => {
+                            emit(&a, SpeechEvent::Error { code: "no-audio".into(), message: "Windows couldn’t hear the microphone".into() })
+                        }
                         SpeechRecognitionResultStatus::NetworkFailure => emit(&a, SpeechEvent::Error { code: "other".into(), message: "no internet connection".into() }),
                         s => emit(&a, SpeechEvent::Error { code: "other".into(), message: format!("recognition stopped ({})", s.0) }),
                     }
@@ -144,6 +185,20 @@ mod win {
                 let code = code_for(e.code().0);
                 Err(format!("{code}: {}", e.message()))
             }
+        }
+    }
+
+    pub fn voice_typing() -> Result<(), String> {
+        let key = |vk: VIRTUAL_KEY, up: bool| INPUT {
+            r#type: INPUT_KEYBOARD,
+            Anonymous: INPUT_0 { ki: KEYBDINPUT { wVk: vk, dwFlags: if up { KEYEVENTF_KEYUP } else { KEYBD_EVENT_FLAGS(0) }, ..Default::default() } },
+        };
+        let inputs = [key(VK_LWIN, false), key(VK_H, false), key(VK_H, true), key(VK_LWIN, true)];
+        let sent = unsafe { SendInput(&inputs, std::mem::size_of::<INPUT>() as i32) };
+        if sent as usize == inputs.len() {
+            Ok(())
+        } else {
+            Err(windows::core::Error::from_thread().message())
         }
     }
 
@@ -174,6 +229,7 @@ mod tests {
     fn failures_say_what_to_fix() {
         assert_eq!(code_for(0x8004_5509u32 as i32), "privacy");
         assert_eq!(code_for(0x8007_0005u32 as i32), "no-mic");
+        assert_eq!(code_for(0xC00D_ABE0u32 as i32), "no-mic");
         assert_eq!(code_for(0x8000_4005u32 as i32), "other");
     }
 }

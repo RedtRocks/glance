@@ -20,7 +20,9 @@ const bridge = process.argv[2]
 const live = process.argv.includes('--live')
 /** The email address in the test letter. */
 const hasEmail = (t) => /jane\.doe@/.test(t)
-if (!bridge || !existsSync(bridge)) throw new Error(`usage: mcp-smoke.mjs <glance-mcp>; not found: ${bridge}`)
+// Node can't stat the Store package's app alias (a reparse point), only start it.
+const alias = /[\\/]WindowsApps[\\/]/i.test(bridge ?? '')
+if (!bridge || (!alias && !existsSync(bridge))) throw new Error(`usage: mcp-smoke.mjs <glance-mcp>; not found: ${bridge}`)
 
 const dir = mkdtempSync(join(tmpdir(), 'glance-mcp-'))
 const input = join(dir, 'letter.pdf')
@@ -35,6 +37,10 @@ const input = join(dir, 'letter.pdf')
 }
 
 const child = spawn(bridge, [], { stdio: ['pipe', 'pipe', 'inherit'] })
+child.on('error', (e) => {
+  console.error(`couldn't start ${bridge}: ${e.message}`)
+  process.exit(1)
+})
 const pending = new Map()
 let nextId = 1
 createInterface({ input: child.stdout }).on('line', (line) => {
