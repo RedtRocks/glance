@@ -171,6 +171,8 @@ a{color:var(--ink);text-underline-offset:4px}a:hover{color:var(--accent)}
 [data-hero],[data-py],[data-px]{will-change:transform}
 .theme-toggle .i-sun{display:none}.dark .theme-toggle .i-sun{display:inline}.dark .theme-toggle .i-moon{display:none}
 @media (prefers-reduced-motion:reduce){
+.ink-spark{--draw:1}.ink-spark path{fill-opacity:1}.ink-spark.done .ink-spark-small{animation:none}
+
 .w [class*="deal-"],.w .rise-shot,.w .tag-in,.w [class*="px-"],.w .stag-up,.w .stag-down,.w .tag-spin{animation:none !important}
 .btn:hover,.btn:active{transform:none !important}
 .viewer img{transform:none !important}
@@ -201,6 +203,13 @@ a.fchip::after{content:"\2197";font-size:14px;color:var(--ink-muted)}
 .seg-scroll{max-width:100%;overflow-x:auto;scrollbar-width:none}
 .seg-scroll::-webkit-scrollbar{display:none}
 .appchip{display:inline-flex;align-items:center;padding:8px 14px;border-radius:9999px;background:rgba(255,255,255,.1);color:#ffffff;font-size:15px;line-height:20px}
+.ink-spark{align-self:flex-start;overflow:visible;--draw:0}
+.ink-spark path{fill:#ffffff;fill-opacity:0;stroke:#0a0a0a;stroke-width:2.5;stroke-linejoin:round;stroke-dasharray:1;transition:fill-opacity .5s ease}
+.ink-spark-big{stroke-dashoffset:calc(1 - var(--draw))}
+.ink-spark-small{stroke-dashoffset:clamp(0, 1.6 - var(--draw) * 1.6, 1);transform-origin:80px 75px;transform-box:view-box}
+.ink-spark.done path{fill-opacity:1}
+.ink-spark.done .ink-spark-small{animation:twinkle 2.4s ease-in-out infinite}
+@keyframes twinkle{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(.72) rotate(45deg)}}
 .aichip{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:9999px;background:rgba(255,255,255,.55);color:#0a0a0a;font-size:15px;line-height:20px}
 .term{font-family:Consolas,ui-monospace,monospace;font-size:14px;line-height:22px;background:#0a0a0a;color:#e8e6ef;border-radius:16px;padding:20px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);overflow:hidden}
 .term .p{color:#f8d32c}.term .d{color:#a9a6b3}.term .ok{color:#7ee2a8}
@@ -483,7 +492,10 @@ Open in Your Browser
 <div class="wrap">
 <div data-reveal="0" style="background: #f8d32c; color: #0a0a0a; border-radius: 28px; padding: 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 40px; align-items: center">
 <div style="display: flex; flex-direction: column; gap: 20px">
-<div data-py="-16" data-rot="20" style="align-self: flex-start; color: #6312f6"><svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8.67 15.73q.37.27.83.27a1.4 1.4 0 0 0 1.33-.88l.61-1.86a2.9 2.9 0 0 1 1.82-1.81l1.78-.58a1.44 1.44 0 0 0-.06-2.74l-1.75-.57a2.9 2.9 0 0 1-1.82-1.82l-.58-1.78a1.45 1.45 0 0 0-2.73.02l-.59 1.8a2.9 2.9 0 0 1-1.77 1.78l-1.77.57a1.44 1.44 0 0 0 .01 2.73l1.76.57a2.9 2.9 0 0 1 1.82 1.83l.58 1.77q.15.44.53.7m7.66 5.05q-.29-.2-.4-.55l-.34-1a1.3 1.3 0 0 0-.82-.83l-.99-.32A1.15 1.15 0 0 1 13 17a1.1 1.1 0 0 1 .77-1.08l1-.33a1.3 1.3 0 0 0 .8-.82l.33-.99a1.14 1.14 0 0 1 2.16-.02l.33 1.01a1.3 1.3 0 0 0 .82.82l.99.32a1.14 1.14 0 0 1 .04 2.17l-1.01.33a1.3 1.3 0 0 0-.82.82l-.32.99a1.14 1.14 0 0 1-1.76.56"/></svg></div>
+<svg class="ink-spark" viewBox="0 0 100 100" width="96" height="96" aria-hidden="true">
+<path class="ink-spark-big" pathLength="1" d="M40 6C42 28 52 38 74 40C52 42 42 52 40 74C38 52 28 42 6 40C28 38 38 28 40 6Z"/>
+<path class="ink-spark-small" pathLength="1" d="M80 62C81 71 84 74 93 75C84 76 81 79 80 88C79 79 76 76 67 75C76 74 79 71 80 62Z"/>
+</svg>
 <span style="align-self: flex-start; background: #0a0a0a; color: #ffffff; border-radius: 6px; padding: 6px 10px; font-size: 13px; line-height: 18px">New in the Windows App</span>
 <p class="h3">Ask AI, Then Let It Edit the Page</p>
 <p class="body" style="max-width: 480px">Chat with Claude, ChatGPT or Gemini next to your document, using the account you already have. Say or type a change, and it appears in the page's own font.</p>
@@ -752,6 +764,22 @@ Open in Your Browser
   
   };
   fxInit.call({});
+})();
+</script>
+<script>
+/* Ask AI: the sparkle is drawn like a pen line as its card scrolls into view, then fills and twinkles. */
+(function () {
+  var svg = document.querySelector('.ink-spark');
+  if (!svg) return;
+  if (!('IntersectionObserver' in window) || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) { svg.style.setProperty("--draw", "1"); svg.classList.add("done"); return; }
+  var steps = []; for (var i = 0; i <= 50; i++) steps.push(i / 50);
+  new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      var d = Math.min(1, e.intersectionRatio / 0.85);
+      svg.style.setProperty('--draw', d.toFixed(3));
+      svg.classList.toggle('done', d >= 1);
+    });
+  }, { threshold: steps }).observe(svg.closest('[data-reveal]') || svg);
 })();
 </script>
 </body>
