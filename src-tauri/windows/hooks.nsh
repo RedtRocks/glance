@@ -3,7 +3,8 @@
 ;   tabs in one go.
 ; - Adds classic right-click verbs: Open in Glance, Combine into PDF and Remove Location
 ;   Info. On Windows 11 they appear under "Show more options"; the top-level menu needs a
-;   signed package (ADR 0009). Explorer runs a verb once per selected file; Glance gathers
+;   package identity, which only the Store package has (ADR 0009). The location types are
+;   checked against scripts/packaging.ts by tests/packaging.test.ts. Explorer runs a verb once per selected file; Glance gathers
 ;   the launches into one request (src-tauri/src/explorer.rs).
 ; - Registers Glance for Settings > Apps > Default apps and "Open with"
 ;   (default-apps.nsh, generated from tauri.conf.json), keeping Explorer's thumbnails.

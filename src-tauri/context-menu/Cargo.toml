@@ -1,0 +1,27 @@
+[package]
+name = "glance-context-menu"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Windows 11 top-level Explorer context menu for the Microsoft Store package (see src/lib.rs)"
+publish = false
+
+[lib]
+name = "glance_context_menu"
+crate-type = ["cdylib", "rlib"]
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.62", features = [
+  "Win32_Foundation",
+  "Win32_System_Com",
+  "Win32_System_LibraryLoader",
+  "Win32_UI_Shell",
+  "Win32_UI_Shell_Common",
+] }
+windows-core = "0.62"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+strip = true

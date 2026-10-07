@@ -1,6 +1,6 @@
 # Builds Glance's Microsoft Store package (see packaging/README.md).
 #
-#   pack.ps1 -Exe <glance.exe> -Arch x64|arm64 -Out <Glance-x64.msix>
+#   pack.ps1 -Exe <glance.exe> -ContextMenu <glance_context_menu.dll> -Arch x64|arm64 -Out <Glance-x64.msix>
 #   pack.ps1 -BundleFrom <folder of .msix files> -Out <Glance.msixbundle>
 #
 # The package identity comes from MSIX_IDENTITY_NAME, MSIX_PUBLISHER and
@@ -9,6 +9,8 @@
 [CmdletBinding(DefaultParameterSetName = 'Pack')]
 param(
   [Parameter(Mandatory, ParameterSetName = 'Pack')][string]$Exe,
+  # Windows 11's top-level right-click menu (src-tauri/context-menu), built for the same -Arch.
+  [Parameter(Mandatory, ParameterSetName = 'Pack')][string]$ContextMenu,
   [Parameter(Mandatory, ParameterSetName = 'Pack')][ValidateSet('x64', 'arm64')][string]$Arch,
   [Parameter(Mandatory, ParameterSetName = 'Bundle')][string]$BundleFrom,
   [Parameter(Mandatory)][string]$Out
@@ -42,6 +44,7 @@ Remove-Item -Recurse -Force $work -ErrorAction SilentlyContinue
 $layout = Join-Path $work 'layout'
 New-Item -ItemType Directory -Force $layout | Out-Null
 Copy-Item $Exe (Join-Path $layout 'Glance.exe')
+Copy-Item $ContextMenu (Join-Path $layout 'glance_context_menu.dll')
 # No glance-mcp.exe: its alias starts Glance.exe, which relays for AI apps (scripts/packaging.ts).
 Copy-Item -Recurse (Join-Path $PSScriptRoot 'Assets') (Join-Path $layout 'Assets')
 

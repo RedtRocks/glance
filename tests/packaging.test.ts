@@ -1,7 +1,11 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import {
+  CONTEXT_MENU_DLL,
+  CONTEXT_MENU_VERBS,
+  contextMenuTypes,
   DEFAULT_APPS_NSH,
+  LOCATION_TYPES,
   DEV_IDENTITY,
   extensions,
   msixManifest,
@@ -73,6 +77,30 @@ describe('MSIX manifest', () => {
     const xml = msixManifest(conf, 'x64', DEV_IDENTITY)
     expect(xml.match(/<Application /g)).toHaveLength(1)
     expect(xml).not.toContain('AppListEntry')
+  })
+
+  it('adds Open in Glance, Combine into PDF and Remove Location Info to the Windows 11 menu', () => {
+    const xml = msixManifest(conf, 'x64', DEV_IDENTITY)
+    const types = contextMenuTypes(conf)
+    for (const ext of ['pdf', 'jpg', 'heic', 'cr2', 'psd']) expect(types.get(ext)).toContain('GlanceCombine')
+    expect(types.get('pdf')).toEqual(['GlanceOpen', 'GlanceCombine'])
+    expect(types.get('jpg')).toEqual(['GlanceOpen', 'GlanceCombine', 'GlanceRemoveLocation'])
+    for (const ext of ['glb', 'xps', 'cbz', 'eps']) expect(types.has(ext)).toBe(false)
+    expect(xml).toContain('<desktop5:ItemType Type=".heic">')
+    expect(xml).toContain(`<desktop5:Verb Id="GlanceRemoveLocation" Clsid="${CONTEXT_MENU_VERBS[2].clsid}" />`)
+    // Each verb's COM class is served by the DLL, and the namespaces can be skipped by older Windows.
+    for (const v of CONTEXT_MENU_VERBS) expect(xml).toContain(`<com:Class Id="${v.clsid}" Path="${CONTEXT_MENU_DLL}" ThreadingModel="STA" />`)
+    expect(xml).toMatch(/IgnorableNamespaces="[^"]*\bdesktop4 desktop5 com\b/)
+  })
+
+  it('matches the context menu DLL and the installer on CLSIDs and location types', () => {
+    const rust = readFileSync('src-tauri/context-menu/src/lib.rs', 'utf8')
+    for (const v of CONTEXT_MENU_VERBS) expect(rust).toContain(`0x${v.clsid.replace(/-/g, '_')}`)
+    const rustTypes = /LOCATION_TYPES: \[&str; \d+\] = \[([^\]]+)\]/.exec(rust)![1].match(/"(\w+)"/g)!.map((t) => t.slice(1, -1))
+    expect(rustTypes).toEqual(LOCATION_TYPES)
+    const hooks = readFileSync('src-tauri/windows/hooks.nsh', 'utf8')
+    const block = /!macro GLANCE_LOCATION_TYPES M([\s\S]*?)!macroend/.exec(hooks)![1]
+    expect([...block.matchAll(/"\.(\w+)"/g)].map((m) => m[1])).toEqual(LOCATION_TYPES)
   })
 
   it('escapes the identity', () => {
