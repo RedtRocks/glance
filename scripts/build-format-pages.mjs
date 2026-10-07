@@ -408,6 +408,9 @@ export function build(today = new Date().toISOString().slice(0, 10)) {
   mkdirSync(join(SITE, HUB.slug), { recursive: true })
   writeFileSync(join(SITE, HUB.slug, 'index.html'), hub(HUB))
   writeFileSync(join(SITE, 'sitemap.xml'), sitemap(FORMAT_PAGES, today))
+  // The same list as plain text, which Search Console also accepts: a fallback when it
+  // reports the XML one as "couldn't fetch" or "could not be read".
+  writeFileSync(join(SITE, 'sitemap.txt'), [...sitemap(FORMAT_PAGES, today).matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]).join('\n') + '\n')
   return FORMAT_PAGES.length + 1
 }
 
