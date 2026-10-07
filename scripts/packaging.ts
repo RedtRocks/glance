@@ -178,10 +178,48 @@ function ftaNames(conf: TauriConf): string[] {
   })
 }
 
+/** The Explorer command DLL in the Store package (src-tauri/context-menu). */
+export const CONTEXT_MENU_DLL = 'glance_context_menu.dll'
+
+/** Formats whose location info Glance can remove (src-tauri/src/metadata.rs); hooks.nsh and src-tauri/context-menu list them too. */
+export const LOCATION_TYPES = ['jpg', 'jpeg', 'jfif', 'png', 'tif', 'tiff', 'webp', 'heic', 'heif', 'jxl']
+
+/** Explorer verbs and their COM classes (src-tauri/context-menu/src/lib.rs), in menu order. */
+export const CONTEXT_MENU_VERBS = [
+  { id: 'GlanceOpen', clsid: 'd479f676-6ff1-4114-be81-5c7dfb4f7514' },
+  { id: 'GlanceCombine', clsid: '4f22f3ee-52e1-4591-acbc-74dbe703bdbe' },
+  { id: 'GlanceRemoveLocation', clsid: '0a5189eb-b743-41cd-897e-d0c9401bdeee' }
+] as const
+
+/**
+ * Extension → the verbs Windows 11's context menu shows for it: Open in Glance and Combine
+ * into PDF for PDFs and images, Remove Location Info for LOCATION_TYPES, as the installer's
+ * classic verbs do.
+ */
+export function contextMenuTypes(conf: TauriConf): Map<string, string[]> {
+  const [open, combine, remove] = CONTEXT_MENU_VERBS.map((v) => v.id)
+  const types = new Map<string, string[]>()
+  const pdfAndImages = conf.bundle.fileAssociations.filter((a) => a.ext.includes('pdf') || /image/i.test(a.name))
+  for (const e of [...new Set(pdfAndImages.flatMap((a) => a.ext.map((x) => x.toLowerCase())))]) {
+    types.set(e, LOCATION_TYPES.includes(e) ? [open, combine, remove] : [open, combine])
+  }
+  return types
+}
+
 /** AppxManifest.xml for the Store package. The layout holds Glance.exe and Assets\. */
 export function msixManifest(conf: TauriConf, arch: 'x64' | 'arm64', identity: MsixIdentity): string {
   const names = ftaNames(conf)
   const displayName = identity.displayName ?? conf.productName
+  const verbTypes = [...contextMenuTypes(conf)]
+    .map(
+      ([ext, verbs]) => `            <desktop5:ItemType Type=".${xml(ext)}">
+${verbs.map((id) => `              <desktop5:Verb Id="${id}" Clsid="${CONTEXT_MENU_VERBS.find((v) => v.id === id)!.clsid}" />`).join('\n')}
+            </desktop5:ItemType>`
+    )
+    .join('\n')
+  const verbClasses = CONTEXT_MENU_VERBS.map(
+    (v) => `            <com:Class Id="${v.clsid}" Path="${CONTEXT_MENU_DLL}" ThreadingModel="STA" />`
+  ).join('\n')
   const ftas = conf.bundle.fileAssociations
     .map(
       (a, i) => `        <uap:Extension Category="windows.fileTypeAssociation">
@@ -202,8 +240,11 @@ ${a.ext.map((e) => `              <uap:FileType>.${xml(e.toLowerCase())}</uap:Fi
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  xmlns:desktop4="http://schemas.microsoft.com/appx/manifest/desktop/windows10/4"
+  xmlns:desktop5="http://schemas.microsoft.com/appx/manifest/desktop/windows10/5"
+  xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  IgnorableNamespaces="uap uap3 desktop rescap">
+  IgnorableNamespaces="uap uap3 desktop desktop4 desktop5 com rescap">
   <Identity Name="${xml(identity.name)}" Publisher="${xml(identity.publisher)}" Version="${msixVersion(conf.version)}" ProcessorArchitecture="${arch}" />
   <Properties>
     <DisplayName>${xml(displayName)}</DisplayName>
@@ -238,6 +279,20 @@ ${a.ext.map((e) => `              <uap:FileType>.${xml(e.toLowerCase())}</uap:Fi
           </uap3:AppExecutionAlias>
         </uap3:Extension>
 ${ftas}
+        <!-- Windows 11's top-level right-click menu (ADR 0009): an IExplorerCommand per verb,
+             served by src-tauri/context-menu in a surrogate host with the package's identity. -->
+        <desktop4:Extension Category="windows.fileExplorerContextMenus">
+          <desktop4:FileExplorerContextMenus>
+${verbTypes}
+          </desktop4:FileExplorerContextMenus>
+        </desktop4:Extension>
+        <com:Extension Category="windows.comServer">
+          <com:ComServer>
+            <com:SurrogateServer DisplayName="Glance context menu">
+${verbClasses}
+            </com:SurrogateServer>
+          </com:ComServer>
+        </com:Extension>
       </Extensions>
     </Application>
   </Applications>

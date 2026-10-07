@@ -69,14 +69,19 @@ jobs:
           targets: ${{ matrix.target }}
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: src-tauri
+          workspaces: |
+            src-tauri
+            src-tauri/context-menu
           key: release-${{ matrix.target }}
       - run: npm ci
       - name: Build Glance
         run: npx tauri build --target ${{ matrix.target }} --no-bundle
+      - name: Build context menu
+        working-directory: src-tauri/context-menu
+        run: cargo build --release --locked --target ${{ matrix.target }}
       - name: Pack MSIX
         shell: pwsh
-        run: packaging/msix/pack.ps1 -Exe src-tauri/target/${{ matrix.target }}/release/glance.exe -Arch ${{ matrix.arch }} -Out msix/Glance-${{ matrix.arch }}.msix
+        run: packaging/msix/pack.ps1 -Exe src-tauri/target/${{ matrix.target }}/release/glance.exe -ContextMenu src-tauri/context-menu/target/${{ matrix.target }}/release/glance_context_menu.dll -Arch ${{ matrix.arch }} -Out msix/Glance-${{ matrix.arch }}.msix
       - uses: actions/upload-artifact@v4
         with:
           name: msix-${{ matrix.arch }}

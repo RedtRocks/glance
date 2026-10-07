@@ -102,6 +102,7 @@ jobs:
             src-tauri
             src-tauri/thumbnailer
             src-tauri/mcp-bridge
+            src-tauri/context-menu
       - run: npm ci
       - name: Build frontend
         run: npm run build
@@ -171,9 +172,14 @@ jobs:
           name: glance-windows-x64-installer
           path: src-tauri/target/release/bundle/nsis/*.exe
           if-no-files-found: error
+      - name: Build context menu (Store package)
+        working-directory: src-tauri/context-menu
+        run: |
+          cargo test --locked
+          cargo build --release --locked
       - name: Pack MSIX (Store package, test identity)
         shell: pwsh
-        run: packaging/msix/pack.ps1 -Exe src-tauri/target/release/glance.exe -Arch x64 -Out msix/Glance-x64.msix
+        run: packaging/msix/pack.ps1 -Exe src-tauri/target/release/glance.exe -ContextMenu src-tauri/context-menu/target/release/glance_context_menu.dll -Arch x64 -Out msix/Glance-x64.msix
       - uses: actions/upload-artifact@v4
         with:
           name: glance-windows-x64-msix
@@ -210,6 +216,23 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'AI tools smoke test through the Store package failed' }
           Start-Sleep -Seconds 6
           if (Get-Process glance -ErrorAction SilentlyContinue) { throw 'Glance kept running after the AI app disconnected' }
+          # Windows 11's right-click menu: each command comes from the package's COM classes, as
+          # Explorer creates them, and Combine into PDF starts the packaged Glance with the file.
+          Push-Location src-tauri/context-menu
+          cargo test --locked -- --ignored installed_package
+          $failed = $LASTEXITCODE
+          Pop-Location
+          if ($failed -ne 0) { throw 'the context menu commands failed' }
+          $launched = $null
+          foreach ($i in 1..20) {
+            $launched = Get-CimInstance Win32_Process -Filter "Name = 'Glance.exe'" | Where-Object { $_.CommandLine -like '*--combine-pdf*scan.pdf*' }
+            if ($launched) { break }
+            Start-Sleep -Milliseconds 500
+          }
+          if (-not $launched) { throw 'Combine into PDF did not start Glance' }
+          if ($launched.ExecutablePath -notlike '*\WindowsApps\*') { throw "Combine into PDF started $($launched.ExecutablePath)" }
+          Stop-Process -Name glance -Force -ErrorAction SilentlyContinue
+          Start-Sleep -Seconds 2
           Remove-AppxPackage -Package $pkg.PackageFullName
 
   windows-arm64:
@@ -237,6 +260,9 @@ jobs:
         run: cargo check --locked --target aarch64-pc-windows-msvc
       - name: Check glance-mcp
         working-directory: src-tauri/mcp-bridge
+        run: cargo check --locked --target aarch64-pc-windows-msvc
+      - name: Check context menu
+        working-directory: src-tauri/context-menu
         run: cargo check --locked --target aarch64-pc-windows-msvc
 
   linux-rust:

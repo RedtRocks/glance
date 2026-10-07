@@ -13,3 +13,4 @@ src-tauri/mcp-bridge/target/
 dist-web/
 public/decoder.wasm
 web/decoder/target/
+src-tauri/context-menu/target/

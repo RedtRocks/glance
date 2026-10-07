@@ -57,7 +57,8 @@ When the three values are set, the Release workflow also builds the Store bundle
 
 ### What differs in the Store build
 
-- No "Send to → Glance" or classic right-click entries (they come from the NSIS installer's registry hooks, which MSIX can't run). "Open with" and default-app associations work for every format.
+- No "Send to → Glance" (it comes from the NSIS installer's hooks, which MSIX can't run). "Open with" and default-app associations work for every format.
+- Open in Glance, Combine into PDF and Remove Location Info are in Windows 11's top-level right-click menu, from `glance_context_menu.dll` (src-tauri/context-menu) packed next to Glance.exe. The installer version keeps them under "Show more options" (ADR 0009).
 - Update checks against GitHub are off and hidden in Settings; Help → Check for Updates points to the Store.
 - `glance` works from a terminal (app execution alias).
 

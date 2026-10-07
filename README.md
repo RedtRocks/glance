@@ -130,11 +130,10 @@
 | Touchpad gestures: pinch to zoom smoothly; two-finger orbit and Shift + two-finger pan for 3D models | ✅ |
 | Touchscreen gestures: pinch to zoom around your fingers, double-tap to zoom, swipe to turn pages or move between photos; tap markup to select it, with a bar to edit, recolor, duplicate or delete | ✅ |
 | Interface follows the Windows display language, with a Language setting (English only so far; translations welcome) | ✅ |
-| Explorer right-click menu: Open in Glance, Combine into PDF, Remove Location Info (on Windows 11 under "Show more options") | ✅ |
+| Explorer right-click menu: Open in Glance, Combine into PDF, Remove Location Info (Windows 11's main menu in the Microsoft Store version; under "Show more options" with the GitHub installer) | ✅ |
 | AI apps (Claude Code, Claude Desktop, Codex, Antigravity, Muse Code, Cursor, VS Code and any MCP app) can view any format, read text with OCR, convert, combine, split and redact files, and see and control what's open in Glance; one-click setup in Settings → AI apps ([how it works](docs/AI-APPS.md)) | ✅ |
 | Web version at [redtrocks.github.io/glance/app](https://redtrocks.github.io/glance/app/): the same app in any modern browser, installable, works offline, files never leave the device ([what it can't do](#faq)) | ✅ |
 | Ask AI sidebar: chat with Claude, ChatGPT, Gemini, GitHub Copilot, Qwen, Kimi, Mistral or OpenCode about the open file (whole page or a selected area), signed in with your own account or an API key, or use the company's website in the sidebar; chats are kept per document | ✅ |
-| Windows 11 top-level context menu (needs a signed build) | Milestone 6 |
 
 Signing on an iPhone or iPad (Preview's Continuity feature) isn't possible on Windows; use the camera or a photo of your signature instead.
 

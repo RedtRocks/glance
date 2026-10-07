@@ -1,6 +1,6 @@
 Glance is a free, open-source, lightweight viewer and editor for PDFs, images, camera RAW and 3D models on Windows, inspired by macOS Preview. It also previews Word, PowerPoint and Excel files, and runs in any browser at https://redtrocks.github.io/glance/app/.
 
-> **Early preview.** Most of Preview's everyday features work, plus version history, 3D models, certificate signatures and more. Glance's entries in Explorer's right-click menu are under **Show more options** on Windows 11; the top-level entry comes once releases are code-signed. See the [README](https://github.com/RedtRocks/glance#features) for the full list.
+> **Early preview.** Most of Preview's everyday features work, plus version history, 3D models, certificate signatures and more. On Windows 11, the Microsoft Store version puts Glance's entries in Explorer's main right-click menu; with the installer from GitHub they're under **Show more options**. See the [README](https://github.com/RedtRocks/glance#features) for the full list.
 
 ## New in 0.6.4
 
