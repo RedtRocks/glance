@@ -258,7 +258,7 @@ Download for Windows
 Open in Your Browser
 </a>
 </div>
-<p style="margin: 0; font-size: 13px; line-height: 18px; color: var(--ink-muted); text-align: center">Windows 10 and 11, x64 and ARM64 · iPhone, Android, Mac and Chromebook browsers · Apache-2.0</p>
+<p style="margin: 0; font-size: 13px; line-height: 18px; color: var(--ink-muted); text-align: center">Windows 10 and 11, x64 and ARM64 · Fedora Linux <span data-linux-soon>(next release)</span> · iPhone, Android, Mac and Chromebook browsers · Apache-2.0</p>
 </div>
 
 <div class="wrap" style="margin-top: 64px">
@@ -337,6 +337,16 @@ Open in Your Browser
 <div class="phone" data-py="-30" style="width: 42%; transform: rotate(-4deg); margin-top: 24px"><picture><source srcset="assets/phone-start-dark.webp" media="(prefers-color-scheme: dark)" data-dark-src><img src="assets/phone-start.webp" alt="The Glance web app's start screen on a phone" loading="lazy" width="600" height="1298"></picture></div>
 <div class="phone" data-py="40" style="width: 42%; transform: rotate(3deg)"><picture><source srcset="assets/phone-pdf-dark.webp" media="(prefers-color-scheme: dark)" data-dark-src><img src="assets/phone-pdf.webp" alt="A travel PDF open in the Glance web app on a phone, with the bottom toolbar" loading="lazy" width="600" height="1298"></picture></div>
 </div>
+</div>
+</div>
+<div data-reveal="0" style="margin-top: -48px; background: var(--night); color: #ffffff; border-radius: 28px; padding: 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px 40px; align-items: center">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<p class="h3">Glance for Linux <span data-linux-soon style="display: inline-block; vertical-align: middle; background: #f8d32c; color: #0a0a0a; border-radius: 6px; padding: 6px 10px; font-size: 13px; line-height: 18px">Next release</span></p>
+<p class="body" style="color: #d4d4d4">The same app for Fedora 42 and newer, on x86_64 and ARM64, as an RPM with the AI tools included. Signatures and API keys are kept in your login keyring.</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 16px; align-items: flex-start">
+<code style="display: block; max-width: 100%; overflow-x: auto; background: rgba(255,255,255,.08); border-radius: 12px; padding: 14px 16px; font-size: 15px; line-height: 22px; white-space: nowrap">sudo dnf install ./Glance-*-linux-x86_64.rpm</code>
+<a class="btn" data-linux-download href="https://github.com/RedtRocks/glance/releases/latest" style="background: #ffffff; color: #0a0a0a">Get the Linux RPM</a>
 </div>
 </div>
 </div>
@@ -533,11 +543,11 @@ Open in Your Browser
 <div class="duo">
 <div style="background: #f8d32c; color: var(--on-block); border-radius: 28px; padding: 40px; display: flex; flex-direction: column; gap: 20px; min-height: 380px; justify-content: flex-end">
 <p class="h2" style="text-align: left; max-width: 640px">No Telemetry. No Accounts. No Uploads.</p>
-<p class="body" style="max-width: 560px">In the browser, files open on your device and are never sent anywhere. On Windows, the only network request is an optional daily check for a newer release, and background removal and text recognition run on your PC.</p>
+<p class="body" style="max-width: 560px">In the browser, files open on your device and are never sent anywhere. In the desktop app, the only network requests are an optional daily check for a newer release and an anonymous install count, and background removal and text recognition run on your PC.</p>
 </div>
 <div style="background: var(--night); color: #ffffff; border-radius: 28px; padding: 40px; display: flex; flex-direction: column; gap: 16px; justify-content: flex-end">
-<p class="h3">Signatures Encrypted With Windows DPAPI</p>
-<p class="body" style="color: #d4d4d4">Draw with a pen, capture with the camera, or import a photo.</p>
+<p class="h3">Signatures Encrypted on Your PC</p>
+<p class="body" style="color: #d4d4d4">Draw with a pen, capture with the camera, or import a photo. Windows DPAPI or your Linux login keyring keeps them locked to your account.</p>
 <a href="https://github.com/RedtRocks/glance/blob/main/PRIVACY.md" style="color: #ffffff; font-size: 17px">Read the Privacy Policy</a>
 </div>
 </div>

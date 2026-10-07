@@ -21,6 +21,7 @@ Glance also runs in any modern browser at https://redtrocks.github.io/glance/app
 - [Website](https://redtrocks.github.io/glance/)
 - [Microsoft Store](https://apps.microsoft.com/detail/9N01BTLDS9X1)
 - [Download the latest release](https://github.com/RedtRocks/glance/releases/latest): `Glance-<version>-windows-x64-setup.exe` or `-arm64-setup.exe`
+- Linux (Fedora 42+, starting with the release after 0.6.4): `Glance-<version>-linux-x86_64.rpm` or `-aarch64.rpm` from the same release page, installed with `sudo dnf install`. Linux lacks the Windows-only features (text recognition, scanning, certificate signatures, Explorer integration, XPS, JPEG XR).
 - [Source code and README](https://github.com/RedtRocks/glance)
 - [Supported formats](https://github.com/RedtRocks/glance/blob/main/docs/FORMATS.md)
 - [Privacy policy](https://github.com/RedtRocks/glance/blob/main/PRIVACY.md)
