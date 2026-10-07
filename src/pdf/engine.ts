@@ -12,6 +12,32 @@ import { t } from '../i18n'
 type PdfJs = typeof import('pdfjs-dist')
 let loading: Promise<PdfJs> | null = null
 
+// PDF.js reads page text with `for await` over a ReadableStream. WebKitGTK only supports
+// that from 2.52 on, so Ubuntu 22.04 and Debian 12 (2.50) would fail on every text read.
+if (!(Symbol.asyncIterator in ReadableStream.prototype)) {
+  Object.defineProperty(ReadableStream.prototype, Symbol.asyncIterator, {
+    configurable: true,
+    writable: true,
+    value: async function* (this: ReadableStream) {
+      const reader = this.getReader()
+      let done = false
+      try {
+        while (!done) {
+          const next = await reader.read()
+          done = next.done
+          if (!done) yield next.value
+        }
+      } finally {
+        try {
+          if (!done) await reader.cancel()
+        } finally {
+          reader.releaseLock()
+        }
+      }
+    }
+  })
+}
+
 export function pdfjs(): Promise<PdfJs> {
   if (!loading) {
     loading = (import('pdfjs-dist/legacy/build/pdf.mjs') as Promise<PdfJs>).then((m) => {

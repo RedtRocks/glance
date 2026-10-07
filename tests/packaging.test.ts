@@ -217,9 +217,11 @@ describe('Linux RPM', () => {
 
   it('bundles the installed executable bridge and recommends Ghostscript', () => {
     const linux = JSON.parse(readFileSync('src-tauri/tauri.linux.conf.json', 'utf8'))
-    expect(linux.bundle.targets).toEqual(['rpm'])
-    expect(linux.bundle.linux.rpm.desktopTemplate).toBe('linux/glance.desktop')
-    expect(linux.bundle.linux.rpm.files).toEqual({ '/usr/bin/glance-mcp': 'target/mcp-bridge/glance-mcp' })
-    expect(linux.bundle.linux.rpm.recommends).toContain('ghostscript')
+    expect(linux.bundle.targets).toEqual(['rpm', 'deb'])
+    for (const fmt of ['rpm', 'deb']) {
+      expect(linux.bundle.linux[fmt].desktopTemplate).toBe('linux/glance.desktop')
+      expect(linux.bundle.linux[fmt].files).toEqual({ '/usr/bin/glance-mcp': 'target/mcp-bridge/glance-mcp' })
+      expect(linux.bundle.linux[fmt].recommends).toContain('ghostscript')
+    }
   })
 })
