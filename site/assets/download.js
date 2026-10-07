@@ -1,7 +1,7 @@
 /* One-click download: the Download buttons point at the newest installer itself, for
    this PC's processor, instead of the release page. If GitHub can't be reached they
-   keep their normal link to the release page. Linux RPMs: once the latest release has
-   them, the "next release" labels go and Linux visitors get the RPM for their processor. */
+   keep their normal link to the release page. Linux packages: once the latest release has
+   them, the "next release" labels go and Linux visitors get the .deb and RPM for their processor. */
 (function () {
   var links = document.querySelectorAll('a[href*="github.com/RedtRocks/glance/releases"]');
   if (!links.length || !window.fetch) return;
@@ -24,10 +24,15 @@
     .then(function (res) {
       var assets = res[0].assets || [], wantArm = res[1];
       var pick = function (re) { return assets.filter(function (a) { return re.test(a.name); })[0]; };
-      var rpm = (wantArm ? pick(/aarch64\.rpm$/i) : pick(/x86_64\.rpm$/i)) || pick(/\.rpm$/i);
-      if (rpm) soon.forEach(function (el) { el.remove(); });
+      // No cross-architecture fallback: an arm64 package won't install on x86_64 or vice versa.
+      var rpm = wantArm ? pick(/aarch64\.rpm$/i) : pick(/x86_64\.rpm$/i);
+      var deb = wantArm ? pick(/arm64\.deb$/i) : pick(/amd64\.deb$/i);
+      if (pick(/\.(rpm|deb)$/i)) soon.forEach(function (el) { el.remove(); });
       if (linux) {
-        if (ours(rpm)) document.querySelectorAll('a[data-linux-download]').forEach(function (a) { point(a, rpm); });
+        document.querySelectorAll('a[data-linux-download]').forEach(function (a) {
+          var asset = a.getAttribute('data-linux-download') === 'deb' ? deb : rpm;
+          if (ours(asset)) point(a, asset);
+        });
         return;
       }
       if (!windows) return;
