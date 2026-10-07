@@ -71,7 +71,10 @@ writeFileSync(
     )
     .replace(
       '<div id="app"></div>',
-      `<div id="app"></div>
+      // The app draws its own headings once it runs; this one is for search engines
+      // and screen readers, and takes no space on screen.
+      `<h1 style="position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">${esc(HUB.h1)}</h1>
+    <div id="app"></div>
     <noscript>
       <h1>${esc(HUB.h1)}</h1>
       <p>${esc(HUB.lead)} Glance needs JavaScript to open files.</p>

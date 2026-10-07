@@ -403,7 +403,7 @@ export const HUB = {
   title: 'Online File Viewer and Editor',
   pageTitle: 'Open and Edit Any File Online, Free and Private | Glance',
   h1: 'Open and Edit Any File Online, Free',
-  description: 'Open PDFs, photos, HEIC, RAW, Photoshop, Word, Excel, PowerPoint, 3D models, e-books, email and 190+ file types in your browser, and edit PDFs and images. Nothing is uploaded.',
+  description: 'Open PDFs, photos, HEIC, RAW, PSD, Word, Excel, PowerPoint, 3D models, e-books and 190+ formats in your browser, and edit PDFs and images. Nothing is uploaded.',
   lead: 'PDFs, photos, Photoshop and RAW files, Word, Excel and PowerPoint, 3D models, e-books, email and more: over 190 file types open right here, and nothing is uploaded.',
   groups: [
     { name: 'Documents', tone: PINK, items: [['PDF', 'pdf-viewer'], ['Word', 'docx-viewer'], ['PowerPoint', 'pptx-viewer'], ['Excel', 'xlsx-viewer'], ['CSV', 'csv-viewer'], ['Markdown', 'markdown-viewer'], ['Illustrator AI', 'pdf-viewer']] },

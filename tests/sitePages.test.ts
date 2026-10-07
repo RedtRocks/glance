@@ -27,3 +27,31 @@ describe('website pages for each file type', () => {
     expect(linked.filter((s) => !slugs.has(s))).toEqual([])
   })
 })
+
+describe('IndexNow', () => {
+  it('publishes its key file and maps changed files to their pages', async () => {
+    // @ts-expect-error plain JavaScript script
+    const { KEY, pagesFor, sitemapUrls } = await import('../scripts/indexnow.mjs')
+    expect(readFileSync(`site/${KEY}.txt`, 'utf8').trim()).toBe(KEY)
+    const site = 'https://redtrocks.github.io/glance/'
+    expect(pagesFor(['site/pdf-viewer/index.html', 'src/main.tsx', 'README.md'])).toEqual([`${site}pdf-viewer/`, `${site}app/`])
+    expect(pagesFor(['site/stats/index.html'])).toEqual([])
+    expect(pagesFor(['site/sitemap.xml'])).toEqual(sitemapUrls())
+  })
+})
+
+describe('what Bing Webmaster checks', () => {
+  const files = ['site/index.html', 'site/stats/index.html', ...[...pages, HUB as Page].map((p) => `site/${p.slug}/index.html`)]
+  it('every image has alt text', () => {
+    const bare = files.flatMap((f) => [...readFileSync(f, 'utf8').matchAll(/<img\b[^>]*>/g)].filter((m) => !/\balt="[^"]+"/.test(m[0])).map((m) => `${f}: ${m[0]}`))
+    expect(bare).toEqual([])
+  })
+  it('descriptions are 25 to 160 characters', () => {
+    const bad = files.filter((f) => !f.includes('/stats/')).map((f) => [f, /<meta name="description" content="([^"]*)"/.exec(readFileSync(f, 'utf8'))![1].replace(/&amp;/g, '&')]).filter(([, d]) => d.length < 25 || d.length > 160)
+    expect(bad).toEqual([])
+  })
+  it('titles stay within 70 characters', () => {
+    const long = files.map((f) => [f, /<title>(.*?)<\/title>/.exec(readFileSync(f, 'utf8'))![1].replace(/&amp;/g, '&')]).filter(([, t]) => t.length > 70)
+    expect(long).toEqual([])
+  })
+})
