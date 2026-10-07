@@ -49,7 +49,7 @@ function PhoneStart() {
         <div class="ww-card yellow" />
         <div class="ww-card pink" />
         <div class="ww-card violet">
-          <img src={photoUrl} alt="" width={600} height={400} />
+          <img src={photoUrl} alt={t('Photo of an espresso')} width={600} height={400} />
         </div>
         <span class="ww-tag yellow">
           <b>+190</b>

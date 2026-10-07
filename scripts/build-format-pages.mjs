@@ -117,7 +117,7 @@ ${main}
 <footer style="border-top: 1px solid var(--divider)">
 <div class="wrap" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 24px; padding-top: 40px; padding-bottom: 48px">
 <a href="../" style="display: flex; align-items: center; gap: 10px; text-decoration: none; font-size: 26px">
-<img src="../assets/icon.svg" alt="" style="width: 28px; height: 28px">
+<img src="../assets/icon.svg" alt="Glance logo" style="width: 28px; height: 28px">
 <span>glance</span>
 </a>
 <div style="display: flex; flex-wrap: wrap; gap: 24px; font-size: 20px; line-height: 24px">
@@ -325,7 +325,7 @@ function hub(h) {
 </div>
 <div class="wrap" style="margin-top: 48px">
 <div class="dropzone" data-drop>
-<div class="drop-stack" aria-hidden="true"><span style="background: #f8d32c; transform: rotate(-8deg)"></span><span style="background: #f258a8; transform: rotate(6deg)"></span><span style="background: var(--surface)"><img src="../assets/icon.svg" alt=""></span></div>
+<div class="drop-stack" aria-hidden="true"><span style="background: #f8d32c; transform: rotate(-8deg)"></span><span style="background: #f258a8; transform: rotate(6deg)"></span><span style="background: var(--surface)"><img src="../assets/icon.svg" alt="Glance app icon"></span></div>
 <p class="h3">Drop Files Here</p>
 <p class="body" style="color: var(--ink-muted)">or</p>
 <a class="btn btn-ink" href="../app/" data-open-file>Choose Files</a>

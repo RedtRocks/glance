@@ -11,7 +11,7 @@ const iconUrl = new URL('icon.svg', document.baseURI).href
 export function Brand() {
   return (
     <a class="w-brand" href="../" aria-label={t('Glance website')}>
-      <img src={iconUrl} alt="" width={28} height={28} />
+      <img src={iconUrl} alt={t('Glance logo')} width={28} height={28} />
       {/* i18n-ignore: product name, written the way the website writes it */}
       <span>glance</span>
     </a>

@@ -39,3 +39,15 @@ describe('IndexNow', () => {
     expect(pagesFor(['site/sitemap.xml'])).toEqual(sitemapUrls())
   })
 })
+
+describe('what Bing Webmaster checks', () => {
+  const files = ['site/index.html', 'site/stats/index.html', ...[...pages, HUB as Page].map((p) => `site/${p.slug}/index.html`)]
+  it('every image has alt text', () => {
+    const bare = files.flatMap((f) => [...readFileSync(f, 'utf8').matchAll(/<img\b[^>]*>/g)].filter((m) => !/\balt="[^"]+"/.test(m[0])).map((m) => `${f}: ${m[0]}`))
+    expect(bare).toEqual([])
+  })
+  it('titles stay within 70 characters', () => {
+    const long = files.map((f) => [f, /<title>(.*?)<\/title>/.exec(readFileSync(f, 'utf8'))![1].replace(/&amp;/g, '&')]).filter(([, t]) => t.length > 70)
+    expect(long).toEqual([])
+  })
+})
