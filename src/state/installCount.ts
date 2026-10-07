@@ -11,7 +11,7 @@ import { storeInstall } from './updates'
 
 const ENDPOINT = 'https://cloud.umami.is/api/send'
 /** The "Glance app" website in Umami, kept apart from the website's visitor numbers. */
-export const APP_WEBSITE_ID = '__APP_WEBSITE_ID__'
+export const APP_WEBSITE_ID = '851a144f-cbe6-4c81-a08a-4e9b25a008e3'
 const LAST = 'glance.installCount.last'
 
 /** Today's date as YYYY-MM-DD, in local time, so one check-in per calendar day. */

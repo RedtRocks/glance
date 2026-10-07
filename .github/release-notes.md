@@ -2,6 +2,10 @@ Glance is a free, open-source, lightweight viewer and editor for PDFs, images, c
 
 > **Early preview.** Most of Preview's everyday features work, plus version history, 3D models, certificate signatures and more. Glance's entries in Explorer's right-click menu are under **Show more options** on Windows 11; the top-level entry comes once releases are code-signed. See the [README](https://github.com/RedtRocks/glance#features) for the full list.
 
+## New in 0.6.4
+
+- **An anonymous count of installs.** Once a day Glance sends one check-in with its version number and whether it came from the Microsoft Store or GitHub, so there's a number for how many copies are in use. There's no ID, and nothing about you or the files you open. Turn it off in **Settings → Count this install**. The [privacy policy](https://github.com/RedtRocks/glance/blob/main/PRIVACY.md) has the details.
+
 ## New in 0.6.3
 
 - **The mic in Ask AI works.** **Open Settings** now opens the right Windows Settings page. If the microphone is blocked, Glance says so before listening. If Windows still hears nothing, the sidebar explains why and offers **Use Windows voice typing** (Win+H), which types into the message box.

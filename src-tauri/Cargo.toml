@@ -1,6 +1,6 @@
 [package]
 name = "glance"
-version = "0.6.3"
+version = "0.6.4"
 description = "Glance: a lightweight viewer and editor for PDFs, images, and 3D models"
 authors = ["Glance contributors"]
 license = "Apache-2.0"
