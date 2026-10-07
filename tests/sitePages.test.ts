@@ -46,6 +46,10 @@ describe('what Bing Webmaster checks', () => {
     const bare = files.flatMap((f) => [...readFileSync(f, 'utf8').matchAll(/<img\b[^>]*>/g)].filter((m) => !/\balt="[^"]+"/.test(m[0])).map((m) => `${f}: ${m[0]}`))
     expect(bare).toEqual([])
   })
+  it('descriptions are 25 to 160 characters', () => {
+    const bad = files.filter((f) => !f.includes('/stats/')).map((f) => [f, /<meta name="description" content="([^"]*)"/.exec(readFileSync(f, 'utf8'))![1].replace(/&amp;/g, '&')]).filter(([, d]) => d.length < 25 || d.length > 160)
+    expect(bad).toEqual([])
+  })
   it('titles stay within 70 characters', () => {
     const long = files.map((f) => [f, /<title>(.*?)<\/title>/.exec(readFileSync(f, 'utf8'))![1].replace(/&amp;/g, '&')]).filter(([, t]) => t.length > 70)
     expect(long).toEqual([])
