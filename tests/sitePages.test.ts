@@ -27,3 +27,15 @@ describe('website pages for each file type', () => {
     expect(linked.filter((s) => !slugs.has(s))).toEqual([])
   })
 })
+
+describe('IndexNow', () => {
+  it('publishes its key file and maps changed files to their pages', async () => {
+    // @ts-expect-error plain JavaScript script
+    const { KEY, pagesFor, sitemapUrls } = await import('../scripts/indexnow.mjs')
+    expect(readFileSync(`site/${KEY}.txt`, 'utf8').trim()).toBe(KEY)
+    const site = 'https://redtrocks.github.io/glance/'
+    expect(pagesFor(['site/pdf-viewer/index.html', 'src/main.tsx', 'README.md'])).toEqual([`${site}pdf-viewer/`, `${site}app/`])
+    expect(pagesFor(['site/stats/index.html'])).toEqual([])
+    expect(pagesFor(['site/sitemap.xml'])).toEqual(sitemapUrls())
+  })
+})

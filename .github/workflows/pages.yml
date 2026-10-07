@@ -58,3 +58,9 @@ jobs:
           path: _site
       - id: deployment
         uses: actions/deploy-pages@v4
+      # Asks Bing and the other IndexNow engines to recrawl the pages this push
+      # changed. A failure here never fails the deploy.
+      - name: Tell search engines what changed (IndexNow)
+        continue-on-error: true
+        run: node scripts/indexnow.mjs "${{ github.event.before }}"
+
