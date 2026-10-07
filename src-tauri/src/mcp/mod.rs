@@ -62,6 +62,12 @@ fn new_token() -> String {
     blake3::hash(&seed).to_hex()[..40].to_string()
 }
 
+#[cfg(unix)]
+fn write_endpoint(ep: &endpoint::Endpoint) -> std::io::Result<()> {
+    endpoint::write_in(&endpoint::dir(), ep)
+}
+
+#[cfg(not(unix))]
 fn write_endpoint(ep: &endpoint::Endpoint) -> std::io::Result<()> {
     std::fs::create_dir_all(endpoint::dir())?;
     let path = endpoint::file();

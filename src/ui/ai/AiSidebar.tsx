@@ -328,7 +328,7 @@ function ApiKeyForm({ onDone }: { onDone: () => void }) {
         <span>{t('API key')}</span>
         <input type="password" value={key} onInput={(e) => setKey((e.target as HTMLInputElement).value)} required autocomplete="off" />
       </label>
-      <p class="muted small">{t('The key is kept in Windows Credential Manager on this PC and only given to the AI helper when it starts.')}</p>
+      <p class="muted small">{platform.isWindows ? t('The key is kept in Windows Credential Manager on this PC and only given to the AI helper when it starts.') : t('The key is kept encrypted in the system keyring (GNOME Keyring or KWallet) on this PC and only given to the AI helper when it starts.')}</p>
       {error && <p class="ai-notice error">{error}</p>}
       <div class="ai-permission-buttons">
         <button class="btn primary" type="submit" disabled={saving || !key.trim() || !name.trim()}>

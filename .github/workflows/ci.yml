@@ -256,3 +256,51 @@ jobs:
       - name: glance-mcp tests
         working-directory: src-tauri/mcp-bridge
         run: cargo test --locked
+
+  linux-rpm:
+    name: Linux RPM (Fedora, AI tools smoke test)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-24.04
+    container: registry.fedoraproject.org/fedora:42
+    steps:
+      - name: Install build dependencies
+        run: |
+          dnf install -y git gcc gcc-c++ clang make perl file rpm-build webkit2gtk4.1-devel openssl-devel \
+            librsvg2-devel libxdo-devel nodejs npm xorg-x11-server-Xvfb dbus-daemon cpio
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            src-tauri
+            src-tauri/mcp-bridge
+          key: fedora
+      - run: npm ci
+      - name: Build RPM
+        run: npx tauri build --bundles rpm
+      - name: Check the RPM contents
+        run: |
+          rpm=$(ls src-tauri/target/release/bundle/rpm/*.rpm | head -n1)
+          rpm -qlp "$rpm" | tee files.txt
+          grep -qx /usr/bin/glance files.txt
+          grep -qx /usr/bin/glance-mcp files.txt
+          mkdir rpm-root && (cd rpm-root && rpm2cpio "../$rpm" | cpio -idm --quiet)
+          desktop=$(find rpm-root/usr/share/applications -name '*.desktop' | head -n1)
+          cat "$desktop"
+          grep -q '^Exec=.* %F$' "$desktop"
+          grep -q 'image/heic' "$desktop"
+      - name: Install RPM
+        run: dnf install -y ./src-tauri/target/release/bundle/rpm/*.rpm
+      - name: AI tools smoke test (installed glance-mcp)
+        timeout-minutes: 15
+        run: |
+          # Containers have no login session, so give Glance a private runtime dir and a session bus.
+          export XDG_RUNTIME_DIR=/tmp/xdg-runtime
+          mkdir -m 700 -p "$XDG_RUNTIME_DIR"
+          dbus-run-session -- xvfb-run -a node scripts/mcp-smoke.mjs /usr/bin/glance-mcp
+      - uses: actions/upload-artifact@v4
+        with:
+          name: glance-linux-x86_64-rpm
+          path: src-tauri/target/release/bundle/rpm/*.rpm
+          if-no-files-found: error

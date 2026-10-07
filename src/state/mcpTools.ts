@@ -15,12 +15,12 @@ import {
   pageIndex,
   parsePages,
   partPath,
-  samePath,
   searchRegexes,
   toBase64,
   type Box,
   type SearchArgs
 } from '../core/mcp/helpers'
+import { samePath } from '../core/paths'
 import { canvasMeasure, findMatches, type TextItem } from '../core/findText'
 import { newId, type Rect, type Redaction } from '../core/markup'
 import type { ImageInput } from '../core/pageOps'
@@ -136,7 +136,7 @@ async function renderPdfPage(proxy: PDFDocumentProxy, index: number, opts: { dpi
 }
 
 async function decodeImage(probe: platform.Probe, index: number, max?: number): Promise<ImageBitmap | HTMLImageElement> {
-  const res = await fetch(platform.imageUrl(probe, index, max))
+  const res = await fetch(await platform.imageUrlAsync(probe, index, max))
   if (!res.ok) throw new ToolError(`couldn’t decode ${probe.name}: ${(await res.text().catch(() => '')) || res.status}`)
   const blob = await res.blob()
   try {
@@ -287,7 +287,7 @@ function describeMatches(found: Found[]): string {
 
 async function prepareOutput(output: unknown, inputs: string[], overwrite: unknown): Promise<string> {
   if (typeof output !== 'string') throw new ToolError('output_path is required')
-  checkOutput(output, inputs, await exists(output), overwrite === true)
+  checkOutput(output, inputs, await exists(output), overwrite === true, platform.pathPolicy)
   // A file open in Glance with unsaved edits would silently lose them.
   const open = findByPath(output)
   if (open?.dirty.peek()) throw new ToolError(`${output} is open in Glance with unsaved changes`)
@@ -305,7 +305,7 @@ function findTab(tab: unknown): Doc {
     if (!d) throw new ToolError('No document is open in Glance. Open one with glance_open.')
     return d
   }
-  const d = docs.value.find((x) => x.id === tab || (x.path.peek() && samePath(x.path.peek()!, String(tab))))
+  const d = docs.value.find((x) => x.id === tab || (x.path.peek() && samePath(x.path.peek()!, String(tab), platform.pathPolicy)))
   if (!d) throw new ToolError(`No open tab "${String(tab)}". glance_list_open lists the tabs.`)
   return d
 }

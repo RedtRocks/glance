@@ -13,6 +13,7 @@ path = "src/lib.rs"
 # Same decoders as src-tauri, without threads (wasm32-unknown-unknown has none).
 [dependencies]
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "bmp", "ico", "tiff", "webp", "tga", "exr", "hdr", "dds", "pnm", "qoi"] }
+tiff = "0.11"
 icns = "0.5"
 jxl-oxide = { version = "0.12", default-features = false, features = ["image"] }
 hayro-jpeg2000 = "0.4"

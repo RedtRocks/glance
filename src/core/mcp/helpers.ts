@@ -1,6 +1,7 @@
 /** Pure helpers for the AI tools (src/state/mcpTools.ts): page lists, output paths, search. */
 import { SENSITIVE_PATTERNS, termRegex } from '../findText'
 import { ToolError } from './protocol'
+import { samePath, type PathPolicy } from '../paths'
 
 /**
  * Pages like "1-3,7,10-" (numbered from 1) as sorted, unique 0-based indices.
@@ -29,16 +30,8 @@ export function pageIndex(page: unknown, count: number): number {
   return n - 1
 }
 
-const sep = /[\\/]/
-
 export function isAbsolute(path: string): boolean {
   return /^[A-Za-z]:[\\/]/.test(path) || path.startsWith('\\\\') || path.startsWith('/')
-}
-
-/** Paths compare like Windows does: case-insensitive, either slash. */
-export function samePath(a: string, b: string): boolean {
-  const norm = (p: string) => p.split(sep).filter(Boolean).join('/').toLowerCase()
-  return norm(a) === norm(b)
 }
 
 export function extension(path: string): string {
@@ -49,9 +42,9 @@ export function extension(path: string): string {
  * Checks where a tool may write: an absolute path that isn't one of its inputs (tools
  * never change the files they're given) and doesn't exist unless overwriting.
  */
-export function checkOutput(output: string, inputs: string[], exists: boolean, overwrite: boolean): void {
+export function checkOutput(output: string, inputs: string[], exists: boolean, overwrite: boolean, policy: PathPolicy): void {
   if (!isAbsolute(output)) throw new ToolError(`output_path must be an absolute path: ${output}`)
-  if (inputs.some((i) => samePath(i, output))) throw new ToolError('output_path must be a new file: Glance never overwrites the file it reads from')
+  if (inputs.some((i) => samePath(i, output, policy))) throw new ToolError('output_path must be a new file: Glance never overwrites the file it reads from')
   if (exists && !overwrite) throw new ToolError(`${output} already exists (pass overwrite: true to replace it)`)
 }
 

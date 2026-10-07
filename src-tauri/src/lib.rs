@@ -8,6 +8,8 @@ mod explorer;
 mod files;
 mod fonts;
 mod history;
+#[cfg(target_os = "linux")]
+mod keyring_store;
 mod mcp;
 mod metadata;
 mod ocr;

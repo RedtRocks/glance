@@ -2,13 +2,14 @@ import { computed, signal, type Signal } from '@preact/signals'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 import { History } from './history'
 import { openPdf, readOutline, PasswordRequired, type OutlineNode } from '../pdf/engine'
-import { forgetBrowserFile, releaseFile, type Probe } from '../platform'
+import { forgetBrowserFile, pathPolicy, releaseFile, type Probe } from '../platform'
 import { remapPages, transformForImage, type Markup, type PageMap, type Redaction } from '../core/markup'
 import type { Raster } from '../core/image/raster'
 import type { Backdrop, CameraView, Lighting, Look } from '../model/viewer'
 import { t } from '../i18n'
 import type { Affine } from '../core/image/transform'
 import { previewExt, previewFlavor, type PreviewFlavor } from '../core/previews'
+import { pathKey } from '../core/paths'
 
 let seq = 0
 const nextId = (): string => `doc${++seq}`
@@ -391,7 +392,7 @@ export function removeDoc(id: string): void {
   const path = doc.path.peek() ?? (doc.kind === 'pdf' ? doc.convertedFrom : null)
   if (path) {
     void releaseFile(path)
-    // In the browser the file and its decoded pages are only in memory; let them go.
+    // Release browser files and cached pages, including desktop HEIF decoded in the webview.
     forgetBrowserFile(path)
   }
   const next = list.filter((d) => d.id !== id)
@@ -400,8 +401,8 @@ export function removeDoc(id: string): void {
 }
 
 export function findByPath(path: string): Doc | undefined {
-  const norm = path.toLowerCase()
-  return docs.value.find((d) => d.path.value?.toLowerCase() === norm)
+  const norm = pathKey(path, pathPolicy)
+  return docs.value.find((d) => d.path.value !== null && pathKey(d.path.value, pathPolicy) === norm)
 }
 
 export { PasswordRequired }

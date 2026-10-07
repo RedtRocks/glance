@@ -62,6 +62,12 @@ Decoded through WIC with Microsoft's Raw Image Extension (built into Windows 11 
 ## 3D models
 `.glb .gltf .obj .stl .ply .fbx .usdz .usda .usdc .dae .3mf .3ds`: three.js, loaded on demand.
 
+## Linux
+- HEIF / HEIC decode through the libheif WebAssembly decoder, loaded on demand.
+- Multi-page TIFF decodes through the Rust `image` crate.
+- Camera RAW shows the full-size JPEG preview embedded in the file (no WIC RAW codec).
+- JPEG XR and XPS / OpenXPS aren't supported (they need Windows codecs).
+
 ## Also
 - Multi-page TIFFs and CBZ files show pages in the sidebar; animated GIF, APNG and animated WebP show read-only **Frames**.
 - New from Clipboard, and screenshots via the Windows Snipping Tool.

@@ -20,7 +20,7 @@ import {
   type TextStyle,
   type Tool
 } from '../../state/markupState'
-import { deleteSignature, isTauri, listFonts, listSignatures, type SavedSignature } from '../../platform'
+import { deleteSignature, isTauri, isWindows, listFonts, listSignatures, type SavedSignature } from '../../platform'
 import { markSelection, type TextMarkupKind } from './textSelection'
 import { Icon } from '../Icon'
 import type { IconName } from '../icons'
@@ -258,7 +258,7 @@ function Signatures({ close }: { close: () => void }) {
       >
         {t('Create signature…')}
       </button>
-      <p class="muted small">{t('Signatures are encrypted with your Windows account and never leave this PC.')}</p>
+      <p class="muted small">{isWindows ? t('Signatures are encrypted with your Windows account and never leave this PC.') : t('Signatures are kept encrypted in the system keyring (GNOME Keyring or KWallet) and never leave this PC.')}</p>
     </div>
   )
 }

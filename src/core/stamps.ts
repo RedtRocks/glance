@@ -18,7 +18,11 @@ const STANDARD: Record<StampFont, StandardFonts> = {
   Times: StandardFonts.TimesRoman,
   Courier: StandardFonts.Courier
 }
-const SYSTEM_FALLBACK: Record<StampFont, string> = { Helvetica: 'Segoe UI', Times: 'Times New Roman', Courier: 'Consolas' }
+const SYSTEM_FALLBACK: Record<StampFont, string[]> = {
+  Helvetica: ['Segoe UI', 'DejaVu Sans', 'Noto Sans', 'Noto Sans CJK SC', 'Noto Color Emoji'],
+  Times: ['Times New Roman', 'DejaVu Serif', 'Noto Serif', 'Noto Sans CJK SC', 'Noto Color Emoji'],
+  Courier: ['Consolas', 'DejaVu Sans Mono', 'Noto Sans Mono', 'Noto Sans CJK SC', 'Noto Color Emoji']
+}
 
 function encodes(font: PDFFont, text: string): boolean {
   try {
@@ -61,7 +65,11 @@ function fontSource(doc: PDFDocument, o: StampOptions, env: StampEnv): Fonts {
       standard ??= await doc.embedFont(STANDARD[o.font])
       if (encodes(standard, text) || !env.loadFont) return standard
       system ??= (async () => {
-        const bytes = await env.loadFont!(SYSTEM_FALLBACK[o.font])
+        let bytes: Uint8Array | null = null
+        for (const family of SYSTEM_FALLBACK[o.font]) {
+          bytes = await env.loadFont!(family)
+          if (bytes) break
+        }
         if (!bytes) return null
         const fontkit = (await import('@cantoo/fontkit')).default
         doc.registerFontkit(fontkit as never)

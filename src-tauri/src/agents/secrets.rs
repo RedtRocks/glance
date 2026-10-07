@@ -1,5 +1,5 @@
-//! API keys for the Ask AI sidebar, kept in Windows Credential Manager (never in Glance's own
-//! files, and never sent back to the webview).
+//! API keys for the Ask AI sidebar, kept in Windows Credential Manager or the Linux login
+//! keyring (never in Glance's own files, and never sent back to the webview).
 
 const PREFIX: &str = "Glance/AI/";
 
@@ -40,8 +40,26 @@ mod imp {
     }
 }
 
-/// Elsewhere (development and tests) keys live in memory only.
-#[cfg(not(windows))]
+#[cfg(target_os = "linux")]
+mod imp {
+    use crate::keyring_store::entry;
+
+    pub fn save(target: &str, secret: &str) -> Result<(), String> {
+        entry(target).and_then(|e| e.set_password(secret))
+            .map_err(|_| "API keys need the system keyring (GNOME Keyring or KWallet), which isn't available.".into())
+    }
+
+    pub fn load(target: &str) -> Option<String> {
+        entry(target).and_then(|e| e.get_password()).ok()
+    }
+
+    pub fn delete(target: &str) {
+        let _ = entry(target).and_then(|e| e.delete_credential());
+    }
+}
+
+/// Other development platforms keep keys in memory only.
+#[cfg(not(any(windows, target_os = "linux")))]
 mod imp {
     use std::collections::HashMap;
     use std::sync::Mutex;

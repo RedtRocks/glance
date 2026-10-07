@@ -1,0 +1,12 @@
+[Desktop Entry]
+Categories=Graphics;Viewer;
+{{#if comment}}
+Comment={{comment}}
+{{/if}}
+Exec={{exec}} %F
+StartupWMClass=glance
+Icon={{icon}}
+Name={{name}}
+Terminal=false
+Type=Application
+MimeType=application/pdf;application/illustrator;application/postscript;image/x-eps;application/vnd.comicbook+zip;image/jpeg;image/png;image/apng;image/gif;image/webp;image/bmp;image/vnd.microsoft.icon;image/svg+xml;image/avif;image/tiff;image/heif;image/jp2;image/x-jp2-codestream;image/jpx;image/jxl;image/x-exr;image/vnd.radiance;image/x-tga;image/vnd.ms-dds;image/qoi;image/x-portable-pixmap;image/x-portable-graymap;image/x-portable-bitmap;image/x-portable-arbitrarymap;image/x-portable-anymap;image/x-icns;image/vnd.adobe.photoshop;image/x-canon-cr2;image/x-canon-cr3;image/x-canon-crw;image/x-nikon-nef;image/x-nikon-nrw;image/x-sony-arw;image/x-sony-srf;image/x-sony-sr2;image/x-fuji-raf;image/x-olympus-orf;image/x-panasonic-rw2;image/x-panasonic-rw;image/x-adobe-dng;image/x-pentax-pef;image/x-samsung-srw;image/x-sigma-x3f;image/x-epson-erf;image/x-mamiya-mef;image/x-leaf-mos;image/x-minolta-mrw;image/x-kodak-kdc;image/x-kodak-dcr;image/x-hasselblad-3fr;image/x-hasselblad-fff;image/x-phaseone-iiq;model/gltf-binary;model/gltf+json;model/obj;model/stl;model/3mf;image/x-3ds;image/x-dcraw;model/vnd.usdz+zip;model/vnd.usda;model/vnd.collada+xml;image/heic;application/vnd.openxmlformats-officedocument.wordprocessingml.document;application/vnd.openxmlformats-officedocument.presentationml.presentation;application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;application/msword;application/vnd.ms-powerpoint;application/vnd.ms-excel;text/csv;

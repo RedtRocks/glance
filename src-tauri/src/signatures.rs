@@ -1,9 +1,8 @@
-//! Saved signatures, encrypted at rest with Windows DPAPI.
+//! Saved signatures, encrypted at rest with Windows DPAPI or a Linux login-keyring key.
 //!
-//! A saved signature can stamp a legally meaningful mark, so it must not be usable by
-//! other accounts or by someone who copies the file: CryptProtectData ties the
-//! ciphertext to the current Windows user. (Other platforms are for development only
-//! and store the data unencrypted.)
+//! A saved signature can stamp a legally meaningful mark, so copying its file must
+//! not reveal it. DPAPI ties ciphertext to the Windows user; Linux uses authenticated
+//! encryption with a key held by Secret Service. Without secure storage, saving fails.
 
 use base64::Engine;
 use serde::{Deserialize, Serialize};
@@ -62,13 +61,72 @@ mod dpapi {
     }
 }
 
-#[cfg(not(windows))]
+#[cfg(target_os = "linux")]
 mod dpapi {
-    pub fn protect(data: &[u8], _entropy: &[u8]) -> Result<Vec<u8>, String> {
-        Ok(data.to_vec())
+    use base64::Engine;
+    use chacha20poly1305::{aead::{Aead, AeadInPlace, Payload}, KeyInit, XChaCha20Poly1305, XNonce};
+    use crate::keyring_store::{entry, UNAVAILABLE};
+    use std::sync::Mutex;
+
+    // Serialize first-use creation so concurrent saves cannot overwrite each other's key.
+    static KEY_LOCK: Mutex<()> = Mutex::new(());
+
+    pub fn key() -> Result<[u8; 32], String> {
+        let _guard = KEY_LOCK.lock().map_err(|_| UNAVAILABLE.to_string())?;
+        let entry = entry("signature-key").map_err(|_| UNAVAILABLE.to_string())?;
+        match entry.get_password() {
+            Ok(encoded) => base64::engine::general_purpose::STANDARD.decode(encoded)
+                .map_err(|_| "The saved-signature key in the system keyring is invalid.".to_string())?
+                .try_into().map_err(|_| "The saved-signature key in the system keyring is invalid.".to_string()),
+            Err(keyring::Error::NoEntry) => {
+                let mut key = [0; 32];
+                getrandom::fill(&mut key).map_err(|e| format!("Cannot generate the saved-signature key: {e}"))?;
+                entry.set_password(&base64::engine::general_purpose::STANDARD.encode(key))
+                    .map_err(|_| UNAVAILABLE.to_string())?;
+                Ok(key)
+            }
+            Err(_) => Err(UNAVAILABLE.into()),
+        }
     }
-    pub fn unprotect(data: &[u8], _entropy: &[u8]) -> Result<Vec<u8>, String> {
-        Ok(data.to_vec())
+
+    pub fn seal(key: &[u8; 32], data: &[u8], entropy: &[u8]) -> Result<Vec<u8>, String> {
+        let mut nonce = [0; 24];
+        getrandom::fill(&mut nonce).map_err(|e| format!("Cannot generate a signature nonce: {e}"))?;
+        let cipher = XChaCha20Poly1305::new(key.into());
+        let mut sealed = Vec::with_capacity(nonce.len() + data.len() + 16);
+        sealed.extend_from_slice(&nonce);
+        sealed.extend_from_slice(data);
+        let tag = cipher.encrypt_in_place_detached(XNonce::from_slice(&nonce), entropy, &mut sealed[24..])
+            .map_err(|_| "Cannot encrypt the saved signature.".to_string())?;
+        sealed.extend_from_slice(&tag);
+        Ok(sealed)
+    }
+
+    pub fn open(key: &[u8; 32], data: &[u8], entropy: &[u8]) -> Result<Vec<u8>, String> {
+        if data.len() < 24 + 16 {
+            return Err("The saved signature is damaged or cannot be decrypted.".into());
+        }
+        XChaCha20Poly1305::new(key.into())
+            .decrypt(XNonce::from_slice(&data[..24]), Payload { msg: &data[24..], aad: entropy })
+            .map_err(|_| "The saved signature is damaged or cannot be decrypted.".into())
+    }
+
+    pub fn protect(data: &[u8], entropy: &[u8]) -> Result<Vec<u8>, String> {
+        seal(&key()?, data, entropy)
+    }
+
+    pub fn unprotect(data: &[u8], entropy: &[u8]) -> Result<Vec<u8>, String> {
+        open(&key()?, data, entropy)
+    }
+}
+
+#[cfg(not(any(windows, target_os = "linux")))]
+mod dpapi {
+    pub fn protect(_data: &[u8], _entropy: &[u8]) -> Result<Vec<u8>, String> {
+        Err("Saved signatures need the system keyring (GNOME Keyring or KWallet), which isn't available.".into())
+    }
+    pub fn unprotect(data: &[u8], entropy: &[u8]) -> Result<Vec<u8>, String> {
+        protect(data, entropy)
     }
 }
 
@@ -104,6 +162,8 @@ pub fn read_all(dir: &Path) -> Vec<Signature> {
 
 #[tauri::command]
 pub fn signatures_list(app: AppHandle) -> Result<Vec<Signature>, String> {
+    #[cfg(target_os = "linux")]
+    dpapi::key()?;
     Ok(read_all(&dir(&app)?))
 }
 
@@ -137,19 +197,37 @@ mod tests {
     use super::*;
 
     #[test]
-    fn round_trips_and_is_not_plaintext_on_windows() {
+    #[cfg(any(windows, target_os = "linux"))]
+    fn round_trips_and_is_not_plaintext() {
+        #[cfg(target_os = "linux")]
+        if let Err(error) = dpapi::key() {
+            assert_eq!(error, crate::keyring_store::UNAVAILABLE);
+            return; // Headless tests have no login keyring; pure crypto is tested below.
+        }
         let d = std::env::temp_dir().join(format!("glance-sig-{}", std::process::id()));
         std::fs::create_dir_all(&d).unwrap();
         let sig = Signature { id: "sig-1".into(), name: "Jane".into(), created: 1, png: "iVBORw0KGgo=".into() };
         write(&d, &sig).unwrap();
         let raw = std::fs::read(d.join("sig-1.sig")).unwrap();
-        #[cfg(windows)]
         assert!(!String::from_utf8_lossy(&raw).contains("Jane"), "signature must be encrypted at rest");
-        let _ = raw;
         let back = read_all(&d);
         assert_eq!(back.len(), 1);
         assert_eq!(back[0].name, "Jane");
         std::fs::remove_dir_all(&d).ok();
+    }
+
+    #[test]
+    #[cfg(target_os = "linux")]
+    fn authenticated_encryption_rejects_tampering_and_wrong_associated_data() {
+        let key = [42; 32];
+        let data = b"{\"name\":\"Jane\"}";
+        let mut sealed = dpapi::seal(&key, data, ENTROPY).unwrap();
+        assert_eq!(dpapi::open(&key, &sealed, ENTROPY).unwrap(), data);
+        assert!(dpapi::open(&key, &sealed, b"wrong associated data").is_err());
+        assert!(dpapi::open(&[43; 32], &sealed, ENTROPY).is_err());
+        assert!(dpapi::open(&key, &sealed[..23], ENTROPY).is_err());
+        sealed[24] ^= 1;
+        assert!(dpapi::open(&key, &sealed, ENTROPY).is_err());
     }
 
     #[test]

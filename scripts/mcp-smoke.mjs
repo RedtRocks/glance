@@ -77,7 +77,9 @@ async function tool(name, args) {
 function endpointDir() {
   if (process.env.GLANCE_MCP_DIR) return process.env.GLANCE_MCP_DIR
   if (process.platform === 'win32') return join(process.env.LOCALAPPDATA, 'io.github.redtrocks.glance')
-  return join(process.env.XDG_RUNTIME_DIR || tmpdir(), `glance-${process.env.USER || process.env.USERNAME || ''}`)
+  const abs = (key) => (process.env[key]?.startsWith('/') ? process.env[key] : undefined)
+  if (abs('XDG_RUNTIME_DIR')) return join(abs('XDG_RUNTIME_DIR'), 'glance')
+  return join(abs('XDG_STATE_HOME') ?? join(abs('HOME') ?? '/', '.local/state'), 'glance')
 }
 const text = (r) => r.content.filter((c) => c.type === 'text').map((c) => c.text).join('\n')
 function check(ok, what) {

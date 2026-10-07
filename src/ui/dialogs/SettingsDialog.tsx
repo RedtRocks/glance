@@ -126,17 +126,17 @@ export function SettingsDialog() {
       </div>
       {tab === 'general' ? (
         <div class="settings-cards">
-          <DefaultAppCard />
-          <SettingsCard icon="moon" title={t('App theme')} description={t('Follow Windows, or always use light or dark.')}>
+          {platform.windowsShell && <DefaultAppCard />}
+          <SettingsCard icon="moon" title={t('App theme')} description={platform.windowsShell ? t('Follow Windows, or always use light or dark.') : t('Follow the system, or always use light or dark.')}>
             <select value={s.theme} onChange={(e) => updateSettings({ theme: (e.target as HTMLSelectElement).value as ThemePref })}>
-              <option value="system">{t('Use Windows setting')}</option>
+              <option value="system">{platform.windowsShell ? t('Use Windows setting') : t('Use system setting')}</option>
               <option value="light">{t('Light')}</option>
               <option value="dark">{t('Dark')}</option>
             </select>
           </SettingsCard>
-          <SettingsCard icon="language" title={t('Language')} description={t('Follow Windows, or pick the language Glance uses.')}>
+          <SettingsCard icon="language" title={t('Language')} description={platform.windowsShell ? t('Follow Windows, or pick the language Glance uses.') : t('Follow the system, or pick the language Glance uses.')}>
             <select value={s.language} onChange={(e) => updateSettings({ language: (e.target as HTMLSelectElement).value })}>
-              <option value="system">{t('Use Windows setting')}</option>
+              <option value="system">{platform.windowsShell ? t('Use Windows setting') : t('Use system setting')}</option>
               {languages.map((code) => (
                 <option key={code} value={code}>
                   {languageName(code)}

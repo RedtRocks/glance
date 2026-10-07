@@ -133,3 +133,65 @@ describe('Default apps registration (installer)', () => {
     expect(hooks).toMatch(/NSIS_HOOK_PREUNINSTALL[\s\S]*GLANCE_DEFAULT_APPS_UNREGISTER[\s\S]*!macroend/)
   })
 })
+
+describe('Linux RPM', () => {
+  // Shared MIME Info names, plus IANA registrations for USD and COLLADA.
+  // https://gitlab.freedesktop.org/xdg/shared-mime-info/-/blob/master/data/freedesktop.org.xml.in
+  // https://www.iana.org/assignments/media-types/model
+  const mimeByExt: Record<string, string> = {
+    pdf: 'application/pdf', ai: 'application/illustrator', ps: 'application/postscript',
+    eps: 'image/x-eps', epsf: 'image/x-eps', xps: 'application/vnd.ms-xpsdocument', oxps: 'application/oxps',
+    cbz: 'application/vnd.comicbook+zip',
+    jpg: 'image/jpeg', jpeg: 'image/jpeg', jfif: 'image/jpeg', png: 'image/png', apng: 'image/apng',
+    gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp', dib: 'image/bmp', ico: 'image/vnd.microsoft.icon',
+    svg: 'image/svg+xml', avif: 'image/avif', tif: 'image/tiff', tiff: 'image/tiff',
+    heic: 'image/heif', heif: 'image/heif', hif: 'image/heif',
+    jp2: 'image/jp2', j2k: 'image/x-jp2-codestream', jpf: 'image/jpx', jpx: 'image/jpx', jxl: 'image/jxl',
+    jxr: 'image/jxr', wdp: 'image/jxr', hdp: 'image/jxr', exr: 'image/x-exr', hdr: 'image/vnd.radiance',
+    tga: 'image/x-tga', dds: 'image/vnd.ms-dds', qoi: 'image/qoi', ppm: 'image/x-portable-pixmap',
+    pgm: 'image/x-portable-graymap', pbm: 'image/x-portable-bitmap', pam: 'image/x-portable-arbitrarymap',
+    pnm: 'image/x-portable-anymap', icns: 'image/x-icns', psd: 'image/vnd.adobe.photoshop',
+    cr2: 'image/x-canon-cr2', cr3: 'image/x-canon-cr3', crw: 'image/x-canon-crw',
+    nef: 'image/x-nikon-nef', nrw: 'image/x-nikon-nrw', arw: 'image/x-sony-arw',
+    srf: 'image/x-sony-srf', sr2: 'image/x-sony-sr2', raf: 'image/x-fuji-raf',
+    orf: 'image/x-olympus-orf', rw2: 'image/x-panasonic-rw2', raw: 'image/x-panasonic-rw',
+    dng: 'image/x-adobe-dng', pef: 'image/x-pentax-pef', srw: 'image/x-samsung-srw',
+    x3f: 'image/x-sigma-x3f', erf: 'image/x-epson-erf', mef: 'image/x-mamiya-mef', mos: 'image/x-leaf-mos',
+    mrw: 'image/x-minolta-mrw', kdc: 'image/x-kodak-kdc', dcr: 'image/x-kodak-dcr',
+    '3fr': 'image/x-hasselblad-3fr', fff: 'image/x-hasselblad-fff', iiq: 'image/x-phaseone-iiq',
+    rwl: 'image/x-panasonic-rw2', gpr: 'image/x-dcraw',
+    glb: 'model/gltf-binary', gltf: 'model/gltf+json', obj: 'model/obj', stl: 'model/stl',
+    usdz: 'model/vnd.usdz+zip', usda: 'model/vnd.usda', dae: 'model/vnd.collada+xml',
+    '3mf': 'model/3mf', '3ds': 'image/x-3ds',
+  }
+  // No registered/shared MIME type exists for these formats. Never claim all unknown binary files.
+  const NO_MIME = new Set(['ply', 'fbx', 'usdc'])
+  // Windows-only formats (XPS needs the XPS Rasterization Service, JPEG XR needs WIC): Linux must not claim them.
+  const LINUX_UNSUPPORTED = new Set(['xps', 'oxps', 'jxr', 'wdp', 'hdp'])
+
+  it('covers every associated extension with a MIME type or an explicit exclusion', () => {
+    const desktop = readFileSync('src-tauri/linux/glance.desktop', 'utf8')
+    const mimes = new Set(desktop.match(/^MimeType=(.+)$/m)?.[1].split(';').filter(Boolean))
+    expect(desktop).toContain('Exec={{exec}} %F')
+    expect(mimes.has('application/octet-stream')).toBe(false)
+    for (const ext of extensions(conf)) {
+      if (LINUX_UNSUPPORTED.has(ext)) {
+        expect(mimes.has(mimeByExt[ext]), `Linux claims unsupported .${ext}`).toBe(false)
+      } else if (NO_MIME.has(ext)) {
+        expect(mimeByExt[ext]).toBeUndefined()
+      } else {
+        expect(mimeByExt[ext], `No MIME mapping for .${ext}`).toBeDefined()
+        expect(mimes.has(mimeByExt[ext]), `Desktop template omits .${ext}`).toBe(true)
+      }
+    }
+    for (const ext of NO_MIME) expect(extensions(conf)).toContain(ext)
+  })
+
+  it('bundles the installed executable bridge and recommends Ghostscript', () => {
+    const linux = JSON.parse(readFileSync('src-tauri/tauri.linux.conf.json', 'utf8'))
+    expect(linux.bundle.targets).toEqual(['rpm'])
+    expect(linux.bundle.linux.rpm.desktopTemplate).toBe('linux/glance.desktop')
+    expect(linux.bundle.linux.rpm.files).toEqual({ '/usr/bin/glance-mcp': 'target/mcp-bridge/glance-mcp' })
+    expect(linux.bundle.linux.rpm.recommends).toContain('ghostscript')
+  })
+})

@@ -253,6 +253,7 @@ dependencies = [
  "image",
  "jxl-oxide",
  "serde",
+ "tiff",
  "which",
  "windows",
  "windows-core",

@@ -28,6 +28,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 percent-encoding = "2"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "bmp", "ico", "tiff", "webp", "tga", "exr", "hdr", "dds", "pnm", "qoi"] }
+tiff = "0.11"
 icns = "0.5"
 jxl-oxide = { version = "0.12", features = ["image"] }
 hayro-jpeg2000 = "0.4"
@@ -44,6 +45,15 @@ ttf-parser = { version = "0.25", default-features = false, features = ["std", "o
 tract-onnx = "0.23"
 # Matches tract-onnx's linalg; enables multithreaded matrix multiply (~1.7x faster).
 tract-linalg = { version = "=0.23.8", features = ["multithread-mm"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+# async-io uses pure-Rust zbus; the synchronous backend requires native libdbus.
+keyring = { version = "3.6.3", default-features = false, features = ["async-secret-service", "async-io", "crypto-rust"] }
+chacha20poly1305 = "0.10"
+getrandom = "0.3"
 
 [target.'cfg(windows)'.dependencies]
 window-vibrancy = "0.6"

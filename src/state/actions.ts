@@ -28,7 +28,7 @@ import { msg, t } from '../i18n'
 import { mayHaveSignatures } from '../core/signatureStatus'
 import { PREVIEWS } from '../core/previews'
 
-const GS_INSTALL = 'winget install ArtifexSoftware.GhostScript'
+const GS_INSTALL = platform.isWindows ? 'winget install ArtifexSoftware.GhostScript' : 'sudo dnf install ghostscript'
 
 export const OPEN_FILTERS: platform.FileFilter[] = [
   {
@@ -175,7 +175,7 @@ async function openFresh(path: string): Promise<Doc | null> {
 
 function notice(probe: Probe, title: string, message: string, actions: NoticeDoc['actions'] = []): Doc {
   // Whatever Glance can't show, another installed app probably can.
-  const all = platform.isTauri ? [...actions, { label: t('Open with another app…'), run: () => void platform.openWith(probe.path).catch((e) => toast(String(e), 'error')) }] : actions
+  const all = platform.windowsShell ? [...actions, { label: t('Open with another app…'), run: () => void platform.openWith(probe.path).catch((e) => toast(String(e), 'error')) }] : actions
   const doc = new NoticeDoc(probe.name, probe.path, title, message, all)
   addDoc(doc)
   return doc

@@ -5,7 +5,7 @@ export function NoticeView({ doc }: { doc: NoticeDoc }) {
     <div class="notice">
       <h2>{doc.title}</h2>
       {doc.message.split('\n\n').map((para, i) => (
-        <p key={i} class={/^winget /.test(para) ? 'code' : ''}>
+        <p key={i} class={/^(winget |sudo dnf )/.test(para) ? 'code' : ''}>
           {para}
         </p>
       ))}

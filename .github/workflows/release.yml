@@ -1,6 +1,6 @@
 name: Release
 
-# Build Windows installers and publish a GitHub Release, either by pushing a tag like
+# Build Windows installers and Linux RPMs and publish a GitHub Release, either by pushing a tag like
 # v0.1.0, or from the Actions tab ("Run workflow") with a version: the release and its
 # tag are then created on the selected branch's commit.
 on:
@@ -65,6 +65,47 @@ jobs:
           name: installer-${{ matrix.arch }}
           path: dist-release/*.exe
 
+  # Linux RPMs build alongside the Windows installers but never hold up the release:
+  # linux-publish attaches them after it is published, so a Linux failure only means no RPMs.
+  linux-rpm:
+    name: Linux ${{ matrix.arch }} (RPM)
+    runs-on: ${{ matrix.runner }}
+    container: registry.fedoraproject.org/fedora:42
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    steps:
+      - name: Install build dependencies
+        run: |
+          dnf install -y git gcc gcc-c++ clang make perl file rpm-build webkit2gtk4.1-devel openssl-devel \
+            librsvg2-devel libxdo-devel nodejs npm
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            src-tauri
+            src-tauri/mcp-bridge
+          key: release-linux-${{ matrix.arch }}
+      - run: npm ci
+      - name: Build RPM
+        run: npx tauri build --bundles rpm
+      - name: Name RPM
+        shell: bash
+        run: |
+          tag="${{ github.event.inputs.tag || github.ref_name }}"
+          mkdir -p dist-release
+          cp src-tauri/target/release/bundle/rpm/*.rpm "dist-release/Glance-$tag-linux-${{ matrix.arch }}.rpm"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rpm-${{ matrix.arch }}
+          path: dist-release/*.rpm
+
   publish:
     name: Publish release
     needs: build
@@ -86,6 +127,24 @@ jobs:
           files: |
             dist-release/*.exe
             dist-release/SHA256SUMS.txt
+
+  linux-publish:
+    name: Add Linux RPMs to the release
+    needs: [publish, linux-rpm]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: rpm-*
+          path: dist-release
+          merge-multiple: true
+      - name: Upload RPMs and their checksums
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd dist-release
+          sha256sum *.rpm > SHA256SUMS-linux.txt && cat SHA256SUMS-linux.txt
+          gh release upload "${{ github.event.inputs.tag || github.ref_name }}" *.rpm SHA256SUMS-linux.txt --repo "$GITHUB_REPOSITORY"
 
   winget:
     name: winget
