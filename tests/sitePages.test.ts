@@ -13,6 +13,7 @@ describe('website pages for each file type', () => {
       const html = readFileSync(`site/${p.slug}/index.html`, 'utf8')
       expect(html).toContain(p.h1.replace(/&/g, '&amp;'))
       expect(sitemap).toContain(`/glance/${p.slug}/`)
+      expect(readFileSync('site/sitemap.txt', 'utf8')).toContain(`/glance/${p.slug}/\n`)
     }
   })
 
