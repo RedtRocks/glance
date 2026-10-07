@@ -17,6 +17,7 @@ import { startWebApp } from '../platform/webApp'
 import { t } from '../i18n'
 import { WebNav } from './web/WebNav'
 import { WebWelcome } from './web/WebWelcome'
+import { OpeningOverlay } from './web/FileLoader'
 import { PageCounter, PhoneBar, PhoneDock, PhoneSearch, PhoneSheets } from './web/PhoneShell'
 import { MenuBar } from './MenuBar'
 import { TabStrip } from './TabStrip'
@@ -232,6 +233,7 @@ export function App() {
       {activeDoc.value instanceof PdfDoc && stampOpen.value && <StampDialog doc={activeDoc.value} />}
       {activeDoc.value instanceof ImageDoc && exportOpen.value && <ExportDialog doc={activeDoc.value} />}
       {activeDoc.value instanceof PdfDoc && exportOpen.value && <PdfExportDialog doc={activeDoc.value} />}
+      {platform.isWeb && <OpeningOverlay />}
       <DialogHost />
       <Toasts />
       <ContextMenu />

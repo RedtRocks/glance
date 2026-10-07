@@ -6,6 +6,7 @@ import { toast } from '../../state/ui'
 import * as platform from '../../platform'
 import { Icon } from '../Icon'
 import { Popover } from '../markup/Popover'
+import { FileLoader } from '../web/FileLoader'
 import { intlLocale, msg, t } from '../../i18n'
 import { isDoubleTap, isTap } from '../touchGestures'
 
@@ -191,7 +192,9 @@ export function ModelView({ doc }: { doc: ModelDoc }) {
           <p>{error}</p>
         </div>
       ) : (
-        !stats && <div class="model-loading muted">{t('Loading model…')}</div>
+        !stats && (
+          <div class="model-loading muted">{platform.isWeb ? <FileLoader name={doc.name.value} /> : t('Loading model…')}</div>
+        )
       )}
       {stats && (
         <div class="model-controls" role="toolbar" aria-label={t('3D view')}>

@@ -1,7 +1,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks'
 import type { ImageDoc } from '../../state/documents'
 import { wheelZoom } from '../gestures'
-import { imageUrl } from '../../platform'
+import { imageUrl, isWeb } from '../../platform'
+import { FileLoader } from '../web/FileLoader'
 import { tool } from '../../state/markupState'
 import { MarkupLayer } from '../markup/MarkupLayer'
 import { imageViewport } from '../../image/viewport'
@@ -184,7 +185,7 @@ export function ImageView({ doc }: { doc: ImageDoc }) {
                 <canvas ref={canvas} class="image-pixels" style={{ width: w, height: h, imageRendering: scale >= 3 ? 'pixelated' : 'auto' }} />
               ) : !src ? (
                 // The browser version decodes TIFF, RAW and the like before it can show them.
-                <p class="image-decoding">{t('Opening…')}</p>
+                isWeb ? <FileLoader name={doc.name.value} /> : <p class="image-decoding">{t('Opening…')}</p>
               ) : (
                 <img
                   ref={img}

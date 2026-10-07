@@ -66,6 +66,9 @@ export async function withBusy<T>(label: string, fn: () => Promise<T>): Promise<
   }
 }
 
+/** The file the browser version is reading in, for its loading card. */
+export const opening = signal<{ name: string; index: number; total: number } | null>(null)
+
 export const findQuery = signal('')
 export const findOpen = signal(false)
 export const settingsOpen = signal(false)

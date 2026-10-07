@@ -5,6 +5,7 @@ import * as platform from '../../platform'
 import { t } from '../../i18n'
 import { openFiles } from '../../state/actions'
 import { useTouchZoom } from '../touchGestures'
+import { FileLoader } from '../web/FileLoader'
 
 /** Office files, text, Markdown, media, books, fonts and email, previewed read-only (preview/render.ts, loaded on demand). */
 export function PreviewView({ doc }: { doc: PreviewDoc }) {
@@ -105,12 +106,17 @@ export function PreviewView({ doc }: { doc: PreviewDoc }) {
           ))}
         </div>
       )}
-      {state === 'loading' && (
-        <div class="office-status">
-          <div class="spinner" />
-          <p>{t('Opening…')}</p>
-        </div>
-      )}
+      {state === 'loading' &&
+        (platform.isWeb ? (
+          <div class="office-status">
+            <FileLoader name={doc.name.value} />
+          </div>
+        ) : (
+          <div class="office-status">
+            <div class="spinner" />
+            <p>{t('Opening…')}</p>
+          </div>
+        ))}
       {state !== 'loading' && state !== 'ready' && (
         <div class="office-status">
           <h2>{t('Glance can’t show this file')}</h2>
