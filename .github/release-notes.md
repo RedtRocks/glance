@@ -1,6 +1,12 @@
-Glance is a free, open-source, lightweight viewer and editor for PDFs, images, camera RAW and 3D models on Windows, inspired by macOS Preview. It also previews Word, PowerPoint and Excel files, and runs in any browser at https://redtrocks.github.io/glance/app/.
+Glance is a free, open-source, lightweight viewer and editor for PDFs, images, camera RAW and 3D models on Windows and Linux, inspired by macOS Preview. It also previews Word, PowerPoint and Excel files, and runs in any browser at https://redtrocks.github.io/glance/app/.
 
 > **Early preview.** Most of Preview's everyday features work, plus version history, 3D models, certificate signatures and more. On Windows 11, the Microsoft Store version puts Glance's entries in Explorer's main right-click menu; with the installer from GitHub they're under **Show more options**. See the [README](https://github.com/RedtRocks/glance#features) for the full list.
+
+## New in 0.6.5
+
+- **Glance for Linux.** Download a package for Ubuntu 22.04+ and Debian 12+ (`.deb`) or Fedora 42+ (`.rpm`), for Intel/AMD and ARM64 PCs. It includes the AI tools, adds Glance to **Open With** for PDFs, images and its other file types, and keeps saved signatures and AI API keys in your login keyring (GNOME Keyring or KWallet). Features that need Windows, such as Text Recognition, scanning and certificate signing, are hidden on Linux.
+- **A safer connection for AI apps on Linux.** The address AI apps use to reach Glance is kept in a private folder only your account can open, never in a shared temporary folder, and Glance checks it hasn't been tampered with before using it.
+- **Glance in Windows 11's main right-click menu (Microsoft Store version).** **Open in Glance**, **Combine into PDF** and **Remove Location Info** (for photos) now appear without **Show more options**. With the installer from GitHub they stay under **Show more options**.
 
 ## New in 0.6.4
 
@@ -85,6 +91,8 @@ Fixes for Ask AI:
 |---|---|
 | Most Windows PCs (Intel/AMD) | `Glance-…-windows-x64-setup.exe` |
 | ARM laptops (Snapdragon, Surface Pro X) | `Glance-…-windows-arm64-setup.exe` |
+| Ubuntu 22.04+ or Debian 12+ (Intel/AMD) | `Glance-…-linux-amd64.deb` |
+| Ubuntu 22.04+ or Debian 12+ (ARM64) | `Glance-…-linux-arm64.deb` |
 | Fedora 42+ (Intel/AMD) | `Glance-…-linux-x86_64.rpm` |
 | Fedora 42+ (ARM64) | `Glance-…-linux-aarch64.rpm` |
 
@@ -98,12 +106,12 @@ Not sure? Open **Settings → System → About** and look at **System type**.
 
 Requires Windows 10 (1809+) or Windows 11. The installer downloads the WebView2 runtime if it's missing (it's preinstalled on Windows 11).
 
-On Fedora, run `sudo dnf install ./Glance-…-linux-x86_64.rpm` (or the `aarch64` file).
+On Ubuntu or Debian, run `sudo apt install ./Glance-…-linux-amd64.deb` (or the `arm64` file). On Fedora, run `sudo dnf install ./Glance-…-linux-x86_64.rpm` (or the `aarch64` file).
 
 ## Privacy
 
-No account and nothing you open leaves your PC. Glance makes two optional daily requests, both with a switch in Settings: an update check, and an anonymous count of installs (version number only, no ID). Background removal and text recognition run on your PC. Saved signatures are encrypted with your Windows account.
+No account and nothing you open leaves your PC. Glance makes two optional daily requests, both with a switch in Settings: an update check, and an anonymous count of installs (version number only, no ID). Background removal and text recognition run on your PC. Saved signatures are encrypted with your Windows account, or with your login keyring on Linux.
 
 ## Verify your download
 
-Compare the file's hash with `SHA256SUMS.txt`: in PowerShell, run `Get-FileHash .\Glance-…-setup.exe`. For the Linux RPMs, run `sha256sum -c SHA256SUMS-linux.txt --ignore-missing` in the download folder.
+Compare the file's hash with `SHA256SUMS.txt`: in PowerShell, run `Get-FileHash .\Glance-…-setup.exe`. For the Linux packages, run `sha256sum -c SHA256SUMS-linux.txt --ignore-missing` in the download folder.
