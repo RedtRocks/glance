@@ -85,6 +85,8 @@ Fixes for Ask AI:
 |---|---|
 | Most Windows PCs (Intel/AMD) | `Glance-…-windows-x64-setup.exe` |
 | ARM laptops (Snapdragon, Surface Pro X) | `Glance-…-windows-arm64-setup.exe` |
+| Fedora 42+ (Intel/AMD) | `Glance-…-linux-x86_64.rpm` |
+| Fedora 42+ (ARM64) | `Glance-…-linux-aarch64.rpm` |
 
 Not sure? Open **Settings → System → About** and look at **System type**.
 
@@ -96,10 +98,12 @@ Not sure? Open **Settings → System → About** and look at **System type**.
 
 Requires Windows 10 (1809+) or Windows 11. The installer downloads the WebView2 runtime if it's missing (it's preinstalled on Windows 11).
 
+On Fedora, run `sudo dnf install ./Glance-…-linux-x86_64.rpm` (or the `aarch64` file).
+
 ## Privacy
 
 No account and nothing you open leaves your PC. Glance makes two optional daily requests, both with a switch in Settings: an update check, and an anonymous count of installs (version number only, no ID). Background removal and text recognition run on your PC. Saved signatures are encrypted with your Windows account.
 
 ## Verify your download
 
-Compare the file's hash with `SHA256SUMS.txt`: in PowerShell, run `Get-FileHash .\Glance-…-setup.exe`.
+Compare the file's hash with `SHA256SUMS.txt`: in PowerShell, run `Get-FileHash .\Glance-…-setup.exe`. For the Linux RPMs, run `sha256sum -c SHA256SUMS-linux.txt --ignore-missing` in the download folder.

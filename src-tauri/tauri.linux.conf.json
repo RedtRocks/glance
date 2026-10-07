@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "bundle": {
+    "targets": ["rpm"],
+    "linux": {
+      "rpm": {
+        "desktopTemplate": "linux/glance.desktop",
+        "files": {
+          "/usr/bin/glance-mcp": "target/mcp-bridge/glance-mcp"
+        },
+        "recommends": ["ghostscript"]
+      }
+    }
+  }
+}
