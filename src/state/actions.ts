@@ -20,7 +20,7 @@ import {
   removeDoc,
   type Doc
 } from './documents'
-import { alertDialog, promptText, showDialog, toast, withBusy } from './ui'
+import { alertDialog, opening, promptText, showDialog, toast, withBusy } from './ui'
 import { applyImageRedactions, editableImage, rotateImage, saveImage, saveImageAs } from './imageActions'
 import * as versions from './versions'
 import { flushAutosave } from './autosave'
@@ -208,13 +208,19 @@ async function openPostscript(probe: Probe): Promise<Doc | null> {
 }
 
 export async function openFiles(paths: string[], opts: { quiet?: boolean } = {}): Promise<void> {
-  for (const p of paths) {
-    try {
-      await openOne(p)
-    } catch (e) {
-      console.error(e)
-      if (!opts.quiet) toast(t('Couldn’t open {file}: {error}', { file: platform.baseName(p), error: String((e as Error).message ?? e) }), 'error')
+  try {
+    for (const [i, p] of paths.entries()) {
+      // Reading a big PDF in the browser takes a moment; say what's happening meanwhile.
+      if (platform.isWeb) opening.value = { name: platform.baseName(p), index: i + 1, total: paths.length }
+      try {
+        await openOne(p)
+      } catch (e) {
+        console.error(e)
+        if (!opts.quiet) toast(t('Couldn’t open {file}: {error}', { file: platform.baseName(p), error: String((e as Error).message ?? e) }), 'error')
+      }
     }
+  } finally {
+    opening.value = null
   }
 }
 

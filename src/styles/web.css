@@ -1097,3 +1097,182 @@
     padding: 12px 0 96px;
   }
 }
+
+/* ---------- Opening a file: the start screen's card stack, fanning ---------- */
+.opening-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 85;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: color-mix(in srgb, var(--bg-solid) 72%, transparent);
+  animation: fl-in 180ms 150ms both;
+}
+.opening-overlay .file-loader {
+  padding: 32px 36px 28px;
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+}
+.file-loader {
+  display: grid;
+  justify-items: center;
+  width: min(340px, 100%);
+  text-align: center;
+  color: var(--text);
+}
+.image-page .file-loader {
+  padding: 40px 24px;
+}
+.model-loading .file-loader {
+  color: var(--text);
+}
+.fl-stack {
+  position: relative;
+  width: 84px;
+  height: 104px;
+  margin-bottom: 20px;
+}
+.fl-card {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  background: var(--tone);
+  animation: fl-fan 1.6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+.fl-card.yellow {
+  --from: -4deg;
+  --to: -14deg;
+}
+.fl-card.pink {
+  --from: 2.5deg;
+  --to: 12deg;
+}
+.fl-card.violet {
+  --from: 0deg;
+  --to: 0deg;
+  --tone: var(--violet-deep);
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 18px 14px;
+  animation-name: fl-lift;
+}
+.fl-card i {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.85);
+  transform-origin: left;
+  animation: fl-line 1.6s ease-in-out infinite;
+}
+.fl-card i:nth-child(2) {
+  width: 80%;
+  animation-delay: 0.15s;
+}
+.fl-card i:nth-child(3) {
+  width: 60%;
+  animation-delay: 0.3s;
+}
+.fl-title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 28px;
+}
+.fl-name {
+  max-width: 100%;
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: var(--text-2);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.fl-count {
+  margin: 2px 0 0;
+  color: var(--text-3);
+  font-size: 13px;
+}
+.fl-bar {
+  position: relative;
+  width: 160px;
+  height: 4px;
+  margin: 18px 0 16px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--subtle-press);
+}
+.fl-bar span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--violet), var(--pink), var(--orange));
+  animation: fl-slide 1.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+.fl-note {
+  margin: 0;
+  text-wrap: balance;
+  color: var(--text-2);
+  font-size: 13px;
+}
+@keyframes fl-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fl-fan {
+  0%,
+  100% {
+    transform: rotate(var(--from));
+  }
+  50% {
+    transform: rotate(var(--to));
+  }
+}
+@keyframes fl-lift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+@keyframes fl-line {
+  0% {
+    transform: scaleX(0.2);
+    opacity: 0.5;
+  }
+  50%,
+  100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+@keyframes fl-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fl-card,
+  .fl-card i,
+  .fl-bar span {
+    animation: none;
+  }
+  .fl-card {
+    transform: rotate(var(--to));
+  }
+  .fl-bar span {
+    width: 100%;
+  }
+}
+.fl-note .icon {
+  display: inline-block;
+  margin-right: 6px;
+  vertical-align: -3px;
+}
