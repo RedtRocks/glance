@@ -14,7 +14,7 @@ import { makeDefault } from './defaultApp'
 import { versionsOpen } from './versions'
 import { activeDoc, activeId, docs, type Doc, type ViewMode } from './documents'
 import { settings, updateSettings } from './settings'
-import { cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, findOpen, inspectorOpen, aiOpen, signaturesOpen, promptText, redactTextOpen, toast, settingsOpen, sidebarVisible, slideshow } from './ui'
+import { feedbackOpen, cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, findOpen, inspectorOpen, aiOpen, signaturesOpen, promptText, redactTextOpen, toast, settingsOpen, sidebarVisible, slideshow } from './ui'
 import { parsePageInput } from '../core/pageControls'
 import { printDoc } from './print'
 import { applyRedactions } from './actions'
@@ -326,6 +326,7 @@ export const COMMANDS: Command[] = [
       else if (r === 'store') toast(t('The Microsoft Store keeps Glance up to date'))
     }
   },
+  { id: 'help.feedback', label: msg('Send Feedback…'), run: () => void (feedbackOpen.value = true) },
   { id: 'help.about', label: msg('About Glance'), run: actions.showAbout },
   { id: 'help.github', label: msg('Glance on GitHub'), run: () => platform.openUrl('https://github.com/RedtRocks/glance') }
 ]

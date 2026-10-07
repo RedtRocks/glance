@@ -108,5 +108,8 @@ export const collageOpen = signal(false)
 export const reduceOpen = signal(false)
 export const scanOpen = signal(false)
 
+/** Help → Send Feedback. */
+export const feedbackOpen = signal(false)
+
 /** Pages → Header, Footer & Watermark. */
 export const stampOpen = signal(false)

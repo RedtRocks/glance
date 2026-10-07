@@ -4015,3 +4015,26 @@ input[type='range'] {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Send feedback */
+.feedback {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.field textarea {
+  min-height: 120px;
+  resize: vertical;
+  border: 1px solid var(--stroke);
+  border-bottom-color: var(--stroke-strong);
+  border-radius: var(--radius);
+  background: var(--control);
+  padding: 8px 10px;
+  font: inherit;
+  color: inherit;
+}
+.field textarea:focus {
+  outline: none;
+  border-bottom: 2px solid var(--accent);
+  background: var(--layer-alt);
+}
