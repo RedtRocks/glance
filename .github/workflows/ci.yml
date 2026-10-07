@@ -6,6 +6,12 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Every job only reads the repository. The paths filter reads a pull request's changed
+# files through the API, which needs pull-requests: read.
+permissions:
+  contents: read
+  pull-requests: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
