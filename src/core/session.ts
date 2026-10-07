@@ -3,6 +3,8 @@
  * (Settings → Reopen tabs). Pure data helpers; state/session.ts does the wiring.
  */
 
+import { pathKey, type PathPolicy } from './paths'
+
 export interface SessionTab {
   path: string
   /** Zero-based page. */
@@ -27,7 +29,7 @@ export interface SessionSource {
 }
 
 /** Only tabs backed by a file on disk can come back; duplicates collapse to the first. */
-export function captureSession(open: SessionSource[]): Session {
+export function captureSession(open: SessionSource[], policy: PathPolicy): Session {
   const tabs: SessionTab[] = []
   const seen = new Set<string>()
   let active = 0
@@ -37,7 +39,7 @@ export function captureSession(open: SessionSource[]): Session {
     // Converted PostScript/EPS/AI files are reopened from the original.
     const path = d.path ?? d.convertedFrom ?? null
     if (!path) continue
-    const key = path.toLowerCase()
+    const key = pathKey(path, policy)
     if (seen.has(key)) continue
     seen.add(key)
     if (d.active) active = tabs.length

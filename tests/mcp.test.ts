@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { McpServer, ToolError, checkArgs, type ToolDefinition } from '../src/core/mcp/protocol'
-import { checkOutput, matchOcrLines, parsePages, partPath, samePath, searchRegexes, toBase64 } from '../src/core/mcp/helpers'
+import { checkOutput, matchOcrLines, parsePages, partPath, searchRegexes, toBase64 } from '../src/core/mcp/helpers'
+import { samePath } from '../src/core/paths'
 import definitions from '../src/core/mcp/tools.json'
 
 const echo: ToolDefinition = {
@@ -116,12 +117,14 @@ describe('AI tool helpers', () => {
   })
 
   it('never writes over an input', () => {
-    expect(() => checkOutput('C:\\a\\out.pdf', ['C:\\a\\in.pdf'], false, false)).not.toThrow()
-    expect(() => checkOutput('c:/A/IN.pdf', ['C:\\a\\in.pdf'], true, true)).toThrow('never overwrites')
-    expect(() => checkOutput('C:\\a\\out.pdf', ['C:\\a\\in.pdf'], true, false)).toThrow('already exists')
-    expect(() => checkOutput('C:\\a\\out.pdf', ['C:\\a\\in.pdf'], true, true)).not.toThrow()
-    expect(() => checkOutput('out.pdf', [], false, false)).toThrow('absolute')
-    expect(samePath('C:\\x\\Y.pdf', 'c:/x/y.pdf')).toBe(true)
+    expect(() => checkOutput('C:\\a\\out.pdf', ['C:\\a\\in.pdf'], false, false, 'windows')).not.toThrow()
+    expect(() => checkOutput('c:/A/IN.pdf', ['C:\\a\\in.pdf'], true, true, 'windows')).toThrow('never overwrites')
+    expect(() => checkOutput('C:\\a\\out.pdf', ['C:\\a\\in.pdf'], true, false, 'windows')).toThrow('already exists')
+    expect(() => checkOutput('C:\\a\\out.pdf', ['C:\\a\\in.pdf'], true, true, 'windows')).not.toThrow()
+    expect(() => checkOutput('out.pdf', [], false, false, 'windows')).toThrow('absolute')
+    expect(samePath('C:\\x\\Y.pdf', 'c:/x/y.pdf', 'windows')).toBe(true)
+    expect(() => checkOutput('/home/A.pdf', ['/home/a.pdf'], false, false, 'posix')).not.toThrow()
+    expect(() => checkOutput('/home/a.pdf', ['/home//a.pdf'], true, true, 'posix')).toThrow('never overwrites')
   })
 
   it('numbers split parts', () => {

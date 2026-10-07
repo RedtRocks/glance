@@ -1,7 +1,7 @@
 /**
- * HEIC and HEIF photos (iPhone pictures) in the browser version: libheif
- * (LGPL-3.0, via libheif-js) compiled to WebAssembly, loaded the first time one is
- * opened. The Windows app uses the system's HEIF codec instead.
+ * HEIC and HEIF photos (iPhone pictures) in browsers and non-Windows desktop apps:
+ * libheif (LGPL-3.0, via libheif-js) compiled to WebAssembly, loaded the first time
+ * one is opened. The Windows app uses the system's HEIF codec instead.
  */
 
 interface HeifImage {

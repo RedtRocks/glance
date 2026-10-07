@@ -34,6 +34,7 @@ fn site(app: &AppHandle, id: &str) -> Result<Webview, String> {
 /// The user agent of Microsoft Edge on the same engine. WebView2's own adds client hints
 /// naming "WebView2", and Google refuses to sign in inside apps that send them; a custom
 /// user agent turns those hints off.
+#[cfg(windows)]
 fn edge_user_agent() -> String {
     let version = tauri::webview_version().unwrap_or_else(|_| "141.0.0.0".into());
     let major = version.split('.').next().unwrap_or("141");
@@ -61,7 +62,6 @@ pub async fn website_show(app: AppHandle, id: String, x: f64, y: f64, width: f64
     let window = app.get_window("main").ok_or("no main window")?;
     let opener = app.clone();
     let builder = tauri::webview::WebviewBuilder::new(&label, WebviewUrl::External(url))
-        .user_agent(&edge_user_agent())
         // Sign-in pages hop between domains; only web addresses are allowed.
         .on_navigation(|u| matches!(u.scheme(), "https" | "about"))
         // "Sign in with Google/Apple/Microsoft" opens a sized popup that reports back to the
@@ -77,6 +77,8 @@ pub async fn website_show(app: AppHandle, id: String, x: f64, y: f64, width: f64
             let _ = opener.opener().open_url(u.as_str(), None::<&str>);
             tauri::webview::NewWindowResponse::Deny
         });
+    #[cfg(windows)]
+    let builder = builder.user_agent(&edge_user_agent());
     window.add_child(builder, position, size).map_err(|e| e.to_string())?;
     Ok(())
 }
@@ -122,6 +124,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[cfg(windows)]
     fn user_agent_reads_as_edge() {
         let ua = edge_user_agent();
         assert!(ua.contains(" Edg/") && ua.contains(" Chrome/"));

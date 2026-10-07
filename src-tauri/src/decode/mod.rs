@@ -64,6 +64,12 @@ pub fn page_count(path: &Path) -> u32 {
     if let Ok(n) = wic::frame_count(path) {
         return n;
     }
+    if ext == "tif" || ext == "tiff" {
+        return std::fs::File::open(path)
+            .map_err(|e| e.to_string())
+            .and_then(|file| tiff_page_count(std::io::BufReader::new(file)))
+            .unwrap_or(1);
+    }
     1
 }
 
@@ -99,6 +105,14 @@ fn decode_unguarded(path: &Path, page: u32, max: Option<u32>) -> Result<Decoded,
     }
 
     let data = std::fs::read(path).map_err(|e| e.to_string())?;
+    if ext == "tif" || ext == "tiff" {
+        match decode_tiff(&data, page) {
+            Ok(d) => return Ok(d.fit(max)),
+            Err(e) if page != 0 => return Err(e),
+            // Keep the image crate's first-page support for uncommon TIFF layouts.
+            Err(_) => {}
+        }
+    }
     Ok(decode_data(&ext, &data)?.fit(max))
 }
 
@@ -122,6 +136,72 @@ pub fn decode_data(ext: &str, data: &[u8]) -> Result<Decoded, String> {
         _ => decode_hinted(data, image::ImageFormat::from_extension(ext), None)?,
     };
     Ok(decoded)
+}
+
+fn tiff_page_count(reader: impl std::io::Read + std::io::Seek) -> Result<u32, String> {
+    let mut decoder = tiff::decoder::Decoder::new(reader).map_err(|e| e.to_string())?;
+    let mut count = 1u32;
+    while decoder.more_images() {
+        decoder.next_image().map_err(|e| e.to_string())?;
+        count = count.checked_add(1).ok_or("Too many TIFF pages")?;
+    }
+    Ok(count)
+}
+
+/// Decodes any page of a multi-page TIFF; the `image` crate only reads the first page.
+fn decode_tiff(data: &[u8], page: u32) -> Result<Decoded, String> {
+    use tiff::{decoder::DecodingResult, ColorType};
+
+    let mut decoder = tiff::decoder::Decoder::new(Cursor::new(data)).map_err(|e| e.to_string())?;
+    for _ in 0..page {
+        decoder.next_image().map_err(|e| e.to_string())?;
+    }
+    let (width, height) = decoder.dimensions().map_err(|e| e.to_string())?;
+    let color = decoder.colortype().map_err(|e| e.to_string())?;
+    let orientation = decoder.get_tag_u32(tiff::tags::Tag::Orientation).ok()
+        .and_then(|v| u8::try_from(v).ok())
+        .and_then(image::metadata::Orientation::from_exif);
+    macro_rules! pixels {
+        ($variant:ident, $data:expr) => {
+            DynamicImage::$variant(image::ImageBuffer::from_raw(width, height, $data)
+                .ok_or("Invalid TIFF pixel buffer")?)
+        };
+    }
+    let mut img = match (color, decoder.read_image().map_err(|e| e.to_string())?) {
+        // Bilevel (fax) pages: MSB-first bits, rows padded to whole bytes; WhiteIsZero is
+        // already inverted by the tiff crate, so 1 = white.
+        (ColorType::Gray(1), DecodingResult::U8(v)) => {
+            let stride = (width as usize).div_ceil(8);
+            let mut luma = Vec::with_capacity(width as usize * height as usize);
+            for row in v.chunks_exact(stride).take(height as usize) {
+                luma.extend((0..width as usize).map(|x| if row[x / 8] & (0x80 >> (x % 8)) != 0 { 255 } else { 0 }));
+            }
+            pixels!(ImageLuma8, luma)
+        }
+        (ColorType::Gray(8), DecodingResult::U8(v)) => pixels!(ImageLuma8, v),
+        (ColorType::Gray(16), DecodingResult::U16(v)) => pixels!(ImageLuma16, v),
+        (ColorType::GrayA(8), DecodingResult::U8(v)) => pixels!(ImageLumaA8, v),
+        (ColorType::GrayA(16), DecodingResult::U16(v)) => pixels!(ImageLumaA16, v),
+        (ColorType::RGB(8), DecodingResult::U8(v)) => pixels!(ImageRgb8, v),
+        (ColorType::RGB(16), DecodingResult::U16(v)) => pixels!(ImageRgb16, v),
+        (ColorType::RGBA(8), DecodingResult::U8(v)) => pixels!(ImageRgba8, v),
+        (ColorType::RGBA(16), DecodingResult::U16(v)) => pixels!(ImageRgba16, v),
+        (ColorType::CMYK(8), DecodingResult::U8(mut v)) => {
+            for p in v.chunks_exact_mut(4) {
+                let k = 255 - p[3] as u16;
+                for c in &mut p[..3] {
+                    *c = ((255 - *c as u16) * k / 255) as u8;
+                }
+                p[3] = 255;
+            }
+            pixels!(ImageRgba8, v)
+        }
+        _ => return Err("Unsupported TIFF color layout".into()),
+    };
+    if let Some(o) = orientation {
+        img.apply_orientation(o);
+    }
+    Ok(Decoded::from_rgba(img.into_rgba8()))
 }
 
 /// Generic path through the `image` crate, honoring EXIF orientation.
@@ -229,6 +309,54 @@ mod tests {
         let d = decode(&p, 0, Some(100)).unwrap();
         assert_eq!((d.width, d.height), (100, 50));
         assert_eq!(&d.rgba[0..4], &[1, 2, 3, 255]);
+    }
+
+    #[test]
+    fn decodes_each_tiff_page() {
+        use tiff::encoder::{colortype, TiffEncoder};
+
+        let mut bytes = Cursor::new(Vec::new());
+        {
+            let mut encoder = TiffEncoder::new(&mut bytes).unwrap();
+            encoder.write_image::<colortype::RGB8>(1, 1, &[255, 0, 0]).unwrap();
+            encoder.write_image::<colortype::RGBA8>(2, 1, &[1, 2, 3, 255, 4, 5, 6, 255]).unwrap();
+        }
+        let bytes = bytes.into_inner();
+        let p = write_temp("multipage.tiff", &bytes);
+        assert_eq!(tiff_page_count(Cursor::new(&bytes)).unwrap(), 2);
+        assert_eq!(page_count(&p), 2);
+        let d = decode_tiff(&bytes, 1).unwrap();
+        assert_eq!((d.width, d.height), (2, 1));
+        assert_eq!(&d.rgba[..4], &[1, 2, 3, 255]);
+        let d = decode(&p, 1, None).unwrap();
+        assert_eq!((d.width, d.height), (2, 1));
+        assert_eq!(&d.rgba[..4], &[1, 2, 3, 255]);
+        let d = decode(&p, 1, Some(1)).unwrap();
+        assert_eq!((d.width, d.height), (1, 1));
+        assert!(decode_tiff(&bytes, 2).is_err());
+        let _ = std::fs::remove_file(p);
+    }
+
+    #[test]
+    fn decodes_bilevel_tiff_page() {
+        // Hand-built 10x2 1-bit TIFF; the tiff encoder can't write bilevel images.
+        let mut t = b"II*\0".to_vec();
+        t.extend(12u32.to_le_bytes());
+        t.extend([0x80, 0x40, 0, 0]); // row 0: pixels 0 and 9 white; row 1 black
+        let tags: [(u16, u16, u32); 8] =
+            [(256, 3, 10), (257, 3, 2), (258, 3, 1), (259, 3, 1), (262, 3, 1), (273, 4, 8), (278, 3, 2), (279, 4, 4)];
+        t.extend((tags.len() as u16).to_le_bytes());
+        for (tag, kind, value) in tags {
+            t.extend(tag.to_le_bytes());
+            t.extend(kind.to_le_bytes());
+            t.extend(1u32.to_le_bytes());
+            t.extend(value.to_le_bytes());
+        }
+        t.extend(0u32.to_le_bytes());
+        let d = decode_tiff(&t, 0).unwrap();
+        assert_eq!((d.width, d.height), (10, 2));
+        let px = |x: usize, y: usize| d.rgba[(y * 10 + x) * 4];
+        assert_eq!((px(0, 0), px(1, 0), px(9, 0), px(0, 1)), (255, 0, 255, 0));
     }
 
     #[test]

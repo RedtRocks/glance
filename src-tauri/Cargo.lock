@@ -1821,6 +1821,7 @@ dependencies = [
  "tauri-plugin-drag",
  "tauri-plugin-opener",
  "tauri-plugin-single-instance",
+ "tiff",
  "tract-linalg",
  "tract-onnx",
  "ttf-parser",

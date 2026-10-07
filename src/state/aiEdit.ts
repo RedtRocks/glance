@@ -11,6 +11,7 @@
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 import { ToolError, type ToolHandler, type ToolResult } from '../core/mcp/protocol'
 import { fontStack, newId, textBoxLayout, type Color, type Markup, type Rect, type TextMarkup } from '../core/markup'
+import { samePath } from '../core/paths'
 import {
   buildLines,
   buildParagraphs,
@@ -401,7 +402,7 @@ function makeRoom(m: PageModel, y: number, left: number, right: number, delta: n
 function editableTab(tab: unknown): PdfDoc | ImageDoc {
   let d: Doc | null | undefined
   if (tab === undefined || tab === null || tab === '') d = activeDoc.value
-  else d = docs.value.find((x) => x.id === tab || x.path.peek()?.toLowerCase() === String(tab).toLowerCase())
+  else d = docs.value.find((x) => x.id === tab || (x.path.peek() !== null && samePath(x.path.peek()!, String(tab), platform.pathPolicy)))
   if (!d) throw new ToolError(tab ? `No open tab "${String(tab)}". glance_list_open lists the tabs.` : 'No document is open in Glance.')
   if (!(d instanceof PdfDoc || d instanceof ImageDoc)) throw new ToolError(`${d.name.peek()} isn’t a PDF or image, so its text can’t be edited here`)
   return d

@@ -52,7 +52,7 @@ export function externalHint(doc: Doc | null): { kind: string; detail: string } 
 }
 
 export function canOpenWith(doc: Doc | null = activeDoc.value): boolean {
-  return platform.isTauri && !!doc?.path.peek()
+  return platform.windowsShell && !!doc?.path.peek()
 }
 
 export async function openWithOtherApp(doc: Doc | null = activeDoc.value): Promise<void> {

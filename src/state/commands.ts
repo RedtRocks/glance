@@ -371,19 +371,25 @@ for (const [rule, ids] of VISIBILITY) {
   }
 }
 
-// The browser version can't reach Windows: these stay out of its menus.
-const WINDOWS_ONLY = [
-  'file.newFromClipboard', 'file.scan', 'file.newWindow', 'file.openWith', 'file.makeDefault', 'file.versions', 'file.batch',
-  'image.setWallpaper', 'image.setLockScreen', 'tools.ocr', 'tools.copyImageText', 'tools.certSign', 'view.signatures',
-  'view.customizeToolbar', 'help.updates',
-  // The subject model runs in the Rust backend.
-  'tools.removeBackground', 'tools.copySubject'
+// Desktop features need the Rust backend; shell integrations also need Windows.
+const DESKTOP_ONLY = [
+  'file.newFromClipboard', 'file.newWindow', 'file.versions', 'file.batch', 'view.signatures',
+  'view.customizeToolbar', 'help.updates', 'tools.removeBackground', 'tools.copySubject'
 ]
-if (!platform.isTauri) {
-  for (const id of WINDOWS_ONLY) {
+const WINDOWS_ONLY = [
+  'file.scan', 'file.openWith', 'file.makeDefault', 'image.setWallpaper', 'image.setLockScreen',
+  'tools.ocr', 'tools.copyImageText', 'tools.certSign'
+]
+for (const [available, ids] of [
+  [platform.isTauri, DESKTOP_ONLY],
+  [platform.windowsShell, WINDOWS_ONLY],
+  // The browser has its own share/download flow; Linux has no Windows share sheet.
+  [platform.isWeb || platform.windowsShell, ['file.share']]
+] as const) {
+  for (const id of ids) {
     const cmd = COMMANDS.find((c) => c.id === id)
-    if (!cmd) throw new Error(`web rule for unknown command ${id}`)
-    cmd.visible = () => false
+    if (!cmd) throw new Error(`platform rule for unknown command ${id}`)
+    if (!available) cmd.visible = () => false
   }
 }
 

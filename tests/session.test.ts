@@ -8,7 +8,7 @@ describe('session capture', () => {
     const s = captureSession([
       tab({ path: 'C:\\a.pdf', page: 3, zoom: 1.5 }),
       tab({ kind: 'image', path: 'C:\\b.png', zoom: 'fit', active: true })
-    ])
+    ], 'windows')
     expect(s).toEqual({
       tabs: [
         { path: 'C:\\a.pdf', page: 3, zoom: 1.5 },
@@ -22,19 +22,19 @@ describe('session capture', () => {
       tab({ path: null, active: true }),
       tab({ kind: 'notice', path: 'C:\\x.heic' }),
       tab({ path: null, convertedFrom: 'C:\\art.eps' })
-    ])
+    ], 'windows')
     expect(s.tabs.map((t) => t.path)).toEqual(['C:\\art.eps'])
     expect(s.active).toBe(0)
   })
   it('collapses the same path in different case', () => {
-    const s = captureSession([tab({ path: 'C:\\A.pdf' }), tab({ path: 'c:\\a.PDF', active: true })])
+    const s = captureSession([tab({ path: 'C:\\A.pdf' }), tab({ path: 'c:\\a.PDF', active: true })], 'windows')
     expect(s.tabs).toHaveLength(1)
   })
 })
 
 describe('session parse', () => {
   it('round-trips a captured session', () => {
-    const s = captureSession([tab({ page: 2, zoom: 'fit-page', active: true })])
+    const s = captureSession([tab({ page: 2, zoom: 'fit-page', active: true })], 'windows')
     expect(parseSession(JSON.stringify(s))).toEqual(s)
   })
   it('rejects garbage and drops malformed tabs', () => {

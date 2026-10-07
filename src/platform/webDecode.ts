@@ -1,9 +1,9 @@
 /**
- * Image decoding for the browser version (see web/decoder).
+ * Image decoding for the browser version (see web/decoder) and desktop HEIF fallback.
  *
- * The Windows app decodes TIFF, camera RAW, PSD, JPEG XL and the rest in Rust. On the
- * web the same Rust code runs as WebAssembly, loaded the first time a file needs it,
- * and hands back a BMP the browser shows natively. Nothing leaves the device.
+ * The desktop app decodes TIFF, camera RAW, PSD, JPEG XL and the rest in Rust. On the
+ * web the same Rust code runs as WebAssembly. Non-Windows desktop apps also use
+ * libheif WebAssembly for HEIF photos. Both hand back BMP bytes; nothing leaves the device.
  */
 
 import { signal, type Signal } from '@preact/signals'

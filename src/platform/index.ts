@@ -7,7 +7,9 @@
 
 import type { ShellRequest } from '../core/explorer'
 import { PREVIEWS } from '../core/previews'
+import type { PathPolicy } from '../core/paths'
 import { archivePage, archivePageCount, cachedUrl, cachedUrlAsync, decodeImage, forgetCached } from './webDecode'
+import { HEIF } from './heif'
 import { t } from '../i18n'
 
 export type Kind = 'pdf' | 'image' | 'model' | 'postscript' | 'xps' | 'archive' | 'preview' | 'unsupported'
@@ -24,7 +26,9 @@ export interface Probe {
 export const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 /** The browser version (web/), which wears the website's Wollo design instead of Fluent. */
 export const isWeb = !isTauri
-const isWindows = typeof navigator !== 'undefined' && /Windows/i.test(navigator.userAgent)
+/** Running on Windows (desktop app or browser). Linux desktop builds lack the Windows-only integrations. */
+export const isWindows = typeof navigator !== 'undefined' && /Windows/i.test(navigator.userAgent)
+export const pathPolicy: PathPolicy = isWindows ? 'windows' : 'posix'
 
 type Invoke = typeof import('@tauri-apps/api/core').invoke
 let invokeFn: Invoke | null = null
@@ -43,7 +47,7 @@ export function registerBrowserFile(file: File): string {
   return key
 }
 
-/** Frees a file the browser version held in memory, with any pages decoded from it. */
+/** Frees a browser file and decoded pages, including desktop HEIF pages. */
 export function forgetBrowserFile(path: string): void {
   browserFiles.delete(path)
   forgetCached(`${path}#`)
@@ -55,9 +59,9 @@ async function browserBytes(path: string): Promise<Uint8Array> {
   return new Uint8Array(await f.arrayBuffer())
 }
 
-/** Decodes one page with the WebAssembly decoders (web/decoder). */
+/** Decodes in the webview when no native decoder is available. */
 async function decodeInBrowser(probe: Probe, page: number): Promise<Uint8Array> {
-  const bytes = await browserBytes(probe.path)
+  const bytes = await readFile(probe.path)
   // A comic book archive's pages are ordinary images; the decoder sniffs them.
   if (probe.kind === 'archive') return decodeImage('', await archivePage(bytes, page))
   return decodeImage(extOf(probe.name), bytes)
@@ -66,6 +70,11 @@ async function decodeInBrowser(probe: Probe, page: number): Promise<Uint8Array> 
 function extOf(path: string): string {
   const m = /\.([^./\\]+)$/.exec(path)
   return m ? m[1].toLowerCase() : ''
+}
+
+/** The Rust backend decodes HEIF only through Windows' codec; Linux decodes it here with libheif. */
+function usesHeifWasm(probe: Probe): boolean {
+  return isTauri && !isWindows && probe.kind === 'image' && HEIF.includes(extOf(probe.name))
 }
 
 /**
@@ -103,6 +112,7 @@ export function schemeUrl(route: 'file' | 'decode' | 'archive', params: Record<s
 
 /** URL an <img> can load directly for one page of an image file. */
 export function imageUrl(probe: Probe, page = 0, max?: number): string {
+  if (usesHeifWasm(probe)) return cachedUrl(`${probe.path}#${page}`, () => decodeInBrowser(probe, page))
   if (!isTauri) {
     if (probe.browserNative) {
       const f = browserFiles.get(probe.path)
@@ -115,9 +125,9 @@ export function imageUrl(probe: Probe, page = 0, max?: number): string {
   return schemeUrl('decode', { path: probe.path, page, ...(max ? { max } : {}) })
 }
 
-/** Like [`imageUrl`], but waits for a page the browser version still has to decode. */
+/** Like [`imageUrl`], but waits for any page the webview still has to decode. */
 export async function imageUrlAsync(probe: Probe, page = 0, max?: number): Promise<string> {
-  if (isTauri || probe.browserNative) return imageUrl(probe, page, max)
+  if (!usesHeifWasm(probe) && (isTauri || probe.browserNative)) return imageUrl(probe, page, max)
   return cachedUrlAsync(`${probe.path}#${page}`, () => decodeInBrowser(probe, page))
 }
 
@@ -149,7 +159,7 @@ const WASM_IMAGES = [
   'tif', 'tiff', 'jp2', 'j2k', 'jpf', 'jpx', 'j2c', 'jxl', 'exr', 'hdr', 'tga', 'dds', 'qoi',
   'ppm', 'pgm', 'pbm', 'pam', 'pnm', 'icns', 'psd', 'psb',
   // libheif, loaded on its own (platform/heif.ts)
-  'heic', 'heif', 'hif'
+  ...HEIF
 ]
 
 const RAW_IMAGES = [
@@ -434,7 +444,7 @@ export async function readClipboardImage(): Promise<{ rgba: Uint8Array; width: n
 }
 
 // ---------------------------------------------------------------------------
-// Saved signatures (encrypted with Windows DPAPI in the backend)
+// Saved signatures (encrypted with Windows DPAPI or the Linux system keyring)
 
 export interface SavedSignature {
   id: string
@@ -560,13 +570,13 @@ export async function onCloseRequested(canClose: () => Promise<boolean>, hasUnsa
 
 /** Shows the Windows "Open with" picker for the file. */
 export async function openWith(path: string): Promise<void> {
-  if (!isTauri) throw new Error(t('Open With is available in the Windows app.'))
+  if (!windowsShell) throw new Error(t('Open With is available in the Windows app.'))
   await invoke('open_with', { path })
 }
 
 /** Whether Windows opens PDFs, and JPEG and PNG images, with Glance. */
 export async function defaultAppStatus(): Promise<{ pdf: boolean; images: boolean }> {
-  return isTauri ? invoke('default_app_status') : { pdf: false, images: false }
+  return windowsShell ? invoke('default_app_status') : { pdf: false, images: false }
 }
 
 /**
@@ -575,13 +585,13 @@ export async function defaultAppStatus(): Promise<{ pdf: boolean; images: boolea
  * on Windows 11).
  */
 export async function openDefaultAppsSettings(): Promise<void> {
-  if (!isTauri) throw new Error(t('Default apps can be set in the Windows app.'))
+  if (!windowsShell) throw new Error(t('Default apps can be set in the Windows app.'))
   await invoke('open_default_apps_settings')
 }
 
 /** Uses the image bytes (JPEG/PNG/BMP) as the desktop background or the lock screen. */
 export async function setWallpaper(bytes: Uint8Array, ext: string, target: 'desktop' | 'lock'): Promise<void> {
-  if (!isTauri) throw new Error(t('Setting the background is available in the Windows app.'))
+  if (!windowsShell) throw new Error(t('Setting the background is available in the Windows app.'))
   await invoke('set_wallpaper', bytes, { headers: { 'x-target': target, 'x-ext': ext } })
 }
 
@@ -614,6 +624,9 @@ export interface OcrResult {
   lines: { text: string; words: { text: string; x: number; y: number; w: number; h: number }[] }[]
   language: string
 }
+
+/** Windows shell hand-offs need both the desktop backend and Windows, not just Tauri. */
+export const windowsShell = isTauri && isWindows
 
 export const ocrAvailable = isTauri && isWindows
 
@@ -784,6 +797,7 @@ export async function shareFiles(paths: string[], title: string): Promise<void> 
     for (const f of files) await writeFile(f.name, new Uint8Array(await f.arrayBuffer()))
     return
   }
+  if (!windowsShell) throw new Error(t('Sharing files is available in the Windows app.'))
   await invoke('share_files', { paths, title })
 }
 
@@ -903,7 +917,7 @@ export interface AgentInfo {
   /** Where to get the agent's program (Node.js or uv) when it isn't installed. */
   install?: string
   custom: boolean
-  /** Set when it uses an API key (kept in Windows Credential Manager) instead of a sign-in. */
+  /** Set when it uses an API key (kept in the system credential store) instead of a sign-in. */
   api?: { kind: 'anthropic' | 'openai'; baseUrl: string }
   /** One of its programs is installed. */
   ready: boolean

@@ -13,7 +13,7 @@ export const defaultApp = signal<{ pdf: boolean; images: boolean } | null>(null)
 export const defaultAppOffer = signal(false)
 
 export async function refreshDefaultApp(): Promise<void> {
-  if (!platform.isTauri) return
+  if (!platform.windowsShell) return
   try {
     defaultApp.value = await platform.defaultAppStatus()
   } catch {
@@ -24,7 +24,7 @@ export async function refreshDefaultApp(): Promise<void> {
 
 /** Asks once per install, and only when Glance isn't already the default for both. */
 export async function offerDefaultApp(): Promise<void> {
-  if (!platform.isTauri || settings.peek().defaultAppAsked) return
+  if (!platform.windowsShell || settings.peek().defaultAppAsked) return
   await refreshDefaultApp()
   const s = defaultApp.peek()
   if (s && !(s.pdf && s.images)) defaultAppOffer.value = true
@@ -36,6 +36,7 @@ export function dismissDefaultAppOffer(): void {
 }
 
 export async function makeDefault(): Promise<void> {
+  if (!platform.windowsShell) return
   dismissDefaultAppOffer()
   await platform.openDefaultAppsSettings()
 }

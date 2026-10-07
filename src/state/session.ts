@@ -69,6 +69,6 @@ export async function restoreSession(): Promise<() => void> {
   return effect(() => {
     if (!settings.value.reopenTabs) return write(null)
     const active = activeId.value
-    write(captureSession(docs.value.map((d) => source(d, active))))
+    write(captureSession(docs.value.map((d) => source(d, active)), platform.pathPolicy))
   })
 }
