@@ -22,6 +22,8 @@ In Claude Code you can also run `claude mcp add --scope user glance -- "%LOCALAP
 
 The Microsoft Store version installs `glance-mcp.exe` as an app alias in `%LOCALAPPDATA%\Microsoft\WindowsApps`, so the command keeps working across updates.
 
+On Linux, the .deb and .rpm install `/usr/bin/glance-mcp`. The Flatpak's command is `flatpak run --command=glance-mcp io.github.redtrocks.glance` (Settings → AI apps → Copy command shows it); AI apps that are themselves Flatpaks can't run it.
+
 ## What AI apps can do
 
 | Tool | What it does |

@@ -199,7 +199,15 @@ On Fedora:
 sudo dnf install ./Glance-<tag>-linux-x86_64.rpm
 ```
 
-It installs `glance` and `glance-mcp` in `/usr/bin` and registers Glance for its file types. Install `ghostscript` (recommended by the package) for PostScript and EPS. To build from source, install the Tauri prerequisites (`sudo dnf install gcc gcc-c++ clang webkit2gtk4.1-devel openssl-devel librsvg2-devel libxdo-devel nodejs npm`), then run `npm install && npx tauri build --bundles rpm`; the RPM lands in `src-tauri/target/release/bundle/rpm`. For a .deb, run `npx tauri build --bundles deb`; the output is in `src-tauri/target/release/bundle/deb`.
+On any other distribution, use the Flatpak (`Glance-<tag>-linux-x86_64.flatpak` or `-aarch64.flatpak`):
+
+```sh
+flatpak install --user ./Glance-<tag>-linux-x86_64.flatpak
+```
+
+The Flatpak can't open PostScript or EPS (Ghostscript isn't bundled); use the .deb or .rpm for those. Building it yourself is described in `packaging/README.md`.
+
+The .deb and .rpm install `glance` and `glance-mcp` in `/usr/bin` and register Glance for its file types. Install `ghostscript` (recommended by the package) for PostScript and EPS. To build from source, install the Tauri prerequisites (`sudo dnf install gcc gcc-c++ clang webkit2gtk4.1-devel openssl-devel librsvg2-devel libxdo-devel nodejs npm`), then run `npm install && npx tauri build --bundles rpm`; the RPM lands in `src-tauri/target/release/bundle/rpm`. For a .deb, run `npx tauri build --bundles deb`; the output is in `src-tauri/target/release/bundle/deb`.
 
 Not on Linux yet: Text Recognition, scanning, Certificate Signatures, Open With and default apps from inside Glance, Set as Wallpaper, the share sheet, speech input, XPS and JPEG XR. Saved signatures and AI API keys are stored in your login keyring (Secret Service, such as GNOME Keyring or KWallet).
 
