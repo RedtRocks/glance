@@ -1,6 +1,8 @@
-Glance is a free, open-source, lightweight viewer and editor for PDFs, images, camera RAW and 3D models on Windows and Linux, inspired by macOS Preview. It also previews Word, PowerPoint and Excel files, and runs in any browser at https://redtrocks.github.io/glance/app/.
+# Changelog
 
-> **Early preview.** Most of Preview's everyday features work, plus version history, 3D models, certificate signatures and more. On Windows 11, the Microsoft Store version puts Glance's entries in Explorer's main right-click menu; with the installer from GitHub they're under **Show more options**. See the [README](https://github.com/RedtRocks/glance#features) for the full list.
+What changed in each version of Glance, newest first. Downloads for every version are on the [releases page](https://github.com/RedtRocks/glance/releases).
+
+<!-- The Release workflow publishes the section for the version it releases (scripts/release-notes.ts). Add a line under the top "## New in" section for anything users will notice. -->
 
 ## New in 0.6.5
 
@@ -85,33 +87,44 @@ Fixes for Ask AI:
 - **Instant Alpha fix:** a quick click no longer leaves a blue tint that Delete can't remove.
 - **Ready for translation:** all text now goes through a translation layer, and Glance follows the Windows display language (Settings → Language) as translations are added.
 
-## Download
+## New in 0.3.0
 
-| Your PC | Installer |
-|---|---|
-| Most Windows PCs (Intel/AMD) | `Glance-…-windows-x64-setup.exe` |
-| ARM laptops (Snapdragon, Surface Pro X) | `Glance-…-windows-arm64-setup.exe` |
-| Ubuntu 22.04+ or Debian 12+ (Intel/AMD) | `Glance-…-linux-amd64.deb` |
-| Ubuntu 22.04+ or Debian 12+ (ARM64) | `Glance-…-linux-arm64.deb` |
-| Fedora 42+ (Intel/AMD) | `Glance-…-linux-x86_64.rpm` |
-| Fedora 42+ (ARM64) | `Glance-…-linux-aarch64.rpm` |
+- **Version history and autosave.** Every save keeps a version (File → Browse Versions: preview, restore or open a copy). Edits save automatically a few seconds after you stop (turn it off in Settings). Versions share unchanged data, so they take little space.
+- **Safe with other apps and windows.** A file opens in one window only; if another app changes it, Glance pauses autosave and asks before replacing anything.
+- **3D models.** GLB/glTF, OBJ, STL, PLY, 3MF, Collada, FBX, USDZ and 3DS: orbit, zoom, wireframe, turntable, animations and PNG snapshots.
+- **XPS and OpenXPS** documents, rendered by Windows.
+- **Clean Up PDF** removes comments, links, metadata, attached files and scripts for real, and PDFs are compacted when saving.
+- **Create Collage** from photos (rows or grid).
+- **Password-protect PDFs** when exporting (AES-256, with printing/copying/editing permissions), **Reduce File Size** for image-heavy PDFs, **New from Clipboard** (Ctrl+N) and **Import from Scanner** (flatbed or feeder, straight into a PDF).
+- **Explorer right-click menu:** Open in Glance, Combine into PDF (selected PDFs and images, in name order, as a new PDF next to them) and Remove Location Info. On Windows 11 they're under Show more options.
+- **Share** through the Windows share sheet, **Send to → Glance** in Explorer, and **update notifications** you can skip or turn off.
 
-Not sure? Open **Settings → System → About** and look at **System type**.
+## New in 0.2.0
 
-## Install
+**Fixes from testing 0.1.0**
 
-1. Download the installer and run it. It installs for your account only; no administrator rights are needed.
-2. **Windows SmartScreen will warn** that the app is from an unknown publisher, because releases aren't code-signed yet. Click **More info → Run anyway**.
-3. To make Glance your PDF or image viewer: open **Settings → Apps → Default apps → Glance** and pick the file types, or right-click a file → **Open with → Choose another app → Glance** and choose **Always**.
+- Highlights no longer hide the text underneath.
+- Closing a window with unsaved changes asks to save them (pending redactions included).
+- The sidebar no longer shows another document's pages after switching tabs.
+- Dragging pages between PDFs is easier: hover a tab to open it, then drop exactly where you want. Right-click a page for Copy/Move To, Duplicate, Split and more.
+- Menus show only what applies to the open file, and the View menu uses one-choice groups.
 
-Requires Windows 10 (1809+) or Windows 11. The installer downloads the WebView2 runtime if it's missing (it's preinstalled on Windows 11).
+**PDF**
 
-On Ubuntu or Debian, run `sudo apt install ./Glance-…-linux-amd64.deb` (or the `arm64` file). On Fedora, run `sudo dnf install ./Glance-…-linux-x86_64.rpm` (or the `aarch64` file).
+- Text boxes in any installed font; highlights in any color; squiggly underline; loupe (magnifier).
+- Duplicate pages, Split PDF, and export pages as PNG, JPEG or TIFF.
+- Remove Sensitive Text finds names, emails, phone, card and ID numbers to redact.
+- Recognize Text (Windows OCR) makes scanned PDFs searchable and selectable.
+- Sign with your camera.
 
-## Privacy
+**Images**
 
-No account and nothing you open leaves your PC. Glance makes two optional daily requests, both with a switch in Settings: an update check, and an anonymous count of installs (version number only, no ID). Background removal and text recognition run on your PC. Saved signatures are encrypted with your Windows account, or with your login keyring on Linux.
+- Remove Background and Copy Subject, Instant Alpha, selections, crop, Adjust Color (now with Definition and Gamma) and Adjust Size.
+- Inspector (Ctrl+I) with EXIF, color profile and **Remove Location**.
+- Batch Edit Images: rotate, resize, convert and remove location for many images at once.
+- Export in Display P3, Adobe RGB or Gray; copy text from an image; set an image as your desktop background or lock screen.
+- Open PSD, AI and RAW files in another app with one click.
 
-## Verify your download
+## New in 0.1.0
 
-Compare the file's hash with `SHA256SUMS.txt`: in PowerShell, run `Get-FileHash .\Glance-…-setup.exe`. For the Linux packages, run `sha256sum -c SHA256SUMS-linux.txt --ignore-missing` in the download folder.
+- **The first release.** Viewing PDFs, images and camera RAW, PDF page management, markup, signatures, form filling and redaction.

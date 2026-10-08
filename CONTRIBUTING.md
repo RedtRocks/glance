@@ -105,7 +105,7 @@ Nothing a user opens leaves their device. Don't add network calls, telemetry or 
 1. Fork the repository and branch from `main`.
 2. Keep one change per pull request, with a test for new logic.
 3. Run the checks above.
-4. If the change is something users will notice, add a line to the top section of [`.github/release-notes.md`](.github/release-notes.md) (see below). Update the README's feature table or `docs/` if they describe what you changed.
+4. If the change is something users will notice, add a line to the top section of [`CHANGELOG.md`](CHANGELOG.md) (see below). Update the README's feature table or `docs/` if they describe what you changed.
 5. Open the pull request and fill in the template. Screenshots in light and dark mode help for UI changes.
 
 CI runs on every pull request:
@@ -123,7 +123,7 @@ Pull requests that only touch Markdown, `assets/`, `site/`, issue templates or `
 
 ## Releases (maintainers)
 
-Release notes live in [`.github/release-notes.md`](.github/release-notes.md), newest first, under `## New in <version>` headings, written for users rather than developers. The Release workflow publishes that file as the release page and fails unless it has a section for the tag being released.
+Release notes live in [`CHANGELOG.md`](CHANGELOG.md), newest first, under `## New in <version>` headings, written for users rather than developers. The Release workflow fails unless it has a section for the tag being released. Each release page shows only that section, under a download table for the files attached, with install help folded away and a link to the changelog for earlier versions (`scripts/release-notes.ts`). After fixing an earlier version's notes, run **Actions → Release notes** with its tag (or `all`) to rewrite its page.
 
 To release:
 
@@ -131,7 +131,7 @@ To release:
 2. Make sure the notes have `## New in <version>`.
 3. Merge to `main`, then run **Actions → Release** with the tag (`v0.7.0`).
 
-The workflow builds the x64 and ARM64 Windows installers and the Linux packages, publishes the GitHub release with `SHA256SUMS.txt`, submits to winget, and builds the Microsoft Store bundle (uploaded by hand in Partner Center). See [`packaging/README.md`](packaging/README.md).
+The workflow builds the x64 and ARM64 Windows installers and the Linux packages, publishes the GitHub release with one `SHA256SUMS.txt` for every file, submits to winget, and builds the Microsoft Store bundle (uploaded by hand in Partner Center). See [`packaging/README.md`](packaging/README.md).
 
 ## Licence of contributions
 

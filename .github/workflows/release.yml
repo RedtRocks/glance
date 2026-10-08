@@ -38,7 +38,7 @@ jobs:
             echo "::error::Tag $tag doesn't match version $app in src-tauri/tauri.conf.json. Bump the version (package.json, tauri.conf.json, Cargo.toml) before releasing, or the app offers its own release as an update."
             exit 1
           fi
-          tr -d '\r' < .github/release-notes.md | grep -qxF "## New in ${tag#v}" || { echo "::error::.github/release-notes.md has no '## New in ${tag#v}' section."; exit 1; }
+          tr -d '\r' < CHANGELOG.md | grep -qxF "## New in ${tag#v}" || { echo "::error::CHANGELOG.md has no '## New in ${tag#v}' section."; exit 1; }
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -65,8 +65,8 @@ jobs:
           name: installer-${{ matrix.arch }}
           path: dist-release/*.exe
 
-  # Linux RPMs build alongside the Windows installers but never hold up the release:
-  # linux-publish attaches them after it is published, so a Linux failure only means no RPMs.
+  # Linux packages build alongside the Windows installers. publish waits for them but
+  # goes ahead without them if they fail, so a Linux failure only means no Linux packages.
   linux-rpm:
     name: Linux ${{ matrix.arch }} (RPM)
     runs-on: ${{ matrix.runner }}
@@ -154,52 +154,47 @@ jobs:
 
   publish:
     name: Publish release
-    needs: build
+    needs: [build, linux-rpm, linux-deb]
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
     runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - uses: actions/download-artifact@v4
         with:
           path: dist-release
           merge-multiple: true
       - name: Checksums
-        run: cd dist-release && sha256sum *.exe > SHA256SUMS.txt && cat SHA256SUMS.txt
+        run: |
+          shopt -s nullglob
+          linux=(dist-release/*.rpm dist-release/*.deb)
+          if [ ${#linux[@]} -eq 0 ]; then echo "::warning::No Linux packages were built, so the release has none."; fi
+          # One file for every platform: winget reads the installers' hashes from it.
+          cd dist-release && sha256sum *.exe *.rpm *.deb > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - name: Release page
+        # This version's notes and a download table for the files attached; history stays in CHANGELOG.md.
+        run: node scripts/release-notes.ts "$TAG" dist-release/* > release-body.md && cat release-body.md
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          tag_name: ${{ env.TAG }}
           target_commitish: ${{ github.sha }}
-          name: Glance ${{ github.event.inputs.tag || github.ref_name }}
-          body_path: .github/release-notes.md
+          name: Glance ${{ env.TAG }}
+          body_path: release-body.md
           files: |
             dist-release/*.exe
+            dist-release/*.rpm
+            dist-release/*.deb
             dist-release/SHA256SUMS.txt
-
-  linux-publish:
-    name: Add Linux packages to the release
-    needs: [publish, linux-rpm, linux-deb]
-    if: ${{ !cancelled() && needs.publish.result == 'success' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          pattern: linux-*
-          path: dist-release
-          merge-multiple: true
-      - name: Upload Linux packages and their checksums
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p dist-release && cd dist-release
-          shopt -s nullglob
-          pkgs=(*.rpm *.deb)
-          if [ ${#pkgs[@]} -eq 0 ]; then echo "::warning::No Linux packages were built, so none were added."; exit 0; fi
-          sha256sum "${pkgs[@]}" > SHA256SUMS-linux.txt && cat SHA256SUMS-linux.txt
-          gh release upload "${{ github.event.inputs.tag || github.ref_name }}" "${pkgs[@]}" SHA256SUMS-linux.txt --repo "$GITHUB_REPOSITORY"
 
   winget:
     name: winget
     needs: publish
+    # Run even when a Linux build failed: publish went ahead without it.
+    if: ${{ !cancelled() && needs.publish.result == 'success' }}
     uses: ./.github/workflows/winget.yml
     with:
       tag: ${{ github.event.inputs.tag || github.ref_name }}
@@ -208,6 +203,8 @@ jobs:
   store:
     name: Microsoft Store
     needs: publish
+    # Run even when a Linux build failed: publish went ahead without it.
+    if: ${{ !cancelled() && needs.publish.result == 'success' }}
     uses: ./.github/workflows/store.yml
     with:
       optional: true
