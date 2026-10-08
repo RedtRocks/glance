@@ -49,6 +49,11 @@ pub fn dir() -> PathBuf {
     {
         let absolute_env = |key| std::env::var_os(key).map(PathBuf::from).filter(|p| p.is_absolute());
         if let Some(base) = absolute_env("XDG_RUNTIME_DIR") {
+            // Each `flatpak run` gets its own runtime dir; only app/<id> is shared by all of the
+            // app's sandboxes, so glance-mcp and Glance meet there.
+            if let Some(id) = std::env::var_os("FLATPAK_ID") {
+                return base.join("app").join(id).join("glance");
+            }
             return base.join("glance");
         }
         let base = absolute_env("XDG_STATE_HOME").unwrap_or_else(|| {

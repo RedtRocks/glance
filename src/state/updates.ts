@@ -20,6 +20,10 @@ const storeCheck = platform.isStorePackage().then(
   () => false
 )
 
+/** Installed as a Flatpak: a software center or a new .flatpak updates it, not an installer. */
+export const flatpakInstall = signal(false)
+void platform.isFlatpak().then((f) => (flatpakInstall.value = f), () => undefined)
+
 export const availableUpdate = signal<{ version: string; url: string } | null>(null)
 
 export async function checkForUpdates(opts: { force?: boolean } = {}): Promise<'newer' | 'current' | 'skipped' | 'off' | 'store' | 'error'> {

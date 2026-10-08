@@ -247,7 +247,7 @@ fn toml_string(s: &str) -> String {
     out
 }
 
-fn connect_target(t: &Target, command: &str) -> Result<(), String> {
+fn connect_target(t: &Target, b: &Bridge) -> Result<(), String> {
     match t.format {
         Format::Json { key, typed } => {
             let mut root = read_json(&t.file)?;
@@ -256,8 +256,8 @@ fn connect_target(t: &Target, command: &str) -> Result<(), String> {
             if typed {
                 entry.insert("type".into(), json!("stdio"));
             }
-            entry.insert("command".into(), json!(command));
-            entry.insert("args".into(), json!([]));
+            entry.insert("command".into(), json!(b.command));
+            entry.insert("args".into(), json!(b.args));
             let servers = root.entry(key).or_insert_with(|| Value::Object(Map::new()));
             let Value::Object(servers) = servers else {
                 return Err(format!("{}: unexpected MCP settings, left alone", t.file.display()));
@@ -267,7 +267,8 @@ fn connect_target(t: &Target, command: &str) -> Result<(), String> {
         }
         Format::CodexToml => {
             let old = std::fs::read_to_string(&t.file).unwrap_or_default();
-            let block = format!("[mcp_servers.{SERVER_NAME}]\ncommand = {}\nargs = []\n", toml_string(command));
+            let args = b.args.iter().map(|a| toml_string(a)).collect::<Vec<_>>().join(", ");
+            let block = format!("[mcp_servers.{SERVER_NAME}]\ncommand = {}\nargs = [{args}]\n", toml_string(&b.command));
             let new = match toml_block(&old) {
                 Some((a, b)) => format!("{}{block}{}{}", &old[..a], if b < old.len() { "\n" } else { "" }, &old[b..]),
                 None if old.is_empty() => block,
@@ -303,7 +304,7 @@ fn disconnect_target(t: &Target) -> Result<(), String> {
     }
 }
 
-pub fn connect(d: &Dirs, id: &str, command: &str) -> Result<(), String> {
+pub fn connect(d: &Dirs, id: &str, b: &Bridge) -> Result<(), String> {
     let all = apps(d);
     let app = all.iter().find(|a| a.id == id).ok_or("unknown app")?;
     let found = installed(app);
@@ -311,7 +312,7 @@ pub fn connect(d: &Dirs, id: &str, command: &str) -> Result<(), String> {
         return Err(format!("{} isn't installed for this user", app.name));
     }
     for t in found {
-        connect_target(t, command)?;
+        connect_target(t, b)?;
     }
     Ok(())
 }
@@ -325,20 +326,30 @@ pub fn disconnect(d: &Dirs, id: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// What AI apps run to reach Glance.
+pub struct Bridge {
+    pub command: String,
+    pub args: Vec<String>,
+}
+
 /// The command AI apps run: glance-mcp next to Glance, or, for the Store build (whose
 /// folder is versioned and changes with every update), its app execution alias.
-pub fn bridge_command(store_package: bool, d: Option<&Dirs>) -> Result<String, String> {
+pub fn bridge_command(store_package: bool, d: Option<&Dirs>) -> Result<Bridge, String> {
+    // A Flatpak's files aren't on the host's paths: AI apps start glance-mcp through flatpak run.
+    if let Some(id) = crate::flatpak_id() {
+        return Ok(Bridge { command: "flatpak".into(), args: vec!["run".into(), "--command=glance-mcp".into(), id] });
+    }
     let name = if cfg!(windows) { "glance-mcp.exe" } else { "glance-mcp" };
     if store_package {
         if let Some(d) = d {
-            return Ok(d.local_appdata.join("Microsoft").join("WindowsApps").join(name).to_string_lossy().into_owned());
+            return Ok(Bridge { command: d.local_appdata.join("Microsoft").join("WindowsApps").join(name).to_string_lossy().into_owned(), args: vec![] });
         }
     }
     let exe = std::env::current_exe().map_err(|e| e.to_string())?;
     let dir = exe.parent().ok_or("no app folder")?;
     let bridge = dir.join(name);
     if bridge.is_file() {
-        Ok(bridge.to_string_lossy().into_owned())
+        Ok(Bridge { command: bridge.to_string_lossy().into_owned(), args: vec![] })
     } else {
         Err(format!("{} is missing; reinstall Glance", bridge.display()))
     }
@@ -350,21 +361,22 @@ pub struct Overview {
     apps: Vec<AppStatus>,
     /// Empty when glance-mcp is missing (development builds).
     command: String,
+    args: Vec<String>,
     problem: Option<String>,
 }
 
-fn bridge(d: Option<&Dirs>) -> Result<String, String> {
+fn bridge(d: Option<&Dirs>) -> Result<Bridge, String> {
     bridge_command(crate::store_package_now(), d)
 }
 
 #[tauri::command]
 pub fn ai_apps() -> Overview {
     let d = Dirs::current();
-    let (command, problem) = match bridge(d.as_ref()) {
-        Ok(c) => (c, None),
-        Err(e) => (String::new(), Some(e)),
+    let (command, args, problem) = match bridge(d.as_ref()) {
+        Ok(b) => (b.command, b.args, None),
+        Err(e) => (String::new(), Vec::new(), Some(e)),
     };
-    Overview { apps: d.as_ref().map(status).unwrap_or_default(), command, problem }
+    Overview { apps: d.as_ref().map(status).unwrap_or_default(), command, args, problem }
 }
 
 #[tauri::command]
@@ -382,6 +394,8 @@ pub fn ai_app_disconnect(id: String) -> Result<(), String> {
 mod tests {
     use super::*;
 
+    fn plain(c: &str) -> Bridge { Bridge { command: c.into(), args: vec![] } }
+
     fn scratch(name: &str) -> Dirs {
         let root = std::env::temp_dir().join(format!("glance-aiapps-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
@@ -398,10 +412,10 @@ mod tests {
     fn only_installed_apps_can_connect() {
         let d = scratch("installed");
         assert!(!by_id(&status(&d), "cursor").installed);
-        assert!(connect(&d, "cursor", "C:\\g\\glance-mcp.exe").is_err());
+        assert!(connect(&d, "cursor", &plain("C:\\g\\glance-mcp.exe")).is_err());
         std::fs::create_dir_all(d.home.join(".cursor")).unwrap();
         assert!(by_id(&status(&d), "cursor").installed);
-        connect(&d, "cursor", "C:\\g\\glance-mcp.exe").unwrap();
+        connect(&d, "cursor", &plain("C:\\g\\glance-mcp.exe")).unwrap();
         let text = std::fs::read_to_string(d.home.join(".cursor/mcp.json")).unwrap();
         assert_eq!(text, "{\n  \"mcpServers\": {\n    \"glance\": {\n      \"command\": \"C:\\\\g\\\\glance-mcp.exe\",\n      \"args\": []\n    }\n  }\n}\n");
         assert!(by_id(&status(&d), "cursor").connected);
@@ -413,7 +427,7 @@ mod tests {
         std::fs::create_dir_all(d.home.join(".claude")).unwrap();
         let original = "{\"zeta\":1,\"numStartups\":5,\"mcpServers\":{\"other\":{\"command\":\"x\"}},\"alpha\":[1,2]}";
         std::fs::write(d.home.join(".claude.json"), original).unwrap();
-        connect(&d, "claude-code", "/opt/glance-mcp").unwrap();
+        connect(&d, "claude-code", &plain("/opt/glance-mcp")).unwrap();
         let v: Value = serde_json::from_str(&std::fs::read_to_string(d.home.join(".claude.json")).unwrap()).unwrap();
         let keys: Vec<_> = v.as_object().unwrap().keys().cloned().collect();
         assert_eq!(keys, ["zeta", "numStartups", "mcpServers", "alpha"]);
@@ -434,7 +448,7 @@ mod tests {
         std::fs::create_dir_all(d.appdata.join("Code/User")).unwrap();
         let jsonc = "{\n  // my servers\n  \"servers\": {}\n}\n";
         std::fs::write(d.appdata.join("Code/User/mcp.json"), jsonc).unwrap();
-        assert!(connect(&d, "vscode", "glance-mcp").is_err());
+        assert!(connect(&d, "vscode", &plain("glance-mcp")).is_err());
         assert_eq!(std::fs::read_to_string(d.appdata.join("Code/User/mcp.json")).unwrap(), jsonc);
     }
 
@@ -442,7 +456,7 @@ mod tests {
     fn vscode_uses_servers_with_a_type() {
         let d = scratch("vscode");
         std::fs::create_dir_all(d.appdata.join("Code/User")).unwrap();
-        connect(&d, "vscode", "glance-mcp").unwrap();
+        connect(&d, "vscode", &plain("glance-mcp")).unwrap();
         let v: Value = serde_json::from_str(&std::fs::read_to_string(d.appdata.join("Code/User/mcp.json")).unwrap()).unwrap();
         assert_eq!(v["servers"]["glance"]["type"], "stdio");
     }
@@ -452,7 +466,7 @@ mod tests {
         let d = scratch("muse");
         std::fs::create_dir_all(d.home.join(".config/muse")).unwrap();
         std::fs::write(d.home.join(".config/muse/settings.json"), "{\"mcp_servers\":{}}").unwrap();
-        connect(&d, "muse-code", "glance-mcp").unwrap();
+        connect(&d, "muse-code", &plain("glance-mcp")).unwrap();
         let v: Value = serde_json::from_str(&std::fs::read_to_string(d.home.join(".config/muse/settings.json")).unwrap()).unwrap();
         assert!(v.get("mcpServers").is_none());
         assert_eq!(v["mcp_servers"]["glance"]["command"], "glance-mcp");
@@ -465,7 +479,7 @@ mod tests {
         std::fs::create_dir_all(&pkg).unwrap();
         let s = status(&d);
         assert!(by_id(&s, "claude-desktop").installed);
-        connect(&d, "claude-desktop", "glance-mcp").unwrap();
+        connect(&d, "claude-desktop", &plain("glance-mcp")).unwrap();
         assert!(pkg.join("LocalCache/Roaming/Claude/claude_desktop_config.json").is_file());
         assert!(!d.appdata.join("Claude/claude_desktop_config.json").exists());
     }
@@ -477,7 +491,7 @@ mod tests {
         let file = d.home.join(".codex/config.toml");
         let original = "model = \"gpt-5\"\n\n[mcp_servers.other]\ncommand = \"x\"\n";
         std::fs::write(&file, original).unwrap();
-        connect(&d, "codex", "C:\\Program Files\\Glance\\glance-mcp.exe").unwrap();
+        connect(&d, "codex", &plain("C:\\Program Files\\Glance\\glance-mcp.exe")).unwrap();
         let text = std::fs::read_to_string(&file).unwrap();
         assert_eq!(
             text,
@@ -485,7 +499,7 @@ mod tests {
         );
         // Reconnecting replaces the block (and its sub-tables) instead of adding another.
         std::fs::write(&file, format!("{text}\n[mcp_servers.glance.env]\nA = \"1\"\n\n[profile]\nx = 1\n")).unwrap();
-        connect(&d, "codex", "glance-mcp").unwrap();
+        connect(&d, "codex", &plain("glance-mcp")).unwrap();
         let text = std::fs::read_to_string(&file).unwrap();
         assert_eq!(text.matches("[mcp_servers.glance").count(), 1);
         assert!(text.contains("command = \"glance-mcp\"") && text.contains("[profile]\nx = 1"));
@@ -494,6 +508,20 @@ mod tests {
         let text = std::fs::read_to_string(&file).unwrap();
         assert!(!text.contains("glance"));
         assert!(text.starts_with(original.trim_end()) && text.contains("[profile]"));
+    }
+
+    #[test]
+    fn args_are_written_for_json_and_toml() {
+        let d = scratch("args");
+        std::fs::create_dir_all(d.home.join(".cursor")).unwrap();
+        std::fs::create_dir_all(d.home.join(".codex")).unwrap();
+        let b = Bridge { command: "flatpak".into(), args: vec!["run".into(), "--command=glance-mcp".into(), "io.github.redtrocks.glance".into()] };
+        connect(&d, "cursor", &b).unwrap();
+        connect(&d, "codex", &b).unwrap();
+        let v: Value = serde_json::from_str(&std::fs::read_to_string(d.home.join(".cursor/mcp.json")).unwrap()).unwrap();
+        assert_eq!(v["mcpServers"]["glance"]["args"], json!(["run", "--command=glance-mcp", "io.github.redtrocks.glance"]));
+        let text = std::fs::read_to_string(d.home.join(".codex/config.toml")).unwrap();
+        assert!(text.contains("args = [\"run\", \"--command=glance-mcp\", \"io.github.redtrocks.glance\"]"));
     }
 
     #[test]

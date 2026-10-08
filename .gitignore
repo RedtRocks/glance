@@ -14,3 +14,7 @@ dist-web/
 public/decoder.wasm
 web/decoder/target/
 src-tauri/context-menu/target/
+packaging/flatpak/cargo-sources.json
+packaging/flatpak/node-sources.json
+.flatpak-builder/
+*.flatpak

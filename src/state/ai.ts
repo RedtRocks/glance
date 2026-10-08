@@ -289,8 +289,8 @@ export const agentName = (id: string): string => agents.peek().find((a) => a.id 
 
 async function mcpServers(): Promise<acp.McpServer[]> {
   if (settings.peek().aiApps === false) return []
-  const { command } = await platform.aiApps().catch(() => ({ command: '' }))
-  return command ? [{ name: 'glance', command, args: [], env: [] }] : []
+  const { command, args } = await platform.aiApps().catch(() => ({ command: '', args: [] as string[] }))
+  return command ? [{ name: 'glance', command, args, env: [] }] : []
 }
 
 function sessionCwd(l: Link): string {

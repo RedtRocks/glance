@@ -1,4 +1,4 @@
-import { availableUpdate } from '../state/updates'
+import { availableUpdate, flatpakInstall } from '../state/updates'
 import { updateSettings } from '../state/settings'
 import * as platform from '../platform'
 import { InfoBar } from './InfoBar'
@@ -23,7 +23,7 @@ export function UpdateBar() {
       }
       onClose={() => (availableUpdate.value = null)}
     >
-      {t('See what’s new and download the installer from GitHub.')}
+      {flatpakInstall.value ? t('Update it in your software center, or download the new .flatpak from GitHub.') : t('See what’s new and download the installer from GitHub.')}
     </InfoBar>
   )
 }

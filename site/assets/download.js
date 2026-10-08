@@ -1,7 +1,7 @@
 /* One-click download: the Download buttons point at the newest installer itself, for
    this PC's processor, instead of the release page. If GitHub can't be reached they
    keep their normal link to the release page. Linux packages: once the latest release has
-   them, the "next release" labels go and Linux visitors get the .deb and RPM for their processor. */
+   them, the "next release" labels go and Linux visitors get the .deb, RPM and Flatpak for their processor. */
 (function () {
   var links = document.querySelectorAll('a[href*="github.com/RedtRocks/glance/releases"]');
   if (!links.length || !window.fetch) return;
@@ -27,10 +27,11 @@
       // No cross-architecture fallback: an arm64 package won't install on x86_64 or vice versa.
       var rpm = wantArm ? pick(/aarch64\.rpm$/i) : pick(/x86_64\.rpm$/i);
       var deb = wantArm ? pick(/arm64\.deb$/i) : pick(/amd64\.deb$/i);
+      var flatpak = wantArm ? pick(/aarch64\.flatpak$/i) : pick(/x86_64\.flatpak$/i);
       if (pick(/\.(rpm|deb)$/i)) soon.forEach(function (el) { el.remove(); });
       if (linux) {
         document.querySelectorAll('a[data-linux-download]').forEach(function (a) {
-          var asset = a.getAttribute('data-linux-download') === 'deb' ? deb : rpm;
+          var asset = { deb: deb, rpm: rpm, flatpak: flatpak }[a.getAttribute('data-linux-download')];
           if (ours(asset)) point(a, asset);
         });
         return;

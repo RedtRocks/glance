@@ -1,0 +1,1 @@
+{ "type": "dir", "path": "../..", "skip": [".git", ".flatpak-builder", "node_modules", "dist", "src-tauri/target", "web/decoder/target", "packaging/flatpak/cargo-sources.json", "packaging/flatpak/node-sources.json"] }

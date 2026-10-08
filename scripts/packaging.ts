@@ -23,6 +23,7 @@ const REPO = 'https://github.com/RedtRocks/glance'
 export interface TauriConf {
   productName: string
   version: string
+  identifier: string
   bundle: {
     publisher: string
     copyright: string

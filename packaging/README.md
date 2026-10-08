@@ -69,3 +69,20 @@ CI packs an x64 MSIX with a test identity on every pull request (artifact `glanc
 ## Linux packages
 
 `.github/workflows/release.yml` builds `Glance-<tag>-linux-x86_64.rpm` and `-aarch64.rpm` in a Fedora 42 container, and `Glance-<tag>-linux-amd64.deb` and `-arm64.deb` in an `ubuntu:22.04` container, alongside the Windows installers. They are only in the GitHub release, published together with the Windows installers and listed in the same `SHA256SUMS.txt` (releases up to 0.6.5 had a separate `SHA256SUMS-linux.txt`). `publish` waits for them but goes ahead without them if they fail, so a failed Linux build just leaves the release without Linux packages; winget and the Store package still run. `src-tauri/tauri.linux.conf.json` (merged by Tauri on Linux) adds `/usr/bin/glance-mcp`, built by `scripts/mcp-bridge.mjs`, recommends `ghostscript`, and uses `src-tauri/linux/glance.desktop`, whose `MimeType=` line covers the file associations (`tests/packaging.test.ts` checks it). CI's `linux-rpm` and `linux-deb` jobs install the package and run `scripts/mcp-smoke.mjs` against `/usr/bin/glance-mcp`.
+
+## Flatpak
+
+`packaging/flatpak/io.github.redtrocks.glance.yml` builds from source offline. Generate its npm and Cargo sources from the unchanged lockfiles with `packaging/flatpak/sources.sh` (needs `uv`, `curl` and `git`), then build locally:
+
+```sh
+flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+flatpak install --user -y flathub org.flatpak.Builder
+packaging/flatpak/sources.sh
+flatpak run org.flatpak.Builder --user --install-deps-from=flathub --disable-rofiles-fuse --force-clean --repo=.flatpak-builder/repo .flatpak-builder/build packaging/flatpak/io.github.redtrocks.glance.yml
+flatpak build-bundle .flatpak-builder/repo glance.flatpak io.github.redtrocks.glance --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo
+flatpak install --user -y glance.flatpak
+```
+
+The release workflow attaches `Glance-<tag>-linux-{x86_64,aarch64}.flatpak` bundles, listed in `SHA256SUMS.txt` with the other packages, and keeps a `flathub-<tag>` workflow artifact containing the manifest and pinned source files for submission. Each release must add a matching `<release version="X" date="YYYY-MM-DD"/>` to `packaging/flatpak/io.github.redtrocks.glance.metainfo.xml`; the version gate enforces it. Flathub submission needs the owner's verification of `io.github.redtrocks` and follows the first release.
+
+AI apps that are themselves Flatpaks can't run `flatpak run …` (unsupported).

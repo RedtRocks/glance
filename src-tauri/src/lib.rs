@@ -57,6 +57,17 @@ pub(crate) fn store_package_now() -> bool {
     }
 }
 
+/// The app id when Glance runs as a Flatpak (Flatpak sets FLATPAK_ID in every sandbox).
+pub(crate) fn flatpak_id() -> Option<String> {
+    std::env::var("FLATPAK_ID").ok().filter(|id| !id.is_empty())
+}
+
+/// Whether Glance runs as a Flatpak; the UI adjusts install and update hints.
+#[tauri::command]
+fn flatpak() -> bool {
+    flatpak_id().is_some()
+}
+
 fn apply_backdrop(window: &tauri::Window) {
     #[cfg(windows)]
     {
@@ -70,6 +81,13 @@ fn apply_backdrop(window: &tauri::Window) {
 }
 
 pub fn run() {
+    // Flatpak's /tmp is private to the sandbox. Files Glance drags out or hands to other apps
+    // must sit where the host sees the same path: the app's cache folder under ~/.var/app.
+    if flatpak_id().is_some() {
+        if let Some(cache) = std::env::var_os("XDG_CACHE_HOME").map(std::path::PathBuf::from).filter(|p| p.is_absolute()) {
+            std::env::set_var("TMPDIR", cache.join("tmp"));
+        }
+    }
     tauri::Builder::default()
         // Must be first: a second launch forwards its files here and exits.
         .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
@@ -127,6 +145,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             window_material,
             store_package,
+            flatpak,
             commands::probe,
             commands::write_file,
             commands::write_temp,

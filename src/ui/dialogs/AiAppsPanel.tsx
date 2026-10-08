@@ -34,7 +34,8 @@ export function AiAppsPanel() {
   const copy = (text: string): void => void platform.copyText(text).then(() => toast(t('Copied')))
   const installed = state?.apps.filter((a) => a.installed) ?? []
   const missing = state?.apps.filter((a) => !a.installed) ?? []
-  const snippet = state?.command ? JSON.stringify({ mcpServers: { glance: { command: state.command, args: [] } } }, null, 2) : ''
+  const line = state?.command ? [state.command, ...state.args].join(' ') : ''
+  const snippet = state?.command ? JSON.stringify({ mcpServers: { glance: { command: state.command, args: state.args } } }, null, 2) : ''
 
   return (
     <div class="settings-cards">
@@ -54,9 +55,9 @@ export function AiAppsPanel() {
       {state && !installed.length && !state.problem && <p class="settings-note">{t('No supported AI apps were found for this Windows user. Use the command below to add Glance to any app that supports MCP.')}</p>}
       {state?.command && (
         <SettingsCard icon="copy" title={t('Other apps')}
-          description={t('Add Glance as a local (stdio) MCP server with this command: {command}', { command: state.command })}>
+          description={t('Add Glance as a local (stdio) MCP server with this command: {command}', { command: line })}>
           <div class="settings-card-buttons">
-            <button class="btn" onClick={() => copy(state.command)}>{t('Copy command')}</button>
+            <button class="btn" onClick={() => copy(line)}>{t('Copy command')}</button>
             <button class="btn" onClick={() => copy(snippet)}>{t('Copy JSON')}</button>
           </div>
         </SettingsCard>

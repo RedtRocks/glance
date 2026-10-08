@@ -38,6 +38,7 @@ fn font_dirs() -> Vec<PathBuf> {
     } else {
         dirs.push("/usr/share/fonts".into());
         dirs.push("/usr/local/share/fonts".into());
+        dirs.push("/run/host/fonts".into()); // Flatpak: the host's system fonts
         dirs.push("/Library/Fonts".into());
         dirs.push("/System/Library/Fonts".into());
         if let Some(home) = std::env::var_os("HOME") {

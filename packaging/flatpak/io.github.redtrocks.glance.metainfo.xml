@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.redtrocks.glance</id>
+  <launchable type="desktop-id">io.github.redtrocks.glance.desktop</launchable>
+  <name>Glance</name>
+  <summary>View and edit PDFs, images, camera RAW and 3D models</summary>
+  <developer id="io.github.redtrocks"><name>Glance contributors</name></developer>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>Apache-2.0</project_license>
+  <url type="homepage">https://redtrocks.github.io/glance/</url>
+  <url type="bugtracker">https://github.com/RedtRocks/glance/issues</url>
+  <url type="vcs-browser">https://github.com/RedtRocks/glance</url>
+  <content_rating type="oars-1.1"/>
+  <branding>
+    <color type="primary" scheme_preference="light">#ffffff</color>
+    <color type="primary" scheme_preference="dark">#0a0a0a</color>
+  </branding>
+  <description>
+    <p>Glance brings the everyday tools of macOS Preview to Linux in a small, fast app. Free and open source, it needs no account and collects no telemetry. Saved signatures and AI API keys stay in your login keyring.</p>
+    <p>Read PDFs in continuous, single or two-page view. Rearrange, rotate, delete and insert pages by dragging; merge documents between tabs or drag pages out to make a new PDF. Fill in forms, sign with your mouse, pen or a photo, and add highlights, notes, shapes, arrows and text boxes that stay editable in other PDF apps. Redaction removes content, not just a black box on top. Clean Up PDF strips comments, metadata, attachments and scripts. Export with an AES-256 password, reduce file size, or save pages as PNG, JPEG or TIFF.</p>
+    <p>Open HEIC, camera RAW, JPEG XL, WebP, AVIF, PSD, TIFF and dozens more image formats. Adjust color, resize, crop, remove backgrounds with on-device AI, mark up screenshots, remove location info, make collages and batch-convert images.</p>
+    <p>View GLB/glTF, OBJ, STL, 3MF, FBX, USDZ and more 3D models with orbit, wireframe and snapshots. Edits save automatically, and every save keeps a version you can go back to.</p>
+  </description>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Rearrange pages by dragging</caption>
+      <image>https://raw.githubusercontent.com/RedtRocks/glance/main/packaging/flatpak/screenshots/pdf.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Mark up and sign PDFs</caption>
+      <image>https://raw.githubusercontent.com/RedtRocks/glance/main/packaging/flatpak/screenshots/markup.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Edit photos and camera RAW</caption>
+      <image>https://raw.githubusercontent.com/RedtRocks/glance/main/packaging/flatpak/screenshots/image.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>View 3D models</caption>
+      <image>https://raw.githubusercontent.com/RedtRocks/glance/main/packaging/flatpak/screenshots/model.png</image>
+    </screenshot>
+  </screenshots>
+  <releases><release version="0.6.5" date="2026-10-07"/></releases>
+</component>
