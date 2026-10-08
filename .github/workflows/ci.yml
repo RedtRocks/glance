@@ -18,9 +18,9 @@ concurrency:
 
 jobs:
   # Changes that only touch docs (Markdown, README images under assets/, the landing page
-  # under site/) can't break the app, so the build and test jobs below skip for them. A
-  # skipped job counts as passed, so pull requests stay mergeable. Running CI by hand
-  # always runs everything.
+  # under site/, issue templates) can't break the app, so the build and test jobs below
+  # skip for them. A skipped job counts as passed, so pull requests stay mergeable.
+  # Running CI by hand always runs everything.
   changes:
     name: Detect code changes
     runs-on: ubuntu-latest
@@ -41,6 +41,7 @@ jobs:
               - '!assets/**'
               - '!site/**'
               - '!LICENSE'
+              - '!.github/ISSUE_TEMPLATE/**'
 
   frontend:
     name: Frontend (typecheck, tests, build)

@@ -1,0 +1,54 @@
+name: Bug report
+description: Something in Glance doesn't work as it should.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a PDF with ...
+        2. Choose Markup → ...
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Glance version
+      description: Help → About Glance.
+      placeholder: 0.6.5
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Where you run it
+      options:
+        - Windows 11, installer from GitHub
+        - Windows 11, Microsoft Store
+        - Windows 10, installer from GitHub
+        - Windows 10, Microsoft Store
+        - Linux (.deb)
+        - Linux (.rpm)
+        - Browser version
+        - Built from source
+    validations:
+      required: true
+  - type: input
+    id: filetype
+    attributes:
+      label: File type
+      description: The kind of file involved, if any (PDF, HEIC, CR3, GLB, DOCX ...).
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: Screenshots, error messages, or a sample file you can share. Don't attach files with private information.
