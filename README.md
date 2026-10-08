@@ -221,14 +221,15 @@ src-tauri/           Rust backend
   mcp-bridge/        glance-mcp.exe, the MCP server AI apps start (relays to Glance)
 packaging/           winget manifests and the Microsoft Store (MSIX) package and listing
 docs/adr/            Architecture decision records
+docs/ARCHITECTURE.md How the pieces fit together
 CONTEXT.md           Domain glossary
 ```
 
 ## Contributing
 
-Issues and pull requests are welcome. Please read [`CONTEXT.md`](CONTEXT.md) for the project's vocabulary and [`docs/adr`](docs/adr) for the decisions behind the design.
+Issues and pull requests are welcome. [`CONTRIBUTING.md`](CONTRIBUTING.md) covers setup, tests, the conventions CI enforces (all UI text goes through `t()`, so Glance can be translated) and how pull requests are reviewed. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) maps the code, [`CONTEXT.md`](CONTEXT.md) defines the project's vocabulary, and [`docs/adr`](docs/adr) records the decisions behind the design. AI coding agents should start with [`AGENTS.md`](AGENTS.md).
 
-**Translations.** Write every piece of UI text through `t()` from `src/i18n` (see the comment at the top of `src/i18n/index.ts`), in English, with placeholders instead of string concatenation: `t('Exported {file}', { file })`, `t('{count, plural, one {# page} other {# pages}}', { count })`. Text defined outside components, such as command labels, is marked with `msg()` and passed through `t()` where it's shown. `npm test` fails on UI text that skips `t()`, and `npm run i18n` lists it. To add or update a language, run `npm run i18n -- <code>` (for example `de` or `pt-BR`) and fill in `src/i18n/locales/<code>.json`. To check layout with longer text, pick the pseudo-locale in Settings → Language (shown in dev builds).
+**Translations.** Run `npm run i18n -- <code>` (for example `de` or `pt-BR`) and fill in `src/i18n/locales/<code>.json`; see [CONTRIBUTING.md](CONTRIBUTING.md#all-ui-text-goes-through-t) for details.
 
 ## License
 
