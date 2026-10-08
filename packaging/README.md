@@ -83,6 +83,8 @@ flatpak build-bundle .flatpak-builder/repo glance.flatpak io.github.redtrocks.gl
 flatpak install --user -y glance.flatpak
 ```
 
+To lint like Flathub, add `--mirror-screenshots-url=https://dl.flathub.org/media --compose-url-policy=full` to the build, then run `flatpak run --command=flatpak-builder-lint org.flatpak.Builder repo .flatpak-builder/repo`. Expect only `finish-args-host-filesystem-access` and `finish-args-flatpak-spawn-access` (exceptions to request at submission); the screenshot URLs resolve once this folder is on `main`.
+
 The release workflow attaches `Glance-<tag>-linux-{x86_64,aarch64}.flatpak` bundles, listed in `SHA256SUMS.txt` with the other packages, and keeps a `flathub-<tag>` workflow artifact containing the manifest and pinned source files for submission. Each release must add a matching `<release version="X" date="YYYY-MM-DD"/>` to `packaging/flatpak/io.github.redtrocks.glance.metainfo.xml`; the version gate enforces it. Flathub submission needs the owner's verification of `io.github.redtrocks` and follows the first release.
 
 AI apps that are themselves Flatpaks can't run `flatpak run …` (unsupported).
