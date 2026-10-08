@@ -76,7 +76,7 @@ tests/           Vitest tests and fixtures
 
 ## CI
 
-Every pull request runs: Frontend (typecheck, tests, build), Web version, Windows (Rust tests, NSIS installer, Store MSIX), Windows ARM64 (check), Rust tests on Linux, Linux RPM and Linux .deb. Changes that only touch `**/*.md`, `assets/`, `site/`, `.github/ISSUE_TEMPLATE/` or `LICENSE` skip the build and test jobs. The Windows job takes the longest (around 20 minutes).
+Every pull request runs: Frontend (typecheck, tests, build), Web version, Windows (Rust tests, NSIS installer, Store MSIX), Windows ARM64 (check), Rust tests on Linux, Linux RPM and Linux .deb. Changes that only touch `**/*.md`, `assets/`, `site/`, `.github/ISSUE_TEMPLATE/` or `LICENSE` skip the build and test jobs. The Windows job takes the longest (up to an hour on a cold cache), so docs-only changes are worth keeping separate.
 
 ## Pull requests
 
