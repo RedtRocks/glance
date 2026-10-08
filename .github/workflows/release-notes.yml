@@ -1,0 +1,38 @@
+name: Release notes
+
+# Rewrites the page of releases that are already out from CHANGELOG.md, in the same
+# layout the Release workflow publishes (scripts/release-notes.ts): use it after fixing
+# a version's notes. Only the text changes; files and download counts stay as they are.
+on:
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: Releases to rewrite, e.g. "v0.6.5 v0.6.4", or "all"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  rewrite:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAGS: ${{ github.event.inputs.tags }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Rewrite release pages
+        run: |
+          if [ "$TAGS" = all ]; then TAGS=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --json tagName --jq '.[].tagName'); fi
+          for tag in $TAGS; do
+            mapfile -t assets < <(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name')
+            if ! node scripts/release-notes.ts "$tag" "${assets[@]}" > body.md; then
+              echo "::warning::Skipped $tag: CHANGELOG.md has no section for it."
+              continue
+            fi
+            gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --notes-file body.md
+            echo "Rewrote $tag"
+          done

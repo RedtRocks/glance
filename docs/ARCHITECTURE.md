@@ -106,4 +106,4 @@ There are two separate AI features:
 | `packaging/` | winget manifests and the Microsoft Store MSIX, generated from `tauri.conf.json` by `scripts/packaging.ts` |
 | `scripts/` | Build and maintenance scripts: i18n extraction, web build, site pages, packaging, IndexNow |
 | `tests/` | Vitest tests, with fixtures in `images/`, `models/`, `office/` and `signatures/` |
-| `.github/workflows/` | `ci.yml` (every pull request), `release.yml` (installers, Linux packages, GitHub release), `winget.yml`, `store.yml`, `pages.yml` (website and web app) |
+| `.github/workflows/` | `ci.yml` (every pull request), `release.yml` (installers, Linux packages, GitHub release), `release-notes.yml` (rewrites published release pages), `winget.yml`, `store.yml`, `pages.yml` (website and web app) |

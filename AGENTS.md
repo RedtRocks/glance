@@ -65,11 +65,11 @@ tests/           Vitest tests and fixtures
 7. **No GPL or AGPL dependencies.** Permissive licences only. Ask before adding any dependency.
 8. **Nothing leaves the device.** No new network requests, telemetry or remote content without the maintainer's agreement; anything added must be in `PRIVACY.md` and the CSP in `src-tauri/tauri.conf.json`. Previews of user files must not fetch from the web (see `src/preview/sanitize.ts`).
 9. **Match the surrounding style.** No formatter runs in CI. TypeScript: no semicolons, single quotes, two-space indent. Comments are short and explain why. Use the vocabulary in `CONTEXT.md`.
-10. **User-facing docs move with the code.** If you add or change a feature users will notice, update the README feature table or `docs/FORMATS.md` / `docs/AI-APPS.md` as needed, and add a bullet under the top `## New in <version>` section of `.github/release-notes.md` (plain language, written for users).
+10. **User-facing docs move with the code.** If you add or change a feature users will notice, update the README feature table or `docs/FORMATS.md` / `docs/AI-APPS.md` as needed, and add a bullet under the top `## New in <version>` section of `CHANGELOG.md` (plain language, written for users). Each release page shows only its own version's section; `scripts/release-notes.ts` builds it.
 
 ## Don'ts
 
-- Don't bump the version, tag, or run the Release workflow unless the maintainer asks. Releases are cut by the maintainer once all in-progress work has merged. When asked, the version lives in `package.json`, `package-lock.json` (two fields at the top), `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and `src-tauri/Cargo.lock`; the Release workflow fails if the tag doesn't match or the notes lack `## New in <version>`.
+- Don't bump the version, tag, or run the Release workflow unless the maintainer asks. Releases are cut by the maintainer once all in-progress work has merged. When asked, the version lives in `package.json`, `package-lock.json` (two fields at the top), `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and `src-tauri/Cargo.lock`; the Release workflow fails if the tag doesn't match or `CHANGELOG.md` lacks `## New in <version>`.
 - Don't hand-edit generated files: `package-lock.json` and `Cargo.lock` (use npm and cargo), the per-format site pages under `site/*-viewer/` and `site/sitemap.xml` (regenerate with `node scripts/build-format-pages.mjs`), and `packaging/` manifests produced by `scripts/packaging.ts`.
 - Don't change `.github/workflows/` to make a check pass; fix the cause.
 - Don't commit build output (`dist/`, `dist-web/`, `src-tauri/target/`).
