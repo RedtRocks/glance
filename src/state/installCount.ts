@@ -6,6 +6,7 @@
  * Unlike update checks this also runs in the Store build.
  */
 import * as platform from '../platform'
+import { installSource } from '../core/installSource'
 import { settings } from './settings'
 import { storeInstall } from './updates'
 
@@ -42,7 +43,7 @@ export async function countInstall(): Promise<'sent' | 'off' | 'skipped' | 'erro
           url: `/${version}`,
           language: navigator.language,
           name: 'Daily check-in',
-          data: { version, from: storeInstall.peek() ? 'Microsoft Store' : flatpak ? 'Flatpak' : 'GitHub' }
+          data: { version, from: installSource(storeInstall.peek(), flatpak) }
         }
       })
     })
