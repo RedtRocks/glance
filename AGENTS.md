@@ -4,7 +4,7 @@ Instructions for AI coding agents (Claude Code, Codex, Cursor, Copilot and other
 
 ## What this is
 
-Glance is a free, open-source (Apache-2.0) Apple Preview alternative for Windows: a viewer and light editor for PDFs, images (HEIC, camera RAW, PSD), 3D models and Office files. It is a Tauri 2 app: a Preact + TypeScript UI in WebView2 and a Rust backend. The same UI also ships as a browser app and as Linux `.deb` and `.rpm` packages. Windows is the main platform.
+Glance is a free, open-source (Apache-2.0) reader for every kind of file, with an AI assistant and agent built in: a viewer and light editor for PDFs, images (HEIC, camera RAW, PSD), 3D models and Office files, and a tool AI apps can use over MCP. It is a Tauri 2 app: a Preact + TypeScript UI in WebView2 and a Rust backend. The same UI also ships as a browser app and as Linux `.deb` and `.rpm` packages. Windows is the main platform.
 
 Read before changing behaviour:
 

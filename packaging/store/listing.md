@@ -8,11 +8,13 @@ Glance Viewer (must match the name reserved in Partner Center and STORE_DISPLAY_
 
 ## Short description (for the listing header)
 
-View and edit PDFs, images, camera RAW and 3D models. Free, open source and light, inspired by macOS Preview.
+Read PDFs, images, Office files, 3D models and 190+ file types, and ask AI about them. Free and open source.
 
 ## Description
 
-Glance brings the everyday tools of macOS Preview to Windows, in a small, fast app that feels at home on Windows 11.
+Glance is one reader for every kind of file, with an AI assistant and agent built in, in a small, fast app that feels at home on Windows 11.
+
+Ask AI: chat with Claude, ChatGPT, Gemini, Copilot and others about the page you're on or an area you select, signed in with your own account. Ask by voice or typing and the AI edits a PDF's text in place, in the document's own font. AI apps such as Claude Code and Codex can also use Glance as a tool to read, convert, combine and redact your files.
 
 PDFs: read in continuous, single or two-page view; rearrange, rotate, delete and insert pages by dragging; merge documents by dragging pages between tabs, or drag pages out of the window to make a new PDF. Fill in forms, sign with your mouse, pen or a photo of your signature, and add highlights, notes, shapes, arrows and text boxes that stay editable in other PDF apps.
 

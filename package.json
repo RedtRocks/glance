@@ -2,7 +2,7 @@
   "name": "glance",
   "version": "0.6.7",
   "private": true,
-  "description": "Glance: a free, open-source, lightweight viewer and editor for PDFs, images, and 3D models on Windows, inspired by macOS Preview.",
+  "description": "Glance: a free, open-source reader for every kind of file (PDFs, images, Office files, 3D models), with an AI assistant and agent built in.",
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {

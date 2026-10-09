@@ -13,7 +13,7 @@ body:
     id: idea
     attributes:
       label: What you'd like
-      description: How you picture it working. If macOS Preview or another app does it, say how.
+      description: How you picture it working. If another app does it, say how.
   - type: textarea
     id: extra
     attributes:

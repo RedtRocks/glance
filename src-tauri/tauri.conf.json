@@ -48,8 +48,8 @@
     "publisher": "Glance contributors",
     "copyright": "Copyright 2026 Glance contributors. Apache-2.0.",
     "category": "Productivity",
-    "shortDescription": "View and edit PDFs, images, and 3D models",
-    "longDescription": "Glance is a free, open-source, lightweight viewer and editor for PDFs, images, camera RAW, and 3D models, inspired by macOS Preview.",
+    "shortDescription": "Read any file, with AI built in",
+    "longDescription": "Glance is a free, open-source reader for every kind of file, with an AI assistant and agent built in: PDFs, images, camera RAW, Office files, 3D models and 190+ more types.",
     "license": "Apache-2.0",
     "icon": [
       "icons/32x32.png",
