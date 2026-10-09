@@ -4,6 +4,10 @@ What changed in each version of Glance, newest first. Downloads for every versio
 
 <!-- The Release workflow publishes the section for the version it releases (scripts/release-notes.ts). Add a line under the top "## New in" section for anything users will notice. -->
 
+## New in 0.6.7
+
+- **The install count tells Flatpaks apart.** The anonymous daily check-in (**Settings → Count this install**) now says whether the copy is a Flatpak, instead of counting it as a download from GitHub. Nothing else it sends has changed.
+
 ## New in 0.6.6
 
 - **Glance as a Flatpak, for any Linux distribution.** Download `Glance-…-linux-x86_64.flatpak` (or the `aarch64` file) from the release and install it with `flatpak install --user`. It includes the AI tools: AI apps connect with `flatpak run --command=glance-mcp io.github.redtrocks.glance`, and Ask AI uses the agents installed on your PC. PostScript files need the `.deb` or `.rpm` version.

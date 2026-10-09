@@ -1,11 +1,12 @@
 /**
  * Anonymous install count (ADR 0016): once a day, while "Count this install" is on,
  * Glance tells Umami (https://umami.is) that a copy is in use, with its version and
- * whether it came from the Microsoft Store or GitHub. No ID, file, name or setting
+ * whether it came from the Microsoft Store, a Flatpak or GitHub. No ID, file, name or setting
  * is sent; the number of these check-ins per day is how many copies are in use.
  * Unlike update checks this also runs in the Store build.
  */
 import * as platform from '../platform'
+import { installSource } from '../core/installSource'
 import { settings } from './settings'
 import { storeInstall } from './updates'
 
@@ -30,6 +31,7 @@ export async function countInstall(): Promise<'sent' | 'off' | 'skipped' | 'erro
     const { getVersion } = await import('@tauri-apps/api/app')
     const version = await getVersion()
     await platform.isStorePackage().then((s) => (storeInstall.value = s), () => undefined)
+    const flatpak = await platform.isFlatpak().catch(() => false)
     const res = await fetch(ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -41,7 +43,7 @@ export async function countInstall(): Promise<'sent' | 'off' | 'skipped' | 'erro
           url: `/${version}`,
           language: navigator.language,
           name: 'Daily check-in',
-          data: { version, from: storeInstall.peek() ? 'Microsoft Store' : 'GitHub' }
+          data: { version, from: installSource(storeInstall.peek(), flatpak) }
         }
       })
     })
