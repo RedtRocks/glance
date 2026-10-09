@@ -113,7 +113,7 @@ a{color:var(--ink);text-underline-offset:4px}a:hover{color:var(--accent)}
 </div>
 <p class="cute" id="cute">₹10 is a cutting chai. We'll take it with a smile.</p>
 <a class="btn btn-violet give-btn" id="donate" href="https://github.com/sponsors/RedtRocks" target="_blank" rel="noopener">Donate</a>
-<p class="small muted" id="pay-with">Pay with any card, in your own currency</p>
+<p class="small muted" id="pay-with">Pay with any card, from any country</p>
 <p class="small muted"><span id="region-note">Paying from outside India.</span> <button type="button" class="link" id="switch-region">In India?</button></p>
 </div>
 </section>
@@ -192,7 +192,7 @@ function renderGive() {
   const btn = $('donate')
   btn.textContent = !url ? 'Coming soon' : freq === 'monthly' ? 'Donate monthly' : 'Donate'
   if (url) { btn.href = url; btn.removeAttribute('aria-disabled') } else { btn.removeAttribute('href'); btn.setAttribute('aria-disabled', 'true') }
-  $('pay-with').textContent = region === 'in' ? 'Pay with UPI, card or netbanking' : 'Pay with any card, in your own currency'
+  $('pay-with').textContent = region === 'in' ? 'Pay with UPI, card or netbanking' : 'Pay with any card, from any country'
   $('region-note').textContent = region === 'in' ? 'Paying from India.' : 'Paying from outside India.'
   $('switch-region').textContent = region === 'in' ? 'Not in India?' : 'In India?'
 }

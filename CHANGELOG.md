@@ -6,7 +6,7 @@ What changed in each version of Glance, newest first. Downloads for every versio
 
 ## New in 0.6.8
 
-- **Support Glance.** A pink heart on the toolbar opens the Support page on the website, where you can give once or monthly in your own currency (UPI in India). It unlocks nothing; Glance stays free. You can remove the heart with **View → Customize Toolbar**.
+- **Support Glance.** A pink heart on the toolbar opens the Support page on the website, where you can give once or monthly by card from any country (or UPI in India). It unlocks nothing; Glance stays free. You can remove the heart with **View → Customize Toolbar**.
 
 ## New in 0.6.7
 
