@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Support Glance</title>
+<meta name="description" content="Glance is free, open source and has no ads. Chip in once or monthly, with UPI in India or any card everywhere else.">
+<!-- Kept out of search until the maintainer has tested payments end to end. -->
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e0d12" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="preload" href="../assets/urbanist-latin.woff2" as="font" type="font/woff2" crossorigin>
+<script>(function(){try{var t=localStorage.getItem('glance-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}})();</script>
+<style>
+@font-face{font-family:'Urbanist';font-style:normal;font-weight:400;font-display:swap;src:url("../assets/urbanist-latin.woff2") format('woff2')}
+/* Wollo tokens, the same as the home page */
+:root{
+--surface:#ffffff;--surface-subtle:#f9f9f9;--divider:#dcdcdc;
+--ink:#0a0a0a;--ink-muted:#6b6b6b;--ink-hover:#262626;--on-ink:#ffffff;--accent:#6312f6;--night:#0a0a0a;--pink:#f258a8;
+color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+--surface:#0e0d12;--surface-subtle:#1a1920;--divider:#34323d;
+--ink:#f4f3f7;--ink-muted:#a9a6b3;--ink-hover:#dcdae2;--on-ink:#0e0d12;--accent:#b49bff;--night:#1f1d27;color-scheme:dark}}
+:root[data-theme="dark"]{
+--surface:#0e0d12;--surface-subtle:#1a1920;--divider:#34323d;
+--ink:#f4f3f7;--ink-muted:#a9a6b3;--ink-hover:#dcdae2;--on-ink:#0e0d12;--accent:#b49bff;--night:#1f1d27;color-scheme:dark}
+html,body{margin:0;background:var(--surface)}
+a{color:var(--ink);text-underline-offset:4px}a:hover{color:var(--accent)}
+.w{font-family:Urbanist,"Segoe UI","Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--surface);overflow-x:clip;font-variant-numeric:tabular-nums}
+.w *{box-sizing:border-box;font-weight:400}
+.w a:focus-visible,.w button:focus-visible,.w input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1280px;margin:0 auto;padding:0 80px}
+.h1{font-size:64px;line-height:64px;letter-spacing:-1px;margin:0;text-align:center;text-wrap:balance}
+.h3{font-size:32px;line-height:40px;margin:0;text-wrap:balance}
+.title{font-size:20px;line-height:24px;margin:0}
+.body{font-size:17px;line-height:26px;margin:0;text-wrap:pretty}
+.muted{color:var(--ink-muted)}
+.small{font-size:14px;line-height:20px;margin:0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:0 24px;border-radius:10px;font:inherit;font-size:15px;line-height:20px;text-decoration:none;cursor:pointer;border:0;transition:transform 150ms cubic-bezier(.16,1,.3,1),background-color 150ms}
+.btn:hover{transform:translateY(-1px)}.btn:active{transform:scale(.96)}
+.btn-ink{background:var(--ink);color:var(--on-ink)}.btn-ink:hover{color:var(--on-ink);background:var(--ink-hover)}
+.btn-sec{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--divider)}.btn-sec:hover{color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.btn-violet{background:#6312f6;color:#ffffff}.btn-violet:hover{color:#ffffff;background:#5410d6}
+.btn[aria-disabled="true"]{opacity:.5;cursor:default;transform:none}
+.seg{display:inline-flex;gap:4px;padding:4px;border-radius:9999px;box-shadow:inset 0 0 0 1px var(--ink)}
+.seg button{font:inherit;font-size:15px;min-height:44px;padding:0 22px;border-radius:9999px;border:0;cursor:pointer;background:transparent;color:var(--ink)}
+.seg button[aria-checked="true"]{background:var(--ink);color:var(--on-ink)}
+.seg-sm button{min-height:36px;font-size:14px;padding:0 16px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:9999px;background:var(--surface-subtle);font-size:15px}
+.give{max-width:560px;margin:0 auto;border-radius:24px;background:var(--surface-subtle);padding:48px 40px;display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center}
+.cute{margin:0;font-size:17px;color:var(--ink-muted);font-style:italic;min-height:26px}
+.give-btn{width:100%;min-height:60px;font-size:20px;border-radius:14px}
+.link{font:inherit;background:none;border:0;padding:0;color:var(--ink);text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+.podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:end;max-width:880px;margin:0 auto}
+.pod{position:relative;border-radius:20px;background:var(--surface-subtle);display:flex;flex-direction:column;align-items:center;gap:10px;padding:28px 16px;text-align:center;min-width:0}
+.pod .title{overflow-wrap:anywhere}
+.p1{padding-block:44px;background:#6312f6;color:#ffffff}.p1 .badge{background:rgba(255,255,255,.18);color:#ffffff;box-shadow:none}
+.rank{position:absolute;top:14px;left:16px;font-size:15px;opacity:.6}
+.crown{position:absolute;top:-18px;font-size:28px}
+.avatar{width:56px;height:56px;border-radius:9999px;display:flex;flex:none;align-items:center;justify-content:center;color:#ffffff;font-size:22px}
+.avatar.sm{width:32px;height:32px;font-size:14px}
+.badge{font-size:13px;padding:4px 10px;border-radius:9999px;box-shadow:inset 0 0 0 1px var(--divider);color:var(--ink-muted);white-space:nowrap}
+.board{list-style:none;max-width:880px;margin:16px auto 0;padding:0;display:flex;flex-direction:column}
+.board li{display:flex;align-items:center;gap:14px;padding:14px 8px;border-top:1px solid var(--divider);font-size:17px;min-width:0}
+.board li>span:nth-child(3){overflow-wrap:anywhere;min-width:0}
+.board .r{width:28px;flex:none;color:var(--ink-muted);font-size:15px}
+.board .badge{margin-left:auto}
+.full{max-width:880px;margin:24px auto 0;border-radius:20px;background:var(--surface-subtle);padding:24px;display:flex;flex-direction:column;gap:16px}
+.full-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.full input{width:100%;font:inherit;font-size:16px;min-height:44px;padding:0 14px;border-radius:10px;border:0;background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--divider)}
+.full .board{margin:0;max-height:520px;overflow-y:auto}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+[hidden]{display:none !important}
+.empty{max-width:560px;margin:0 auto;text-align:center;border-radius:20px;background:var(--surface-subtle);padding:40px 24px;display:flex;flex-direction:column;gap:8px;align-items:center}
+.faq{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:16px;padding:24px 0;border-top:1px solid var(--divider)}
+.help{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.help a{text-decoration:none;border-radius:20px;background:var(--surface-subtle);padding:28px;display:flex;flex-direction:column;gap:8px}
+@media (max-width:960px){
+.wrap{padding:0 20px}.h1{font-size:42px;line-height:46px}
+.faq,.help{grid-template-columns:minmax(0,1fr)}
+.give{padding:32px 20px}.hide-sm{display:none !important}
+.podium{gap:8px}.pod{padding:20px 8px}.p1{padding-block:32px}.pod .title{font-size:16px}.avatar{width:44px;height:44px}
+}
+@media (prefers-reduced-motion:reduce){.btn:hover,.btn:active{transform:none}}
+</style>
+</head>
+<body>
+<div class="w">
+<header style="padding-top:16px"><div class="wrap">
+<nav aria-label="Main" style="display:flex;align-items:center;justify-content:space-between;gap:16px;background:var(--surface-subtle);border-radius:10px;padding:8px 8px 8px 16px">
+<a href="../" style="display:flex;align-items:center;gap:10px;text-decoration:none;font-size:26px;letter-spacing:-.5px"><img src="../assets/icon.svg" alt="Glance logo" style="width:30px;height:30px"><span>glance</span></a>
+<div style="display:flex;gap:8px">
+<a class="btn btn-sec hide-sm" href="https://github.com/RedtRocks/glance" style="min-height:44px;padding:0 18px">GitHub</a>
+<a class="btn btn-ink" href="https://github.com/RedtRocks/glance/releases/latest" style="min-height:44px;padding:0 18px">Download</a>
+</div>
+</nav>
+</div></header>
+
+<main class="wrap">
+<section style="padding-top:96px;display:flex;flex-direction:column;align-items:center;gap:24px;text-align:center">
+<span class="pill"><svg width="16" height="16" viewBox="0 0 24 24" fill="#f258a8" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.6 3 5 6.6 5c2.1 0 3.5 1.1 4.4 2.5C11.9 6.1 13.3 5 15.4 5 19 5 21.1 8.6 19.6 11.8 17.5 16.4 12 21 12 21z"/></svg>Free, open source, no ads</span>
+<h1 class="h1">Support Glance</h1>
+<p class="body muted" style="max-width:620px">Glance has no paid tier and nothing to upsell. If it saves you time, you can chip in whatever feels right. Even a single digit helps, honestly.</p>
+</section>
+
+<section style="padding-top:48px" aria-label="Donate">
+<div class="give">
+<div class="seg" role="radiogroup" aria-label="How often">
+<button type="button" role="radio" aria-checked="true" data-freq="once">One time</button>
+<button type="button" role="radio" aria-checked="false" data-freq="monthly">Monthly</button>
+</div>
+<p class="cute" id="cute">₹10 is a cutting chai. We'll take it with a smile.</p>
+<a class="btn btn-violet give-btn" id="donate" href="https://github.com/sponsors/RedtRocks" target="_blank" rel="noopener">Donate</a>
+<p class="small muted" id="pay-with">Pay with any card, in your own currency</p>
+<p class="small muted"><span id="region-note">Paying from outside India.</span> <button type="button" class="link" id="switch-region">In India?</button></p>
+</div>
+</section>
+
+<section style="padding-top:96px" aria-labelledby="wall-title">
+<div style="display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;margin-bottom:40px">
+<h2 class="h3" id="wall-title">Wall of thanks</h2>
+<p class="body muted" style="max-width:560px">The people keeping Glance going. Donate and leave your name to join them.</p>
+<div class="seg seg-sm" role="radiogroup" aria-label="Period" id="period">
+<button type="button" role="radio" aria-checked="true" data-period="all">All time</button>
+<button type="button" role="radio" aria-checked="false" data-period="month">This month</button>
+</div>
+</div>
+<div class="podium" id="podium"></div>
+<ol class="board" id="board"></ol>
+<div class="empty" id="empty" hidden><p class="title">Be the first name here</p><p class="body muted">Donate and leave your name, and you'll show up on this wall.</p></div>
+<div style="display:flex;justify-content:center;margin-top:20px"><button type="button" class="btn btn-sec" id="open-full" hidden>See full leaderboard</button></div>
+<div class="full" id="full" hidden>
+<div class="full-head"><h3 class="title">All-time leaderboard</h3><span class="small muted" id="full-count"></span><button type="button" class="btn btn-sec" id="close-full" style="min-height:40px;margin-left:auto">Close</button></div>
+<label><span class="sr">Find a name</span><input id="full-search" type="search" placeholder="Find a name" autocomplete="off"></label>
+<ol class="board" id="full-list"></ol>
+</div>
+<p class="small muted" style="text-align:center;margin-top:24px">Ranked by total given. Amounts stay private, and anyone can give anonymously.</p>
+</section>
+
+<section style="padding-top:64px">
+<p class="title" style="text-align:center;margin:0 0 96px">Every rupee, cent and penny goes into making Glance better. Thank you, truly. <span aria-hidden="true" style="color:var(--pink)">♥</span></p>
+<h2 class="h3" style="margin-bottom:8px">Questions</h2>
+<div class="faq"><p class="title">Can I use Zelle, Venmo or Cash App?</p><p class="body muted">No. They only send money between US bank accounts, and Glance is made in India. Any card works here instead, from anywhere.</p></div>
+<div class="faq"><p class="title">Can I stop a monthly donation?</p><p class="body muted">Yes, any time, from the service you paid with. No questions, no hard feelings.</p></div>
+<div class="faq"><p class="title">Do I get anything extra?</p><p class="body muted">No. Everyone gets the same Glance, with every feature. Your support pays for the time that goes into it.</p></div>
+<div class="faq"><p class="title">Is my payment private?</p><p class="body muted">Glance never sees your card or bank details. Playto (in India) or GitHub Sponsors handles the payment, and this page doesn't track visits or payments.</p></div>
+</section>
+
+<section style="padding:96px 0">
+<h2 class="h3" style="margin-bottom:24px">Other ways to help</h2>
+<div class="help">
+<a href="https://github.com/RedtRocks/glance"><span class="title">Star it on GitHub</span><span class="body muted">Helps other people find Glance.</span></a>
+<a href="https://apps.microsoft.com/detail/9N01BTLDS9X1"><span class="title">Rate it in the Microsoft Store</span><span class="body muted">A review goes a long way for a small app.</span></a>
+<a href="../"><span class="title">Tell a friend</span><span class="body muted">Especially one juggling PDFs, photos and Office files.</span></a>
+</div>
+</section>
+</main>
+
+<footer style="border-top:1px solid var(--divider)">
+<div class="wrap" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:24px;padding-top:40px;padding-bottom:48px">
+<a href="../" style="display:flex;align-items:center;gap:10px;text-decoration:none;font-size:26px"><img src="../assets/icon.svg" alt="Glance logo" style="width:28px;height:28px"><span>glance</span></a>
+<div style="display:flex;flex-wrap:wrap;gap:24px;font-size:20px;line-height:24px">
+<a href="../app/" style="text-decoration:none">Open in Browser</a>
+<a href="https://github.com/RedtRocks/glance" style="text-decoration:none">GitHub</a>
+<a href="https://github.com/RedtRocks/glance/blob/main/LICENSE" style="text-decoration:none">Apache-2.0</a>
+</div>
+</div>
+</footer>
+</div>
+
+<script type="module">
+import { LINKS, regionFor, checkoutFor, rankSupporters, colourFor } from './wall.js'
+
+let region = regionFor(Intl.DateTimeFormat().resolvedOptions().timeZone)
+let freq = 'once'
+let period = 'all'
+let supporters = []
+
+const $ = (id) => document.getElementById(id)
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+const CUTE = {
+  in: { once: '₹10 is a cutting chai. We\'ll take it with a smile.', monthly: 'A little every month keeps a bug fix brewing.' },
+  world: { once: 'A dollar buys a coffee for the code.', monthly: '$1 a month keeps a bug fix brewing.' }
+}
+
+function renderGive() {
+  document.querySelectorAll('[data-freq]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.freq === freq)))
+  $('cute').textContent = CUTE[region][freq]
+  const url = checkoutFor(region, freq)
+  const btn = $('donate')
+  btn.textContent = !url ? 'Coming soon' : freq === 'monthly' ? 'Donate monthly' : 'Donate'
+  if (url) { btn.href = url; btn.removeAttribute('aria-disabled') } else { btn.removeAttribute('href'); btn.setAttribute('aria-disabled', 'true') }
+  $('pay-with').textContent = region === 'in' ? 'Pay with UPI, card or netbanking' : 'Pay with any card, in your own currency'
+  $('region-note').textContent = region === 'in' ? 'Paying from India.' : 'Paying from outside India.'
+  $('switch-region').textContent = region === 'in' ? 'Not in India?' : 'In India?'
+}
+
+const avatar = (s, sm) => `<span class="avatar${sm ? ' sm' : ''}" style="background:${colourFor(s.name)}">${s.name ? esc([...s.name][0].toUpperCase()) : '?'}</span>`
+const row = (s) => `<li><span class="r">${s.rank}</span>${avatar(s, true)}<span${s.name ? '' : ' class="muted"'}>${s.name ? esc(s.name) : 'Anonymous'}</span>${s.monthly ? '<span class="badge">Monthly</span>' : ''}</li>`
+
+function renderWall() {
+  document.querySelectorAll('[data-period]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.period === period)))
+  const list = rankSupporters(supporters, period)
+  $('empty').hidden = list.length > 0
+  $('podium').innerHTML = [1, 0, 2].map((i, k) => {
+    const s = list[i]
+    if (!s) return ''
+    return `<div class="pod ${['p2', 'p1', 'p3'][k]}">${i === 0 ? '<span class="crown" aria-hidden="true">👑</span>' : ''}<span class="rank">${s.rank}</span>${avatar(s)}<span class="title">${s.name ? esc(s.name) : 'Anonymous'}</span>${s.monthly ? '<span class="badge">Monthly</span>' : ''}</div>`
+  }).join('')
+  $('board').innerHTML = list.slice(3, 10).map(row).join('')
+  $('open-full').hidden = supporters.length <= 10 || !$('full').hidden
+}
+
+function renderFull() {
+  const all = rankSupporters(supporters, 'all')
+  const q = $('full-search').value.trim().toLowerCase()
+  const rows = all.filter((s) => !q || (s.name ?? 'anonymous').toLowerCase().includes(q))
+  $('full-count').textContent = `${all.length} supporters`
+  $('full-list').innerHTML = rows.length ? rows.map(row).join('') : '<li class="muted">No one by that name yet.</li>'
+}
+
+document.querySelectorAll('[data-freq]').forEach((b) => b.addEventListener('click', () => { freq = b.dataset.freq; renderGive() }))
+$('switch-region').addEventListener('click', () => { region = region === 'in' ? 'world' : 'in'; renderGive() })
+$('donate').addEventListener('click', (e) => { if (!checkoutFor(region, freq)) e.preventDefault() })
+document.querySelectorAll('[data-period]').forEach((b) => b.addEventListener('click', () => { period = b.dataset.period; renderWall() }))
+$('open-full').addEventListener('click', () => { $('full').hidden = false; $('open-full').hidden = true; renderFull(); $('full-search').focus() })
+$('close-full').addEventListener('click', () => { $('full').hidden = true; renderWall() })
+$('full-search').addEventListener('input', renderFull)
+
+renderGive()
+renderWall()
+fetch('supporters.json', { cache: 'no-cache' })
+  .then((r) => r.json())
+  .then((d) => { supporters = Array.isArray(d.supporters) ? d.supporters : []; renderWall() })
+  .catch(() => {})
+void LINKS
+</script>
+</body>
+</html>

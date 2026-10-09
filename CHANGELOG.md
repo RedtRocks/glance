@@ -4,6 +4,10 @@ What changed in each version of Glance, newest first. Downloads for every versio
 
 <!-- The Release workflow publishes the section for the version it releases (scripts/release-notes.ts). Add a line under the top "## New in" section for anything users will notice. -->
 
+## New in 0.6.8
+
+- **Support Glance.** A pink heart on the toolbar opens the Support page on the website, where you can give once or monthly in your own currency (UPI in India). It unlocks nothing; Glance stays free. You can remove the heart with **View → Customize Toolbar**.
+
 ## New in 0.6.7
 
 - **The install count tells Flatpaks apart.** The anonymous daily check-in (**Settings → Count this install**) now says whether the copy is a Flatpak, instead of counting it as a download from GitHub. Nothing else it sends has changed.

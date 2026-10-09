@@ -35,7 +35,8 @@ let count = 0
   for (const name of readdirSync(d)) {
     const p = join(d, name)
     // stats/ is the owner's download counter; their own checks shouldn't count as visits.
-    if (statSync(p).isDirectory()) { if (relative(dir, p) !== 'stats') walk(p) }
+    // support/ promises donors it doesn't track visits.
+    if (statSync(p).isDirectory()) { if (!['stats', 'support'].includes(relative(dir, p))) walk(p) }
     // google*.html is Search Console's verification file and must stay byte for byte.
     else if (name.endsWith('.html') && !/^google[0-9a-f]+\.html$/.test(name)) {
       const html = readFileSync(p, 'utf8')
