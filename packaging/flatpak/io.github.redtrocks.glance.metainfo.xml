@@ -39,5 +39,5 @@
       <image>https://raw.githubusercontent.com/RedtRocks/glance/main/packaging/flatpak/screenshots/model.png</image>
     </screenshot>
   </screenshots>
-  <releases><release version="0.6.5" date="2026-10-07"/></releases>
+  <releases><release version="0.6.6" date="2026-10-09"/><release version="0.6.5" date="2026-10-07"/></releases>
 </component>
