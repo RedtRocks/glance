@@ -51,6 +51,18 @@ It's built to feel native on Windows 11 (Fluent design, Mica, Explorer integrati
 <table>
   <tr>
     <td width="50%" valign="top">
+<img src="assets/screenshots/ai-choice-light.webp" alt="The Ask AI sidebar listing Claude, ChatGPT, Gemini, GitHub Copilot, Qwen, Kimi, Mistral and OpenCode, each signed in with your own account">
+      <h3>Ask the AI you already use</h3>
+      Claude, ChatGPT, Gemini, Copilot and more sit next to your file, signed in with your own account. Ask about the whole page or an area you select.
+    </td>
+    <td width="50%" valign="top">
+<img src="assets/screenshots/ai-edit-light.webp" alt="Claude has renamed the tenant and added a renewal sentence to a lease PDF, with Keep and Undo buttons for the two changes">
+      <h3>Tell it what to change</h3>
+      Type or say what you want and the AI edits the PDF's text in place, in the document's own font. Keep or undo each change.
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/pages-dark.webp">
   <img src="assets/screenshots/pages-light.webp" alt="Contact sheet of a 12-page travel PDF with two pages selected">
