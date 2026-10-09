@@ -113,7 +113,7 @@ a{color:var(--ink);text-underline-offset:4px}a:hover{color:var(--accent)}
 </div>
 <p class="cute" id="cute">₹10 is a cutting chai. We'll take it with a smile.</p>
 <a class="btn btn-violet give-btn" id="donate" href="https://github.com/sponsors/RedtRocks" target="_blank" rel="noopener">Donate</a>
-<p class="small muted" id="pay-with">Pay with any card, from any country</p>
+<p class="small muted" id="pay-with">Pay with a card, Apple Pay or Google Pay</p>
 <p class="small muted"><span id="region-note">Paying from outside India.</span> <button type="button" class="link" id="switch-region">In India?</button></p>
 </div>
 </section>
@@ -145,7 +145,7 @@ a{color:var(--ink);text-underline-offset:4px}a:hover{color:var(--accent)}
 <div class="faq"><p class="title">Can I use Zelle, Venmo or Cash App?</p><p class="body muted">No. They only send money between US bank accounts, and Glance is made in India. Any card works here instead, from anywhere.</p></div>
 <div class="faq"><p class="title">Can I stop a monthly donation?</p><p class="body muted">Yes, any time, from the service you paid with. No questions, no hard feelings.</p></div>
 <div class="faq"><p class="title">Do I get anything extra?</p><p class="body muted">No. Everyone gets the same Glance, with every feature. Your support pays for the time that goes into it.</p></div>
-<div class="faq"><p class="title">Is my payment private?</p><p class="body muted">Glance never sees your card or bank details. Playto (in India) or GitHub Sponsors handles the payment, and this page doesn't track visits or payments.</p></div>
+<div class="faq"><p class="title">Is my payment private?</p><p class="body muted">Glance never sees your card or bank details. Playto, a payment service, handles it, and this page doesn't track visits or payments.</p></div>
 </section>
 
 <section style="padding:96px 0">
@@ -192,7 +192,7 @@ function renderGive() {
   const btn = $('donate')
   btn.textContent = !url ? 'Coming soon' : freq === 'monthly' ? 'Donate monthly' : 'Donate'
   if (url) { btn.href = url; btn.removeAttribute('aria-disabled') } else { btn.removeAttribute('href'); btn.setAttribute('aria-disabled', 'true') }
-  $('pay-with').textContent = region === 'in' ? 'Pay with UPI, card or netbanking' : 'Pay with any card, from any country'
+  $('pay-with').textContent = region === 'in' ? 'Pay with UPI, card or netbanking' : 'Pay with a card, Apple Pay or Google Pay'
   $('region-note').textContent = region === 'in' ? 'Paying from India.' : 'Paying from outside India.'
   $('switch-region').textContent = region === 'in' ? 'Not in India?' : 'In India?'
 }
