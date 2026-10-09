@@ -4,6 +4,10 @@ What changed in each version of Glance, newest first. Downloads for every versio
 
 <!-- The Release workflow publishes the section for the version it releases (scripts/release-notes.ts). Add a line under the top "## New in" section for anything users will notice. -->
 
+## New in 0.6.6
+
+- **Glance as a Flatpak, for any Linux distribution.** Download `Glance-…-linux-x86_64.flatpak` (or the `aarch64` file) from the release and install it with `flatpak install --user`. It includes the AI tools: AI apps connect with `flatpak run --command=glance-mcp io.github.redtrocks.glance`, and Ask AI uses the agents installed on your PC. PostScript files need the `.deb` or `.rpm` version.
+
 ## New in 0.6.5
 
 - **Glance for Linux.** Download a package for Ubuntu 22.04+ and Debian 12+ (`.deb`) or Fedora 42+ (`.rpm`), for Intel/AMD and ARM64 PCs. It includes the AI tools, adds Glance to **Open With** for PDFs, images and its other file types, and keeps saved signatures and AI API keys in your login keyring (GNOME Keyring or KWallet). Features that need Windows, such as Text Recognition, scanning and certificate signing, are hidden on Linux.

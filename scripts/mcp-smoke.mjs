@@ -10,7 +10,7 @@
  * open (as it would for a user).
  */
 import { spawn } from 'node:child_process'
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createInterface } from 'node:readline'
@@ -87,6 +87,20 @@ function check(ok, what) {
   console.log(`ok - ${what}`)
 }
 
+/** Flatpak runs Glance in its own PID namespace: find the host PID whose innermost PID is `pid`. */
+// ponytail: first match wins; two sandboxes reusing the PID would confuse it (CI runs one).
+function hostPid(pid) {
+  if (process.platform !== 'linux') return pid
+  for (const d of readdirSync('/proc')) {
+    if (!/^\d+$/.test(d)) continue
+    try {
+      const s = readFileSync(`/proc/${d}/status`, 'utf8')
+      if (/^Name:\s+glance$/m.test(s) && Number(/^NSpid:\s+(.+)$/m.exec(s)?.[1].trim().split(/\s+/).at(-1)) === pid) return Number(d)
+    } catch {}
+  }
+  return pid
+}
+
 try {
   const init = await request('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'mcp-smoke', version: '1' } })
   check(init.serverInfo.name === 'glance', `initialize (Glance ${init.serverInfo.version}, protocol ${init.protocolVersion})`)
@@ -131,7 +145,7 @@ try {
   const endpoint = join(endpointDir(), 'mcp-endpoint')
   const pidOf = () => Number(readFileSync(endpoint, 'utf8').trim().split(/\s+/)[2])
   const pid = pidOf()
-  process.kill(pid)
+  process.kill(hostPid(pid))
   // (On Linux the killed Glance stays a zombie of glance-mcp, so don't wait for it to vanish.)
   await new Promise((r) => setTimeout(r, 2000))
   check((await tool('glance_info', { path: input })).structuredContent.pages === 2 && pidOf() !== pid, 'after Glance quits, the next call starts it again')

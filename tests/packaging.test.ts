@@ -225,3 +225,22 @@ describe('Linux RPM', () => {
     }
   })
 })
+
+describe('Linux Flatpak', () => {
+  it('the manifest matches the app', () => {
+    const manifest = readFileSync('packaging/flatpak/io.github.redtrocks.glance.yml', 'utf8')
+    expect(/^id: (.+)$/m.exec(manifest)?.[1]).toBe(conf.identifier)
+    expect(manifest).toContain('command: glance')
+    expect(manifest).toContain('ln -s glance /app/bin/glance-mcp')
+    const metainfo = readFileSync('packaging/flatpak/io.github.redtrocks.glance.metainfo.xml', 'utf8')
+    expect(metainfo).toContain(`<id>${conf.identifier}</id>`)
+    expect(metainfo).toContain(`<launchable type="desktop-id">${conf.identifier}.desktop</launchable>`)
+  })
+
+  it('the desktop template only uses placeholders the Flatpak build fills', () => {
+    const desktop = readFileSync('src-tauri/linux/glance.desktop', 'utf8')
+    expect(new Set(desktop.match(/{{[^}]+}}/g))).toEqual(new Set([
+      '{{#if comment}}', '{{comment}}', '{{/if}}', '{{exec}}', '{{icon}}', '{{name}}',
+    ]))
+  })
+})

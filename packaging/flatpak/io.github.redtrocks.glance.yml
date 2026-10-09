@@ -1,0 +1,50 @@
+id: io.github.redtrocks.glance
+runtime: org.gnome.Platform
+runtime-version: '51'
+sdk: org.gnome.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+  - org.freedesktop.Sdk.Extension.node22
+command: glance
+finish-args:
+  - --share=ipc
+  - --share=network # update check, AI services, and glance-mcp's 127.0.0.1 link to Glance
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  - --filesystem=host # opens, saves in place and combines next to the user's files; AI tools pass any path
+  - --talk-name=org.freedesktop.secrets # saved signatures and API keys in the login keyring
+  - --talk-name=org.freedesktop.FileManager1 # Show in Folder
+  - --talk-name=org.freedesktop.Flatpak # Ask AI starts the user's agent programs on the host
+build-options:
+  append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node22/bin
+modules:
+  - name: glance
+    buildsystem: simple
+    build-options:
+      env:
+        CARGO_HOME: /run/build/glance/cargo
+        CARGO_NET_OFFLINE: 'true'
+        npm_config_cache: /run/build/glance/flatpak-node/npm-cache
+        npm_config_offline: 'true'
+        XDG_CACHE_HOME: /run/build/glance/flatpak-node/cache
+    build-commands:
+      - npm ci --offline
+      # Builds the web UI (beforeBuildCommand) and the app; glance-mcp is the same binary (src/main.rs).
+      - npx tauri build --no-bundle
+      - install -Dm755 src-tauri/target/release/glance /app/bin/glance
+      - ln -s glance /app/bin/glance-mcp
+      - mkdir -p /app/share/applications
+      - >-
+        sed -e '/^{{#if comment}}$/,/^{{\/if}}$/d' -e 's/{{exec}}/glance/' -e 's/{{icon}}/io.github.redtrocks.glance/' -e 's/{{name}}/Glance/'
+        src-tauri/linux/glance.desktop > /app/share/applications/io.github.redtrocks.glance.desktop
+      - install -Dm644 src-tauri/icons/32x32.png /app/share/icons/hicolor/32x32/apps/io.github.redtrocks.glance.png
+      - install -Dm644 src-tauri/icons/64x64.png /app/share/icons/hicolor/64x64/apps/io.github.redtrocks.glance.png
+      - install -Dm644 src-tauri/icons/128x128.png /app/share/icons/hicolor/128x128/apps/io.github.redtrocks.glance.png
+      - install -Dm644 src-tauri/icons/128x128@2x.png /app/share/icons/hicolor/256x256/apps/io.github.redtrocks.glance.png
+      - install -Dm644 src-tauri/icons/icon.png /app/share/icons/hicolor/512x512/apps/io.github.redtrocks.glance.png
+      - install -Dm644 packaging/flatpak/io.github.redtrocks.glance.metainfo.xml /app/share/metainfo/io.github.redtrocks.glance.metainfo.xml
+    sources:
+      - glance-source.json
+      - cargo-sources.json
+      - node-sources.json

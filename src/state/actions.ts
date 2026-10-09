@@ -194,22 +194,32 @@ async function openPostscript(probe: Probe): Promise<Doc | null> {
     addDoc(doc)
     return doc
   } catch (e) {
-    const install = await ghostscriptInstallCommand()
-    const missing = String(e).includes('ghostscript-missing')
-    const actions = [
-      { label: t('Copy install command'), run: () => void navigator.clipboard.writeText(install).then(() => toast(t('Command copied. Paste it into Terminal.'))) },
-      { label: t('Ghostscript website'), run: () => void platform.openUrl('https://ghostscript.com/releases/gsdnld.html') }
-    ]
-    const why = missing
-      ? t('PostScript needs Ghostscript, a free program Glance can’t include for licensing reasons. Install it once and Glance will use it automatically.')
-      : t('Ghostscript couldn’t convert this file: {error}', { error: String(e) })
+    let why: string
+    let actions: NoticeDoc['actions']
+    let body: string
+    if (await platform.isFlatpak()) {
+      why = t('PostScript needs Ghostscript, which the Flatpak version of Glance can’t use. Install the .deb or .rpm version of Glance to open PostScript files.')
+      actions = [{ label: t('Get the .deb or .rpm'), run: () => void platform.openUrl('https://github.com/RedtRocks/glance/releases/latest') }]
+      body = why
+    } else {
+      const install = await ghostscriptInstallCommand()
+      const missing = String(e).includes('ghostscript-missing')
+      actions = [
+        { label: t('Copy install command'), run: () => void navigator.clipboard.writeText(install).then(() => toast(t('Command copied. Paste it into Terminal.'))) },
+        { label: t('Ghostscript website'), run: () => void platform.openUrl('https://ghostscript.com/releases/gsdnld.html') }
+      ]
+      why = missing
+        ? t('PostScript needs Ghostscript, a free program Glance can’t include for licensing reasons. Install it once and Glance will use it automatically.')
+        : t('Ghostscript couldn’t convert this file: {error}', { error: String(e) })
+      body = `${why}\n\n${install}`
+    }
     if (/\.(eps|epsf|epsi)$/i.test(probe.path)) {
       // EPS files usually carry a preview image we can show meanwhile.
       const doc = new ImageDoc({ ...probe, kind: 'image', browserNative: false, pages: 1 }, t('Showing the embedded preview. {reason}', { reason: why }))
       addDoc(doc)
       return doc
     }
-    return notice(probe, t('Ghostscript is needed for PostScript'), `${why}\n\n${install}`, actions)
+    return notice(probe, t('Ghostscript is needed for PostScript'), body, actions)
   }
 }
 

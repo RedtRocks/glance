@@ -208,12 +208,69 @@ fn slug(name: &str) -> String {
 // Finding programs
 
 fn resolve(l: &Launch) -> Option<PathBuf> {
+    #[cfg(target_os = "linux")]
+    if crate::flatpak_id().is_some() {
+        return host::which(&l.program);
+    }
     which::which(&l.program).ok()
 }
 
 /// The launch to use, with its program's full path; `None` when nothing is installed.
 fn pick(agent: &Agent) -> Option<(PathBuf, Launch)> {
     agent.launch.iter().find_map(|l| resolve(l).map(|p| (p, l.clone())))
+}
+
+#[cfg(target_os = "linux")]
+mod host {
+    //! In Flatpak, agents are the user's own programs outside the sandbox. They start
+    //! through `flatpak-spawn --host` (finish-arg --talk-name=org.freedesktop.Flatpak) in a
+    //! login shell, so they get the PATH the user's terminal has.
+    // ponytail: `sh -l` reads ~/.profile only; a PATH set only in ~/.bashrc isn't seen.
+    // Users then add the agent as a custom agent with its full path.
+    // ponytail: stop() can only signal flatpak-spawn, which passes SIGTERM on and, when it dies,
+    // has the host agent sent SIGINT (--watch-bus); an agent ignoring both outlives Glance.
+    use std::collections::BTreeMap;
+    use std::io::{Seek, Write};
+    use std::os::fd::{AsRawFd, FromRawFd, OwnedFd};
+    use std::os::unix::process::CommandExt;
+    use std::path::{Path, PathBuf};
+    use std::process::Command;
+
+    const RUN: [&str; 3] = ["sh", "-lc", r#"exec "$0" "$@""#];
+
+    pub fn which(program: &str) -> Option<PathBuf> {
+        let out = Command::new("flatpak-spawn").args(["--host", "sh", "-lc", r#"command -v "$0""#, program]).output().ok()?;
+        let found = String::from_utf8(out.stdout).ok()?;
+        let found = found.trim();
+        (out.status.success() && found.starts_with('/')).then(|| PathBuf::from(found))
+    }
+
+    /// The agent's environment (API keys) goes through a file descriptor (--env-fd), never
+    /// through a command line other users can read. A memfd, not a pipe: flatpak-spawn reads it
+    /// only once started, and a pipe would block this write past 64 KiB.
+    pub fn command(program: &Path, args: &[String], env: &BTreeMap<String, String>, cwd: &Path) -> std::io::Result<(Command, OwnedFd)> {
+        let raw = unsafe { libc::memfd_create(c"glance-agent-env".as_ptr(), libc::MFD_CLOEXEC) };
+        if raw < 0 {
+            return Err(std::io::Error::last_os_error());
+        }
+        let mut file = unsafe { std::fs::File::from_raw_fd(raw) };
+        for (k, v) in env {
+            file.write_all(format!("{k}={v}\0").as_bytes())?;
+        }
+        file.rewind()?;
+        let read = OwnedFd::from(file);
+        let fd = read.as_raw_fd();
+        let mut cmd = Command::new("flatpak-spawn");
+        cmd.args(["--host", "--watch-bus", "--env-fd=3"]).arg(format!("--directory={}", cwd.display())).args(RUN).arg(program).args(args);
+        unsafe {
+            cmd.pre_exec(move || {
+                // dup2 onto the same fd keeps FD_CLOEXEC, so clear the flag instead.
+                let r = if fd == 3 { libc::fcntl(3, libc::F_SETFD, 0) } else { libc::dup2(fd, 3) };
+                if r < 0 { Err(std::io::Error::last_os_error()) } else { Ok(()) }
+            });
+        }
+        Ok((cmd, read))
+    }
 }
 
 #[derive(Serialize)]
@@ -400,6 +457,14 @@ pub async fn agent_start(app: AppHandle, state: State<'_, Agents>, id: String) -
         let secret = secrets::load(&agent.id).ok_or_else(|| format!("the API key for {} is missing; remove it and add it again", agent.name))?;
         agent.env.extend(key_env(api, &secret));
     }
+    #[cfg(target_os = "linux")]
+    let (mut cmd, _env_pipe) = if crate::flatpak_id().is_some() {
+        let (c, fd) = host::command(&program, &l.args, &agent.env, &cwd).map_err(|e| format!("couldn’t start {}: {e}", agent.name))?;
+        (c, Some(fd))
+    } else {
+        (command(&program, &l.args, &agent, &cwd), None)
+    };
+    #[cfg(not(target_os = "linux"))]
     let mut cmd = command(&program, &l.args, &agent, &cwd);
     cmd.stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
     #[cfg(unix)]

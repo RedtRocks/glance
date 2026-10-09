@@ -394,3 +394,54 @@ jobs:
           name: glance-linux-amd64-deb
           path: src-tauri/target/release/bundle/deb/*.deb
           if-no-files-found: error
+
+  linux-flatpak:
+    name: Linux Flatpak (sandbox, AI tools smoke test)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci # the smoke test needs @cantoo/pdf-lib
+      - name: Install Flatpak tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder appstream desktop-file-utils xvfb xauth dbus
+          # Ubuntu 24.04 blocks the unprivileged user namespaces bubblewrap needs.
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          pipx install uv
+      - run: packaging/flatpak/sources.sh
+      - name: Build Flatpak
+        run: |
+          flatpak-builder --user --install-deps-from=flathub --disable-rofiles-fuse --force-clean \
+            --state-dir="$RUNNER_TEMP/fb-state" --repo="$RUNNER_TEMP/repo" "$RUNNER_TEMP/fb-build" \
+            packaging/flatpak/io.github.redtrocks.glance.yml
+          flatpak build-bundle "$RUNNER_TEMP/repo" glance.flatpak io.github.redtrocks.glance \
+            --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo
+      - name: Check metadata
+        run: |
+          appstreamcli validate --no-net "$RUNNER_TEMP/fb-build/files/share/metainfo/io.github.redtrocks.glance.metainfo.xml"
+          desktop-file-validate "$RUNNER_TEMP/fb-build/files/share/applications/io.github.redtrocks.glance.desktop"
+      - run: flatpak install --user -y --noninteractive ./glance.flatpak
+      - name: AI tools smoke test through the sandbox
+        timeout-minutes: 20
+        run: |
+          # The runtime dir must be the same path on the host and in the sandbox.
+          export XDG_RUNTIME_DIR=/run/user/$(id -u)
+          sudo mkdir -p "$XDG_RUNTIME_DIR" && sudo chown "$(id -u):$(id -g)" "$XDG_RUNTIME_DIR" && chmod 700 "$XDG_RUNTIME_DIR"
+          printf '#!/bin/sh\nexec flatpak run --command=glance-mcp io.github.redtrocks.glance "$@"\n' > "$RUNNER_TEMP/glance-mcp"
+          chmod +x "$RUNNER_TEMP/glance-mcp"
+          # The sandbox can't see the host's /tmp; keep the test files in the home folder.
+          mkdir -p "$HOME/glance-smoke"
+          GLANCE_MCP_DIR="$XDG_RUNTIME_DIR/app/io.github.redtrocks.glance/glance" TMPDIR="$HOME/glance-smoke" \
+            dbus-run-session -- xvfb-run -a node scripts/mcp-smoke.mjs "$RUNNER_TEMP/glance-mcp"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: glance-linux-x86_64-flatpak
+          path: glance.flatpak
+          if-no-files-found: error

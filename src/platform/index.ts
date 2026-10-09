@@ -309,6 +309,11 @@ export async function isStorePackage(): Promise<boolean> {
   return isTauri ? invoke<boolean>('store_package') : false
 }
 
+/** Whether Glance runs as a Flatpak (src-tauri/src/lib.rs `flatpak`). */
+export async function isFlatpak(): Promise<boolean> {
+  return isTauri && !isWindows ? invoke<boolean>('flatpak') : false
+}
+
 export async function showWindow(): Promise<void> {
   if (!isTauri) return
   const { getCurrentWindow } = await import('@tauri-apps/api/window')
@@ -892,11 +897,13 @@ export interface AiApps {
   apps: AiApp[]
   /** The command AI apps run (glance-mcp.exe); empty when it's missing. */
   command: string
+  /** Arguments for command; Flatpak needs `run --command=glance-mcp <id>`. */
+  args: string[]
   problem: string | null
 }
 
 export async function aiApps(): Promise<AiApps> {
-  if (!isTauri) return { apps: [], command: '', problem: t('Connecting AI apps is available in the Windows app.') }
+  if (!isTauri) return { apps: [], command: '', args: [], problem: t('Connecting AI apps is available in the Windows app.') }
   return invoke<AiApps>('ai_apps')
 }
 

@@ -36,7 +36,8 @@ interface Platform {
 const PLATFORMS: Platform[] = [
   { label: 'Windows 10 and 11', ext: '.exe', intel: /-windows-x64-setup\.exe$/, arm: /-windows-arm64-setup\.exe$/ },
   { label: 'Ubuntu 22.04+, Debian 12+', ext: '.deb', intel: /-linux-amd64\.deb$/, arm: /-linux-arm64\.deb$/ },
-  { label: 'Fedora 42+', ext: '.rpm', intel: /-linux-x86_64\.rpm$/, arm: /-linux-aarch64\.rpm$/ }
+  { label: 'Fedora 42+', ext: '.rpm', intel: /-linux-x86_64\.rpm$/, arm: /-linux-aarch64\.rpm$/ },
+  { label: 'Any Linux (Flatpak)', ext: '.flatpak', intel: /-linux-x86_64\.flatpak$/, arm: /-linux-aarch64\.flatpak$/ }
 ]
 
 function downloadTable(tag: string, assets: string[]): string {
@@ -64,11 +65,12 @@ function installHelp(assets: string[]): string {
   }
   if (has(/\.deb$/)) parts.push('**Ubuntu or Debian.** `sudo apt install ./Glance-…-linux-amd64.deb` (or the `arm64` file).')
   if (has(/\.rpm$/)) parts.push('**Fedora.** `sudo dnf install ./Glance-…-linux-x86_64.rpm` (or the `aarch64` file).')
+  if (has(/\.flatpak$/)) parts.push('**Any Linux (Flatpak).** `flatpak install --user ./Glance-…-linux-x86_64.flatpak` (or the `aarch64` file). PostScript files need the .deb or RPM.')
   // Releases before 0.6.6 kept the Linux hashes in a second file.
   const sums = assets.find((a) => a === 'SHA256SUMS.txt')
   const linuxSums = assets.find((a) => a === 'SHA256SUMS-linux.txt') ?? sums
   if (sums) {
-    const linux = has(/\.(deb|rpm)$/) && linuxSums ? `, or \`sha256sum -c --ignore-missing ${linuxSums}\` on Linux` : ''
+    const linux = has(/\.(deb|rpm|flatpak)$/) && linuxSums ? `, or \`sha256sum -c --ignore-missing ${linuxSums}\` on Linux` : ''
     parts.push(`**Check a download.** Its SHA-256 hash is in \`${sums}\`${linuxSums !== sums ? ` and \`${linuxSums}\`` : ''}: run \`Get-FileHash\` in PowerShell${linux}.`)
   }
   parts.push(

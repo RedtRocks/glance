@@ -39,6 +39,7 @@ jobs:
             exit 1
           fi
           tr -d '\r' < CHANGELOG.md | grep -qxF "## New in ${tag#v}" || { echo "::error::CHANGELOG.md has no '## New in ${tag#v}' section."; exit 1; }
+          grep -qF "<release version=\"${tag#v}\"" packaging/flatpak/io.github.redtrocks.glance.metainfo.xml || { echo "::error::packaging/flatpak/io.github.redtrocks.glance.metainfo.xml has no <release version=\"${tag#v}\">."; exit 1; }
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -152,9 +153,56 @@ jobs:
           name: linux-deb-${{ matrix.arch }}
           path: dist-release/*.deb
 
+  linux-flatpak:
+    name: Linux ${{ matrix.arch }} (Flatpak)
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Flatpak tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder appstream desktop-file-utils xvfb xauth dbus
+          # Ubuntu 24.04 blocks the unprivileged user namespaces bubblewrap needs.
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          pipx install uv
+      - run: packaging/flatpak/sources.sh
+      - name: Build Flatpak
+        run: |
+          flatpak-builder --user --install-deps-from=flathub --disable-rofiles-fuse --force-clean \
+            --state-dir="$RUNNER_TEMP/fb-state" --repo="$RUNNER_TEMP/repo" "$RUNNER_TEMP/fb-build" \
+            packaging/flatpak/io.github.redtrocks.glance.yml
+          tag="${{ github.event.inputs.tag || github.ref_name }}"
+          mkdir -p dist-release
+          flatpak build-bundle "$RUNNER_TEMP/repo" "dist-release/Glance-$tag-linux-${{ matrix.arch }}.flatpak" io.github.redtrocks.glance --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-flatpak-${{ matrix.arch }}
+          path: dist-release/*.flatpak
+      - name: Prepare Flathub sources
+        if: matrix.arch == 'x86_64'
+        run: |
+          tag="${{ github.event.inputs.tag || github.ref_name }}"
+          mkdir -p flathub
+          cp packaging/flatpak/io.github.redtrocks.glance.yml packaging/flatpak/cargo-sources.json packaging/flatpak/node-sources.json flathub/
+          printf '{ "type": "git", "url": "https://github.com/RedtRocks/glance.git", "tag": "%s", "commit": "%s" }\n' "$tag" "${{ github.sha }}" > flathub/glance-source.json
+      - uses: actions/upload-artifact@v4
+        if: matrix.arch == 'x86_64'
+        with:
+          name: flathub-${{ github.event.inputs.tag || github.ref_name }}
+          path: flathub/
+
   publish:
     name: Publish release
-    needs: [build, linux-rpm, linux-deb]
+    needs: [build, linux-rpm, linux-deb, linux-flatpak]
     if: ${{ !cancelled() && needs.build.result == 'success' }}
     runs-on: ubuntu-latest
     env:
@@ -171,10 +219,10 @@ jobs:
       - name: Checksums
         run: |
           shopt -s nullglob
-          linux=(dist-release/*.rpm dist-release/*.deb)
+          linux=(dist-release/*.rpm dist-release/*.deb dist-release/*.flatpak)
           if [ ${#linux[@]} -eq 0 ]; then echo "::warning::No Linux packages were built, so the release has none."; fi
           # One file for every platform: winget reads the installers' hashes from it.
-          cd dist-release && sha256sum *.exe *.rpm *.deb > SHA256SUMS.txt && cat SHA256SUMS.txt
+          cd dist-release && sha256sum *.exe *.rpm *.deb *.flatpak > SHA256SUMS.txt && cat SHA256SUMS.txt
       - name: Release page
         # This version's notes and a download table for the files attached; history stays in CHANGELOG.md.
         run: node scripts/release-notes.ts "$TAG" dist-release/* > release-body.md && cat release-body.md
@@ -188,6 +236,7 @@ jobs:
             dist-release/*.exe
             dist-release/*.rpm
             dist-release/*.deb
+            dist-release/*.flatpak
             dist-release/SHA256SUMS.txt
 
   winget:

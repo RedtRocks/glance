@@ -18,6 +18,7 @@ const assets = (tag: string) => [
   `dist-release/Glance-${tag}-windows-arm64-setup.exe`,
   `dist-release/Glance-${tag}-linux-amd64.deb`,
   `dist-release/Glance-${tag}-linux-x86_64.rpm`,
+  `dist-release/Glance-${tag}-linux-aarch64.flatpak`,
   'dist-release/SHA256SUMS.txt'
 ]
 
@@ -35,6 +36,7 @@ describe('release notes', () => {
     expect(body).not.toContain('0.1.0')
     expect(body).toContain('(https://github.com/RedtRocks/glance/releases/download/v0.2.0/Glance-v0.2.0-windows-arm64-setup.exe)')
     expect(body).toContain('| **Fedora 42+** | [Download .rpm](https://github.com/RedtRocks/glance/releases/download/v0.2.0/Glance-v0.2.0-linux-x86_64.rpm) | – |')
+    expect(body).toContain('| **Any Linux (Flatpak)** | – | [Download .flatpak](https://github.com/RedtRocks/glance/releases/download/v0.2.0/Glance-v0.2.0-linux-aarch64.flatpak) |')
     expect(body).toContain('blob/main/CHANGELOG.md')
     expect(body.indexOf('| **Windows')).toBeLessThan(body.indexOf('## New in'))
   })
