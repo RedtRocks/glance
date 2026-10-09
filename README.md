@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/banner.jpg" alt="Glance: Preview's best tricks, built for Windows 11"></p>
+<p align="center"><img src="assets/banner.jpg" alt="Glance: Every file in one reader, with AI built in"></p>
 
 <p align="center">
   <a href="https://github.com/RedtRocks/glance/releases/latest"><img src="https://img.shields.io/github/v/release/RedtRocks/glance?style=flat-square&label=release&color=0f6cbd" alt="Latest release"></a>
@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <b>A free, open-source Apple Preview alternative for Windows: a lightweight PDF viewer and editor, image viewer, camera RAW viewer and 3D model viewer.</b>
+  <b>A free, open-source reader for every kind of file, with an AI assistant and agent built in: PDFs, images, camera RAW, Office files, 3D models and 190+ more types on Windows, Linux and the web.</b>
 </p>
 
 <p align="center">
@@ -35,7 +35,14 @@
 </picture>
 </p>
 
-**Glance is a free, open-source alternative to Apple's macOS Preview app for Windows 10 and 11.** It opens PDFs, images (including HEIC and camera RAW), 3D models, and Word, PowerPoint and Excel files in one small app, and brings Preview's everyday superpowers to Windows: rearranging and merging PDF pages by dragging, dragging pages out to create new files, real redaction, markup and signatures, background removal, metadata scrubbing, batch processing, and more. It's built to feel native on Windows 11 (Fluent design, Mica, Explorer integration) while staying small and fast. The same app also [runs in any browser](https://redtrocks.github.io/glance/app/), on phones too, and AI apps such as Claude and Codex can [use it as a tool](docs/AI-APPS.md).
+**Glance is a free, open-source reader for every kind of file, with an AI assistant and agent built in.** One small app opens PDFs, images (including HEIC and camera RAW), Word, PowerPoint and Excel files, 3D models, EPUB, email, code, video and [190+ file types](docs/FORMATS.md) in all.
+
+- **Read anything.** One window and one set of controls for every file, instead of a different app for each type.
+- **Ask AI about it.** The Ask AI sidebar talks to Claude, ChatGPT, Gemini, Copilot and others about the page you're on or an area you select, signed in with your own account.
+- **Let AI do the work.** Ask by voice or typing and the AI edits a PDF's text in place, in the document's own font. AI apps such as Claude Code and Codex can [use Glance as a tool](docs/AI-APPS.md) to read, convert, combine, split and redact your files.
+- **Edit without another app.** Rearrange and merge PDF pages by dragging, mark up, sign, fill forms, redact for real, remove backgrounds, adjust photos and batch-convert.
+
+It's built to feel native on Windows 11 (Fluent design, Mica, Explorer integration) while staying small and fast, and it also runs on Linux and [in any browser](https://redtrocks.github.io/glance/app/), phones included.
 
 > **Status: early preview.** Viewing, PDF page management, markup, signatures, forms, redaction, OCR, image editing, batch editing and metadata tools work today. Everything else is on the roadmap below and in [`docs/adr`](docs/adr).
 
@@ -100,7 +107,7 @@
 | Search, print, slideshow, dark appearance for PDFs | ✅ |
 | Export pages as PDF, PNG, JPEG or TIFF (72-600 ppi) | ✅ |
 | Context-aware toolbar (page controls only for multi-page documents), Customize Toolbar | ✅ |
-| Rebindable keyboard shortcuts (Windows conventions, Preview's shortcuts mapped, Photoshop-style single-key tools: V, H, Z, M, L, W, B, U, R, O, T, S, C, [ ], Space to pan) | ✅ |
+| Rebindable keyboard shortcuts (Windows conventions, common Mac shortcuts mapped, Photoshop-style single-key tools: V, H, Z, M, L, W, B, U, R, O, T, S, C, [ ], Space to pan) | ✅ |
 | Formats: PDF, AI, EPS/PS (via Ghostscript), XPS/OXPS, JPEG, PNG, GIF, WebP, AVIF, BMP, ICO, SVG, TIFF, HEIC, JPEG 2000, JPEG XL, JPEG XR, EXR, HDR, TGA, DDS, QOI, PNM, ICNS, PSD, CBZ, camera RAW ([full list](docs/FORMATS.md)); Open With another app for PSD, AI and RAW | ✅ |
 | Read-only previews of Word, PowerPoint, Excel and CSV files (old 97-2003 .doc, .ppt and .xls too), with Open with… to edit them in Office | ✅ |
 | Previews of text and code (syntax colours), Markdown, video, audio, EPUB e-books, fonts and email (.eml, .msg); nothing in them loads from the internet | ✅ |
@@ -135,7 +142,7 @@
 | Web version at [redtrocks.github.io/glance/app](https://redtrocks.github.io/glance/app/): the same app in any modern browser, installable, works offline, files never leave the device ([what it can't do](#faq)) | ✅ |
 | Ask AI sidebar: chat with Claude, ChatGPT, Gemini, GitHub Copilot, Qwen, Kimi, Mistral or OpenCode about the open file (whole page or a selected area), signed in with your own account or an API key, or use the company's website in the sidebar; chats are kept per document | ✅ |
 
-Signing on an iPhone or iPad (Preview's Continuity feature) isn't possible on Windows; use the camera or a photo of your signature instead.
+Signing on a nearby iPhone or iPad isn't possible on Windows; use the camera or a photo of your signature instead.
 
 Glance deliberately has no quick-look popup: pair it with [PowerToys Peek](https://learn.microsoft.com/windows/powertoys/peek) (Ctrl+Space in Explorer) and press Enter to continue in Glance ([ADR 0011](docs/adr/0011-no-quick-look-pair-with-peek.md)).
 
@@ -145,8 +152,8 @@ No accounts. Glance sends two optional things, both off with a switch in Setting
 
 ## FAQ
 
-**Is there a macOS Preview app for Windows?**
-Apple doesn't make one. Glance is a free, open-source app that does the same jobs on Windows 10 and 11: viewing PDFs and images, rearranging and merging PDF pages, markup, signatures, redaction, Instant Alpha and Adjust Color.
+**What is Glance?**
+A free, open-source reader for PDFs, images, Office files, 3D models and 190+ other file types, with an AI assistant and agent built in. It runs on Windows 10 and 11, Linux and in any browser. Besides reading, it rearranges and merges PDF pages, marks up, signs and redacts, and fixes photos, and the AI can answer questions about a file or edit it for you.
 
 **Is Glance free?**
 Yes. It's free and open source under the Apache-2.0 license, with no ads, account or paid tier. [Download the latest release](https://github.com/RedtRocks/glance/releases/latest).

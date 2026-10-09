@@ -124,7 +124,7 @@ ShortDescription: ${yamlString(conf.bundle.shortDescription)}
 Description: ${yamlString(conf.bundle.longDescription)}
 Moniker: glance
 Tags:
-${yamlList(['pdf', 'pdf-editor', 'image-viewer', 'photo-viewer', 'markup', 'annotate', 'redact', 'ocr', 'camera-raw', 'heic', '3d-viewer', 'preview'])}
+${yamlList(['pdf', 'pdf-editor', 'image-viewer', 'photo-viewer', 'markup', 'annotate', 'redact', 'ocr', 'camera-raw', 'heic', '3d-viewer', 'ai-assistant'])}
 ReleaseNotesUrl: ${REPO}/releases/tag/${tag}
 ManifestType: defaultLocale
 ManifestVersion: ${WINGET_SCHEMA}

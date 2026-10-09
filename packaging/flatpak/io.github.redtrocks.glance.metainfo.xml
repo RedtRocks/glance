@@ -16,7 +16,7 @@
     <color type="primary" scheme_preference="dark">#0a0a0a</color>
   </branding>
   <description>
-    <p>Glance brings the everyday tools of macOS Preview to Linux in a small, fast app. Free and open source, it needs no account and collects no telemetry. Saved signatures and AI API keys stay in your login keyring.</p>
+    <p>Glance is one reader for every kind of file, with an AI assistant and agent built in, in a small, fast app. Ask Claude, ChatGPT, Gemini and others about the page you're on, or let the AI edit a PDF's text for you. Free and open source, it needs no account and collects no telemetry. Saved signatures and AI API keys stay in your login keyring.</p>
     <p>Read PDFs in continuous, single or two-page view. Rearrange, rotate, delete and insert pages by dragging; merge documents between tabs or drag pages out to make a new PDF. Fill in forms, sign with your mouse, pen or a photo, and add highlights, notes, shapes, arrows and text boxes that stay editable in other PDF apps. Redaction removes content, not just a black box on top. Clean Up PDF strips comments, metadata, attachments and scripts. Export with an AES-256 password, reduce file size, or save pages as PNG, JPEG or TIFF.</p>
     <p>Open HEIC, camera RAW, JPEG XL, WebP, AVIF, PSD, TIFF and dozens more image formats. Adjust color, resize, crop, remove backgrounds with on-device AI, mark up screenshots, remove location info, make collages and batch-convert images.</p>
     <p>View GLB/glTF, OBJ, STL, 3MF, FBX, USDZ and more 3D models with orbit, wireframe and snapshots. Edits save automatically, and every save keeps a version you can go back to.</p>

@@ -1,6 +1,6 @@
 # Glance
 
-A free, open-source viewer and light editor for documents, images, and 3D models on Windows, modeled on macOS Preview.
+A free, open-source reader and light editor for documents, images, 3D models and 190+ other file types, with an AI assistant and agent built in.
 
 ## Documents
 

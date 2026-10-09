@@ -88,7 +88,7 @@ export function releaseBody(changelog: string, tag: string, assets: string[]): s
   const names = assets.map((a) => basename(a))
   const table = downloadTable(tag, names)
   return [
-    'Glance is a free, open-source viewer and editor for PDFs, images, camera RAW and 3D models, inspired by macOS Preview.',
+    'Glance is a free, open-source reader for every kind of file, with an AI assistant and agent built in.',
     ...(table ? [table] : []),
     `Also on the [Microsoft Store](${STORE}), which keeps it updated, and [in your browser](${WEB_APP}) with nothing to install.`,
     `## New in ${version}`,

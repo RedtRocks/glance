@@ -33,7 +33,7 @@
   WriteRegStr HKCU "Software\Classes\Applications\${MAINBINARYNAME}.exe\DefaultIcon" "" "$INSTDIR\${MAINBINARYNAME}.exe,0"
   WriteRegStr HKCU "Software\Classes\Applications\${MAINBINARYNAME}.exe\shell\open\command" "" '"$INSTDIR\${MAINBINARYNAME}.exe" "%1"'
   WriteRegStr HKCU "${GLANCE_CAPABILITIES}" "ApplicationName" "Glance"
-  WriteRegStr HKCU "${GLANCE_CAPABILITIES}" "ApplicationDescription" "View and edit PDFs, images, and 3D models"
+  WriteRegStr HKCU "${GLANCE_CAPABILITIES}" "ApplicationDescription" "Read any file, with AI built in"
   WriteRegStr HKCU "${GLANCE_CAPABILITIES}" "ApplicationIcon" "$INSTDIR\${MAINBINARYNAME}.exe,0"
   !insertmacro GLANCE_KEEP_HANDLERS "pdf" "PDF Document" ""
   !insertmacro GLANCE_KEEP_HANDLERS "ai" "Illustrator Document" ""
