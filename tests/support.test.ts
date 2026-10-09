@@ -1,14 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { SUPPORT_PAGE_URL } from '../src/core/support'
 // @ts-expect-error plain JavaScript module shared with the website
 import { LINKS, regionFor, checkoutFor, rankSupporters, colourFor } from '../site/support/wall.js'
 
 describe('Support page', () => {
-  it('opens the website page from the app', () => {
-    expect(SUPPORT_PAGE_URL).toBe('https://redtrocks.github.io/glance/support/')
-  })
-
   it('only links to the two payment services it was set up with', () => {
     // A wrong link here loses real donations, so any change has to be deliberate.
     for (const url of Object.values(LINKS) as string[]) {

@@ -53,14 +53,6 @@ function Btn({ icon, label, command, onClick, pressed, extra = '' }: { icon: Ico
           </linearGradient>
         </svg>
       )}
-      {extra === 'support-button' && (
-        <svg class="ai-gradient-defs" width="0" height="0" aria-hidden="true">
-          <linearGradient id="support-gradient" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#fb7185" />
-            <stop offset="1" stop-color="#ec4899" />
-          </linearGradient>
-        </svg>
-      )}
     </button>
   )
 }
@@ -251,12 +243,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
     label: msg('Ask AI'),
     applies: (c) => isShown(c) && platform.isTauri,
     render: () => <Btn icon="sparkleFilled" label={t('Ask AI')} command="view.askAi" pressed={aiOpen.value} extra="ai-button" />
-  },
-  {
-    id: 'support',
-    label: msg('Support Glance'),
-    applies: () => true,
-    render: () => <Btn icon="heartFilled" label={t('Support Glance')} command="help.support" extra="support-button" />
   },
   { id: 'search', label: msg('Search'), applies: isPdf, render: (c) => <SearchField doc={c.doc!} /> },
   { id: 'overflow', label: msg('More'), applies: () => true, render: () => <Overflow /> }

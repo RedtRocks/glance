@@ -16,7 +16,6 @@ import { activeDoc, activeId, docs, type Doc, type ViewMode } from './documents'
 import { settings, updateSettings } from './settings'
 import { feedbackOpen, cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, findOpen, inspectorOpen, aiOpen, signaturesOpen, promptText, redactTextOpen, toast, settingsOpen, sidebarVisible, slideshow } from './ui'
 import { parsePageInput } from '../core/pageControls'
-import { SUPPORT_PAGE_URL } from '../core/support'
 import { printDoc } from './print'
 import { applyRedactions } from './actions'
 import { markupBar, restyle, selectedId, setTool, SHAPE_TOOLS, signatureDialog, style, tool, WIDTHS, type Tool } from './markupState'
@@ -329,8 +328,7 @@ export const COMMANDS: Command[] = [
   },
   { id: 'help.feedback', label: msg('Send Feedback…'), run: () => void (feedbackOpen.value = true) },
   { id: 'help.about', label: msg('About Glance'), run: actions.showAbout },
-  { id: 'help.github', label: msg('Glance on GitHub'), run: () => platform.openUrl('https://github.com/RedtRocks/glance') },
-  { id: 'help.support', label: msg('Support Glance'), run: () => platform.openUrl(SUPPORT_PAGE_URL) }
+  { id: 'help.github', label: msg('Glance on GitHub'), run: () => platform.openUrl('https://github.com/RedtRocks/glance') }
 ]
 
 // Which commands make sense for which kind of file. A PNG gets no page, outline or

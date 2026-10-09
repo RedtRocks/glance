@@ -351,11 +351,6 @@ select optgroup {
 .tb-button.ai-button .icon {
   filter: drop-shadow(0 0 3px rgba(139, 92, 246, 0.45));
 }
-/* Support Glance gets the same treatment in pink, so it reads as a thank-you rather than a tool. */
-.tb-button.support-button .icon svg,
-.tb-button.support-button .icon path {
-  fill: url(#support-gradient);
-}
 .page-field {
   display: flex;
   align-items: center;
