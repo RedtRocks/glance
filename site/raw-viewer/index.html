@@ -67,6 +67,22 @@
   "mainEntity": [
    {
     "@type": "Question",
+    "name": "What is a RAW file?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "A RAW file is the unprocessed data from a camera’s sensor, saved before the camera turns it into a JPEG. Each brand has its own kind: CR2 and CR3 from Canon, NEF from Nikon, ARW from Sony, RAF from Fujifilm, ORF from Olympus, RW2 from Panasonic, and DNG from Adobe, Leica and many phones."
+    }
+   },
+   {
+    "@type": "Question",
+    "name": "How do I convert RAW to JPG?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "Open the RAW photo in Glance, choose Export As, pick JPEG and save. The photo is converted on your device, without Lightroom or the camera maker’s software."
+    }
+   },
+   {
+    "@type": "Question",
     "name": "Why does the browser show a smaller version of some RAW files?",
     "acceptedAnswer": {
      "@type": "Answer",
@@ -432,6 +448,8 @@ a.fchip{text-decoration:none}a.fchip:hover{color:var(--accent)}
 <div class="wrap" style="display: flex; flex-direction: column; gap: 40px">
 <h2 class="h2">Questions About RAW Files</h2>
 <div class="faq">
+<details><summary>What is a RAW file?</summary><p class="body">A RAW file is the unprocessed data from a camera’s sensor, saved before the camera turns it into a JPEG. Each brand has its own kind: CR2 and CR3 from Canon, NEF from Nikon, ARW from Sony, RAF from Fujifilm, ORF from Olympus, RW2 from Panasonic, and DNG from Adobe, Leica and many phones.</p></details>
+<details><summary>How do I convert RAW to JPG?</summary><p class="body">Open the RAW photo in Glance, choose Export As, pick JPEG and save. The photo is converted on your device, without Lightroom or the camera maker’s software.</p></details>
 <details><summary>Why does the browser show a smaller version of some RAW files?</summary><p class="body">Browsers have no RAW developer, so Glance shows the full-size preview the camera saved inside the file. The Windows app uses the RAW codec Windows provides, when it is installed.</p></details>
 <details><summary>Is Glance's RAW viewer free?</summary><p class="body">Yes. Glance is free and open source under the Apache 2.0 licence, with no account, adverts or watermarks.</p></details>
 <details><summary>Are my RAW files uploaded anywhere?</summary><p class="body">No. Glance opens files on your own device, in your browser or in the Windows app. Nothing is sent to a server, so it is safe for private documents.</p></details>

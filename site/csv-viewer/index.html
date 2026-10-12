@@ -67,6 +67,30 @@
   "mainEntity": [
    {
     "@type": "Question",
+    "name": "What is a CSV file?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "CSV (comma-separated values) is plain text where each line is a row and commas separate the columns. TSV is the same with tabs. Many apps and banks export data this way."
+    }
+   },
+   {
+    "@type": "Question",
+    "name": "How do I open a CSV file without Excel?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "Open Glance in your browser and choose the file. It appears as a table with lined-up columns, and nothing is uploaded."
+    }
+   },
+   {
+    "@type": "Question",
+    "name": "Why does Excel change my CSV data, and does Glance?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "Excel guesses types as it opens a CSV, so long numbers, leading zeros and codes that look like dates can change. Glance only shows the text in the file and never changes it."
+    }
+   },
+   {
+    "@type": "Question",
     "name": "Is Glance's CSV viewer free?",
     "acceptedAnswer": {
      "@type": "Answer",
@@ -416,6 +440,9 @@ a.fchip{text-decoration:none}a.fchip:hover{color:var(--accent)}
 <div class="wrap" style="display: flex; flex-direction: column; gap: 40px">
 <h2 class="h2">Questions About CSV Files</h2>
 <div class="faq">
+<details><summary>What is a CSV file?</summary><p class="body">CSV (comma-separated values) is plain text where each line is a row and commas separate the columns. TSV is the same with tabs. Many apps and banks export data this way.</p></details>
+<details><summary>How do I open a CSV file without Excel?</summary><p class="body">Open Glance in your browser and choose the file. It appears as a table with lined-up columns, and nothing is uploaded.</p></details>
+<details><summary>Why does Excel change my CSV data, and does Glance?</summary><p class="body">Excel guesses types as it opens a CSV, so long numbers, leading zeros and codes that look like dates can change. Glance only shows the text in the file and never changes it.</p></details>
 <details><summary>Is Glance's CSV viewer free?</summary><p class="body">Yes. Glance is free and open source under the Apache 2.0 licence, with no account, adverts or watermarks.</p></details>
 <details><summary>Are my CSV files uploaded anywhere?</summary><p class="body">No. Glance opens files on your own device, in your browser or in the Windows app. Nothing is sent to a server, so it is safe for private documents.</p></details>
 <details><summary>Does it work offline?</summary><p class="body">Yes. Install Glance from your browser (Add to Home Screen on a phone) and it opens files with no internet connection.</p></details>

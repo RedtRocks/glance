@@ -67,10 +67,26 @@
   "mainEntity": [
    {
     "@type": "Question",
+    "name": "How do I open an XLSX file without Excel?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "Open Glance in your browser and choose the workbook. Each sheet opens in its own tab with its formatting, and the file stays on your device."
+    }
+   },
+   {
+    "@type": "Question",
+    "name": "Does it open older .xls files?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "Yes. Excel 97-2003 .xls files show their saved values, number formats, fonts, merged cells and column widths."
+    }
+   },
+   {
+    "@type": "Question",
     "name": "Does Glance recalculate formulas?",
     "acceptedAnswer": {
      "@type": "Answer",
-     "text": "Glance shows the values Excel saved in the file. Charts are not shown. To change cells, open the file in Excel. Older .xls files are not supported."
+     "text": "Glance shows the values Excel saved in the file. Charts are not shown. To change cells, open the file in Excel."
     }
    },
    {
@@ -426,7 +442,9 @@ a.fchip{text-decoration:none}a.fchip:hover{color:var(--accent)}
 <div class="wrap" style="display: flex; flex-direction: column; gap: 40px">
 <h2 class="h2">Questions About Excel Files</h2>
 <div class="faq">
-<details><summary>Does Glance recalculate formulas?</summary><p class="body">Glance shows the values Excel saved in the file. Charts are not shown. To change cells, open the file in Excel. Older .xls files are not supported.</p></details>
+<details><summary>How do I open an XLSX file without Excel?</summary><p class="body">Open Glance in your browser and choose the workbook. Each sheet opens in its own tab with its formatting, and the file stays on your device.</p></details>
+<details><summary>Does it open older .xls files?</summary><p class="body">Yes. Excel 97-2003 .xls files show their saved values, number formats, fonts, merged cells and column widths.</p></details>
+<details><summary>Does Glance recalculate formulas?</summary><p class="body">Glance shows the values Excel saved in the file. Charts are not shown. To change cells, open the file in Excel.</p></details>
 <details><summary>Is Glance's Excel viewer free?</summary><p class="body">Yes. Glance is free and open source under the Apache 2.0 licence, with no account, adverts or watermarks.</p></details>
 <details><summary>Are my Excel files uploaded anywhere?</summary><p class="body">No. Glance opens files on your own device, in your browser or in the Windows app. Nothing is sent to a server, so it is safe for private documents.</p></details>
 <details><summary>Does it work offline?</summary><p class="body">Yes. Install Glance from your browser (Add to Home Screen on a phone) and it opens files with no internet connection.</p></details>
