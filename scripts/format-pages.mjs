@@ -79,7 +79,10 @@ export const FORMAT_PAGES = [
       ['Check the Details', 'Zoom in to the pixel, and see the size and colour details in the Inspector.'],
       ['Open in Photoshop', 'In the Windows app, Open With hands the file to Photoshop or another editor to change its layers.']
     ],
-    faq: [['Can I edit the layers?', 'No. Glance shows the flattened image Photoshop saved inside the file. To change layers, text or effects, open it in Photoshop or another image editor.']]
+    faq: [
+      ['What is a PSD file?', 'PSD (Photoshop Document) is the file Adobe Photoshop saves, with every layer, mask and adjustment kept so the image can be edited later. PSB is the same format for very large images. Besides the layers, Photoshop normally stores a flattened copy of the finished picture, which is what Glance shows.'],
+      ['How do I convert PSD to JPG or PNG without Photoshop?', 'Open the PSD in Glance, choose Export As, pick JPEG or PNG and save. The file is converted on your device, so a client’s design never leaves your computer.'],
+      ['Can I edit the layers?', 'No. Glance shows the flattened image Photoshop saved inside the file. To change layers, text or effects, open it in Photoshop or another image editor.']]
   },
   {
     slug: 'raw-viewer',
@@ -256,7 +259,10 @@ export const FORMAT_PAGES = [
       ['Pictures Included', 'Illustrations inside the book appear in place.'],
       ['Comfortable Reading', 'A clear serif text column, zoom, and dark mode.']
     ],
-    faq: [['Does it open DRM-protected books?', 'No. Books with copy protection from a store only open in that store’s reading app.']]
+    faq: [
+      ['What is an EPUB file?', 'EPUB is the standard e-book format used by most bookshops and libraries outside Amazon. It is a zipped bundle of web pages, pictures and a table of contents, so the text reflows to fit any screen.'],
+      ['How do I read an EPUB on Windows without installing an app?', 'Open Glance in your browser and choose the EPUB file. The book opens straight away with its chapters and pictures, and it stays on your device. The Windows app adds opening e-books with a double-click.'],
+      ['Does it open DRM-protected books?', 'No. Books with copy protection from a store only open in that store’s reading app.']]
   },
   {
     slug: 'eml-msg-viewer',
