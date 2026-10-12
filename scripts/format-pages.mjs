@@ -40,6 +40,7 @@ export const FORMAT_PAGES = [
       ['Redact Properly', 'Redaction removes the text and pictures underneath, not just a black box on top.']
     ],
     faq: [
+      ['Can I black out text in a PDF for good?', 'Yes. Redaction in Glance deletes the text and pictures under the box when you save, so nobody can copy or uncover them later. Drawing a black shape on top would only hide them.'],
       ['How do I merge PDFs?', 'Open the first PDF, then add pages from another PDF or picture with Insert, or drag pages from one tab to another. Save to get one combined PDF.'],
       ['Can I fill in and sign a PDF?', 'Yes. Type text anywhere on the page and add a signature you draw, then save the PDF.']
     ]
@@ -58,6 +59,7 @@ export const FORMAT_PAGES = [
     stepThree: ['View, mark up or convert', 'Zoom in, rotate, adjust colour or add markup, then save it as JPEG or PNG with Export As.'],
     can: PHOTO_CAN('HEIC'),
     faq: [
+      ['Can I open HEIC on Windows without the HEIF extension?', 'Yes. When Windows has no HEIF codec, Glance decodes the photo itself, so it opens on any Windows PC, in any browser and on Linux.'],
       ['What is a HEIC file?', 'HEIC (High Efficiency Image Container) is the photo format iPhones and iPads use by default. It keeps about the same quality as JPEG in a smaller file, but many Windows PCs and websites can’t open it.'],
       ['How do I convert HEIC to JPG?', 'Open the HEIC photo in Glance, choose Export As, pick JPEG and save. The conversion happens on your device.']
     ]
@@ -79,7 +81,10 @@ export const FORMAT_PAGES = [
       ['Check the Details', 'Zoom in to the pixel, and see the size and colour details in the Inspector.'],
       ['Open in Photoshop', 'In the Windows app, Open With hands the file to Photoshop or another editor to change its layers.']
     ],
-    faq: [['Can I edit the layers?', 'No. Glance shows the flattened image Photoshop saved inside the file. To change layers, text or effects, open it in Photoshop or another image editor.']]
+    faq: [
+      ['What is a PSD file?', 'PSD (Photoshop Document) is the file Adobe Photoshop saves, with every layer, mask and adjustment kept so the image can be edited later. PSB is the same format for very large images. Besides the layers, Photoshop normally stores a flattened copy of the finished picture, which is what Glance shows.'],
+      ['How do I convert PSD to JPG or PNG without Photoshop?', 'Open the PSD in Glance, choose Export As, pick JPEG or PNG and save. The file is converted on your device, so a client’s design never leaves your computer.'],
+      ['Can I edit the layers?', 'No. Glance shows the flattened image Photoshop saved inside the file. To change layers, text or effects, open it in Photoshop or another image editor.']]
   },
   {
     slug: 'raw-viewer',
@@ -95,7 +100,10 @@ export const FORMAT_PAGES = [
     shotAlt: 'A camera RAW photo open in Glance',
     stepThree: ['View or convert', 'Zoom in, check the shot, and save it as JPEG or PNG with Export As.'],
     can: PHOTO_CAN('RAW'),
-    faq: [['Why does the browser show a smaller version of some RAW files?', 'Browsers have no RAW developer, so Glance shows the full-size preview the camera saved inside the file. The Windows app uses the RAW codec Windows provides, when it is installed.']]
+    faq: [
+      ['What is a RAW file?', 'A RAW file is the unprocessed data from a camera’s sensor, saved before the camera turns it into a JPEG. Each brand has its own kind: CR2 and CR3 from Canon, NEF from Nikon, ARW from Sony, RAF from Fujifilm, ORF from Olympus, RW2 from Panasonic, and DNG from Adobe, Leica and many phones.'],
+      ['How do I convert RAW to JPG?', 'Open the RAW photo in Glance, choose Export As, pick JPEG and save. The photo is converted on your device, without Lightroom or the camera maker’s software.'],
+      ['Why does the browser show a smaller version of some RAW files?', 'Browsers have no RAW developer, so Glance shows the full-size preview the camera saved inside the file. The Windows app uses the RAW codec Windows provides, when it is installed.']]
   },
   {
     slug: 'tiff-viewer',
@@ -110,7 +118,10 @@ export const FORMAT_PAGES = [
     shotAlt: 'A multi-page TIFF open in Glance',
     stepThree: ['Page through and convert', 'Move between pages, zoom in, and save a page as JPEG or PNG with Export As.'],
     can: PHOTO_CAN('TIFF'),
-    faq: [['Does Glance open multi-page TIFF files?', 'Yes. Each page appears in the sidebar, and you can move between them like the pages of a PDF.']]
+    faq: [
+      ['What is a TIFF file?', 'TIFF is a picture format used by scanners, fax software, printers and photo archives. It keeps every detail and can hold many pages in one file, which is why scanned documents often arrive as TIFF.'],
+      ['How do I convert TIFF to JPG?', 'Open the TIFF in Glance, go to the page you want, choose Export As, pick JPEG or PNG and save. It is converted on your device.'],
+      ['Does Glance open multi-page TIFF files?', 'Yes. Each page appears in the sidebar, and you can move between them like the pages of a PDF.']]
   },
   {
     slug: 'webp-viewer',
@@ -125,7 +136,10 @@ export const FORMAT_PAGES = [
     shotAlt: 'A WebP image open in Glance',
     stepThree: ['Convert or edit', 'Crop, resize or mark it up, then save it as JPEG or PNG with Export As.'],
     can: PHOTO_CAN('WebP'),
-    faq: [['How do I convert WebP to JPG?', 'Open the WebP image in Glance, choose Export As, pick JPEG and save. It is converted on your device.']]
+    faq: [
+      ['What is a WebP file?', 'WebP is the picture format many websites use because the files are small. When you save a picture from a web page it often arrives as .webp, which some older apps can’t open. AVIF is a newer format used the same way.'],
+      ['Can I open AVIF images too?', 'Yes. AVIF pictures open the same way, and Export As saves them as JPEG or PNG.'],
+      ['How do I convert WebP to JPG?', 'Open the WebP image in Glance, choose Export As, pick JPEG and save. It is converted on your device.']]
   },
   {
     slug: 'jxl-viewer',
@@ -140,7 +154,10 @@ export const FORMAT_PAGES = [
     shotAlt: 'A JPEG XL image open in Glance',
     stepThree: ['View or convert', 'Zoom in, edit or mark it up, and save it as JPEG or PNG with Export As.'],
     can: PHOTO_CAN('JXL'),
-    faq: [['What is JPEG XL?', 'JPEG XL is a newer image format that makes smaller files than JPEG at the same quality and supports transparency and HDR.']]
+    faq: [
+      ['Why won’t my PC open JXL files?', 'Windows and most browsers can’t show JPEG XL pictures yet. Glance decodes them itself, so they open in any browser and on Windows without an extra codec.'],
+      ['How do I convert JXL to JPG?', 'Open the JXL picture in Glance, choose Export As, pick JPEG or PNG and save. It is converted on your device.'],
+      ['What is JPEG XL?', 'JPEG XL is a newer image format that makes smaller files than JPEG at the same quality and supports transparency and HDR.']]
   },
   {
     slug: 'svg-viewer',
@@ -159,7 +176,10 @@ export const FORMAT_PAGES = [
       ['Mark It Up', 'Add arrows, shapes and text to explain a design.'],
       ['Safe to Open', 'Scripts inside SVG files never run in Glance.']
     ],
-    faq: []
+    faq: [
+      ['What is an SVG file?', 'SVG is a vector graphics format for logos, icons and diagrams. It is made of shapes rather than pixels, so it stays sharp at any size.'],
+      ['How do I convert SVG to PNG?', 'Open the SVG in Glance, choose Export As, pick PNG or JPEG and save. It is converted on your device.'],
+      ['Is it safe to open an SVG from someone else?', 'Yes. An SVG can contain scripts, but Glance never runs them.'],]
   },
   {
     slug: 'docx-viewer',
@@ -178,7 +198,10 @@ export const FORMAT_PAGES = [
       ['Zoom and Share', 'Zoom in to read small print, share the file or print it.'],
       ['Edit in Word', 'In the Windows app, Open With hands the document to Word or another word processor.']
     ],
-    faq: [['Can I edit Word documents in Glance?', 'Glance shows a read-only preview. To change the text, open the document in Word or another word processor. Older .doc files are not supported.']]
+    faq: [
+      ['How do I open a DOCX file without Word?', 'Open Glance in your browser and choose the file. The document appears with its headings, pictures and tables, and it stays on your device. No Microsoft account or Office licence is needed.'],
+      ['Does it open older .doc files?', 'Yes. Word 97-2003 .doc files show their text, headings, lists, tables and links. Pictures inside .doc files are not shown yet.'],
+      ['Can I edit Word documents in Glance?', 'Glance shows a read-only preview. To change the text, open the document in Word or another word processor.']]
   },
   {
     slug: 'pptx-viewer',
@@ -197,7 +220,10 @@ export const FORMAT_PAGES = [
       ['Jump Around', 'Go straight to any slide from the Go menu or the page counter.'],
       ['Edit in PowerPoint', 'In the Windows app, Open With hands the deck to PowerPoint or another presentation app.']
     ],
-    faq: [['Does Glance play animations?', 'No. Glance shows each slide as it looks when it is finished. To present with animations, open the file in PowerPoint. Older .ppt files are not supported.']]
+    faq: [
+      ['How do I open a PPTX file without PowerPoint?', 'Open Glance in your browser and choose the presentation. Every slide appears with its pictures, charts and tables, and the file stays on your device.'],
+      ['Does it open older .ppt files?', 'Yes, as text. PowerPoint 97-2003 .ppt files show the words on each slide, without pictures or the slide design.'],
+      ['Does Glance play animations?', 'No. Glance shows each slide as it looks when it is finished. To present with animations, open the file in PowerPoint.']]
   },
   {
     slug: 'xlsx-viewer',
@@ -217,7 +243,10 @@ export const FORMAT_PAGES = [
       ['Formatting Kept', 'Number and date formats, bold text, fill colours and merged cells.'],
       ['Edit in Excel', 'In the Windows app, Open With hands the workbook to Excel or another spreadsheet app.']
     ],
-    faq: [['Does Glance recalculate formulas?', 'Glance shows the values Excel saved in the file. Charts are not shown. To change cells, open the file in Excel. Older .xls files are not supported.']]
+    faq: [
+      ['How do I open an XLSX file without Excel?', 'Open Glance in your browser and choose the workbook. Each sheet opens in its own tab with its formatting, and the file stays on your device.'],
+      ['Does it open older .xls files?', 'Yes. Excel 97-2003 .xls files show their saved values, number formats, fonts, merged cells and column widths.'],
+      ['Does Glance recalculate formulas?', 'Glance shows the values Excel saved in the file. Charts are not shown. To change cells, open the file in Excel.']]
   },
   {
     slug: 'csv-viewer',
@@ -236,7 +265,10 @@ export const FORMAT_PAGES = [
       ['Big Files', 'Thousands of rows open on your device without an upload.'],
       ['Open in Excel', 'In the Windows app, Open With hands the file to Excel or another spreadsheet app.']
     ],
-    faq: []
+    faq: [
+      ['What is a CSV file?', 'CSV (comma-separated values) is plain text where each line is a row and commas separate the columns. TSV is the same with tabs. Many apps and banks export data this way.'],
+      ['How do I open a CSV file without Excel?', 'Open Glance in your browser and choose the file. It appears as a table with lined-up columns, and nothing is uploaded.'],
+      ['Why does Excel change my CSV data, and does Glance?', 'Excel guesses types as it opens a CSV, so long numbers, leading zeros and codes that look like dates can change. Glance only shows the text in the file and never changes it.'],]
   },
   {
     slug: 'epub-reader',
@@ -256,7 +288,10 @@ export const FORMAT_PAGES = [
       ['Pictures Included', 'Illustrations inside the book appear in place.'],
       ['Comfortable Reading', 'A clear serif text column, zoom, and dark mode.']
     ],
-    faq: [['Does it open DRM-protected books?', 'No. Books with copy protection from a store only open in that store’s reading app.']]
+    faq: [
+      ['What is an EPUB file?', 'EPUB is the standard e-book format used by most bookshops and libraries outside Amazon. It is a zipped bundle of web pages, pictures and a table of contents, so the text reflows to fit any screen.'],
+      ['How do I read an EPUB on Windows without installing an app?', 'Open Glance in your browser and choose the EPUB file. The book opens straight away with its chapters and pictures, and it stays on your device. The Windows app adds opening e-books with a double-click.'],
+      ['Does it open DRM-protected books?', 'No. Books with copy protection from a store only open in that store’s reading app.']]
   },
   {
     slug: 'eml-msg-viewer',
@@ -276,7 +311,10 @@ export const FORMAT_PAGES = [
       ['Read It Safely', 'Scripts never run and pictures from the web are blocked, so the sender can’t tell you opened it.'],
       ['No Outlook Needed', 'Outlook .msg files open on a phone or Mac as easily as on Windows.']
     ],
-    faq: [['What is the difference between EML and MSG?', 'EML is the standard saved-email format most mail apps use. MSG is Microsoft Outlook’s own format. Glance opens both.']]
+    faq: [
+      ['How do I open a .msg file without Outlook?', 'Open Glance in your browser or the Windows app and choose the file. The message appears with its sender, date and attachments, on any phone or computer.'],
+      ['Can I open the attachments?', 'Yes. Tap an attachment, such as a PDF, photo or Office file, to open it in Glance.'],
+      ['What is the difference between EML and MSG?', 'EML is the standard saved-email format most mail apps use. MSG is Microsoft Outlook’s own format. Glance opens both.']]
   },
   {
     slug: 'markdown-viewer',
@@ -295,7 +333,10 @@ export const FORMAT_PAGES = [
       ['Coloured Code', 'Code blocks are coloured by language.'],
       ['Private by Design', 'Pictures from the web don’t load until you choose to open them.']
     ],
-    faq: []
+    faq: [
+      ['What is a Markdown file?', 'Markdown (.md) is plain text with simple marks for formatting, such as # for a heading and ** for bold. README files on GitHub and many notes apps use it.'],
+      ['How do I view an .md file formatted?', 'Open it in Glance. Headings, lists, tables, links and code blocks appear formatted, the way GitHub shows them.'],
+      ['Does it load pictures from the internet?', 'Not by itself. Pictures from the web appear as links you can choose to open, so opening a file never contacts anyone.'],]
   },
   {
     slug: 'code-viewer',
@@ -314,7 +355,10 @@ export const FORMAT_PAGES = [
       ['Readable JSON', 'JSON saved on one long line is laid out with indents.'],
       ['Any Encoding', 'UTF-8, UTF-16 and older Windows text files show the right characters.']
     ],
-    faq: []
+    faq: [
+      ['How do I view a JSON file nicely?', 'Open it in Glance. JSON saved on one long line is laid out with indents and coloured, so you can read it.'],
+      ['Can I open big log files?', 'Yes. Log and text files open on your device with line numbers, without an upload.'],
+      ['Which file types does it open?', 'JSON, XML, YAML, TOML, INI, logs, plain text, and source code such as Python, JavaScript, TypeScript, C#, C++, Java, Go, Rust, SQL, shell and PowerShell scripts.'],]
   },
   {
     slug: '3d-model-viewer',
@@ -334,7 +378,10 @@ export const FORMAT_PAGES = [
       ['Wireframe and Grid', 'See the mesh, a floor grid and shadows, or let it rotate on its own.'],
       ['Snapshots', 'Export the current view as a picture.']
     ],
-    faq: [['Can I check an STL before 3D printing?', 'Yes. Open it to see its shape and size from every side before you send it to the slicer.']]
+    faq: [
+      ['What 3D file types does Glance open?', 'STL, OBJ, GLB and glTF, FBX, 3MF, PLY, USDZ, DAE (Collada) and 3DS.'],
+      ['How do I open an STL file without installing software?', 'Open Glance in your browser and choose the file. The model appears straight away, and you can turn it, zoom in and save a picture of the view.'],
+      ['Can I check an STL before 3D printing?', 'Yes. Open it to see its shape and size from every side before you send it to the slicer.']]
   },
   {
     slug: 'font-viewer',
@@ -354,7 +401,10 @@ export const FORMAT_PAGES = [
       ['Font Details', 'The family, style, version and designer from inside the file.'],
       ['Nothing Installed', 'The font is only loaded into Glance while you look at it.']
     ],
-    faq: []
+    faq: [
+      ['How do I preview a font without installing it?', 'Open the TTF, OTF, WOFF or WOFF2 file in Glance. You see the font at several sizes, and you can type your own text to try it.'],
+      ['Does Glance install the font?', 'No. The font is only loaded while you look at it. To install it on Windows, use Windows’ own font settings.'],
+      ['Can I see who made the font?', 'Yes. The family, style, version and designer stored in the file are shown with the preview.'],]
   },
   {
     slug: 'video-player',
@@ -374,7 +424,10 @@ export const FORMAT_PAGES = [
       ['Full Screen', 'Watch in full screen or picture-in-picture where your browser offers it.'],
       ['With Your Files', 'Videos open in a tab next to your PDFs and photos.']
     ],
-    faq: [['Why won’t a video play?', 'Glance plays video with your browser’s or Windows’ own codecs. A file in a format they don’t support, such as some MKV files, shows a message instead.']]
+    faq: [
+      ['Can it play audio files too?', 'Yes. MP3, M4A, AAC, FLAC, WAV, Ogg and Opus audio play in the same player.'],
+      ['Are my videos uploaded?', 'No. Videos play straight from your device, even large ones, and nothing is sent anywhere.'],
+      ['Why won’t a video play?', 'Glance plays video with your browser’s or Windows’ own codecs. A file in a format they don’t support, such as some MKV files, shows a message instead.']]
   },
   {
     slug: 'cbz-reader',
@@ -393,7 +446,10 @@ export const FORMAT_PAGES = [
       ['Thumbnails', 'Jump to any page from the sidebar.'],
       ['Zoom Into Panels', 'Pinch or scroll to zoom into the art.']
     ],
-    faq: []
+    faq: [
+      ['What is a CBZ file?', 'A CBZ file is a comic book: a zip archive of page images in reading order. Comic shops and scanners use it to share whole issues in one file.'],
+      ['Does Glance open CBR files?', 'Not yet. CBR comics use the RAR format. Many comic tools can repack a CBR as CBZ, which Glance opens.'],
+      ['How do I read a comic on my phone?', 'Open Glance in your phone’s browser and choose the CBZ file. Pinch to zoom into the panels, and nothing is uploaded.'],]
   }
 ]
 

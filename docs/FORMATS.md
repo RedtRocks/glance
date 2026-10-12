@@ -22,7 +22,7 @@
 | Excel 97-2003 | `.xls .xlt` | `src/preview/xls.ts` (saved values, number formats, fonts, merges, column widths) |
 | CSV / TSV | `.csv .tsv` | `src/preview/render.ts` |
 
-Each shows a bar with **Open with…** (Windows app) to edit the file in Office or another app. Older binary files (`.doc .xls .ppt`) and OpenDocument aren't previewed.
+Each shows a bar with **Open with…** (Windows app) to edit the file in Office or another app. OpenDocument files aren't previewed.
 
 ## Text, media, books, fonts and email (read-only preview)
 | Format | Extensions | Engine |
