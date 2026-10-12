@@ -102,7 +102,8 @@ export const FORMAT_PAGES = [
     can: PHOTO_CAN('RAW'),
     faq: [
       ['What is a RAW file?', 'A RAW file is the unprocessed data from a camera’s sensor, saved before the camera turns it into a JPEG. Each brand has its own kind: CR2 and CR3 from Canon, NEF from Nikon, ARW from Sony, RAF from Fujifilm, ORF from Olympus, RW2 from Panasonic, and DNG from Adobe, Leica and many phones.'],
-      ['How do I convert RAW to JPG?', 'Open the RAW photo in Glance, choose Export As, pick JPEG and save. The photo is converted on your device, without Lightroom or the camera maker’s software.'],['Why does the browser show a smaller version of some RAW files?', 'Browsers have no RAW developer, so Glance shows the full-size preview the camera saved inside the file. The Windows app uses the RAW codec Windows provides, when it is installed.']]
+      ['How do I convert RAW to JPG?', 'Open the RAW photo in Glance, choose Export As, pick JPEG and save. The photo is converted on your device, without Lightroom or the camera maker’s software.'],
+      ['Why does the browser show a smaller version of some RAW files?', 'Browsers have no RAW developer, so Glance shows the full-size preview the camera saved inside the file. The Windows app uses the RAW codec Windows provides, when it is installed.']]
   },
   {
     slug: 'tiff-viewer',
@@ -119,7 +120,8 @@ export const FORMAT_PAGES = [
     can: PHOTO_CAN('TIFF'),
     faq: [
       ['What is a TIFF file?', 'TIFF is a picture format used by scanners, fax software, printers and photo archives. It keeps every detail and can hold many pages in one file, which is why scanned documents often arrive as TIFF.'],
-      ['How do I convert TIFF to JPG?', 'Open the TIFF in Glance, go to the page you want, choose Export As, pick JPEG or PNG and save. It is converted on your device.'],['Does Glance open multi-page TIFF files?', 'Yes. Each page appears in the sidebar, and you can move between them like the pages of a PDF.']]
+      ['How do I convert TIFF to JPG?', 'Open the TIFF in Glance, go to the page you want, choose Export As, pick JPEG or PNG and save. It is converted on your device.'],
+      ['Does Glance open multi-page TIFF files?', 'Yes. Each page appears in the sidebar, and you can move between them like the pages of a PDF.']]
   },
   {
     slug: 'webp-viewer',
@@ -136,7 +138,8 @@ export const FORMAT_PAGES = [
     can: PHOTO_CAN('WebP'),
     faq: [
       ['What is a WebP file?', 'WebP is the picture format many websites use because the files are small. When you save a picture from a web page it often arrives as .webp, which some older apps can’t open. AVIF is a newer format used the same way.'],
-      ['Can I open AVIF images too?', 'Yes. AVIF pictures open the same way, and Export As saves them as JPEG or PNG.'],['How do I convert WebP to JPG?', 'Open the WebP image in Glance, choose Export As, pick JPEG and save. It is converted on your device.']]
+      ['Can I open AVIF images too?', 'Yes. AVIF pictures open the same way, and Export As saves them as JPEG or PNG.'],
+      ['How do I convert WebP to JPG?', 'Open the WebP image in Glance, choose Export As, pick JPEG and save. It is converted on your device.']]
   },
   {
     slug: 'jxl-viewer',
@@ -153,7 +156,8 @@ export const FORMAT_PAGES = [
     can: PHOTO_CAN('JXL'),
     faq: [
       ['Why won’t my PC open JXL files?', 'Windows and most browsers can’t show JPEG XL pictures yet. Glance decodes them itself, so they open in any browser and on Windows without an extra codec.'],
-      ['How do I convert JXL to JPG?', 'Open the JXL picture in Glance, choose Export As, pick JPEG or PNG and save. It is converted on your device.'],['What is JPEG XL?', 'JPEG XL is a newer image format that makes smaller files than JPEG at the same quality and supports transparency and HDR.']]
+      ['How do I convert JXL to JPG?', 'Open the JXL picture in Glance, choose Export As, pick JPEG or PNG and save. It is converted on your device.'],
+      ['What is JPEG XL?', 'JPEG XL is a newer image format that makes smaller files than JPEG at the same quality and supports transparency and HDR.']]
   },
   {
     slug: 'svg-viewer',
@@ -196,7 +200,8 @@ export const FORMAT_PAGES = [
     ],
     faq: [
       ['How do I open a DOCX file without Word?', 'Open Glance in your browser and choose the file. The document appears with its headings, pictures and tables, and it stays on your device. No Microsoft account or Office licence is needed.'],
-      ['Does it open older .doc files?', 'Yes. Word 97-2003 .doc files show their text, headings, lists, tables and links. Pictures inside .doc files are not shown yet.'],['Can I edit Word documents in Glance?', 'Glance shows a read-only preview. To change the text, open the document in Word or another word processor.']]
+      ['Does it open older .doc files?', 'Yes. Word 97-2003 .doc files show their text, headings, lists, tables and links. Pictures inside .doc files are not shown yet.'],
+      ['Can I edit Word documents in Glance?', 'Glance shows a read-only preview. To change the text, open the document in Word or another word processor.']]
   },
   {
     slug: 'pptx-viewer',
@@ -217,7 +222,8 @@ export const FORMAT_PAGES = [
     ],
     faq: [
       ['How do I open a PPTX file without PowerPoint?', 'Open Glance in your browser and choose the presentation. Every slide appears with its pictures, charts and tables, and the file stays on your device.'],
-      ['Does it open older .ppt files?', 'Yes, as text. PowerPoint 97-2003 .ppt files show the words on each slide, without pictures or the slide design.'],['Does Glance play animations?', 'No. Glance shows each slide as it looks when it is finished. To present with animations, open the file in PowerPoint.']]
+      ['Does it open older .ppt files?', 'Yes, as text. PowerPoint 97-2003 .ppt files show the words on each slide, without pictures or the slide design.'],
+      ['Does Glance play animations?', 'No. Glance shows each slide as it looks when it is finished. To present with animations, open the file in PowerPoint.']]
   },
   {
     slug: 'xlsx-viewer',
@@ -239,7 +245,8 @@ export const FORMAT_PAGES = [
     ],
     faq: [
       ['How do I open an XLSX file without Excel?', 'Open Glance in your browser and choose the workbook. Each sheet opens in its own tab with its formatting, and the file stays on your device.'],
-      ['Does it open older .xls files?', 'Yes. Excel 97-2003 .xls files show their saved values, number formats, fonts, merged cells and column widths.'],['Does Glance recalculate formulas?', 'Glance shows the values Excel saved in the file. Charts are not shown. To change cells, open the file in Excel.']]
+      ['Does it open older .xls files?', 'Yes. Excel 97-2003 .xls files show their saved values, number formats, fonts, merged cells and column widths.'],
+      ['Does Glance recalculate formulas?', 'Glance shows the values Excel saved in the file. Charts are not shown. To change cells, open the file in Excel.']]
   },
   {
     slug: 'csv-viewer',
@@ -306,7 +313,8 @@ export const FORMAT_PAGES = [
     ],
     faq: [
       ['How do I open a .msg file without Outlook?', 'Open Glance in your browser or the Windows app and choose the file. The message appears with its sender, date and attachments, on any phone or computer.'],
-      ['Can I open the attachments?', 'Yes. Tap an attachment, such as a PDF, photo or Office file, to open it in Glance.'],['What is the difference between EML and MSG?', 'EML is the standard saved-email format most mail apps use. MSG is Microsoft Outlook’s own format. Glance opens both.']]
+      ['Can I open the attachments?', 'Yes. Tap an attachment, such as a PDF, photo or Office file, to open it in Glance.'],
+      ['What is the difference between EML and MSG?', 'EML is the standard saved-email format most mail apps use. MSG is Microsoft Outlook’s own format. Glance opens both.']]
   },
   {
     slug: 'markdown-viewer',
@@ -372,7 +380,8 @@ export const FORMAT_PAGES = [
     ],
     faq: [
       ['What 3D file types does Glance open?', 'STL, OBJ, GLB and glTF, FBX, 3MF, PLY, USDZ, DAE (Collada) and 3DS.'],
-      ['How do I open an STL file without installing software?', 'Open Glance in your browser and choose the file. The model appears straight away, and you can turn it, zoom in and save a picture of the view.'],['Can I check an STL before 3D printing?', 'Yes. Open it to see its shape and size from every side before you send it to the slicer.']]
+      ['How do I open an STL file without installing software?', 'Open Glance in your browser and choose the file. The model appears straight away, and you can turn it, zoom in and save a picture of the view.'],
+      ['Can I check an STL before 3D printing?', 'Yes. Open it to see its shape and size from every side before you send it to the slicer.']]
   },
   {
     slug: 'font-viewer',
@@ -417,7 +426,8 @@ export const FORMAT_PAGES = [
     ],
     faq: [
       ['Can it play audio files too?', 'Yes. MP3, M4A, AAC, FLAC, WAV, Ogg and Opus audio play in the same player.'],
-      ['Are my videos uploaded?', 'No. Videos play straight from your device, even large ones, and nothing is sent anywhere.'],['Why won’t a video play?', 'Glance plays video with your browser’s or Windows’ own codecs. A file in a format they don’t support, such as some MKV files, shows a message instead.']]
+      ['Are my videos uploaded?', 'No. Videos play straight from your device, even large ones, and nothing is sent anywhere.'],
+      ['Why won’t a video play?', 'Glance plays video with your browser’s or Windows’ own codecs. A file in a format they don’t support, such as some MKV files, shows a message instead.']]
   },
   {
     slug: 'cbz-reader',
