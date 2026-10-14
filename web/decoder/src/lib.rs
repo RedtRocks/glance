@@ -102,5 +102,5 @@ pub unsafe extern "C" fn archive_pages(data_ptr: *const u8, data_len: usize) -> 
 #[no_mangle]
 pub unsafe extern "C" fn archive_page(data_ptr: *const u8, data_len: usize, page: usize) -> u32 {
     let data = slice(data_ptr, data_len);
-    finish(decode::archive::read_page_in(Cursor::new(data), page).map(|(_, b)| b))
+    finish(decode::archive::read_page_in(Cursor::new(data), page, None).map(|(_, b)| b))
 }

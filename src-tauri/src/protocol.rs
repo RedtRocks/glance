@@ -4,7 +4,7 @@
 //! Routes:
 //! - `/file?path=…`                     raw bytes of a file (PDFs, browser-native images, models)
 //! - `/decode?path=…&page=N&max=PX`     any image decoded by the backend, as 32-bit BMP
-//! - `/archive?path=…&page=N`           one image entry of a CBZ, raw
+//! - `/archive?path=…&page=N[&large=1]` one image entry of a CBZ, raw (large: past the size limit)
 
 use crate::decode;
 use percent_encoding::percent_decode_str;
@@ -41,6 +41,17 @@ fn error(status: StatusCode, msg: impl Into<String>) -> Response<Vec<u8>> {
     respond(status, "text/plain; charset=utf-8", msg.into().into_bytes())
 }
 
+/// Whether a webview may read files through this scheme: only Glance's own windows.
+/// The Ask AI sidebar shows company websites in child webviews of the same app, and
+/// every webview gets this scheme, so without this any site could read the user's files.
+pub fn allowed(webview_label: &str) -> bool {
+    webview_label == "main" || webview_label.starts_with("doc-")
+}
+
+pub fn forbidden() -> Response<Vec<u8>> {
+    error(StatusCode::FORBIDDEN, "not available to this page")
+}
+
 pub fn handle(request: Request<Vec<u8>>) -> Response<Vec<u8>> {
     let uri = request.uri();
     let q = query(uri);
@@ -55,14 +66,32 @@ pub fn handle(request: Request<Vec<u8>>) -> Response<Vec<u8>> {
             Ok(bytes) => respond(StatusCode::OK, decode::formats::mime_for(&path), bytes),
             Err(e) => error(StatusCode::NOT_FOUND, e.to_string()),
         },
-        "/archive" => match decode::archive::read_page(&path, page as usize) {
-            Ok((name, bytes)) => respond(StatusCode::OK, decode::formats::mime_for(std::path::Path::new(&name)), bytes),
-            Err(e) => error(StatusCode::NOT_FOUND, e),
-        },
+        "/archive" => {
+            // `large=1` once the user chose to open a page over the limit anyway.
+            let limit = (param(&q, "large") != Some("1")).then_some(decode::archive::MAX_PAGE_BYTES);
+            match decode::archive::read_page(&path, page as usize, limit) {
+                Ok((name, bytes)) => respond(StatusCode::OK, decode::formats::mime_for(std::path::Path::new(&name)), bytes),
+                Err(e) if e == decode::archive::TOO_LARGE => error(StatusCode::PAYLOAD_TOO_LARGE, e),
+                Err(e) => error(StatusCode::NOT_FOUND, e),
+            }
+        }
         "/decode" => match decode::decode(&path, page, max) {
             Ok(d) => respond(StatusCode::OK, "image/bmp", decode::bmp::encode_rgba(d.width, d.height, &d.rgba)),
             Err(e) => error(StatusCode::UNPROCESSABLE_ENTITY, e),
         },
         _ => error(StatusCode::NOT_FOUND, "unknown route"),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn only_glance_windows_read_files() {
+        assert!(allowed("main"));
+        assert!(allowed("doc-1760000000000"));
+        assert!(!allowed("site-chatgpt"));
+        assert!(!allowed(""));
     }
 }

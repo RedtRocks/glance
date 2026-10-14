@@ -8,6 +8,7 @@ import { t } from '../i18n'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import { isTouchpad, pinchScale } from '../core/touchpad'
+import { modelAssetUrl, type WebAssets } from '../core/modelAssets'
 
 export interface ModelStats {
   meshes: number
@@ -69,10 +70,10 @@ function meshFromGeometry(g: THREE.BufferGeometry): THREE.Object3D {
  * materials, FBX, Collada, 3DS) fetch textures after returning; `onAsset` fires as
  * each arrives so an on-demand renderer can redraw.
  */
-export async function parseModel(bytes: ArrayBuffer, name: string, resolve: Resolve, onAsset?: () => void): Promise<{ object: THREE.Object3D; clips: THREE.AnimationClip[] }> {
+export async function parseModel(bytes: ArrayBuffer, name: string, resolve: Resolve, onAsset?: () => void, web: WebAssets = { allow: false }): Promise<{ object: THREE.Object3D; clips: THREE.AnimationClip[] }> {
   const manager = new THREE.LoadingManager()
   if (onAsset) manager.onProgress = manager.onLoad = onAsset
-  manager.setURLModifier((url) => (/^(data|blob|https?|glance):/i.test(url) ? url : resolve(decodeURIComponent(url))))
+  manager.setURLModifier((url) => modelAssetUrl(url, resolve, web))
   switch (ext(name)) {
     case 'glb':
     case 'gltf': {
@@ -89,10 +90,11 @@ export async function parseModel(bytes: ArrayBuffer, name: string, resolve: Reso
       // Materials from the .mtl the file names, when it sits next to it.
       const mtl = /^mtllib\s+(.+)$/m.exec(source)?.[1]?.trim()
       let styled = false
-      if (mtl) {
+      const mtlUrl = mtl && modelAssetUrl(mtl, resolve, web)
+      if (mtlUrl && mtlUrl !== 'data:,') {
         try {
           const { MTLLoader } = await import('three/examples/jsm/loaders/MTLLoader.js')
-          const res = await fetch(resolve(mtl))
+          const res = await fetch(mtlUrl)
           if (res.ok) {
             const materials = new MTLLoader(manager).parse(await res.text(), '')
             materials.preload()
@@ -207,9 +209,9 @@ export function statsOf(object: THREE.Object3D, clips: THREE.AnimationClip[]): M
   return s
 }
 
-export async function createViewer(canvas: HTMLCanvasElement, bytes: ArrayBuffer, name: string, opts: { resolve: Resolve; dark: boolean }): Promise<ModelViewer> {
+export async function createViewer(canvas: HTMLCanvasElement, bytes: ArrayBuffer, name: string, opts: { resolve: Resolve; dark: boolean; web?: WebAssets }): Promise<ModelViewer> {
   let redraw = () => {}
-  const { object, clips } = await parseModel(bytes, name, opts.resolve, () => redraw())
+  const { object, clips } = await parseModel(bytes, name, opts.resolve, () => redraw(), opts.web)
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true, alpha: false })
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
   renderer.outputColorSpace = THREE.SRGBColorSpace
