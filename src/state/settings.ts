@@ -2,9 +2,12 @@ import { effect, signal } from '@preact/signals'
 import { DEFAULT_PAGE_NUMBER_THRESHOLD } from '../core/pageControls'
 
 export type ThemePref = 'system' | 'light' | 'dark'
+/** Fluent matches Windows; Wollo is the website's design (the browser version always wears it). */
+export type LookPref = 'fluent' | 'wollo'
 
 export interface Settings {
   theme: ThemePref
+  look: LookPref
   /** Invert PDF pages while the app is dark (Preview's "dark appearance for PDFs"). */
   darkPdf: boolean
   /** Page number field appears when a document has more pages than this. */
@@ -35,6 +38,7 @@ export const DEFAULT_TOOLBAR = ['sidebar', 'pageControls', 'spacer', 'zoomOut', 
 
 const DEFAULTS: Settings = {
   theme: 'system',
+  look: 'fluent',
   darkPdf: false,
   pageNumberThreshold: DEFAULT_PAGE_NUMBER_THRESHOLD,
   toolbar: DEFAULT_TOOLBAR,

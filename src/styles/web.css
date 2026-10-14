@@ -1,7 +1,8 @@
-/* Glance in the browser wears the website's Wollo design: Urbanist in one weight,
-   ink and violet, flat surfaces separated by a soft grey or a 1px line, no shadows.
-   Everything here applies only with <html data-platform="web"> (see main.tsx); the
-   Windows app keeps its Fluent look from app.css. The document itself stays neutral. */
+/* The website's Wollo design: Urbanist in one weight, ink and violet, flat surfaces
+   separated by a soft grey or a 1px line, no shadows. Everything here applies only with
+   <html data-look="wollo">: always in the browser, and in the desktop app when chosen in
+   Settings (see App.tsx); otherwise the app keeps its Fluent look from app.css. The
+   document itself stays neutral. */
 
 @font-face {
   font-family: Urbanist;
@@ -10,7 +11,7 @@
   font-display: swap;
 }
 
-:root[data-platform='web'] {
+:root[data-look='wollo'] {
   --font: Urbanist, 'Helvetica Neue', Arial, sans-serif;
   --font-display: Urbanist, 'Helvetica Neue', Arial, sans-serif;
   --ink: #0a0a0a;
@@ -49,7 +50,7 @@
   --infobar-info-bg: #f9f9f9;
 }
 
-:root[data-platform='web'][data-theme='dark'] {
+:root[data-look='wollo'][data-theme='dark'] {
   --ink: #f4f3f7;
   --on-ink: #0e0d12;
   --accent: #b49bff;
@@ -77,24 +78,24 @@
 }
 
 /* ---------- Type: one weight, as on the website ---------- */
-:root[data-platform='web'] body {
+:root[data-look='wollo'] body {
   font: 15px/22px var(--font);
   font-weight: 400;
   background: var(--bg-solid);
 }
-:root[data-platform='web'] .app :is(h1, h2, h3, h4, b, strong, th, .modal-title, .menu-heading, .settings-card-title) {
+:root[data-look='wollo'] .app :is(h1, h2, h3, h4, b, strong, th, .modal-title, .menu-heading, .settings-card-title) {
   font-weight: 400;
 }
 /* Text people typed into a document keeps its own weight. */
-:root[data-platform='web'] :is(.markup-layer, .pdf-page, .textLayer) :is(b, strong) {
+:root[data-look='wollo'] :is(.markup-layer, .pdf-page, .textLayer) :is(b, strong) {
   font-weight: revert;
 }
-:root[data-platform='web'] :focus-visible {
+:root[data-look='wollo'] :focus-visible {
   outline: 2px solid var(--violet);
   outline-offset: 2px;
   border-radius: var(--radius);
 }
-:root[data-platform='web'][data-theme='dark'] :focus-visible {
+:root[data-look='wollo'][data-theme='dark'] :focus-visible {
   outline-color: var(--accent);
 }
 
@@ -212,7 +213,7 @@
 }
 
 /* ---------- Desktop chrome ---------- */
-:root[data-platform='web'] .chrome {
+:root[data-look='wollo'] .chrome {
   padding: 16px 16px 0;
   background: var(--bg-solid);
 }
@@ -228,13 +229,25 @@
 .web-nav-spacer {
   flex: 1;
 }
-:root[data-platform='web'] .web-nav .tabstrip {
+:root[data-look='wollo'] .web-nav .tabstrip {
   align-items: center;
   gap: 4px;
   padding: 0;
   min-width: 0;
 }
-:root[data-platform='web'] .tab {
+:root[data-look='wollo'] .chrome > .tabstrip {
+  /* The desktop app's tabs sit in the same soft rounded bar as the browser's nav. */
+  align-items: center;
+  gap: 4px;
+  min-height: 60px;
+  padding: 8px;
+  border-radius: 20px;
+  background: var(--subtle);
+}
+:root[data-look='wollo'] .chrome > .tabstrip .tab.active {
+  background: var(--bg-solid);
+}
+:root[data-look='wollo'] .tab {
   height: 44px;
   min-width: 0;
   max-width: 260px;
@@ -242,58 +255,58 @@
   border-radius: 9999px;
   color: var(--text-2);
 }
-:root[data-platform='web'] .tab.active {
+:root[data-look='wollo'] .tab.active {
   background: var(--bg-solid);
   color: var(--ink);
   box-shadow: inset 0 0 0 1px var(--stroke);
   clip-path: none;
 }
-:root[data-platform='web'] .tab-title {
+:root[data-look='wollo'] .tab-title {
   font-size: 15px;
 }
-:root[data-platform='web'] .tab-close,
-:root[data-platform='web'] .tab-new {
+:root[data-look='wollo'] .tab-close,
+:root[data-look='wollo'] .tab-new {
   width: 32px;
   height: 32px;
   margin: 0;
   border-radius: 9999px;
   color: var(--ink);
 }
-:root[data-platform='web'] .commandbar {
+:root[data-look='wollo'] .commandbar {
   height: 64px;
   gap: 12px;
   padding: 0 4px;
   background: transparent;
   border: 0;
 }
-:root[data-platform='web'] .menubar-button {
+:root[data-look='wollo'] .menubar-button {
   height: 40px;
   padding: 0 12px;
   border-radius: 10px;
 }
-:root[data-platform='web'] .tb-button {
+:root[data-look='wollo'] .tb-button {
   width: 40px;
   height: 40px;
   border-radius: 10px;
   color: var(--ink);
 }
-:root[data-platform='web'] .tb-button.pressed {
+:root[data-look='wollo'] .tb-button.pressed {
   background: var(--ink);
   color: var(--on-ink);
 }
-:root[data-platform='web'] .tb-sep {
+:root[data-look='wollo'] .tb-sep {
   background: var(--stroke);
 }
-:root[data-platform='web'] .page-field input,
-:root[data-platform='web'] .field input,
-:root[data-platform='web'] .field select {
+:root[data-look='wollo'] .page-field input,
+:root[data-look='wollo'] .field input,
+:root[data-look='wollo'] .field select {
   height: 40px;
   border: 0;
   border-radius: 10px;
   background: var(--bg-solid);
   box-shadow: inset 0 0 0 1px var(--stroke);
 }
-:root[data-platform='web'] .search-field {
+:root[data-look='wollo'] .search-field {
   height: 44px;
   border: 0;
   border-radius: 9999px;
@@ -301,38 +314,38 @@
   box-shadow: inset 0 0 0 1px var(--stroke);
   padding: 0 16px;
 }
-:root[data-platform='web'] :is(.page-field input, .search-field, .field input, .field select):is(:focus, :focus-within) {
+:root[data-look='wollo'] :is(.page-field input, .search-field, .field input, .field select):is(:focus, :focus-within) {
   border: 0;
   box-shadow: inset 0 0 0 2px var(--accent);
 }
 
 /* Menus, flyouts and toasts: white cards with a 1px line, rounded like the site. */
-:root[data-platform='web'] :is(.menu, .flyout, .toast) {
+:root[data-look='wollo'] :is(.menu, .flyout, .toast) {
   border: 0;
   border-radius: 20px;
   box-shadow: 0 0 0 1px var(--stroke);
 }
-:root[data-platform='web'] .menu {
+:root[data-look='wollo'] .menu {
   padding: 8px;
 }
-:root[data-platform='web'] .menu-item {
+:root[data-look='wollo'] .menu-item {
   height: 40px;
   border-radius: 10px;
 }
 
 /* Workspace: the sidebar and the document sit in rounded panels with a gap between. */
-:root[data-platform='web'] .workspace {
+:root[data-look='wollo'] .workspace {
   gap: 16px;
   padding: 0 16px 16px;
   background: var(--bg-solid);
 }
-:root[data-platform='web'] .sidebar {
+:root[data-look='wollo'] .sidebar {
   border: 0;
   border-radius: 28px;
   background: var(--subtle);
   overflow: hidden;
 }
-:root[data-platform='web'] .sidebar-tabs {
+:root[data-look='wollo'] .sidebar-tabs {
   justify-content: center;
   gap: 2px;
   margin: 16px auto 8px;
@@ -341,7 +354,7 @@
   border-radius: 9999px;
   box-shadow: inset 0 0 0 1px var(--ink);
 }
-:root[data-platform='web'] .sidebar-tabs button {
+:root[data-look='wollo'] .sidebar-tabs button {
   display: grid;
   place-items: center;
   width: 40px;
@@ -351,49 +364,49 @@
   background: transparent;
   color: var(--ink);
 }
-:root[data-platform='web'] .sidebar-tabs button[aria-selected='true'] {
+:root[data-look='wollo'] .sidebar-tabs button[aria-selected='true'] {
   background: var(--ink);
   color: var(--on-ink);
 }
-:root[data-platform='web'] .thumb.selected {
+:root[data-look='wollo'] .thumb.selected {
   background: transparent;
 }
-:root[data-platform='web'] .thumb.current :is(.thumb-canvas, .thumb-img) {
+:root[data-look='wollo'] .thumb.current :is(.thumb-canvas, .thumb-img) {
   outline: 3px solid var(--violet);
   outline-offset: 2px;
   border-radius: 4px;
 }
-:root[data-platform='web'][data-theme='dark'] .thumb.current :is(.thumb-canvas, .thumb-img) {
+:root[data-look='wollo'][data-theme='dark'] .thumb.current :is(.thumb-canvas, .thumb-img) {
   outline-color: var(--accent);
 }
-:root[data-platform='web'] .viewer {
+:root[data-look='wollo'] .viewer {
   border-radius: 28px;
   overflow: hidden;
 }
 
 /* Dialogs and side panels. */
-:root[data-platform='web'] .modal-backdrop {
+:root[data-look='wollo'] .modal-backdrop {
   background: rgba(10, 10, 10, 0.4);
 }
-:root[data-platform='web'] .modal {
+:root[data-look='wollo'] .modal {
   border: 0;
   border-radius: 28px;
   background: var(--bg-solid);
 }
-:root[data-platform='web'] .modal-title {
+:root[data-look='wollo'] .modal-title {
   padding: 28px 28px 12px;
   font-size: 24px;
   line-height: 30px;
 }
-:root[data-platform='web'] .modal-body {
+:root[data-look='wollo'] .modal-body {
   padding: 0 28px 28px;
 }
-:root[data-platform='web'] .modal-footer {
+:root[data-look='wollo'] .modal-footer {
   padding: 20px 28px 28px;
   border: 0;
   background: transparent;
 }
-:root[data-platform='web'] .btn {
+:root[data-look='wollo'] .btn {
   min-height: 44px;
   height: auto;
   padding: 0 20px;
@@ -402,25 +415,25 @@
   background: var(--bg-solid);
   box-shadow: inset 0 0 0 1px var(--stroke);
 }
-:root[data-platform='web'] .btn:hover {
+:root[data-look='wollo'] .btn:hover {
   background: var(--subtle);
 }
-:root[data-platform='web'] .btn.primary {
+:root[data-look='wollo'] .btn.primary {
   background: var(--ink);
   color: var(--on-ink);
   box-shadow: none;
 }
-:root[data-platform='web'] .side-pane {
+:root[data-look='wollo'] .side-pane {
   border: 0;
   border-radius: 28px;
   background: var(--subtle);
 }
-:root[data-platform='web'] .infobar {
+:root[data-look='wollo'] .infobar {
   margin: 12px 12px 0;
   border: 0;
   border-radius: 20px;
 }
-:root[data-platform='web'] .markup-toolbar {
+:root[data-look='wollo'] .markup-toolbar {
   height: 56px;
   margin: 0 0 12px;
   padding: 0 8px;
@@ -774,23 +787,23 @@
   pointer-events: none;
 }
 /* Room under the last page for the dock. */
-:root[data-platform='web'] .phone-shell .viewer-stage {
+:root[data-look='wollo'] .phone-shell .viewer-stage {
   padding-bottom: 0;
 }
 
 /* On a phone the markup toolbar becomes a tray under the thumb, scrolling sideways. */
 @media (max-width: 700px) {
-  :root[data-platform='web'] .chrome {
+  :root[data-look='wollo'] .chrome {
     padding: 0;
   }
-  :root[data-platform='web'] .workspace {
+  :root[data-look='wollo'] .workspace {
     padding: 0;
     gap: 0;
   }
-  :root[data-platform='web'] .viewer {
+  :root[data-look='wollo'] .viewer {
     border-radius: 0;
   }
-  :root[data-platform='web'] .app > .markup-toolbar {
+  :root[data-look='wollo'] .app > .markup-toolbar {
     flex: none;
     height: auto;
     min-height: 68px;
@@ -802,18 +815,18 @@
     background: var(--bg-solid);
     box-shadow: 0 0 0 1px var(--stroke);
   }
-  :root[data-platform='web'] .app > .markup-toolbar .tb-button {
+  :root[data-look='wollo'] .app > .markup-toolbar .tb-button {
     flex: none;
     width: 48px;
     height: 48px;
     border-radius: 9999px;
   }
   /* A dropdown keeps its icon centred in the round button; the chevron becomes a small badge. */
-  :root[data-platform='web'] .app > .markup-toolbar .tb-button.with-chevron {
+  :root[data-look='wollo'] .app > .markup-toolbar .tb-button.with-chevron {
     justify-content: center;
     padding: 0;
   }
-  :root[data-platform='web'] .app > .markup-toolbar .with-chevron:not(.split-chevron) .chevron {
+  :root[data-look='wollo'] .app > .markup-toolbar .with-chevron:not(.split-chevron) .chevron {
     position: absolute;
     right: 3px;
     bottom: 7px;
@@ -821,25 +834,25 @@
     color: inherit;
   }
   /* The dropdown half of the highlighter: a slim chevron, never an empty black circle. */
-  :root[data-platform='web'] .app > .markup-toolbar .tb-button.split-chevron {
+  :root[data-look='wollo'] .app > .markup-toolbar .tb-button.split-chevron {
     width: 24px;
     margin-left: -6px;
     background: transparent;
     color: var(--ink);
   }
-  :root[data-platform='web'] .app > .markup-toolbar .split-chevron .chevron {
+  :root[data-look='wollo'] .app > .markup-toolbar .split-chevron .chevron {
     color: inherit;
   }
-  :root[data-platform='web'] .app > .markup-toolbar .split-chevron[aria-expanded='true'] .chevron {
+  :root[data-look='wollo'] .app > .markup-toolbar .split-chevron[aria-expanded='true'] .chevron {
     transform: rotate(180deg);
   }
-  :root[data-platform='web'] .app > .markup-toolbar .swatch-bar {
+  :root[data-look='wollo'] .app > .markup-toolbar .swatch-bar {
     left: 50%;
     bottom: 6px;
     translate: -50% 0;
   }
   /* Colours fill the sheet's width, centred, with finger-sized dots. */
-  :root[data-platform='web'] .app > .markup-toolbar .swatches {
+  :root[data-look='wollo'] .app > .markup-toolbar .swatches {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
@@ -849,21 +862,21 @@
     margin: 0 auto;
     padding: 4px 0;
   }
-  :root[data-platform='web'] .app > .markup-toolbar .swatch {
+  :root[data-look='wollo'] .app > .markup-toolbar .swatch {
     width: 40px;
     height: 40px;
   }
-  :root[data-platform='web'] .app > .markup-toolbar .flyout-label {
+  :root[data-look='wollo'] .app > .markup-toolbar .flyout-label {
     text-align: center;
   }
-  :root[data-platform='web'] .app > .markup-toolbar .shape-grid {
+  :root[data-look='wollo'] .app > .markup-toolbar .shape-grid {
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
   }
-  :root[data-platform='web'] .app > .markup-toolbar .shape-grid .tb-button {
+  :root[data-look='wollo'] .app > .markup-toolbar .shape-grid .tb-button {
     justify-self: center;
   }
-  :root[data-platform='web'] .app > .markup-toolbar :is(.flyout, .menu) {
+  :root[data-look='wollo'] .app > .markup-toolbar :is(.flyout, .menu) {
     position: fixed;
     top: auto;
     left: 12px;
@@ -872,19 +885,19 @@
     max-height: 50vh;
     overflow-y: auto;
   }
-  :root[data-platform='web'] .infobar {
+  :root[data-look='wollo'] .infobar {
     margin: 8px 8px 0;
   }
-  :root[data-platform='web'] .modal {
+  :root[data-look='wollo'] .modal {
     width: 100vw;
     max-height: 92vh;
     margin-top: auto;
     border-radius: 28px 28px 0 0;
   }
-  :root[data-platform='web'] .modal-backdrop {
+  :root[data-look='wollo'] .modal-backdrop {
     place-items: end center;
   }
-  :root[data-platform='web'] .side-pane {
+  :root[data-look='wollo'] .side-pane {
     border-radius: 0;
   }
 }
@@ -1051,13 +1064,13 @@
 .file-row.active .file-row-main {
   color: var(--accent);
 }
-:root[data-platform='web'] :is(.sidebar-tabs, .segmented) button[aria-selected='true']::after {
+:root[data-look='wollo'] :is(.sidebar-tabs, .segmented) button[aria-selected='true']::after {
   display: none;
 }
 .pages-grid {
   padding: 4px;
 }
-:root[data-platform='web'] .more-group .menu {
+:root[data-look='wollo'] .more-group .menu {
   box-shadow: none;
   border-radius: 0;
   padding: 0;
@@ -1066,34 +1079,34 @@
   grid-template-columns: 20px 1fr;
   padding: 0 4px 0 0;
 }
-:root[data-platform='web'] .w-field input:focus-visible {
+:root[data-look='wollo'] .w-field input:focus-visible {
   outline: none;
 }
-:root[data-platform='web'] .sheet-tabs {
+:root[data-look='wollo'] .sheet-tabs {
   gap: 6px;
   padding: 8px 12px;
   border: 0;
   background: var(--subtle);
 }
-:root[data-platform='web'] .sheet-tabs button {
+:root[data-look='wollo'] .sheet-tabs button {
   height: 36px;
   border-radius: 9999px;
   color: var(--ink);
 }
-:root[data-platform='web'] .sheet-tabs button[aria-selected='true'] {
+:root[data-look='wollo'] .sheet-tabs button[aria-selected='true'] {
   background: var(--ink);
   color: var(--on-ink);
   box-shadow: none;
 }
 @media (max-width: 700px) {
   /* Clear of the floating dock. */
-  :root[data-platform='web'] .office-scroller {
+  :root[data-look='wollo'] .office-scroller {
     padding-bottom: 96px;
   }
-  :root[data-platform='web'] .sheet-tabs {
+  :root[data-look='wollo'] .sheet-tabs {
     margin-bottom: 88px;
   }
-  :root[data-platform='web'] .office-word .docx-wrapper {
+  :root[data-look='wollo'] .office-word .docx-wrapper {
     padding: 12px 0 96px;
   }
 }

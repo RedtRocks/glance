@@ -122,6 +122,10 @@ export function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? 'dark' : 'light'
   }, [dark, settings.value.theme])
+  const look = platform.isWeb ? 'wollo' : settings.value.look
+  useEffect(() => {
+    document.documentElement.dataset.look = look
+  }, [look])
 
   // Files from the command line (Open with, Send to), later launches, and new windows.
   useEffect(() => {
