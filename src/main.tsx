@@ -9,7 +9,10 @@ import { blockPageZoom } from './ui/touchGestures'
 
 forwardErrors()
 // The browser version takes the website's look (styles/web.css).
-if (isWeb) document.documentElement.dataset.platform = 'web'
+if (isWeb) {
+  document.documentElement.dataset.platform = 'web'
+  document.documentElement.dataset.look = 'wollo'
+}
 blockPageZoom()
 // A company website from the Ask AI sidebar can outlive a reload of this page; nothing
 // here would know to close it.

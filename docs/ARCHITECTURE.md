@@ -42,7 +42,7 @@ The same UI also ships as a browser app (`web/`), where `src/platform` swaps the
 | `preview/` | Read-only HTML previews: Word, PowerPoint, Excel, CSV, text and code, Markdown, EPUB, email, fonts, video and audio |
 | `platform/` | The only bridge to the backend (see below) |
 | `i18n/` | `t()`, `msg()` and the translation catalogs ([ADR 0012](adr/0012-english-text-as-translation-key.md)) |
-| `styles/` | CSS: Fluent for the desktop app, the website's look (`web.css`) for the browser version |
+| `styles/` | CSS: the website's Wollo look (`web.css`, `<html data-look="wollo">`), the default everywhere, over the Fluent base (`app.css`), which the desktop app can switch back to in Settings → Design |
 
 **Start-up stays small.** Heavy engines are loaded with dynamic `import()` the first time a document needs them: PDF.js when a PDF opens, pdf-lib on the first PDF edit (`state/pdfModules.ts`), three.js for models, the preview libraries for Office files. Keep new heavy code off the start-up path.
 

@@ -6,6 +6,7 @@ What changed in each version of Glance, newest first. Downloads for every versio
 
 ## New in 0.6.8
 
+- **A new look that matches the website.** Glance now uses the same design as its website: the Urbanist font, ink and violet colours, rounded panels and pill-shaped tabs, in light and dark. To go back to the Windows look, open **Settings → Design** and choose **Windows**.
 - **Muse in Ask AI.** Meta's Muse is now one of the companies in the Ask AI sidebar. It runs Muse Code, Meta's coding agent, signed in with your Meta account, or shows the Meta AI website in the sidebar. Install [Muse Code](https://dev.meta.ai/docs/muse-code) first; Glance starts the rest.
 
 ## New in 0.6.7

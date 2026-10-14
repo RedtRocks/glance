@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks'
-import { settings, updateSettings, type ThemePref } from '../../state/settings'
+import { settings, updateSettings, type ThemePref, type LookPref } from '../../state/settings'
 import { settingsOpen } from '../../state/ui'
 import { storeInstall } from '../../state/updates'
 import { defaultApp, makeDefault, refreshDefaultApp } from '../../state/defaultApp'
@@ -134,6 +134,14 @@ export function SettingsDialog() {
               <option value="dark">{t('Dark')}</option>
             </select>
           </SettingsCard>
+          {platform.isTauri && (
+            <SettingsCard icon="adjustColor" title={t('Design')} description={t('Match Windows, or use the look of the Glance website.')}>
+              <select value={s.look} onChange={(e) => updateSettings({ look: (e.target as HTMLSelectElement).value as LookPref })}>
+                <option value="fluent">{t('Windows')}</option>
+                <option value="wollo">{t('Glance')}</option>
+              </select>
+            </SettingsCard>
+          )}
           <SettingsCard icon="language" title={t('Language')} description={platform.windowsShell ? t('Follow Windows, or pick the language Glance uses.') : t('Follow the system, or pick the language Glance uses.')}>
             <select value={s.language} onChange={(e) => updateSettings({ language: (e.target as HTMLSelectElement).value })}>
               <option value="system">{platform.windowsShell ? t('Use Windows setting') : t('Use system setting')}</option>

@@ -42,7 +42,7 @@
 - **Let AI do the work.** Ask by voice or typing and the AI edits a PDF's text in place, in the document's own font. AI apps such as Claude Code and Codex can [use Glance as a tool](docs/AI-APPS.md) to read, convert, combine, split and redact your files.
 - **Edit without another app.** Rearrange and merge PDF pages by dragging, mark up, sign, fill forms, redact for real, remove backgrounds, adjust photos and batch-convert.
 
-It's built to feel native on Windows 11 (Fluent design, Mica, Explorer integration) while staying small and fast, and it also runs on Linux and [in any browser](https://redtrocks.github.io/glance/app/), phones included.
+It wears the same Wollo design as its website (Windows 11's Fluent look is one setting away), integrates with Explorer on Windows, stays small and fast, and also runs on Linux and [in any browser](https://redtrocks.github.io/glance/app/), phones included.
 
 > **Status: early preview.** Viewing, PDF page management, markup, signatures, forms, redaction, OCR, image editing, batch editing and metadata tools work today. Everything else is on the roadmap below and in [`docs/adr`](docs/adr).
 
