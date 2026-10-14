@@ -18,9 +18,10 @@ import qwen from './logos/qwen.svg?raw'
 import kimi from './logos/kimi.svg?raw'
 import mistral from './logos/mistral.svg?raw'
 import opencode from './logos/opencode.svg?raw'
+import muse from './logos/muse.svg?raw'
 
 /** Each company's logo (see logos/README.md); others get a letter on their colour. */
-const LOGOS: Record<string, string> = { claude, chatgpt, gemini, copilot, qwen, kimi, mistral, opencode }
+const LOGOS: Record<string, string> = { claude, chatgpt, gemini, copilot, qwen, kimi, mistral, muse, opencode }
 
 /** Each company's colour, for its badge (custom agents are grey). */
 const COLORS: Record<string, string> = {
@@ -31,6 +32,7 @@ const COLORS: Record<string, string> = {
   qwen: '#615ced',
   kimi: '#1f1f1f',
   mistral: '#fa520f',
+  muse: '#6a4cff',
   opencode: '#4b4b4b'
 }
 
@@ -50,6 +52,8 @@ function hint(id: string): string {
       return t('Sign in with your Kimi account.')
     case 'mistral':
       return t('Sign in with your Mistral account.')
+    case 'muse':
+      return t('Sign in with your Meta account through Muse Code, Meta’s coding agent.')
     case 'opencode':
       return t('Free models built in, or sign in to Z.ai, DeepSeek, xAI and many more.')
     default:

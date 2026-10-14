@@ -152,7 +152,7 @@ It's built to feel native on Windows 11 (Fluent design, Mica, Explorer integrati
 | Explorer right-click menu: Open in Glance, Combine into PDF, Remove Location Info (Windows 11's main menu in the Microsoft Store version; under "Show more options" with the GitHub installer) | ✅ |
 | AI apps (Claude Code, Claude Desktop, Codex, Antigravity, Muse Code, Cursor, VS Code and any MCP app) can view any format, read text with OCR, convert, combine, split and redact files, and see and control what's open in Glance; one-click setup in Settings → AI apps ([how it works](docs/AI-APPS.md)) | ✅ |
 | Web version at [redtrocks.github.io/glance/app](https://redtrocks.github.io/glance/app/): the same app in any modern browser, installable, works offline, files never leave the device ([what it can't do](#faq)) | ✅ |
-| Ask AI sidebar: chat with Claude, ChatGPT, Gemini, GitHub Copilot, Qwen, Kimi, Mistral or OpenCode about the open file (whole page or a selected area), signed in with your own account or an API key, or use the company's website in the sidebar; chats are kept per document | ✅ |
+| Ask AI sidebar: chat with Claude, ChatGPT, Gemini, GitHub Copilot, Qwen, Kimi, Mistral, Meta's Muse or OpenCode about the open file (whole page or a selected area), signed in with your own account or an API key, or use the company's website in the sidebar; chats are kept per document | ✅ |
 
 Signing on a nearby iPhone or iPad isn't possible on Windows; use the camera or a photo of your signature instead.
 
