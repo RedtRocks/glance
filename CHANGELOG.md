@@ -4,6 +4,10 @@ What changed in each version of Glance, newest first. Downloads for every versio
 
 <!-- The Release workflow publishes the section for the version it releases (scripts/release-notes.ts). Add a line under the top "## New in" section for anything users will notice. -->
 
+## New in 0.6.8
+
+- **A new look that matches the website.** Glance now uses the same design as its website: the Urbanist font, ink and violet colours, rounded panels and pill-shaped tabs, in light and dark. To go back to the Windows look, open **Settings → Design** and choose **Windows**.
+
 ## New in 0.6.7
 
 - **The install count tells Flatpaks apart.** The anonymous daily check-in (**Settings → Count this install**) now says whether the copy is a Flatpak, instead of counting it as a download from GitHub. Nothing else it sends has changed.

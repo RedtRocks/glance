@@ -2,7 +2,7 @@ import { effect, signal } from '@preact/signals'
 import { DEFAULT_PAGE_NUMBER_THRESHOLD } from '../core/pageControls'
 
 export type ThemePref = 'system' | 'light' | 'dark'
-/** Fluent matches Windows; Wollo is the website's design (the browser version always wears it). */
+/** Wollo is the website's design (the browser version always wears it); Fluent matches Windows. */
 export type LookPref = 'fluent' | 'wollo'
 
 export interface Settings {
@@ -38,7 +38,7 @@ export const DEFAULT_TOOLBAR = ['sidebar', 'pageControls', 'spacer', 'zoomOut', 
 
 const DEFAULTS: Settings = {
   theme: 'system',
-  look: 'fluent',
+  look: 'wollo',
   darkPdf: false,
   pageNumberThreshold: DEFAULT_PAGE_NUMBER_THRESHOLD,
   toolbar: DEFAULT_TOOLBAR,
