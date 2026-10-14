@@ -16,6 +16,14 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# CI only checks that Glance builds, installs and runs; the builds people download come from
+# the Release workflow, which keeps Cargo.toml's whole-program optimisation (lto = true,
+# codegen-units = 1). That makes compiling the glance crate one long single-threaded step
+# (about 12 minutes on Windows, 11 in the Flatpak, 6 for the .deb), so CI builds without it.
+env:
+  CARGO_PROFILE_RELEASE_LTO: 'false'
+  CARGO_PROFILE_RELEASE_CODEGEN_UNITS: '16'
+
 jobs:
   # Changes that only touch docs (Markdown, README images under assets/, the landing page
   # under site/, issue templates) can't break the app, so the build and test jobs below
@@ -418,9 +426,14 @@ jobs:
       - run: packaging/flatpak/sources.sh
       - name: Build Flatpak
         run: |
+          # The build runs in a sandbox that doesn't see the env above, so a copy of the manifest
+          # (next to it, for its relative sources) carries the same settings. Flathub's isn't changed.
+          sed "s/^\( *\)CARGO_NET_OFFLINE: 'true'\$/&\n\1CARGO_PROFILE_RELEASE_LTO: '$CARGO_PROFILE_RELEASE_LTO'\n\1CARGO_PROFILE_RELEASE_CODEGEN_UNITS: '$CARGO_PROFILE_RELEASE_CODEGEN_UNITS'/" \
+            packaging/flatpak/io.github.redtrocks.glance.yml > packaging/flatpak/ci.yml
+          grep -q CARGO_PROFILE_RELEASE_LTO packaging/flatpak/ci.yml
           flatpak-builder --user --install-deps-from=flathub --disable-rofiles-fuse --force-clean \
             --state-dir="$RUNNER_TEMP/fb-state" --repo="$RUNNER_TEMP/repo" "$RUNNER_TEMP/fb-build" \
-            packaging/flatpak/io.github.redtrocks.glance.yml
+            packaging/flatpak/ci.yml
           flatpak build-bundle "$RUNNER_TEMP/repo" glance.flatpak io.github.redtrocks.glance \
             --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo
       - name: Check metadata
