@@ -397,7 +397,9 @@ mod tests {
             let deadline = Instant::now() + Duration::from_secs(5);
             loop {
                 let text = String::from_utf8(self.0.lock().unwrap().clone()).unwrap();
-                if let Some(l) = text.lines().nth(n) {
+                // writeln! can land in several writes; skip a line still being written.
+                let done = &text[..text.rfind('\n').map_or(0, |i| i + 1)];
+                if let Some(l) = done.lines().nth(n) {
                     return serde_json::from_str(l).unwrap();
                 }
                 assert!(Instant::now() < deadline, "no line {n} in {text:?}");
