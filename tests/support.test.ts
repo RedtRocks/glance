@@ -4,13 +4,15 @@ import { readFileSync } from 'node:fs'
 import { LINKS, regionFor, checkoutFor, rankSupporters, colourFor } from '../site/support/wall.js'
 
 describe('Support page', () => {
-  it('only links to the two payment services it was set up with', () => {
+  it('only links to Playto, for donors in India and abroad alike', () => {
     // A wrong link here loses real donations, so any change has to be deliberate.
+    expect(LINKS.worldOnce).toBe(LINKS.indiaOnce)
+    expect(LINKS.worldMonthly).toBe(LINKS.indiaMonthly)
     for (const url of Object.values(LINKS) as string[]) {
       if (!url) continue
       const u = new URL(url)
       expect(u.protocol).toBe('https:')
-      expect(u.hostname === 'github.com' ? u.pathname.startsWith('/sponsors/RedtRocks') : /(^|\.)playto\.so$/.test(u.hostname)).toBe(true)
+      expect(u.hostname).toMatch(/(^|\.)playto\.so$/)
     }
   })
 

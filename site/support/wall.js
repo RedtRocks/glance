@@ -1,16 +1,18 @@
 // Pure logic for the Support page, shared with tests/support.test.ts.
 
 /** Payment links. Change these only with the maintainer's go-ahead; the test pins their hosts. */
+// Playto takes UPI and netbanking in India and cards, Apple Pay and Google Pay from abroad,
+// and pays out in rupees. GitHub Sponsors needs Stripe, which won't take individuals in India.
+const PLAYTO_ONCE = ''
+const PLAYTO_MONTHLY = ''
 export const LINKS = {
-  // Playto handles UPI, cards and netbanking for donors in India.
-  indiaOnce: '',
-  indiaMonthly: '',
-  // GitHub Sponsors takes cards from everywhere, one-time or monthly.
-  worldOnce: 'https://github.com/sponsors/RedtRocks',
-  worldMonthly: 'https://github.com/sponsors/RedtRocks'
+  indiaOnce: PLAYTO_ONCE,
+  indiaMonthly: PLAYTO_MONTHLY,
+  worldOnce: PLAYTO_ONCE,
+  worldMonthly: PLAYTO_MONTHLY
 }
 
-/** India's time zones; everyone else is sent to GitHub Sponsors. */
+/** India's time zones. Only the wording differs: India sees UPI, everyone else sees cards. */
 export function regionFor(timeZone) {
   return timeZone === 'Asia/Kolkata' || timeZone === 'Asia/Calcutta' ? 'in' : 'world'
 }
