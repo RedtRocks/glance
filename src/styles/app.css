@@ -166,6 +166,9 @@ select optgroup {
 .tab-dirty {
   color: var(--accent);
 }
+.page-total {
+  white-space: nowrap;
+}
 .tab-close,
 .tab-new,
 .icon-button {
@@ -186,6 +189,68 @@ select optgroup {
 }
 .tab-new {
   margin: 0 0 5px 2px;
+}
+
+/* Tabs down the left side (Settings → Design → Tabs). The bar runs the window's full
+   height; the menu bar, toolbar and document sit to its right. */
+.side-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.side-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+.tabstrip.vertical {
+  flex: none;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  width: 200px;
+  padding: 8px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--chrome);
+  border-right: 1px solid var(--stroke);
+}
+.tabstrip.vertical .tab {
+  flex: none;
+  min-width: 0;
+  max-width: none;
+  height: 36px;
+  border-radius: var(--radius-lg);
+}
+.tabstrip.vertical .tab.active {
+  clip-path: none;
+}
+.tabstrip.vertical .tab-new {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: auto;
+  height: 36px;
+  margin: 0 0 6px;
+  padding: 0 12px;
+  border-radius: var(--radius-lg);
+}
+/* Below 1200px the side tabs shrink to their icons (the name shows on hover), so the menu
+   bar and toolbar keep the room they have with tabs on top. */
+@media (max-width: 1199px) {
+  .tabstrip.vertical {
+    width: 60px;
+  }
+  .tabstrip.vertical :is(.tab-title, .tab-close, .tab-dirty, .tab-new-label) {
+    display: none;
+  }
+  .tabstrip.vertical :is(.tab, .tab-new) {
+    justify-content: center;
+    padding: 0;
+  }
 }
 
 .commandbar {
@@ -1785,6 +1850,39 @@ body,
   font-size: 12px;
   line-height: 16px;
   color: var(--text-2);
+}
+/* Accent colour swatches (Settings → Design). */
+.accent-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  max-width: 300px;
+}
+.accent-swatch {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+}
+.accent-swatch[aria-checked='true'],
+.accent-custom.checked {
+  box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--text);
+}
+.accent-custom {
+  background: conic-gradient(#f258a8, #f47933, #f8d32c, #1f9d55, #005fb8, #6312f6, #f258a8);
+}
+.accent-custom input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
 }
 .settings-card-buttons {
   display: flex;

@@ -15,6 +15,7 @@ import { offerDefaultApp } from '../state/defaultApp'
 import * as platform from '../platform'
 import { startWebApp } from '../platform/webApp'
 import { t } from '../i18n'
+import { themeVars } from '../core/theme'
 import { WebNav } from './web/WebNav'
 import { WebWelcome } from './web/WebWelcome'
 import { OpeningOverlay } from './web/FileLoader'
@@ -126,6 +127,14 @@ export function App() {
   useEffect(() => {
     document.documentElement.dataset.look = look
   }, [look])
+  // Accent colour and window tint from Settings → Design, written over the look's own colours.
+  const { accent, tint } = settings.value
+  useEffect(() => {
+    const style = document.documentElement.style
+    const vars = themeVars({ accent, tint, look, dark })
+    for (const name of [...style].filter((n) => n.startsWith('--'))) if (!(name in vars)) style.removeProperty(name)
+    for (const [name, value] of Object.entries(vars)) style.setProperty(name, value)
+  }, [accent, tint, look, dark])
 
   // Files from the command line (Open with, Send to), later launches, and new windows.
   useEffect(() => {
@@ -199,6 +208,22 @@ export function App() {
     void platform.setWindowTitle(name ? `${doc?.dirty.value ? '• ' : ''}${name} - Glance` : 'Glance')
   }, [doc, doc?.name.value, doc?.dirty.value])
 
+  const sideTabs = !phone && !platform.isWeb && settings.value.tabs === 'side' && docs.value.length > 0
+  const desktopChrome = (
+    <header class="chrome">
+      {platform.isWeb ? <WebNav /> : !sideTabs && docs.value.length > 0 && <TabStrip />}
+      {(!platform.isWeb || doc) && (
+        <div class="commandbar">
+          <MenuBar />
+          <Toolbar />
+        </div>
+      )}
+      <MarkupToolbar />
+      <UpdateBar />
+      <DefaultAppBar />
+    </header>
+  )
+
   return (
     <div class={`app ${fileDragOver.value ? 'file-drag' : ''}`}>
       {phone ? (
@@ -208,21 +233,19 @@ export function App() {
             {findOpen.value && <PhoneSearch doc={doc} />}
           </header>
         )
+      ) : sideTabs ? (
+        // Tabs down the left side: the bar spans the window's height, beside the chrome and document.
+        <div class="side-layout">
+          <TabStrip vertical />
+          <div class="side-main">
+            {desktopChrome}
+            <Viewer />
+          </div>
+        </div>
       ) : (
-        <header class="chrome">
-          {platform.isWeb ? <WebNav /> : docs.value.length > 0 && <TabStrip />}
-          {(!platform.isWeb || doc) && (
-            <div class="commandbar">
-              <MenuBar />
-              <Toolbar />
-            </div>
-          )}
-          <MarkupToolbar />
-          <UpdateBar />
-          <DefaultAppBar />
-        </header>
+        desktopChrome
       )}
-      <Viewer />
+      {!sideTabs && <Viewer />}
       {/* On a phone the markup tools sit at the bottom, under the thumb. */}
       {phone && <MarkupToolbar />}
       {phone && <PhoneSheets />}

@@ -1,5 +1,6 @@
 import { effect, signal } from '@preact/signals'
 import { DEFAULT_PAGE_NUMBER_THRESHOLD } from '../core/pageControls'
+import { DEFAULT_ACCENT, type Tint } from '../core/theme'
 
 export type ThemePref = 'system' | 'light' | 'dark'
 /** Wollo is the website's design (the browser version always wears it); Fluent matches Windows. */
@@ -8,6 +9,12 @@ export type LookPref = 'fluent' | 'wollo'
 export interface Settings {
   theme: ThemePref
   look: LookPref
+  /** Accent colour as #rrggbb (Settings → Design). */
+  accent: string
+  /** How much the accent tints the window, as in Arc or Zen. */
+  tint: Tint
+  /** Tabs across the top, or down the left side (desktop app). */
+  tabs: 'top' | 'side'
   /** Invert PDF pages while the app is dark (Preview's "dark appearance for PDFs"). */
   darkPdf: boolean
   /** Page number field appears when a document has more pages than this. */
@@ -39,6 +46,9 @@ export const DEFAULT_TOOLBAR = ['sidebar', 'pageControls', 'spacer', 'zoomOut', 
 const DEFAULTS: Settings = {
   theme: 'system',
   look: 'wollo',
+  accent: DEFAULT_ACCENT,
+  tint: 'none',
+  tabs: 'top',
   darkPdf: false,
   pageNumberThreshold: DEFAULT_PAGE_NUMBER_THRESHOLD,
   toolbar: DEFAULT_TOOLBAR,

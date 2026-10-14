@@ -16,10 +16,18 @@ function kindIcon(doc: Doc) {
   return <Icon name="document" size={16} />
 }
 
-export function TabStrip() {
+/** `vertical`: the tabs run down the left side of the window (Settings → Design → Tabs). */
+export function TabStrip({ vertical = false }: { vertical?: boolean }) {
   const list = docs.value
+  const newTab = (
+    <button class="tab-new" aria-label={t('Open file')} title={openTip()} onClick={() => void openWithDialog()}>
+      <Icon name="add" size={16} />
+      {vertical && <span class="tab-new-label">{t('Open file')}</span>}
+    </button>
+  )
   return (
-    <div class="tabstrip" role="tablist">
+    <div class={`tabstrip ${vertical ? 'vertical' : ''}`} role="tablist" aria-orientation={vertical ? 'vertical' : 'horizontal'}>
+      {vertical && newTab}
       {list.map((doc) => {
         const active = doc.id === activeId.value
         return (
@@ -53,9 +61,7 @@ export function TabStrip() {
           </div>
         )
       })}
-      <button class="tab-new" aria-label={t('Open file')} title={openTip()} onClick={() => void openWithDialog()}>
-        <Icon name="add" size={16} />
-      </button>
+      {!vertical && newTab}
     </div>
   )
 }

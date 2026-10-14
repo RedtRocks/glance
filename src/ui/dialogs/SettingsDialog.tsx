@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'preact/hooks'
 import { settings, updateSettings, type ThemePref, type LookPref } from '../../state/settings'
+import { ACCENT_PRESETS, type Tint } from '../../core/theme'
 import { settingsOpen } from '../../state/ui'
 import { storeInstall } from '../../state/updates'
 import { defaultApp, makeDefault, refreshDefaultApp } from '../../state/defaultApp'
@@ -27,6 +28,38 @@ export function SettingsCard({ icon, title, description, children }: { icon: Ico
       </div>
       <div class="settings-card-control">{children}</div>
     </div>
+  )
+}
+
+function accentName(id: (typeof ACCENT_PRESETS)[number]['id']): string {
+  const names = { violet: t('Violet'), periwinkle: t('Periwinkle'), pink: t('Pink'), orange: t('Orange'), yellow: t('Yellow'), green: t('Green'), blue: t('Blue'), ink: t('Ink') }
+  return names[id]
+}
+
+/** Accent colour: the Wollo palette as swatches, plus any colour from the system picker. */
+function AccentCard() {
+  const accent = settings.value.accent.toLowerCase()
+  const custom = !ACCENT_PRESETS.some((p) => p.hex === accent)
+  return (
+    <SettingsCard icon="paintBrush" title={t('Accent colour')} description={t('Used for selections, switches, sliders and highlights.')}>
+      <div class="accent-swatches" role="radiogroup" aria-label={t('Accent colour')}>
+        {ACCENT_PRESETS.map((p) => (
+          <button
+            key={p.id}
+            class="accent-swatch"
+            role="radio"
+            aria-checked={accent === p.hex}
+            aria-label={accentName(p.id)}
+            title={accentName(p.id)}
+            style={{ background: p.hex }}
+            onClick={() => updateSettings({ accent: p.hex })}
+          />
+        ))}
+        <label class={`accent-swatch accent-custom ${custom ? 'checked' : ''}`} title={t('Pick any colour')} style={custom ? { background: accent } : undefined}>
+          <input type="color" value={accent} aria-label={t('Pick any colour')} onInput={(e) => updateSettings({ accent: (e.target as HTMLInputElement).value })} />
+        </label>
+      </div>
+    </SettingsCard>
   )
 }
 
@@ -139,6 +172,22 @@ export function SettingsDialog() {
               <select value={s.look} onChange={(e) => updateSettings({ look: (e.target as HTMLSelectElement).value as LookPref })}>
                 <option value="fluent">{t('Windows')}</option>
                 <option value="wollo">{t('Glance')}</option>
+              </select>
+            </SettingsCard>
+          )}
+          <AccentCard />
+          <SettingsCard icon="fillColor" title={t('Window tint')} description={t('Wash the window in your accent colour.')}>
+            <select value={s.tint} onChange={(e) => updateSettings({ tint: (e.target as HTMLSelectElement).value as Tint })}>
+              <option value="none">{t('None')}</option>
+              <option value="soft">{t('Soft')}</option>
+              <option value="bold">{t('Bold')}</option>
+            </select>
+          </SettingsCard>
+          {platform.isTauri && (
+            <SettingsCard icon="tabs" title={t('Tabs')} description={t('Show open files across the top, or down the left side.')}>
+              <select value={s.tabs} onChange={(e) => updateSettings({ tabs: (e.target as HTMLSelectElement).value as 'top' | 'side' })}>
+                <option value="top">{t('Top')}</option>
+                <option value="side">{t('Side')}</option>
               </select>
             </SettingsCard>
           )}

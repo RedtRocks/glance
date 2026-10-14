@@ -247,6 +247,40 @@
 :root[data-look='wollo'] .chrome > .tabstrip .tab.active {
   background: var(--bg-solid);
 }
+:root[data-look='wollo'] .tabstrip.vertical {
+  gap: 4px;
+  width: 208px;
+  margin: 16px 0 16px 16px;
+  padding: 8px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--subtle);
+}
+:root[data-look='wollo'] .side-main .chrome {
+  padding-top: 8px;
+}
+:root[data-look='wollo'] .tabstrip.vertical .tab,
+:root[data-look='wollo'] .tabstrip.vertical .tab-new {
+  max-width: none;
+  height: 44px;
+}
+:root[data-look='wollo'] .tabstrip.vertical .tab.active {
+  background: var(--bg-solid);
+}
+:root[data-look='wollo'] .tabstrip.vertical .tab-new {
+  width: auto;
+  margin-bottom: 4px;
+  padding: 0 16px;
+  border-radius: 9999px;
+}
+@media (max-width: 1199px) {
+  :root[data-look='wollo'] .tabstrip.vertical {
+    width: 76px;
+  }
+  :root[data-look='wollo'] .tabstrip.vertical :is(.tab, .tab-new) {
+    padding: 0;
+  }
+}
 :root[data-look='wollo'] .tab {
   height: 44px;
   min-width: 0;
