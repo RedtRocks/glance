@@ -333,6 +333,20 @@
   border-radius: 10px;
 }
 
+/* The desktop app's start screen sits in the same rounded panel as an open document. */
+:root[data-look='wollo'] .welcome {
+  margin: 0 16px 16px;
+  border-radius: 20px;
+  background: var(--subtle);
+}
+/* Links and selected text in documents take the violet, not Fluent's blue. */
+:root[data-look='wollo'] .pdf-link:hover {
+  background: rgba(99, 18, 246, 0.12);
+}
+:root[data-look='wollo'] .textLayer ::selection {
+  background: rgba(99, 18, 246, 0.28);
+}
+
 /* Workspace: the sidebar and the document sit in rounded panels with a gap between. */
 :root[data-look='wollo'] .workspace {
   gap: 16px;
@@ -382,6 +396,12 @@
 :root[data-look='wollo'] .viewer {
   border-radius: 28px;
   overflow: hidden;
+}
+/* White previews (text, Markdown, sheets, books, fonts) would melt into the white chrome;
+   a 1px line keeps the panel's edge. */
+:root[data-look='wollo'] .viewer:has(:is(.office-view-text, .office-view-markdown, .office-view-ebook, .office-view-font, .office-view-sheets)) {
+  outline: 1px solid var(--stroke);
+  outline-offset: -1px;
 }
 
 /* Dialogs and side panels. */
