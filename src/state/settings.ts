@@ -1,6 +1,7 @@
 import { effect, signal } from '@preact/signals'
 import { DEFAULT_PAGE_NUMBER_THRESHOLD } from '../core/pageControls'
-import { DEFAULT_ACCENT, type Tint } from '../core/theme'
+import { DEFAULT_ACCENT } from '../core/theme'
+import type { Harmony } from '../core/colourWheel'
 
 export type ThemePref = 'system' | 'light' | 'dark'
 /** Wollo is the website's design (the browser version always wears it); Fluent matches Windows. */
@@ -9,12 +10,18 @@ export type LookPref = 'fluent' | 'wollo'
 export interface Settings {
   theme: ThemePref
   look: LookPref
-  /** Accent colour as #rrggbb (Settings → Design). */
-  accent: string
-  /** How much the accent tints the window, as in Arc or Zen. */
-  tint: Tint
+  /** Window colours from the colour wheel, #rrggbb, at most three; the first is the accent (Settings → Customise). */
+  colours: string[]
+  /** How the other wheel colours follow the first. */
+  harmony: Harmony
+  /** How strongly the colours fill the window, 0 (accent only) to 1, as in Arc or Zen. */
+  strength: number
+  /** Film grain over the window colours, 0 to 1. */
+  grain: number
   /** Tabs across the top, or down the left side (desktop app). */
   tabs: 'top' | 'side'
+  /** Tabs shrink to their icons (View → Collapse Tabs). */
+  tabsCollapsed: boolean
   /** Invert PDF pages while the app is dark (Preview's "dark appearance for PDFs"). */
   darkPdf: boolean
   /** Page number field appears when a document has more pages than this. */
@@ -46,9 +53,12 @@ export const DEFAULT_TOOLBAR = ['sidebar', 'pageControls', 'spacer', 'zoomOut', 
 const DEFAULTS: Settings = {
   theme: 'system',
   look: 'wollo',
-  accent: DEFAULT_ACCENT,
-  tint: 'none',
+  colours: [DEFAULT_ACCENT],
+  harmony: 'complementary',
+  strength: 0,
+  grain: 0,
   tabs: 'top',
+  tabsCollapsed: false,
   darkPdf: false,
   pageNumberThreshold: DEFAULT_PAGE_NUMBER_THRESHOLD,
   toolbar: DEFAULT_TOOLBAR,

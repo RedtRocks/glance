@@ -1,10 +1,10 @@
 /**
- * Theme colours chosen in Settings → Design: the accent colour and how much of it tints
- * the window (as Arc and Zen do). Pure colour maths; App.tsx writes the result onto <html>.
+ * Theme colours chosen in Settings → Customise: the accent colour and how strongly the
+ * window takes on its colours (as Arc and Zen do). Pure colour maths; App.tsx writes the
+ * result onto <html>.
  */
 
 export type Look = 'fluent' | 'wollo'
-export type Tint = 'none' | 'soft' | 'bold'
 
 /** The Wollo palette, from the website. */
 export const ACCENT_PRESETS = [
@@ -83,14 +83,11 @@ const SURFACES: Record<Look, Record<'light' | 'dark', Record<string, string>>> =
   }
 }
 
-const TINT_AMOUNT: Record<Tint, { light: number; dark: number }> = {
-  none: { light: 0, dark: 0 },
-  soft: { light: 0.06, dark: 0.08 },
-  bold: { light: 0.14, dark: 0.16 }
-}
+/** How far surfaces move toward the accent at full strength. */
+const MAX_TINT = { light: 0.14, dark: 0.16 }
 
-/** CSS custom properties for the chosen accent and tint. */
-export function themeVars(opts: { accent: string; tint: Tint; look: Look; dark: boolean }): Record<string, string> {
+/** CSS custom properties for the accent and how strongly (0 to 1) it tints the window. */
+export function themeVars(opts: { accent: string; strength: number; look: Look; dark: boolean }): Record<string, string> {
   const mode = opts.dark ? 'dark' : 'light'
   const base = SURFACES[opts.look][mode]
   const raw = parseHex(opts.accent) ? opts.accent : DEFAULT_ACCENT
@@ -102,7 +99,7 @@ export function themeVars(opts: { accent: string; tint: Tint; look: Look; dark: 
     '--violet': accent,
     '--selection': `${accent}2e`
   }
-  const amount = TINT_AMOUNT[opts.tint][mode]
+  const amount = Math.min(1, Math.max(0, opts.strength)) * MAX_TINT[mode]
   if (amount > 0) for (const [name, value] of Object.entries(base)) vars[name] = mix(value, raw, amount)
   return vars
 }

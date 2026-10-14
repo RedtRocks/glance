@@ -15,7 +15,8 @@ import { offerDefaultApp } from '../state/defaultApp'
 import * as platform from '../platform'
 import { startWebApp } from '../platform/webApp'
 import { t } from '../i18n'
-import { themeVars } from '../core/theme'
+import { DEFAULT_ACCENT, themeVars } from '../core/theme'
+import { grainImage, windowGradient } from '../core/colourWheel'
 import { WebNav } from './web/WebNav'
 import { WebWelcome } from './web/WebWelcome'
 import { OpeningOverlay } from './web/FileLoader'
@@ -127,14 +128,20 @@ export function App() {
   useEffect(() => {
     document.documentElement.dataset.look = look
   }, [look])
-  // Accent colour and window tint from Settings → Design, written over the look's own colours.
-  const { accent, tint } = settings.value
+  // Window colours from Settings → Customise, written over the look's own colours. The
+  // gradient and grain paint the window behind the chrome (data-gradient in app.css).
+  const { colours, strength, grain } = settings.value
+  const key = colours.join()
   useEffect(() => {
-    const style = document.documentElement.style
-    const vars = themeVars({ accent, tint, look, dark })
-    for (const name of [...style].filter((n) => n.startsWith('--'))) if (!(name in vars)) style.removeProperty(name)
-    for (const [name, value] of Object.entries(vars)) style.setProperty(name, value)
-  }, [accent, tint, look, dark])
+    const root = document.documentElement
+    const vars = themeVars({ accent: colours[0] ?? DEFAULT_ACCENT, strength, look, dark })
+    const backdrop = [grainImage(grain), windowGradient(colours, strength)].filter(Boolean).join(', ')
+    if (backdrop) vars['--window-gradient'] = backdrop
+    for (const name of [...root.style].filter((n) => n.startsWith('--'))) if (!(name in vars)) root.style.removeProperty(name)
+    for (const [name, value] of Object.entries(vars)) root.style.setProperty(name, value)
+    if (backdrop) root.dataset.gradient = ''
+    else delete root.dataset.gradient
+  }, [key, strength, grain, look, dark])
 
   // Files from the command line (Open with, Send to), later launches, and new windows.
   useEffect(() => {
@@ -212,7 +219,7 @@ export function App() {
   const desktopChrome = (
     <header class="chrome">
       {platform.isWeb ? <WebNav /> : !sideTabs && docs.value.length > 0 && <TabStrip />}
-      {(!platform.isWeb || doc) && (
+      {(platform.isTauri || doc) && (
         <div class="commandbar">
           <MenuBar />
           <Toolbar />

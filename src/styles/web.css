@@ -269,9 +269,33 @@
 }
 :root[data-look='wollo'] .tabstrip.vertical .tab-new {
   width: auto;
-  margin-bottom: 4px;
+  margin: 0;
   padding: 0 16px;
   border-radius: 9999px;
+}
+:root[data-look='wollo'] .tab-head {
+  margin-bottom: 4px;
+}
+:root[data-look='wollo'] .tab-head .tab-collapse {
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+}
+:root[data-look='wollo'] .tabstrip.vertical.collapsed {
+  width: 76px;
+}
+:root[data-look='wollo'] .tabstrip.vertical.collapsed :is(.tab, .tab-new) {
+  padding: 0;
+}
+:root[data-look='wollo'] .chrome > .tabstrip > .tab-collapse {
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  border-radius: 9999px;
+}
+:root[data-look='wollo'] .chrome > .tabstrip.collapsed .tab:not(.active) {
+  width: 44px;
+  padding: 0;
 }
 @media (max-width: 1199px) {
   :root[data-look='wollo'] .tabstrip.vertical {
@@ -1354,4 +1378,15 @@
   display: inline-block;
   margin-right: 6px;
   vertical-align: -3px;
+}
+
+/* Window colours (data-gradient, app.css): the frame around the panels shows the gradient. */
+:root[data-look='wollo'][data-gradient] body {
+  background: var(--window-gradient), var(--bg-solid);
+}
+:root[data-look='wollo'][data-gradient] :is(.chrome, .workspace) {
+  background: transparent;
+}
+:root[data-look='wollo'][data-gradient] :is(.chrome > .tabstrip, .tabstrip.vertical, .commandbar, .sidebar) {
+  background: color-mix(in srgb, var(--subtle) 60%, transparent);
 }

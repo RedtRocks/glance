@@ -30,19 +30,19 @@ describe('colour maths', () => {
 
 describe('themeVars', () => {
   it('keeps the window untinted by default', () => {
-    const v = themeVars({ accent: '#6312f6', tint: 'none', look: 'wollo', dark: false })
+    const v = themeVars({ accent: '#6312f6', strength: 0, look: 'wollo', dark: false })
     expect(v['--accent']).toBe('#6312f6')
     expect(v['--bg-solid']).toBeUndefined()
   })
 
-  it('tints the window surfaces, more for bold than soft', () => {
-    const soft = themeVars({ accent: '#f258a8', tint: 'soft', look: 'wollo', dark: false })
-    const bold = themeVars({ accent: '#f258a8', tint: 'bold', look: 'wollo', dark: false })
+  it('tints the window surfaces, more at full strength', () => {
+    const soft = themeVars({ accent: '#f258a8', strength: 0.4, look: 'wollo', dark: false })
+    const bold = themeVars({ accent: '#f258a8', strength: 1, look: 'wollo', dark: false })
     expect(soft['--bg-solid']).not.toBe('#ffffff')
     expect(contrast(bold['--bg-solid'], '#ffffff')).toBeGreaterThan(contrast(soft['--bg-solid'], '#ffffff'))
   })
 
   it('falls back to violet for a broken saved colour', () => {
-    expect(themeVars({ accent: 'nope', tint: 'none', look: 'fluent', dark: false })['--accent']).toBe('#6312f6')
+    expect(themeVars({ accent: 'nope', strength: 0, look: 'fluent', dark: false })['--accent']).toBe('#6312f6')
   })
 })

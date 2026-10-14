@@ -219,6 +219,7 @@ export const COMMANDS: Command[] = [
     run: () => updateSettings({ darkPdf: !settings.value.darkPdf }),
     checked: () => settings.value.darkPdf
   },
+  { id: 'view.collapseTabs', label: msg('Collapse Tabs'), keys: ['Ctrl+Shift+B'], run: () => updateSettings({ tabsCollapsed: !settings.value.tabsCollapsed }), checked: () => settings.value.tabsCollapsed },
   { id: 'view.fullscreen', label: msg('Full Screen'), keys: ['F11'], run: () => platform.toggleFullscreen() },
   { id: 'view.slideshow', label: msg('Slideshow'), keys: ['Ctrl+Shift+F'], run: () => void (slideshow.value = true), enabled: hasDoc },
   { id: 'model.resetView', label: msg('Reset View'), run: () => void (model() && (model()!.viewRequest.value = { kind: 'reset' })) },
@@ -374,7 +375,7 @@ for (const [rule, ids] of VISIBILITY) {
 // Desktop features need the Rust backend; shell integrations also need Windows.
 const DESKTOP_ONLY = [
   'file.newFromClipboard', 'file.newWindow', 'file.versions', 'file.batch', 'view.signatures',
-  'view.customizeToolbar', 'help.updates', 'tools.removeBackground', 'tools.copySubject'
+  'view.customizeToolbar', 'view.collapseTabs', 'help.updates', 'tools.removeBackground', 'tools.copySubject'
 ]
 const WINDOWS_ONLY = [
   'file.scan', 'file.openWith', 'file.makeDefault', 'image.setWallpaper', 'image.setLockScreen',
