@@ -8,8 +8,10 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/RedtRocks/glance?style=flat-square&color=6b7280" alt="Apache-2.0 license"></a>
 </p>
 
+<h3 align="center">Every file in one reader, with AI built in.</h3>
+
 <p align="center">
-  <b>A free, open-source reader for every kind of file, with an AI assistant and agent built in: PDFs, images, camera RAW, Office files, 3D models and 190+ more types on Windows, Linux and the web.</b>
+  Glance is a free, open-source app that opens PDFs, photos, camera RAW, Office files, 3D models and <a href="docs/FORMATS.md">190+ other file types</a>, lets you mark them up and edit them, and has an AI assistant and agent built in. It runs on Windows, Linux and in any browser.
 </p>
 
 <p align="center">
@@ -20,12 +22,6 @@
   <a href="https://redtrocks.github.io/glance/app/"><b>Open in your browser</b></a>
   &nbsp;·&nbsp;
   <a href="https://redtrocks.github.io/glance/">Website</a>
-  &nbsp;·&nbsp;
-  <a href="#features">Features</a>
-  &nbsp;·&nbsp;
-  <a href="docs/FORMATS.md">190+ file types</a>
-  &nbsp;·&nbsp;
-  <a href="#building-from-source">Build from source</a>
 </p>
 
 <p align="center">
@@ -35,16 +31,22 @@
 </picture>
 </p>
 
-**Glance is a free, open-source reader for every kind of file, with an AI assistant and agent built in.** One small app opens PDFs, images (including HEIC and camera RAW), Word, PowerPoint and Excel files, 3D models, EPUB, email, code, video and [190+ file types](docs/FORMATS.md) in all.
+## What it does
 
-- **Read anything.** One window and one set of controls for every file, instead of a different app for each type.
-- **Ask AI about it.** The Ask AI sidebar talks to Claude, ChatGPT, Gemini, Copilot and others about the page you're on or an area you select, signed in with your own account.
-- **Let AI do the work.** Ask by voice or typing and the AI edits a PDF's text in place, in the document's own font. AI apps such as Claude Code and Codex can [use Glance as a tool](docs/AI-APPS.md) to read, convert, combine, split and redact your files.
-- **Edit without another app.** Rearrange and merge PDF pages by dragging, mark up, sign, fill forms, redact for real, remove backgrounds, adjust photos and batch-convert.
+- **Opens anything.** One window and one set of controls for every file, instead of a different app for each type.
+- **Answers questions about it.** The Ask AI sidebar talks to Claude, ChatGPT, Gemini, Copilot and others about the page you're on, signed in with your own account.
+- **Does the work for you.** Say or type a change and the AI edits a PDF's text in place, in the document's own font. AI apps such as Claude Code and Codex can [use Glance as a tool](docs/AI-APPS.md).
+- **Edits without another app.** Rearrange and merge PDF pages, mark up, sign, fill forms, redact for real, remove backgrounds and fix photos.
 
-It wears the same Wollo design as its website (Windows 11's Fluent look is one setting away), integrates with Explorer on Windows, stays small and fast, and also runs on Linux and [in any browser](https://redtrocks.github.io/glance/app/), phones included.
+It's free, has no ads or account, and keeps your files on your device ([privacy](#privacy)).
 
-> **Status: early preview.** Viewing, PDF page management, markup, signatures, forms, redaction, OCR, image editing, batch editing and metadata tools work today. Everything else is on the roadmap below and in [`docs/adr`](docs/adr).
+## Get Glance
+
+| Where | How |
+|---|---|
+| **Windows 10 and 11** | [Download the installer](https://github.com/RedtRocks/glance/releases/latest) (under 20 MB, x64 and ARM64) or get it from the [Microsoft Store](https://apps.microsoft.com/detail/9N01BTLDS9X1) |
+| **Any browser**, phones, Macs and Chromebooks included | Open [redtrocks.github.io/glance/app](https://redtrocks.github.io/glance/app/). It installs from the browser menu and works offline |
+| **Linux** | `.deb`, `.rpm` and Flatpak on the [latest release](https://github.com/RedtRocks/glance/releases/latest) ([install steps](#install-on-linux)) |
 
 ## A quick tour
 
@@ -102,97 +104,154 @@ It wears the same Wollo design as its website (Windows 11's Fluent look is one s
   </tr>
 </table>
 
-## Why it's light
+## Everything it can do
+
+Click a group to open it. Everything listed works today.
+
+<details>
+<summary><b>Opening and reading files</b></summary>
+
+- Tabs, drag-and-drop to open, Open with / Send to, one window for everything, menus that fit each file type
+- PDFs: continuous, single or two-page view, zoom, sharp HiDPI rendering, text selection, links, search, print, slideshow and a dark mode for pages
+- Thumbnails, table of contents, contact sheet, Highlights & Notes sidebar and bookmarks
+- Images: JPEG, PNG, GIF, WebP, AVIF, HEIC, JPEG XL, TIFF, PSD, OpenEXR, SVG, camera RAW and many more
+- Read-only previews of Word, PowerPoint, Excel and CSV (old 97-2003 `.doc`, `.ppt` and `.xls` too), with Open with… to edit them in Office
+- Previews of text and code (with syntax colours), Markdown, video, audio, EPUB e-books, fonts and email (`.eml`, `.msg`). Nothing in them loads from the internet
+- 3D models: GLB/glTF, OBJ, STL, PLY, 3MF, DAE, FBX, USDZ and 3DS, with camera views, wireframe, turntable, lighting, backgrounds, clay/normals/X-ray materials, ground shadow, grid, animations and snapshots
+- Text recognition (Windows OCR): scanned PDFs become searchable and selectable, and you can copy text from images
+- The full list of file types is in [docs/FORMATS.md](docs/FORMATS.md)
+
+</details>
+
+<details>
+<summary><b>AI assistant and agent</b></summary>
+
+- **Ask AI sidebar:** chat with Claude, ChatGPT, Gemini, GitHub Copilot, Qwen, Kimi, Mistral, Meta's Muse or OpenCode about the open file (the whole page or a selected area), signed in with your own account or an API key, or use the company's website in the sidebar. Chats are kept per document
+- **AI edits:** type or say what to change and the AI rewrites a PDF's text in place, in the document's own font, with Keep and Undo for each change
+- **AI apps:** Claude Code, Claude Desktop, Codex, Antigravity, Muse Code, Cursor, VS Code and any MCP app can view any format, read text with OCR, convert, combine, split and redact files, and see and control what's open in Glance. One-click setup in Settings → AI apps ([how it works](docs/AI-APPS.md))
+
+</details>
+
+<details>
+<summary><b>PDF pages, markup, forms and signatures</b></summary>
+
+- Reorder, rotate, delete, duplicate, insert, split and merge pages, with undo and redo
+- Drag pages between documents (hover a tab to open it; Shift moves instead of copying) or out of the window to make a new PDF
+- Export pages as PDF, PNG, JPEG or TIFF (72-600 ppi)
+- Markup: sketch with shape recognition, draw, shapes, arrows, speech bubbles, a loupe, text boxes in any installed font, notes, and highlight, underline and strikethrough in any colour. Saved as standard PDF annotations you can keep editing
+- Fill in PDF forms
+- Signatures drawn with a mouse or pen (with pressure), captured with the camera, or imported from a photo, stored encrypted
+- Certificate signatures (Adobe, DocuSign and others): a banner says whether each is valid, who signed and when, and whether the document changed since. Sign with your own certificate or smart card
+- Redaction that truly removes content, and Remove Sensitive Text to find names, emails, phone, card and ID numbers
+- Page numbers, headers, footers and watermarks; password-protected export (AES-256); Reduce File Size; Clean Up PDF
+- Autosave and version history (File → Browse Versions)
+
+</details>
+
+<details>
+<summary><b>Photos and images</b></summary>
+
+- Remove Background and Copy Subject with a bundled AI model that runs on your PC
+- Instant Alpha (Shift adds, Alt subtracts); rectangle, ellipse, lasso and smart-lasso selection; crop, delete and invert selection
+- Adjust Color: exposure, contrast, highlights, shadows, saturation, temperature, tint, sepia, sharpness, levels with a histogram and Auto Levels, with live preview
+- Adjust Size, rotate, flip and Straighten with a grid overlay
+- Markup on images; export as PNG, JPEG, WebP, TIFF, BMP or PDF, optionally converted to Display P3, Adobe RGB or Gray
+- Inspector (Ctrl+I) for EXIF, colour profile and PDF properties, with Remove Location
+- Batch Edit Images, Create Collage, New from Clipboard, Import from Scanner, Set as desktop background or lock screen
+
+</details>
+
+<details>
+<summary><b>Look, shortcuts and Windows integration</b></summary>
+
+- Customise tab: colour-wheel window colours with gradients and grain, tabs on top or down the side, collapsible tabs, and the Glance (Wollo) or Windows 11 look
+- Context-aware toolbar you can customise, and rebindable keyboard shortcuts (Windows conventions, common Mac shortcuts, Photoshop-style single-key tools)
+- Touchpad and touchscreen gestures: pinch to zoom, double-tap, swipe between pages and photos, two-finger orbit for 3D models
+- Explorer right-click menu: Open in Glance, Combine into PDF, Remove Location Info. Explorer thumbnails for PDF, RAW, PSD and more
+- Windows share sheet, Send to, and update notices you can skip or turn off
+- Follows the Windows display language (English only so far; [translations welcome](#contributing))
+- No quick-look popup on purpose: pair Glance with [PowerToys Peek](https://learn.microsoft.com/windows/powertoys/peek) (Ctrl+Space in Explorer) and press Enter to continue in Glance
+
+</details>
+
+## Privacy
+
+No accounts, and nothing you open leaves your device. Text recognition and background removal run on your PC. Glance sends two optional things, both off with a switch in Settings: a daily check for a newer release on GitHub (the Microsoft Store version leaves updates to the Store), and an anonymous daily count of installs (version number only, no ID and nothing you open). AI apps you connect in Settings → AI apps send what they read through Glance to their own AI provider, and Ask AI sends what you share in the sidebar to the AI company you pick. Details are in [PRIVACY.md](PRIVACY.md).
+
+## FAQ
+
+<details>
+<summary><b>Is Glance free?</b></summary>
+
+Yes. It's free and open source under the Apache-2.0 license, with no ads, account or paid tier.
+</details>
+
+<details>
+<summary><b>Can Glance edit PDFs?</b></summary>
+
+It can reorder, rotate, delete, split and merge pages, fill forms, add text, shapes, highlights, notes and signatures, sign with a certificate, and permanently redact text. Ask AI can also rewrite existing text in place. It isn't a full word processor for PDFs.
+</details>
+
+<details>
+<summary><b>Can I use it on a phone, a Mac or a Chromebook?</b></summary>
+
+Yes, in the browser: open [redtrocks.github.io/glance/app](https://redtrocks.github.io/glance/app/) and install it from the browser menu if you like. It works offline and your files stay on the device. A few things need the Windows app: text recognition, scanning, Explorer integration, the Windows share sheet, certificate signatures, PostScript and XPS files, and autosave (in the browser, saving downloads the file).
+</details>
+
+<details>
+<summary><b>Can I ask an AI about a document I have open?</b></summary>
+
+Yes, in the Windows app. Press **Ask AI** to chat with Claude, ChatGPT, Gemini and others in a sidebar about the page you're on or an area you select. Sign in with your own account or paste an API key. What you share goes to the AI company you picked.
+</details>
+
+<details>
+<summary><b>Can AI apps like Claude Code or Codex use Glance?</b></summary>
+
+Yes. Connect them in **Settings → AI apps** and they can view, read, convert, combine, split and redact your files through Glance, and see the page you have open. See [docs/AI-APPS.md](docs/AI-APPS.md).
+</details>
+
+<details>
+<summary><b>Can I sign on a nearby iPhone or iPad?</b></summary>
+
+Not on Windows. Draw your signature, capture it with the camera, or import a photo of it instead.
+</details>
+
+## Install on Linux
+
+Glance builds for Ubuntu 22.04+ and Debian 12+ (`.deb`) and Fedora 42+ (`.rpm`), on x86_64 and ARM64. Download the file for your system from the [latest release](https://github.com/RedtRocks/glance/releases/latest) and install it:
+
+```sh
+sudo apt install ./Glance-<tag>-linux-amd64.deb                  # Ubuntu or Debian
+sudo dnf install ./Glance-<tag>-linux-x86_64.rpm                 # Fedora
+flatpak install --user ./Glance-<tag>-linux-x86_64.flatpak       # any other distribution
+```
+
+ARM64 files end in `-arm64.deb`, `-aarch64.rpm` and `-aarch64.flatpak`.
+
+<details>
+<summary>More about the Linux version</summary>
+
+The `.deb` and `.rpm` install `glance` and `glance-mcp` in `/usr/bin` and register Glance for its file types. Install `ghostscript` (recommended by the package) for PostScript and EPS. The Flatpak can't open PostScript or EPS because Ghostscript isn't bundled; use the `.deb` or `.rpm` for those.
+
+Not on Linux yet: text recognition, scanning, certificate signatures, Open With and default apps from inside Glance, Set as Wallpaper, the share sheet, speech input, XPS and JPEG XR. Saved signatures and AI API keys are stored in your login keyring (Secret Service, such as GNOME Keyring or KWallet).
+
+To build the packages yourself, install the Tauri prerequisites (on Fedora: `sudo dnf install gcc gcc-c++ clang webkit2gtk4.1-devel openssl-devel librsvg2-devel libxdo-devel nodejs npm`), then run `npm install && npx tauri build --bundles rpm` (or `--bundles deb`). The output lands in `src-tauri/target/release/bundle/rpm` or `.../deb`. Building the Flatpak is described in `packaging/README.md`.
+
+</details>
+
+## For developers
+
+<details>
+<summary><b>Why it's small and fast</b></summary>
 
 - **Tauri 2 + WebView2**: the UI runs in the Edge engine already built into Windows 10/11, so Glance doesn't ship its own browser. The installer is under 20 MB (about 18 MB for x64).
 - **Rust backend**: file access and image decoding run natively. Windows' own codecs come first ([WIC](docs/adr/0010-native-first-decoding.md)), so camera RAW and HEIC work whenever Windows supports them.
 - **Lazy engines**: the startup bundle is ~35 KB gzipped. PDF.js loads only when you open a PDF, pdf-lib only when you first edit one, and the 3D engine only for models.
 
-## Features
+</details>
 
-<sub>Everything below works today unless it says otherwise.</sub>
-
-| | Status |
-|---|---|
-| Tabs, drag-and-drop to open, Open with / Send to, single instance; menus tailored to each file type | ✅ |
-| PDF viewing: continuous, single, two-page; zoom; HiDPI rendering; text selection; links | ✅ |
-| Thumbnails, table of contents, contact sheet | ✅ |
-| Page management: reorder, rotate, delete, duplicate, insert blank/from file, split, merge, undo/redo | ✅ |
-| Drag pages between documents (hover a tab to open it; copy, Shift = move) or out of the window to create a PDF; right-click Copy/Move To | ✅ |
-| Search, print, slideshow, dark appearance for PDFs | ✅ |
-| Export pages as PDF, PNG, JPEG or TIFF (72-600 ppi) | ✅ |
-| Context-aware toolbar (page controls only for multi-page documents), Customize Toolbar | ✅ |
-| Rebindable keyboard shortcuts (Windows conventions, common Mac shortcuts mapped, Photoshop-style single-key tools: V, H, Z, M, L, W, B, U, R, O, T, S, C, [ ], Space to pan) | ✅ |
-| Formats: PDF, AI, EPS/PS (via Ghostscript), XPS/OXPS, JPEG, PNG, GIF, WebP, AVIF, BMP, ICO, SVG, TIFF, HEIC, JPEG 2000, JPEG XL, JPEG XR, EXR, HDR, TGA, DDS, QOI, PNM, ICNS, PSD, CBZ, camera RAW ([full list](docs/FORMATS.md)); Open With another app for PSD, AI and RAW | ✅ |
-| Read-only previews of Word, PowerPoint, Excel and CSV files (old 97-2003 .doc, .ppt and .xls too), with Open with… to edit them in Office | ✅ |
-| Previews of text and code (syntax colours), Markdown, video, audio, EPUB e-books, fonts and email (.eml, .msg); nothing in them loads from the internet | ✅ |
-| Markup: sketch (shape recognition), draw, rectangle, rounded rectangle, oval, line, arrow, star, polygon, speech bubble, loupe (magnifier), text boxes in any installed font, notes, highlight (any color), underline, strikethrough, squiggly underline | ✅ |
-| Markup saved as standard, editable PDF annotations (reopen in Glance to keep editing) | ✅ |
-| Signatures: draw with mouse/pen (pressure), capture with the camera, or import a photo; stored encrypted with Windows DPAPI | ✅ |
-| Fill in PDF forms | ✅ |
-| Certificate signatures (Adobe, DocuSign and others): a banner says whether each is valid, who signed and when, and whether the document changed since; trust comes from the Windows certificate store. Sign with your own certificate or smart card (Markup → Sign with Certificate) | ✅ |
-| Redaction that truly removes content (PDF pages rasterized, image areas burned in black; form data, thumbnails, tags and orphaned objects purged); Remove Sensitive Text finds names, emails, phone, card and ID numbers | ✅ |
-| Text recognition (Windows OCR): scanned PDFs become searchable and selectable; copy text from images | ✅ |
-| Highlights & Notes sidebar, bookmarks | ✅ |
-| Remove Background and Copy Subject with a bundled AI model (U²-Net-p, runs locally in Rust) | ✅ |
-| Instant Alpha (Shift adds, Alt subtracts); rectangular, elliptical, lasso and smart-lasso selection; crop, delete, invert selection | ✅ |
-| Adjust Color (exposure, contrast, highlights, shadows, saturation, temperature, tint, sepia, definition, sharpness, gamma, levels with histogram, Auto Levels) with live preview | ✅ |
-| Adjust Size (fit-into presets, units, resolution), rotate and flip | ✅ |
-| Straighten: rotate by any angle with a slider or by dragging, grid overlay, crop to fill | ✅ |
-| Markup on images, flattened on save; export as PNG, JPEG, WebP, TIFF, BMP or PDF, optionally converted to Display P3, Adobe RGB or Gray | ✅ |
-| Inspector (Ctrl+I): EXIF, color profile, PDF properties; Remove Location | ✅ |
-| Batch Edit Images: rotate, flip, resize, convert, remove location | ✅ |
-| Set an image as the desktop background or lock screen | ✅ |
-| Autosave and version history (File → Browse Versions); reopen tabs on launch (optional, in Settings); Clean Up PDF (annotations, links, metadata, attachments, scripts) | ✅ |
-| Share (Windows share sheet), Send to, update notifications you can skip or turn off | ✅ |
-| 3D models: GLB/glTF, OBJ, STL, PLY, 3MF, DAE, FBX, USDZ, 3DS (orbit, camera views, wireframe, turntable, lighting, backgrounds, clay/normals/X-ray materials, ground shadow, grid, animations, snapshot) | ✅ |
-| Create Collage (justified rows or grid) | ✅ |
-| Password-protected PDF export (AES-256, permissions), Reduce File Size, New from Clipboard, Import from Scanner | ✅ |
-| Page numbers, headers, footers and text or image watermarks on PDFs (Pages → Header, Footer & Watermark, with live preview) | ✅ |
-| Touchpad gestures: pinch to zoom smoothly; two-finger orbit and Shift + two-finger pan for 3D models | ✅ |
-| Touchscreen gestures: pinch to zoom around your fingers, double-tap to zoom, swipe to turn pages or move between photos; tap markup to select it, with a bar to edit, recolor, duplicate or delete | ✅ |
-| Customise tab: colour-wheel window colours with gradients and grain (accent colour follows), tabs on top or down the side, collapsible tabs, Glance or Windows look | ✅ |
-| Interface follows the Windows display language, with a Language setting (English only so far; translations welcome) | ✅ |
-| Explorer right-click menu: Open in Glance, Combine into PDF, Remove Location Info (Windows 11's main menu in the Microsoft Store version; under "Show more options" with the GitHub installer) | ✅ |
-| AI apps (Claude Code, Claude Desktop, Codex, Antigravity, Muse Code, Cursor, VS Code and any MCP app) can view any format, read text with OCR, convert, combine, split and redact files, and see and control what's open in Glance; one-click setup in Settings → AI apps ([how it works](docs/AI-APPS.md)) | ✅ |
-| Web version at [redtrocks.github.io/glance/app](https://redtrocks.github.io/glance/app/): the same app in any modern browser, installable, works offline, files never leave the device ([what it can't do](#faq)) | ✅ |
-| Ask AI sidebar: chat with Claude, ChatGPT, Gemini, GitHub Copilot, Qwen, Kimi, Mistral, Meta's Muse or OpenCode about the open file (whole page or a selected area), signed in with your own account or an API key, or use the company's website in the sidebar; chats are kept per document | ✅ |
-
-Signing on a nearby iPhone or iPad isn't possible on Windows; use the camera or a photo of your signature instead.
-
-Glance deliberately has no quick-look popup: pair it with [PowerToys Peek](https://learn.microsoft.com/windows/powertoys/peek) (Ctrl+Space in Explorer) and press Enter to continue in Glance ([ADR 0011](docs/adr/0011-no-quick-look-pair-with-peek.md)).
-
-## Privacy
-
-No accounts. Glance sends two optional things, both off with a switch in Settings: a daily check for a newer release on GitHub (the Microsoft Store version leaves updates to the Store), and an anonymous daily count of installs that adds up to how many copies are in use (version number only, no ID and nothing you open). Background removal and text recognition run on your PC. AI apps you connect in Settings → AI apps send what they read through Glance to their own AI provider, and Ask AI sends what you share in the sidebar to the AI company you pick there.
-
-## FAQ
-
-**What is Glance?**
-A free, open-source reader for PDFs, images, Office files, 3D models and 190+ other file types, with an AI assistant and agent built in. It runs on Windows 10 and 11, Linux and in any browser. Besides reading, it rearranges and merges PDF pages, marks up, signs and redacts, and fixes photos, and the AI can answer questions about a file or edit it for you.
-
-**Is Glance free?**
-Yes. It's free and open source under the Apache-2.0 license, with no ads, account or paid tier. [Download the latest release](https://github.com/RedtRocks/glance/releases/latest).
-
-**Can Glance edit PDFs?**
-It can reorder, rotate, delete, split and merge pages, fill forms, add text, shapes, highlights, notes and signatures, sign with a certificate, and permanently redact text. It doesn't rewrite a PDF's existing body text like a word processor.
-
-**Does Glance send my files anywhere?**
-No. There's no account and nothing you open leaves your PC. Text recognition and background removal run on your PC. Besides an optional update check, Glance sends one anonymous daily count of installs (version number only), which you can turn off in Settings. See [PRIVACY.md](PRIVACY.md).
-
-**What file types does it open?**
-PDF, XPS, EPS and AI files, JPEG, PNG, WebP, AVIF, HEIC, JPEG XL, TIFF, PSD, OpenEXR, SVG, camera RAW, comic book archives, 3D models such as GLB, OBJ, STL and USDZ, Word, PowerPoint and Excel files, CSV, Markdown, text and code, EPUB, email, fonts, video and audio. The full list is in [docs/FORMATS.md](docs/FORMATS.md).
-
-**Can I use Glance on a phone, a Mac or a Chromebook?**
-Yes, in the browser: open [redtrocks.github.io/glance/app](https://redtrocks.github.io/glance/app/) and install it from the browser menu if you like. It works offline and your files stay on the device. A few things need the Windows app: text recognition, scanning, Explorer integration, the Windows share sheet, certificate signatures, PostScript and XPS files, and autosave (in the browser, saving downloads the file).
-
-**Can I ask an AI about a document I have open?**
-Yes, in the Windows app. Press **Ask AI** to chat with Claude, ChatGPT, Gemini and others in a sidebar about the page you're on or an area you select. Sign in with your own account or paste an API key. What you share goes to the AI company you picked.
-
-**Can AI apps like Claude or Codex use Glance?**
-Yes. Connect them in **Settings → AI apps** and they can view, read, convert, combine, split and redact your files through Glance, and see the page you have open. See [docs/AI-APPS.md](docs/AI-APPS.md).
-
-## Building from source
+<details>
+<summary><b>Build from source</b></summary>
 
 Requirements: Node.js 22+, Rust (stable), and on Windows the WebView2 runtime (preinstalled on Windows 10/11).
 
@@ -206,35 +265,10 @@ cd src-tauri && cargo test   # decoder tests (WIC tests run on Windows)
 
 Every pull request builds a Windows installer in CI (see the `glance-windows-x64-installer` artifact).
 
-## Linux
+</details>
 
-Glance also builds for Ubuntu 22.04+ and Debian 12+ (.deb) and Fedora 42+ (.rpm), on x86_64 and ARM64. Download `Glance-<tag>-linux-amd64.deb` (or `-arm64.deb`) or `Glance-<tag>-linux-x86_64.rpm` (or `-aarch64.rpm`) from the [latest release](https://github.com/RedtRocks/glance/releases/latest) and install it:
-
-On Ubuntu or Debian:
-
-```sh
-sudo apt install ./Glance-<tag>-linux-amd64.deb
-```
-
-On Fedora:
-
-```sh
-sudo dnf install ./Glance-<tag>-linux-x86_64.rpm
-```
-
-On any other distribution, use the Flatpak (`Glance-<tag>-linux-x86_64.flatpak` or `-aarch64.flatpak`):
-
-```sh
-flatpak install --user ./Glance-<tag>-linux-x86_64.flatpak
-```
-
-The Flatpak can't open PostScript or EPS (Ghostscript isn't bundled); use the .deb or .rpm for those. Building it yourself is described in `packaging/README.md`.
-
-The .deb and .rpm install `glance` and `glance-mcp` in `/usr/bin` and register Glance for its file types. Install `ghostscript` (recommended by the package) for PostScript and EPS. To build from source, install the Tauri prerequisites (`sudo dnf install gcc gcc-c++ clang webkit2gtk4.1-devel openssl-devel librsvg2-devel libxdo-devel nodejs npm`), then run `npm install && npx tauri build --bundles rpm`; the RPM lands in `src-tauri/target/release/bundle/rpm`. For a .deb, run `npx tauri build --bundles deb`; the output is in `src-tauri/target/release/bundle/deb`.
-
-Not on Linux yet: Text Recognition, scanning, Certificate Signatures, Open With and default apps from inside Glance, Set as Wallpaper, the share sheet, speech input, XPS and JPEG XR. Saved signatures and AI API keys are stored in your login keyring (Secret Service, such as GNOME Keyring or KWallet).
-
-## Project layout
+<details>
+<summary><b>Project layout</b></summary>
 
 ```
 src/                 Preact UI
@@ -256,9 +290,11 @@ docs/ARCHITECTURE.md How the pieces fit together
 CONTEXT.md           Domain glossary
 ```
 
+</details>
+
 ## Contributing
 
-Issues and pull requests are welcome. [`CONTRIBUTING.md`](CONTRIBUTING.md) covers setup, tests, the conventions CI enforces (all UI text goes through `t()`, so Glance can be translated) and how pull requests are reviewed. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) maps the code, [`CONTEXT.md`](CONTEXT.md) defines the project's vocabulary, and [`docs/adr`](docs/adr) records the decisions behind the design. AI coding agents should start with [`AGENTS.md`](AGENTS.md).
+Issues and pull requests are welcome. [`CONTRIBUTING.md`](CONTRIBUTING.md) covers setup, tests, the conventions CI enforces and how pull requests are reviewed. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) maps the code, [`CONTEXT.md`](CONTEXT.md) defines the project's vocabulary, and [`docs/adr`](docs/adr) records the decisions behind the design. AI coding agents should start with [`AGENTS.md`](AGENTS.md).
 
 **Translations.** Run `npm run i18n -- <code>` (for example `de` or `pt-BR`) and fill in `src/i18n/locales/<code>.json`; see [CONTRIBUTING.md](CONTRIBUTING.md#all-ui-text-goes-through-t) for details.
 
