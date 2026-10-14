@@ -352,6 +352,24 @@
   background: var(--ink);
   color: var(--on-ink);
 }
+/* In the desktop app the toolbar is a pill bar of its own, close under the tabs and set
+   off from the panels below by the same 16px gutter that separates the panels. */
+:root[data-look='wollo']:not([data-platform='web']) .chrome {
+  padding-bottom: 16px;
+}
+:root[data-look='wollo']:not([data-platform='web']) .commandbar {
+  height: 60px;
+  margin-top: 6px;
+  padding: 0 10px 0 20px;
+  border-radius: 9999px;
+  background: var(--subtle);
+}
+:root[data-look='wollo']:not([data-platform='web']) .side-main .chrome {
+  padding-top: 16px;
+}
+:root[data-look='wollo']:not([data-platform='web']) .side-main .commandbar {
+  margin-top: 0;
+}
 /* A narrower window gets tighter spacing, so the whole toolbar, More included, stays in view. */
 @media (max-width: 1023px) {
   :root[data-look='wollo'] .commandbar {
@@ -1390,9 +1408,4 @@
 :root[data-look='wollo'][data-gradient] :is(.chrome > .tabstrip, .tabstrip.vertical, .commandbar, .sidebar) {
   background: color-mix(in srgb, var(--subtle) 60%, transparent);
 }
-/* The toolbar becomes a tinted bar too, a pill like the tab bar above it. */
-:root[data-look='wollo'][data-gradient] .commandbar {
-  margin-top: 8px;
-  padding: 0 12px 0 20px;
-  border-radius: 9999px;
-}
+

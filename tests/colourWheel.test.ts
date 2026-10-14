@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { dotAt, dotColour, dotFor, grainImage, harmonise, harmoniesFor, pointOf, windowGradient } from '../src/core/colourWheel'
+import { dotAt, dotColour, dotFor, grainImage, harmonise, harmoniesFor, pointOf, safeAlpha, windowGradient } from '../src/core/colourWheel'
+import { backdropFor, contrast, mix, themeVars } from '../src/core/theme'
 
 describe('colour wheel', () => {
   it('reads hue clockwise from the top and saturation from the centre out', () => {
@@ -60,4 +61,32 @@ describe('window gradient', () => {
     expect(grainImage(0)).toBe('')
     expect(grainImage(0.5)).toMatch(/^url\("data:image\/svg\+xml,/)
   })
+})
+
+describe('readable with any colour', () => {
+  const looks = ['wollo', 'fluent'] as const
+  const wheel = Array.from({ length: 12 }, (_, i) => [0.3, 0.7, 1].map((sat) => dotColour({ hue: i * 30, sat }))).flat()
+  const colours = [...wheel, '#000000', '#ffffff', '#ffff00', '#0a0a0a', '#6312f6', '#f8d32c']
+
+  for (const look of looks) {
+    for (const dark of [false, true]) {
+      const base = backdropFor(look, dark)
+      it(`keeps muted text readable on window colours (${look}, ${dark ? 'dark' : 'light'})`, () => {
+        for (const c of colours) {
+          const a = safeAlpha(c, 0.85, base)
+          expect(contrast(mix(base.bg, c, a), base.muted)).toBeGreaterThanOrEqual(4.5)
+        }
+      })
+      it(`keeps tinted surfaces and the accent readable (${look}, ${dark ? 'dark' : 'light'})`, () => {
+        for (const c of colours) {
+          const v = themeVars({ accent: c, strength: 1, look, dark })
+          for (const name of ['--bg-solid', '--chrome', '--canvas']) {
+            const surface = v[name] ?? base.bg
+            expect(contrast(surface, base.muted)).toBeGreaterThanOrEqual(4.5)
+            expect(contrast(v['--accent'], surface)).toBeGreaterThanOrEqual(2.9)
+          }
+        }
+      })
+    }
+  }
 })

@@ -490,7 +490,9 @@ select optgroup {
 }
 .page-field input {
   width: 52px;
+  color: var(--text);
   text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 .page-field input:focus,
 .search-field:focus-within,

@@ -15,7 +15,7 @@ import { offerDefaultApp } from '../state/defaultApp'
 import * as platform from '../platform'
 import { startWebApp } from '../platform/webApp'
 import { t } from '../i18n'
-import { DEFAULT_ACCENT, themeVars } from '../core/theme'
+import { DEFAULT_ACCENT, backdropFor, themeVars } from '../core/theme'
 import { grainImage, windowGradient } from '../core/colourWheel'
 import { WebNav } from './web/WebNav'
 import { WebWelcome } from './web/WebWelcome'
@@ -135,7 +135,7 @@ export function App() {
   useEffect(() => {
     const root = document.documentElement
     const vars = themeVars({ accent: colours[0] ?? DEFAULT_ACCENT, strength, look, dark })
-    const backdrop = [grainImage(grain), windowGradient(colours, strength)].filter(Boolean).join(', ')
+    const backdrop = [grainImage(grain), windowGradient(colours, strength, backdropFor(look, dark))].filter(Boolean).join(', ')
     if (backdrop) vars['--window-gradient'] = backdrop
     for (const name of [...root.style].filter((n) => n.startsWith('--'))) if (!(name in vars)) root.style.removeProperty(name)
     for (const [name, value] of Object.entries(vars)) root.style.setProperty(name, value)

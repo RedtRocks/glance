@@ -83,6 +83,24 @@ const SURFACES: Record<Look, Record<'light' | 'dark', Record<string, string>>> =
   }
 }
 
+/** The faintest text each look uses (--text-2, flattened onto its window colour). */
+const MUTED: Record<Look, Record<'light' | 'dark', string>> = {
+  wollo: { light: '#6b6b6b', dark: '#a9a6b3' },
+  fluent: { light: '#5f5f5f', dark: '#d1d1d1' }
+}
+
+/** Muted text while window colours are on: a step stronger, so the colours can show more. */
+const MUTED_ON_COLOUR: Record<Look, Record<'light' | 'dark', string>> = {
+  wollo: { light: '#46444d', dark: '#d2cfdb' },
+  fluent: { light: '#444444', dark: '#e2e2e2' }
+}
+
+/** The window colour, and the muted text that window colours must keep readable. */
+export function backdropFor(look: Look, dark: boolean): { bg: string; muted: string } {
+  const mode = dark ? 'dark' : 'light'
+  return { bg: SURFACES[look][mode]['--bg-solid'], muted: MUTED_ON_COLOUR[look][mode] }
+}
+
 /** How far surfaces move toward the accent at full strength. */
 const MAX_TINT = { light: 0.14, dark: 0.16 }
 
@@ -91,7 +109,18 @@ export function themeVars(opts: { accent: string; strength: number; look: Look; 
   const mode = opts.dark ? 'dark' : 'light'
   const base = SURFACES[opts.look][mode]
   const raw = parseHex(opts.accent) ? opts.accent : DEFAULT_ACCENT
-  const accent = readableAccent(raw, base['--bg-solid'])
+  const amount = Math.min(1, Math.max(0, opts.strength)) * MAX_TINT[mode]
+  const muted = MUTED_ON_COLOUR[opts.look][mode]
+  // Each surface takes as much of the accent as it can while muted text on it stays readable.
+  const surfaces: Record<string, string> = {}
+  for (const [name, value] of Object.entries(base)) {
+    let a = amount
+    while (a > 0 && contrast(mix(value, raw, a), muted) < 4.5) a = Math.round((a - 0.01) * 100) / 100
+    surfaces[name] = a > 0 ? mix(value, raw, a) : value
+  }
+  // The accent (switches, focus rings, the open page) has to stand out on every surface.
+  let accent = raw
+  for (const bg of Object.values(surfaces)) accent = readableAccent(accent, bg)
   const vars: Record<string, string> = {
     '--accent': accent,
     '--accent-hover': mix(accent, opts.dark ? '#ffffff' : '#000000', 0.12),
@@ -99,7 +128,10 @@ export function themeVars(opts: { accent: string; strength: number; look: Look; 
     '--violet': accent,
     '--selection': `${accent}2e`
   }
-  const amount = Math.min(1, Math.max(0, opts.strength)) * MAX_TINT[mode]
-  if (amount > 0) for (const [name, value] of Object.entries(base)) vars[name] = mix(value, raw, amount)
+  if (amount > 0) {
+    Object.assign(vars, surfaces)
+    vars['--text-2'] = muted
+    vars['--text-3'] = MUTED[opts.look][mode]
+  }
   return vars
 }

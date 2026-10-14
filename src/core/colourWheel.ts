@@ -4,6 +4,8 @@
  * saturation. Extra dots can follow the first one by a colour harmony or move freely.
  */
 
+import { contrast, mix } from './theme'
+
 export const MAX_DOTS = 3
 
 export type Harmony = 'complementary' | 'analogous' | 'triadic' | 'split' | 'free'
@@ -87,20 +89,40 @@ function rgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${Math.round(alpha * 1000) / 1000})`
 }
 
+/** What the window colours are painted over, and its muted text, the faintest that must stay readable. */
+export interface Backdrop {
+  bg: string
+  muted: string
+}
+
+/** Muted text needs 4.5:1 (WCAG AA); a little headroom covers grain and overlapping layers. */
+const MIN_CONTRAST = 5
+
+/**
+ * The most of `colour` (up to `alpha`) that can be laid over `base` while its muted text,
+ * and so every brighter text and icon, keeps enough contrast.
+ */
+export function safeAlpha(colour: string, alpha: number, base: Backdrop): number {
+  let a = alpha
+  while (a > 0 && contrast(mix(base.bg, colour, a), base.muted) < MIN_CONTRAST) a = Math.round((a - 0.02) * 100) / 100
+  return Math.max(0, a)
+}
+
 /**
  * The window backdrop for `colours` at `strength` (0 to 1): one colour is a soft wash,
- * two run corner to corner, three meet from the corners. Empty when there is nothing to paint.
+ * two run corner to corner, three meet from the corners. Empty when there is nothing to
+ * paint. With a `base`, each colour is held back as far as its text needs.
  */
-export function windowGradient(colours: string[], strength: number): string {
+export function windowGradient(colours: string[], strength: number, base?: Backdrop): string {
   const a = Math.min(1, Math.max(0, strength)) * 0.85
   if (!colours.length || a === 0) return ''
-  const [c1, c2, c3] = colours
-  if (!c2) return `linear-gradient(${rgba(c1, a)}, ${rgba(c1, a)})`
-  if (!c3) return `linear-gradient(135deg, ${rgba(c1, a)} 0%, ${rgba(c2, a)} 100%)`
+  const c = colours.slice(0, MAX_DOTS).map((hex) => rgba(hex, base ? safeAlpha(hex, a, base) : a))
+  if (c.length === 1) return `linear-gradient(${c[0]}, ${c[0]})`
+  if (c.length === 2) return `linear-gradient(135deg, ${c[0]} 0%, ${c[1]} 100%)`
   return [
-    `radial-gradient(circle at 0% 0%, ${rgba(c1, a)} 0%, transparent 70%)`,
-    `radial-gradient(circle at 100% 0%, ${rgba(c2, a)} 0%, transparent 75%)`,
-    `linear-gradient(0deg, ${rgba(c3, a)} 0%, transparent 85%)`
+    `radial-gradient(circle at 0% 0%, ${c[0]} 0%, transparent 70%)`,
+    `radial-gradient(circle at 100% 0%, ${c[1]} 0%, transparent 75%)`,
+    `linear-gradient(0deg, ${c[2]} 0%, transparent 85%)`
   ].join(', ')
 }
 
