@@ -51,7 +51,10 @@ It wears the same Wollo design as its website (Windows 11's Fluent look is one s
 <table>
   <tr>
     <td width="50%" valign="top">
-<img src="assets/screenshots/ai-choice-light.webp" alt="The Ask AI sidebar listing Claude, ChatGPT, Gemini, GitHub Copilot, Qwen, Kimi, Mistral and OpenCode, each signed in with your own account">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/ai-choice-dark.webp">
+  <img src="assets/screenshots/ai-choice-light.webp" alt="The Ask AI sidebar listing Claude, ChatGPT, Gemini, GitHub Copilot, Qwen, Kimi, Mistral and Muse, each signed in with your own account">
+</picture>
       <h3>Ask the AI you already use</h3>
       Claude, ChatGPT, Gemini, Copilot and more sit next to your file, signed in with your own account. Ask about the whole page or an area you select.
     </td>
