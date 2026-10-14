@@ -1390,3 +1390,9 @@
 :root[data-look='wollo'][data-gradient] :is(.chrome > .tabstrip, .tabstrip.vertical, .commandbar, .sidebar) {
   background: color-mix(in srgb, var(--subtle) 60%, transparent);
 }
+/* The toolbar becomes a tinted bar too, rounded like the tab bar above it. */
+:root[data-look='wollo'][data-gradient] .commandbar {
+  margin-top: 8px;
+  padding: 0 12px;
+  border-radius: 20px;
+}
