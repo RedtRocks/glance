@@ -4,6 +4,10 @@ What changed in each version of Glance, newest first. Downloads for every versio
 
 <!-- The Release workflow publishes the section for the version it releases (scripts/release-notes.ts). Add a line under the top "## New in" section for anything users will notice. -->
 
+## New in 0.6.8
+
+- **Muse in Ask AI.** Meta's Muse is now one of the companies in the Ask AI sidebar. It runs Muse Code, Meta's coding agent, signed in with your Meta account, or shows the Meta AI website in the sidebar. Install [Muse Code](https://dev.meta.ai/docs/muse-code) first; Glance starts the rest.
+
 ## New in 0.6.7
 
 - **The install count tells Flatpaks apart.** The anonymous daily check-in (**Settings → Count this install**) now says whether the copy is a Flatpak, instead of counting it as a download from GitHub. Nothing else it sends has changed.

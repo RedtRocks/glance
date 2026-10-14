@@ -100,6 +100,7 @@ fn npx(package: &str, args: &[&str]) -> Launch {
 
 const NODE: &str = "https://nodejs.org/en/download";
 const UV: &str = "https://docs.astral.sh/uv/getting-started/installation/";
+const MUSE: &str = "https://dev.meta.ai/docs/muse-code";
 
 fn builtin(id: &str, name: &str, launch: Vec<Launch>, website: &str, install: &str) -> Agent {
     Agent {
@@ -126,6 +127,9 @@ pub fn builtins() -> Vec<Agent> {
         builtin("qwen", "Qwen", vec![launch("qwen", &["--acp"]), npx("@qwen-code/qwen-code", &["--acp"])], "https://chat.qwen.ai", NODE),
         builtin("kimi", "Kimi", vec![launch("kimi", &["acp"]), launch("uvx", &["--from", "kimi-cli", "kimi", "acp"])], "https://www.kimi.com", UV),
         builtin("mistral", "Mistral", vec![launch("vibe-acp", &[]), launch("uvx", &["--from", "mistral-vibe", "vibe-acp"])], "https://chat.mistral.ai", UV),
+        // Meta's Muse Code speaks its own protocol, not ACP; the community muse-acp adapter
+        // (Apache-2.0, Windows, macOS and Linux) bridges it and needs Muse Code installed.
+        builtin("muse", "Muse", vec![launch("muse-acp", &[]), npx("@brokkai/muse-acp", &[])], "https://www.meta.ai", MUSE),
         // OpenCode signs in to many more companies (Z.ai, DeepSeek, xAI, …) and has free models.
         builtin("opencode", "OpenCode", vec![launch("opencode", &["acp"]), npx("opencode-ai", &["acp"])], "https://opencode.ai", NODE),
     ]
