@@ -4,6 +4,7 @@ import { Icon } from './Icon'
 import { keysFor } from '../state/commands'
 import { displayCombo } from '../core/shortcuts'
 import { dropTabId } from './dragState'
+import { settings, updateSettings } from '../state/settings'
 import { t } from '../i18n'
 
 function openTip(): string {
@@ -16,10 +17,48 @@ function kindIcon(doc: Doc) {
   return <Icon name="document" size={16} />
 }
 
-export function TabStrip() {
+function collapseTip(collapsed: boolean): string {
+  const label = collapsed ? t('Expand tabs') : t('Collapse tabs')
+  const k = keysFor('view.collapseTabs')[0]
+  return k ? t('{label} ({shortcut})', { label, shortcut: displayCombo(k) }) : label
+}
+
+/**
+ * `vertical`: the tabs run down the left side of the window (Settings → Customise → Tabs).
+ * Collapsed tabs shrink to their icons; the open tab keeps its name when they run across the top.
+ */
+export function TabStrip({ vertical = false }: { vertical?: boolean }) {
   const list = docs.value
+  const collapsed = settings.value.tabsCollapsed
+  const toggle = (
+    <button
+      class="tab-collapse"
+      aria-label={collapsed ? t('Expand tabs') : t('Collapse tabs')}
+      aria-pressed={collapsed}
+      title={collapseTip(collapsed)}
+      onClick={() => updateSettings({ tabsCollapsed: !collapsed })}
+    >
+      <Icon name={vertical ? 'sidebar' : collapsed ? 'right' : 'left'} size={16} />
+    </button>
+  )
+  const newTab = (
+    <button class="tab-new" aria-label={t('Open file')} title={openTip()} onClick={() => void openWithDialog()}>
+      <Icon name="add" size={16} />
+      {vertical && <span class="tab-new-label">{t('Open file')}</span>}
+    </button>
+  )
   return (
-    <div class="tabstrip" role="tablist">
+    <div
+      class={`tabstrip ${vertical ? 'vertical' : ''} ${collapsed ? 'collapsed' : ''}`}
+      role="tablist"
+      aria-orientation={vertical ? 'vertical' : 'horizontal'}
+    >
+      {vertical && (
+        <div class="tab-head">
+          {toggle}
+          {newTab}
+        </div>
+      )}
       {list.map((doc) => {
         const active = doc.id === activeId.value
         return (
@@ -53,9 +92,9 @@ export function TabStrip() {
           </div>
         )
       })}
-      <button class="tab-new" aria-label={t('Open file')} title={openTip()} onClick={() => void openWithDialog()}>
-        <Icon name="add" size={16} />
-      </button>
+      {!vertical && newTab}
+      {!vertical && <span class="tab-spacer" />}
+      {!vertical && toggle}
     </div>
   )
 }

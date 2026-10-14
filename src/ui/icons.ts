@@ -77,6 +77,7 @@ import chevronSmall from '@fluentui/svg-icons/icons/chevron_down_12_regular.svg?
 import crop from '@fluentui/svg-icons/icons/crop_20_regular.svg?raw'
 import straighten from '@fluentui/svg-icons/icons/crop_arrow_rotate_20_regular.svg?raw'
 import adjustColor from '@fluentui/svg-icons/icons/color_20_regular.svg?raw'
+import paintBrush from '@fluentui/svg-icons/icons/paint_brush_20_regular.svg?raw'
 import adjustSize from '@fluentui/svg-icons/icons/resize_image_20_regular.svg?raw'
 import removeBg from '@fluentui/svg-icons/icons/image_off_20_regular.svg?raw'
 import copySubject from '@fluentui/svg-icons/icons/person_square_20_regular.svg?raw'
@@ -112,5 +113,5 @@ import folderOpen from '@fluentui/svg-icons/icons/folder_open_20_regular.svg?raw
 import lock from '@fluentui/svg-icons/icons/lock_closed_20_regular.svg?raw'
 import sun from '@fluentui/svg-icons/icons/weather_sunny_20_regular.svg?raw'
 
-export const ICONS = { sidebar, zoomIn, zoomOut, rotateRight, rotateLeft, highlight, search, print, share, more, up, down, left, right, open, close, settings, grid, toc, bookmark, moon, language, save, trash, add, addPage, fullscreen, slideshow, fitPage, zoomFit, undo, redo, edit, check, copy, image, cube, info, newWindow, document, tabs, pen, markup, cursor, draw, sketch, shapes, textBox, note, signature, redact, lineWidth, strokeColor, fillColor, textStyle, underline, strike, star, oval, square, roundRect, arrow, line, bubble, polygon, bookmarkAdd, bookmarks, notes, warningFilled, infoFilled, successFilled, errorFilled, certificate, chevronSmall, crop, straighten, adjustColor, adjustSize, removeBg, copySubject, selectRect, selectEllipse, lasso, smartLasso, instantAlpha, flipH, flipV, exportIcon, squiggly, sparkle, sparkleFilled, apps, back, home, download, upload, folderOpen, lock, sun, history, globe, sendUp, stop, selectArea, onePage, chatAdd, mic, micFilled, eye }
+export const ICONS = { sidebar, zoomIn, zoomOut, rotateRight, rotateLeft, highlight, search, print, share, more, up, down, left, right, open, close, settings, grid, toc, bookmark, moon, language, save, trash, add, addPage, fullscreen, slideshow, fitPage, zoomFit, undo, redo, edit, check, copy, image, cube, info, newWindow, document, tabs, pen, markup, cursor, draw, sketch, shapes, textBox, note, signature, redact, lineWidth, strokeColor, fillColor, textStyle, underline, strike, star, oval, square, roundRect, arrow, line, bubble, polygon, bookmarkAdd, bookmarks, notes, warningFilled, infoFilled, successFilled, errorFilled, certificate, chevronSmall, crop, straighten, adjustColor, paintBrush, adjustSize, removeBg, copySubject, selectRect, selectEllipse, lasso, smartLasso, instantAlpha, flipH, flipV, exportIcon, squiggly, sparkle, sparkleFilled, apps, back, home, download, upload, folderOpen, lock, sun, history, globe, sendUp, stop, selectArea, onePage, chatAdd, mic, micFilled, eye }
 export type IconName = keyof typeof ICONS

@@ -15,13 +15,14 @@ import { offerDefaultApp } from '../state/defaultApp'
 import * as platform from '../platform'
 import { startWebApp } from '../platform/webApp'
 import { t } from '../i18n'
+import { DEFAULT_ACCENT, backdropFor, themeVars } from '../core/theme'
+import { grainImage, windowGradient } from '../core/colourWheel'
 import { WebNav } from './web/WebNav'
 import { WebWelcome } from './web/WebWelcome'
 import { OpeningOverlay } from './web/FileLoader'
 import { PageCounter, PhoneBar, PhoneDock, PhoneSearch, PhoneSheets } from './web/PhoneShell'
-import { MenuBar } from './MenuBar'
+import { CommandBar } from './CommandBar'
 import { TabStrip } from './TabStrip'
-import { Toolbar } from './Toolbar'
 import { Sidebar } from './sidebar/Sidebar'
 import { PdfView } from './views/PdfView'
 import { ImageView } from './views/ImageView'
@@ -126,6 +127,20 @@ export function App() {
   useEffect(() => {
     document.documentElement.dataset.look = look
   }, [look])
+  // Window colours from Settings → Customise, written over the look's own colours. The
+  // gradient and grain paint the window behind the chrome (data-gradient in app.css).
+  const { colours, strength, grain } = settings.value
+  const key = colours.join()
+  useEffect(() => {
+    const root = document.documentElement
+    const vars = themeVars({ accent: colours[0] ?? DEFAULT_ACCENT, strength, look, dark })
+    const backdrop = [grainImage(grain), windowGradient(colours, strength, backdropFor(look, dark))].filter(Boolean).join(', ')
+    if (backdrop) vars['--window-gradient'] = backdrop
+    for (const name of [...root.style].filter((n) => n.startsWith('--'))) if (!(name in vars)) root.style.removeProperty(name)
+    for (const [name, value] of Object.entries(vars)) root.style.setProperty(name, value)
+    if (backdrop) root.dataset.gradient = ''
+    else delete root.dataset.gradient
+  }, [key, strength, grain, look, dark])
 
   // Files from the command line (Open with, Send to), later launches, and new windows.
   useEffect(() => {
@@ -199,6 +214,19 @@ export function App() {
     void platform.setWindowTitle(name ? `${doc?.dirty.value ? '• ' : ''}${name} - Glance` : 'Glance')
   }, [doc, doc?.name.value, doc?.dirty.value])
 
+  const sideTabs = !phone && !platform.isWeb && settings.value.tabs === 'side' && docs.value.length > 0
+  const desktopChrome = (
+    <header class="chrome">
+      {platform.isWeb ? <WebNav /> : !sideTabs && docs.value.length > 0 && <TabStrip />}
+      {(platform.isTauri || doc) && (
+        <CommandBar />
+      )}
+      <MarkupToolbar />
+      <UpdateBar />
+      <DefaultAppBar />
+    </header>
+  )
+
   return (
     <div class={`app ${fileDragOver.value ? 'file-drag' : ''}`}>
       {phone ? (
@@ -208,21 +236,19 @@ export function App() {
             {findOpen.value && <PhoneSearch doc={doc} />}
           </header>
         )
+      ) : sideTabs ? (
+        // Tabs down the left side: the bar spans the window's height, beside the chrome and document.
+        <div class="side-layout">
+          <TabStrip vertical />
+          <div class="side-main">
+            {desktopChrome}
+            <Viewer />
+          </div>
+        </div>
       ) : (
-        <header class="chrome">
-          {platform.isWeb ? <WebNav /> : docs.value.length > 0 && <TabStrip />}
-          {(!platform.isWeb || doc) && (
-            <div class="commandbar">
-              <MenuBar />
-              <Toolbar />
-            </div>
-          )}
-          <MarkupToolbar />
-          <UpdateBar />
-          <DefaultAppBar />
-        </header>
+        desktopChrome
       )}
-      <Viewer />
+      {!sideTabs && <Viewer />}
       {/* On a phone the markup tools sit at the bottom, under the thumb. */}
       {phone && <MarkupToolbar />}
       {phone && <PhoneSheets />}

@@ -166,8 +166,12 @@ select optgroup {
 .tab-dirty {
   color: var(--accent);
 }
+.page-total {
+  white-space: nowrap;
+}
 .tab-close,
 .tab-new,
+.tab-collapse,
 .icon-button {
   display: inline-grid;
   place-items: center;
@@ -180,12 +184,126 @@ select optgroup {
 }
 .tab-close:hover,
 .tab-new:hover,
+.tab-collapse:hover,
 .icon-button:hover {
   background: var(--subtle-hover);
   color: var(--text);
 }
 .tab-new {
   margin: 0 0 5px 2px;
+}
+.tab-spacer {
+  flex: 1;
+}
+.tabstrip > .tab-collapse {
+  flex: none;
+  margin: 0 0 5px;
+}
+/* Collapsed tabs across the top: the others shrink to their icons, the open one keeps its name. */
+.tabstrip.collapsed:not(.vertical) .tab:not(.active) {
+  min-width: 0;
+  width: 40px;
+  padding: 0;
+  justify-content: center;
+}
+.tabstrip.collapsed:not(.vertical) .tab:not(.active) :is(.tab-title, .tab-close, .tab-dirty) {
+  display: none;
+}
+
+/* Tabs down the left side (Settings → Customise → Tabs). The bar runs the window's full
+   height; the menu bar, toolbar and document sit to its right. */
+.side-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.side-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+.tabstrip.vertical {
+  flex: none;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  width: 200px;
+  padding: 8px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--chrome);
+  border-right: 1px solid var(--stroke);
+}
+.tabstrip.vertical .tab {
+  flex: none;
+  min-width: 0;
+  max-width: none;
+  height: 36px;
+  border-radius: var(--radius-lg);
+}
+.tabstrip.vertical .tab.active {
+  clip-path: none;
+}
+.tabstrip.vertical .tab-new {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: auto;
+  height: 36px;
+  margin: 0 0 6px;
+  padding: 0 12px;
+  border-radius: var(--radius-lg);
+}
+.tab-head {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.tabstrip.vertical .tab-head .tab-new {
+  margin: 0;
+}
+.tab-head .tab-new {
+  flex: 1;
+}
+.tab-head .tab-collapse {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-lg);
+}
+/* Collapsed side tabs shrink to their icons (the name shows on hover). Below 1200px they
+   always do, so the menu bar and toolbar keep the room they have with tabs on top. */
+.tabstrip.vertical.collapsed {
+  width: 60px;
+}
+.tabstrip.vertical.collapsed .tab-head {
+  flex-direction: column;
+}
+.tabstrip.vertical.collapsed :is(.tab-title, .tab-close, .tab-dirty, .tab-new-label) {
+  display: none;
+}
+.tabstrip.vertical.collapsed :is(.tab, .tab-new, .tab-collapse) {
+  justify-content: center;
+  width: auto;
+  padding: 0;
+}
+@media (max-width: 1199px) {
+  .tabstrip.vertical {
+    width: 60px;
+  }
+  .tabstrip.vertical .tab-collapse {
+    display: none;
+  }
+  .tabstrip.vertical :is(.tab-title, .tab-close, .tab-dirty, .tab-new-label) {
+    display: none;
+  }
+  .tabstrip.vertical :is(.tab, .tab-new) {
+    justify-content: center;
+    padding: 0;
+  }
 }
 
 .commandbar {
@@ -196,6 +314,20 @@ select optgroup {
   padding: 0 8px;
   background: var(--layer-alt);
   border-bottom: 1px solid var(--stroke);
+}
+/* Too narrow for one line (CommandBar.tsx): the toolbar moves under the menu bar. */
+.commandbar.wrapped {
+  flex-wrap: wrap;
+  height: auto;
+  row-gap: 0;
+}
+.commandbar.wrapped .menubar {
+  height: 44px;
+  align-items: center;
+}
+.commandbar.wrapped .toolbar {
+  flex-basis: 100%;
+  height: 44px;
 }
 :root[data-material='mica'] .commandbar {
   background: var(--layer);
@@ -372,7 +504,9 @@ select optgroup {
 }
 .page-field input {
   width: 52px;
+  color: var(--text);
   text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 .page-field input:focus,
 .search-field:focus-within,
@@ -1786,9 +1920,150 @@ body,
   line-height: 16px;
   color: var(--text-2);
 }
+/* Colour swatches (Settings → Customise). */
+.accent-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  max-width: 300px;
+}
+.accent-swatch {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+}
+.accent-swatch[aria-checked='true'],
+.accent-custom.checked {
+  box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--text);
+}
+.accent-custom {
+  background: conic-gradient(#f258a8, #f47933, #f8d32c, #1f9d55, #005fb8, #6312f6, #f258a8);
+}
+.accent-custom input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
 .settings-card-buttons {
   display: flex;
   gap: 8px;
+}
+
+/* Window colours (Settings → Customise): the colour wheel with its controls beside it. */
+.settings-card-stack {
+  flex-direction: column;
+  align-items: stretch;
+}
+.settings-card-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.colour-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 8px 0 4px 52px;
+}
+.colour-wheel-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.colour-wheel {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  /* Hue clockwise from the top, saturation from the centre out (core/colourWheel.ts). */
+  background: radial-gradient(circle closest-side, #8c8c8c, rgba(140, 140, 140, 0) 100%),
+    conic-gradient(#ff1a1a, #ffff1a, #1aff1a, #1affff, #1a1aff, #ff1aff, #ff1a1a);
+  box-shadow: inset 0 0 0 1px var(--stroke);
+  touch-action: none;
+  cursor: crosshair;
+}
+.colour-dot {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  padding: 0;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  cursor: grab;
+}
+.colour-dot.primary {
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+}
+.colour-dot:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+.colour-wheel-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.colour-wheel-actions .icon-button {
+  width: 32px;
+  height: 32px;
+}
+.colour-wheel-actions .icon-button:disabled {
+  opacity: 0.4;
+}
+.colour-harmony {
+  min-width: 96px;
+}
+.colour-controls {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 220px;
+}
+.colour-controls .accent-swatches {
+  justify-content: flex-start;
+  max-width: none;
+}
+.colour-slider {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+.colour-label {
+  margin-top: 4px;
+  color: var(--text-2);
+  font-size: 12px;
+}
+.gradient-swatch {
+  width: 44px;
+  background-color: #fff;
+  border-radius: 11px;
+}
+
+/* The wheel's colours paint the window; the chrome lets them show through. */
+:root[data-gradient] body {
+  background: var(--window-gradient), var(--bg-solid);
+}
+:root[data-gradient] :is(.chrome, .tabstrip.vertical) {
+  background-color: transparent;
+}
+:root[data-gradient] .commandbar {
+  background: color-mix(in srgb, var(--layer-alt) 55%, transparent);
 }
 .settings-note {
   display: flex;
