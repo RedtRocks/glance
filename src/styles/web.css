@@ -294,6 +294,18 @@
   background: var(--ink);
   color: var(--on-ink);
 }
+/* A narrower window gets tighter spacing, so the whole toolbar, More included, stays in view. */
+@media (max-width: 1023px) {
+  :root[data-look='wollo'] .commandbar {
+    gap: 4px;
+  }
+  :root[data-look='wollo'] .menubar-button {
+    padding: 0 8px;
+  }
+  :root[data-look='wollo'] .tb-button {
+    width: 36px;
+  }
+}
 :root[data-look='wollo'] .tb-sep {
   background: var(--stroke);
 }

@@ -394,6 +394,13 @@ select optgroup {
 .search-field.expanded {
   width: 280px;
 }
+/* In a narrow window the search box gives up width before More is pushed out of view. */
+.tb-item.tb-search {
+  min-width: 44px;
+}
+.tb-search .search-field {
+  max-width: calc(100% - 6px);
+}
 .search-field input {
   flex: 1;
   min-width: 0;
