@@ -151,6 +151,7 @@ It wears the same Wollo design as its website (Windows 11's Fluent look is one s
 | Page numbers, headers, footers and text or image watermarks on PDFs (Pages → Header, Footer & Watermark, with live preview) | ✅ |
 | Touchpad gestures: pinch to zoom smoothly; two-finger orbit and Shift + two-finger pan for 3D models | ✅ |
 | Touchscreen gestures: pinch to zoom around your fingers, double-tap to zoom, swipe to turn pages or move between photos; tap markup to select it, with a bar to edit, recolor, duplicate or delete | ✅ |
+| Customise tab: colour-wheel window colours with gradients and grain (accent colour follows), tabs on top or down the side, collapsible tabs, Glance or Windows look | ✅ |
 | Interface follows the Windows display language, with a Language setting (English only so far; translations welcome) | ✅ |
 | Explorer right-click menu: Open in Glance, Combine into PDF, Remove Location Info (Windows 11's main menu in the Microsoft Store version; under "Show more options" with the GitHub installer) | ✅ |
 | AI apps (Claude Code, Claude Desktop, Codex, Antigravity, Muse Code, Cursor, VS Code and any MCP app) can view any format, read text with OCR, convert, combine, split and redact files, and see and control what's open in Glance; one-click setup in Settings → AI apps ([how it works](docs/AI-APPS.md)) | ✅ |

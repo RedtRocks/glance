@@ -1,7 +1,7 @@
 import { effect, signal } from '@preact/signals'
 import { DEFAULT_PAGE_NUMBER_THRESHOLD } from '../core/pageControls'
 import { DEFAULT_ACCENT } from '../core/theme'
-import type { Harmony } from '../core/colourWheel'
+import { MAX_DOTS, type Harmony } from '../core/colourWheel'
 
 export type ThemePref = 'system' | 'light' | 'dark'
 /** Wollo is the website's design (the browser version always wears it); Fluent matches Windows. */
@@ -74,6 +74,22 @@ const DEFAULTS: Settings = {
 
 const KEY = 'glance.settings.v1'
 
+const unit = (v: unknown, fallback: number): number => (typeof v === 'number' && v >= 0 && v <= 1 ? v : fallback)
+
+/** A hand-edited or older settings file can't break the window colours. */
+function withValidColours(s: Settings): Settings {
+  const colours = Array.isArray(s.colours) ? s.colours.filter((c) => typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c)).slice(0, MAX_DOTS) : []
+  return {
+    ...s,
+    colours: colours.length ? colours : [DEFAULT_ACCENT],
+    harmony: (['complementary', 'analogous', 'triadic', 'split', 'free'] as Harmony[]).includes(s.harmony) ? s.harmony : 'free',
+    strength: unit(s.strength, 0),
+    grain: unit(s.grain, 0),
+    tabs: s.tabs === 'side' ? 'side' : 'top',
+    tabsCollapsed: s.tabsCollapsed === true
+  }
+}
+
 /** Toolbar items added in later versions are appended for users with a saved toolbar. */
 const ADDED_ITEMS: Record<string, string> = { highlight: 'rotate', markup: 'highlight', askAi: 'markup' }
 
@@ -89,7 +105,7 @@ function load(): Settings {
         saved.toolbar.splice(i >= 0 ? i + 1 : saved.toolbar.length - 1, 0, item)
       }
       saved.seenItems = [...new Set([...seen, ...Object.keys(ADDED_ITEMS)])]
-      return saved
+      return withValidColours(saved)
     }
   } catch {
     /* storage unavailable: use defaults */

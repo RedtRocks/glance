@@ -4,6 +4,12 @@ What changed in each version of Glance, newest first. Downloads for every versio
 
 <!-- The Release workflow publishes the section for the version it releases (scripts/release-notes.ts). Add a line under the top "## New in" section for anything users will notice. -->
 
+## New in 0.6.9
+
+- **Make Glance your own.** A new **Customise** tab in Settings holds the theme, design, tabs and toolbar options. Pick up to three colours on a colour wheel, like Zen Browser's, to paint the window in a gradient, with sliders for strength and film grain and some ready-made gradients. The first colour is also the accent colour. Text and icons stay readable whatever you pick, in light and dark.
+- **Tabs down the side, and tabs that collapse.** Show your open files down the left side of the window instead of across the top (**Settings → Customise → Tabs**). Either way, **View → Collapse Tabs** (Ctrl+Shift+B) shrinks them to their icons.
+- **Rounder toolbar.** The tab bar and toolbar are pill-shaped, with more room between the toolbar and the page.
+
 ## New in 0.6.8
 
 - **A new look that matches the website.** Glance now uses the same design as its website: the Urbanist font, ink and violet colours, rounded panels and pill-shaped tabs, in light and dark. To go back to the Windows look, open **Settings → Design** and choose **Windows**.

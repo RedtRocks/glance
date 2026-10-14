@@ -24,7 +24,7 @@ function collapseTip(collapsed: boolean): string {
 }
 
 /**
- * `vertical`: the tabs run down the left side of the window (Settings → Design → Tabs).
+ * `vertical`: the tabs run down the left side of the window (Settings → Customise → Tabs).
  * Collapsed tabs shrink to their icons; the open tab keeps its name when they run across the top.
  */
 export function TabStrip({ vertical = false }: { vertical?: boolean }) {

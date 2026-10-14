@@ -370,7 +370,20 @@
 :root[data-look='wollo']:not([data-platform='web']) .side-main .commandbar {
   margin-top: 0;
 }
-/* A narrower window gets tighter spacing, so the whole toolbar, More included, stays in view. */
+/* On two lines the toolbar pill becomes a rounded panel. */
+:root[data-look='wollo'] .commandbar.wrapped {
+  height: auto;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+:root[data-look='wollo']:not([data-platform='web']) .commandbar.wrapped {
+  border-radius: 28px;
+}
+:root[data-look='wollo'] .commandbar.wrapped :is(.menubar, .toolbar) {
+  height: 48px;
+}
+/* A narrower window gets tighter spacing, so the whole toolbar, More included, stays in view.
+   Side tabs leave the toolbar less room, so they tighten it sooner. */
 @media (max-width: 1023px) {
   :root[data-look='wollo'] .commandbar {
     gap: 4px;
@@ -381,6 +394,25 @@
   :root[data-look='wollo'] .tb-button {
     width: 36px;
   }
+  :root[data-look='wollo']:not([data-platform='web']) .commandbar {
+    padding: 0 8px 0 12px;
+  }
+}
+@media (max-width: 1199px) {
+  :root[data-look='wollo'] .side-main .commandbar {
+    gap: 4px;
+    padding: 0 8px 0 12px;
+  }
+  :root[data-look='wollo'] .side-main .menubar-button {
+    padding: 0 8px;
+  }
+  :root[data-look='wollo'] .side-main .tb-button {
+    width: 36px;
+  }
+}
+/* A squeezed search box trails off rather than cutting its placeholder mid-letter. */
+:root[data-look='wollo'] .search-field input {
+  text-overflow: ellipsis;
 }
 :root[data-look='wollo'] .tb-sep {
   background: var(--stroke);

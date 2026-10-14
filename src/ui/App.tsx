@@ -21,9 +21,8 @@ import { WebNav } from './web/WebNav'
 import { WebWelcome } from './web/WebWelcome'
 import { OpeningOverlay } from './web/FileLoader'
 import { PageCounter, PhoneBar, PhoneDock, PhoneSearch, PhoneSheets } from './web/PhoneShell'
-import { MenuBar } from './MenuBar'
+import { CommandBar } from './CommandBar'
 import { TabStrip } from './TabStrip'
-import { Toolbar } from './Toolbar'
 import { Sidebar } from './sidebar/Sidebar'
 import { PdfView } from './views/PdfView'
 import { ImageView } from './views/ImageView'
@@ -220,10 +219,7 @@ export function App() {
     <header class="chrome">
       {platform.isWeb ? <WebNav /> : !sideTabs && docs.value.length > 0 && <TabStrip />}
       {(platform.isTauri || doc) && (
-        <div class="commandbar">
-          <MenuBar />
-          <Toolbar />
-        </div>
+        <CommandBar />
       )}
       <MarkupToolbar />
       <UpdateBar />
