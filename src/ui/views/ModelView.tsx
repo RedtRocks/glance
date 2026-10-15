@@ -7,6 +7,8 @@ import * as platform from '../../platform'
 import { Icon } from '../Icon'
 import { Popover } from '../markup/Popover'
 import { FileLoader } from '../web/FileLoader'
+import { InfoBar } from '../InfoBar'
+import { webHosts } from '../../core/modelAssets'
 import { intlLocale, msg, t } from '../../i18n'
 import { isDoubleTap, isTap } from '../touchGestures'
 
@@ -82,11 +84,16 @@ export function ModelView({ doc }: { doc: ModelDoc }) {
   const viewer = useRef<ModelViewer | null>(null)
   const [stats, setStats] = useState<ModelStats | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // Sites the model wants files from, held back until the user allows them.
+  const [webSites, setWebSites] = useState<string[]>([])
+  const [allowWeb, setAllowWeb] = useState(false)
   const dark = isDark()
 
   useEffect(() => {
     let alive = true
     let v: ModelViewer | null = null
+    const held: string[] = []
+    setWebSites([])
     const c = canvas.current!
     const ro = new ResizeObserver(() => v?.resize())
     ro.observe(c)
@@ -96,7 +103,14 @@ export function ModelView({ doc }: { doc: ModelDoc }) {
         const { createViewer } = await import('../../model/viewer')
         const created = await createViewer(c, bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer, doc.name.peek(), {
           resolve: (rel) => sibling(doc.probe.path, rel),
-          dark
+          dark,
+          web: {
+            allow: allowWeb,
+            blocked: (url) => {
+              held.push(url)
+              if (alive) setWebSites(webHosts(held))
+            }
+          }
         })
         if (!alive) return created.dispose()
         v = created
@@ -119,7 +133,7 @@ export function ModelView({ doc }: { doc: ModelDoc }) {
       v?.dispose()
       viewer.current = null
     }
-  }, [doc])
+  }, [doc, allowWeb])
 
   // Touch: one finger orbits and two pinch or pan (OrbitControls); a double-tap resets the view.
   useEffect(() => {
@@ -186,6 +200,27 @@ export function ModelView({ doc }: { doc: ModelDoc }) {
   return (
     <div class="model-view">
       <canvas ref={canvas} class="model-canvas" aria-label={t('3D view of {name}', { name: doc.name.value })} />
+      {webSites.length > 0 && (
+        <div class="model-web-bar">
+          <InfoBar
+            severity="warning"
+            title={t('This model wants files from the web')}
+            actions={
+              // The desktop app's content policy never lets a page reach the web.
+              platform.isWeb && (
+                <button class="btn" onClick={() => setAllowWeb(true)}>
+                  {t('Load them')}
+                </button>
+              )
+            }
+            onClose={() => setWebSites([])}
+          >
+            {platform.isWeb
+              ? t('Loading them tells {sites} that you opened this model.', { sites: webSites.join(', ') })
+              : t('Glance doesn’t load files from {sites}, so some textures may be missing.', { sites: webSites.join(', ') })}
+          </InfoBar>
+        </div>
+      )}
       {error ? (
         <div class="notice model-error">
           <h2>{t('Glance can’t show this model')}</h2>

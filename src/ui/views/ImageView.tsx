@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks'
 import type { ImageDoc } from '../../state/documents'
 import { wheelZoom } from '../gestures'
-import { imageUrl, isWeb } from '../../platform'
+import { allowLargePages, imageUrl, isWeb } from '../../platform'
 import { FileLoader } from '../web/FileLoader'
 import { tool } from '../../state/markupState'
 import { MarkupLayer } from '../markup/MarkupLayer'
@@ -60,11 +60,14 @@ export function ImageView({ doc }: { doc: ImageDoc }) {
   const img = useRef<HTMLImageElement>(null)
   const [view, setView] = useState({ w: 0, h: 0 })
   const [error, setError] = useState<string | null>(null)
+  // A comic book page past the size limit: warn, and let the user open it anyway.
+  const [tooLarge, setTooLarge] = useState(false)
   const natural = doc.natural.value
   const raster = doc.preview.value ?? doc.raster.value
   const rotation = doc.raster.value ? 0 : doc.rotation.value
   const zoom = doc.zoom.value
   const page = doc.current.value
+  useEffect(() => setTooLarge(false), [doc, page])
   // Not memoized: in the browser version the URL appears once the page is decoded.
   const src = imageUrl(doc.probe, page)
 
@@ -173,7 +176,22 @@ export function ImageView({ doc }: { doc: ImageDoc }) {
           doc.zoom.value = wheelZoom(typeof z === 'number' ? z : scale, e)
         }}
       >
-        {error ? (
+        {tooLarge ? (
+          <div class="notice">
+            <h2>{t('This page is unusually large')}</h2>
+            <p>{t('It needs more than 256 MB of memory, which can slow down or close Glance. Files made to crash apps often look like this.')}</p>
+            <button
+              class="btn"
+              onClick={() => {
+                allowLargePages(doc.probe.path)
+                // The next render asks for the page with large=1.
+                setTooLarge(false)
+              }}
+            >
+              {t('Open anyway')}
+            </button>
+          </div>
+        ) : error ? (
           <div class="notice">
             <h2>{t('Glance couldn’t display this image')}</h2>
             <p>{error}</p>
@@ -200,6 +218,7 @@ export function ImageView({ doc }: { doc: ImageDoc }) {
                   }}
                   onError={async () => {
                     const res = await fetch(src).catch(() => null)
+                    if (res?.status === 413) return setTooLarge(true)
                     setError(res && !res.ok ? await res.text() : t('The file may be damaged or use an unsupported variant of its format.'))
                   }}
                 />

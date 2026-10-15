@@ -4,6 +4,10 @@ What changed in each version of Glance, newest first. Downloads for every versio
 
 <!-- The Release workflow publishes the section for the version it releases (scripts/release-notes.ts). Add a line under the top "## New in" section for anything users will notice. -->
 
+## New in 0.7.1
+
+- **Safer with untrusted files and websites.** Websites shown in the Ask AI sidebar can no longer reach the files on your PC. A 3D model that wants textures from the web now asks first, and a comic book (.cbz) page too large to be real warns you before it opens.
+
 ## New in 0.7.0
 
 - **A new look that matches the website.** Glance now uses the same design as its website: the Urbanist font, ink and violet colours, rounded panels and pill-shaped tabs, in light and dark. To go back to the Windows look, open **Settings → Customise → Design** and choose **Windows**.

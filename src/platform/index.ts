@@ -110,6 +110,14 @@ export function schemeUrl(route: 'file' | 'decode' | 'archive', params: Record<s
   return isWindows ? `http://glance.localhost/${route}?${q}` : `glance://localhost/${route}?${q}`
 }
 
+/** Comic book archives whose oversized pages the user chose to open anyway. */
+const largePagesAllowed = new Set<string>()
+
+/** Lets `path`'s pages past the archive size limit load, after the user saw the warning. */
+export function allowLargePages(path: string): void {
+  largePagesAllowed.add(path)
+}
+
 /** URL an <img> can load directly for one page of an image file. */
 export function imageUrl(probe: Probe, page = 0, max?: number): string {
   if (usesHeifWasm(probe)) return cachedUrl(`${probe.path}#${page}`, () => decodeInBrowser(probe, page))
@@ -120,7 +128,7 @@ export function imageUrl(probe: Probe, page = 0, max?: number): string {
     }
     return cachedUrl(`${probe.path}#${page}`, () => decodeInBrowser(probe, page))
   }
-  if (probe.kind === 'archive') return schemeUrl('archive', { path: probe.path, page })
+  if (probe.kind === 'archive') return schemeUrl('archive', { path: probe.path, page, ...(largePagesAllowed.has(probe.path) ? { large: 1 } : {}) })
   if (probe.browserNative && !max) return schemeUrl('file', { path: probe.path })
   return schemeUrl('decode', { path: probe.path, page, ...(max ? { max } : {}) })
 }

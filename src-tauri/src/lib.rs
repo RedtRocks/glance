@@ -115,7 +115,10 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_drag::init())
-        .register_asynchronous_uri_scheme_protocol("glance", |_ctx, request, responder| {
+        .register_asynchronous_uri_scheme_protocol("glance", |ctx, request, responder| {
+            if !protocol::allowed(ctx.webview_label()) {
+                return responder.respond(protocol::forbidden());
+            }
             tauri::async_runtime::spawn_blocking(move || responder.respond(protocol::handle(request)));
         })
         .manage(files::OpenFiles::default())

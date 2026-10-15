@@ -86,7 +86,8 @@ fn decode_unguarded(path: &Path, page: u32, max: Option<u32>) -> Result<Decoded,
     let ext = formats::extension(path);
 
     if ext == "cbz" {
-        let (_, bytes) = archive::read_page(path, page as usize)?;
+        // Thumbnails and decoded pages never ask, so huge pages stay refused here.
+        let (_, bytes) = archive::read_page(path, page as usize, Some(archive::MAX_PAGE_BYTES))?;
         return decode_bytes(&bytes, None).map(|d| d.fit(max));
     }
 
