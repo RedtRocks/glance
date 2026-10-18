@@ -146,6 +146,7 @@ export function DeckView({ doc }: { doc: DeckDoc }) {
           </div>
         )}
         {/* The box being typed in is hidden underneath, so its old text doesn't show through. */}
+        {/* i18n-ignore: CSS */}
         {editing && <style>{`.deck-current [data-ref="${editing.key}"] { visibility: hidden }`}</style>}
         {editing && (
           <textarea

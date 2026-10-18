@@ -1,5 +1,5 @@
 {
-  "instructions": "Glance is the user's document and image viewer on Windows. Use it to look at and work with local files: see any page or image (PDF, camera RAW, HEIC, PSD, JPEG XL, EPS, XPS, TIFF, comics and 40+ other formats), read text with OCR, combine, split, rotate and reorder PDF pages, convert images, and redact text so it is really removed. Paths are absolute Windows paths and pages are numbered from 1. Tools never change the files you pass in: every edit writes a new file at output_path. The glance_open, glance_list_open, glance_current_view, glance_go_to_page, glance_mark_redactions, glance_text_layout, glance_edit_text, glance_add_text and glance_erase tools work with what the user has open in the Glance window; the editing ones change the open document in its own style, for the user to review and save. Use these tools whenever the user asks about a local document or image, or about what they're looking at, even if they don't mention Glance. Glance starts in the background by itself when a tool needs it, so never ask the user to open it first.",
+  "instructions": "Glance is the user's document and image viewer on Windows. Use it to look at and work with local files: see any page or image (PDF, camera RAW, HEIC, PSD, JPEG XL, EPS, XPS, TIFF, comics and 40+ other formats), read text with OCR, combine, split, rotate and reorder PDF pages, convert images, and redact text so it is really removed. Paths are absolute Windows paths and pages are numbered from 1. Tools never change the files you pass in: every edit writes a new file at output_path. The glance_open, glance_list_open, glance_current_view, glance_go_to_page, glance_mark_redactions, glance_text_layout, glance_edit_text, glance_add_text and glance_erase tools work with what the user has open in the Glance window; the editing ones change the open document in its own style, for the user to review and save. Glance also creates and edits slide decks (glance_create, glance_deck_edit): send the content and pick layouts, and Glance does the design. Use these tools whenever the user asks about a local document or image, or about what they're looking at, even if they don't mention Glance. Glance starts in the background by itself when a tool needs it, so never ask the user to open it first.",
   "tools": [
     {
       "name": "glance_info",
@@ -303,6 +303,79 @@
         "required": []
       },
       "annotations": { "readOnlyHint": false, "destructiveHint": false, "openWorldHint": false }
+    },
+    {
+      "name": "glance_create",
+      "title": "Create a deck",
+      "description": "Creates a slide deck in Glance from your content and opens it for the user. You choose each slide's layout and fill its slots with words and pictures; Glance's layouts and theme handle position, fonts, colours and fitting, so never describe looks in the text. Good decks: one idea per slide, a title slide first, short phrases rather than sentences, and a mix of layouts (threeCards, bigNumber, timeline, quote, imageRight) instead of bullets on every slide; put detail in notes (what the speaker says). The result lists the slide ids and the design check's findings: fix those with glance_deck_edit, then look at the slides with glance_deck_render. Layouts and their slots (* = required; numbers are the most characters, or entries, that fit): title: title* (60), subtitle (120), image (picture). section: title* (50), subtitle (100). bullets: title* (60), bullets* (list of text, up to 6, 70 each). twoColumns: title* (60), left* and right* (lists of text, up to 5, 60 each). imageLeft and imageRight: title* (60), image* (picture), body (280). fullImage: image* (picture), caption (90). bigNumber: stat* (8, like \"92%\" or \"£1,240\"), statLabel* (60), body (160). threeCards: title* (60), items* (3 of {heading, body}, 80 together). quote: quote* (220), attribution (60). comparison: title* (60), table* (rows of text cells, the first row is the header; up to 7 rows, 40 per cell). timeline: title* (60), items* (up to 6 of {heading, body}, 60 together). A picture is {src, alt, focus?}: src is the absolute path of a local PNG, JPEG, WebP, GIF, AVIF or SVG (Glance copies it into the deck) or a media/ path the deck already has; alt describes it for people who can't see it; focus {x, y} (0 to 1 from the top left) keeps the subject in view when it is cropped.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "kind": { "type": "string", "enum": ["deck"], "description": "What to create. Only deck for now." },
+          "title": { "type": "string", "description": "The deck's name, used for its file name. Default: the first slide's title." },
+          "theme": { "type": "string", "enum": ["wollo", "wolloDark"], "description": "wollo (default): ink on white with violet. wolloDark: light text on near black." },
+          "slides": { "type": "array", "description": "The slides in order: {layout, slots: {slot name: value}, notes?}. Slot values are text, a list of text, a list of {heading, body}, rows of text cells, or a picture, as the layout says.", "items": { "type": "object" } },
+          "output_path": { "type": "string", "description": "Absolute path ending in .gdeck to save the deck at. Default: the deck opens unsaved, and the user picks where to save it." },
+          "overwrite": { "type": "boolean", "description": "Replace output_path if it exists. Default false." }
+        },
+        "required": ["kind", "slides"]
+      },
+      "annotations": { "readOnlyHint": false, "destructiveHint": false, "openWorldHint": false }
+    },
+    {
+      "name": "glance_deck_outline",
+      "title": "Read a deck",
+      "description": "Returns a deck open in Glance as JSON: its theme and each slide's id, number, layout, slots, notes and whether it is hidden. Edits the user made are included. Use the ids with glance_deck_edit.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tab": { "type": "string", "description": "Tab id or path of an open deck, from glance_list_open. Default: the active tab." }
+        },
+        "required": []
+      },
+      "annotations": { "readOnlyHint": true, "openWorldHint": false }
+    },
+    {
+      "name": "glance_deck_edit",
+      "title": "Edit a deck",
+      "description": "Changes a deck open in Glance with a list of operations, applied in order as one step the user can undo. If any operation is invalid nothing changes, and the error says which one and why. Operations: {op:'add', layout, slots?, notes?, after?} (after: a slide id, or null for first; default last); {op:'move', ids, after} (after: an id, or null for first); {op:'delete', ids}; {op:'duplicate', id}; {op:'hide', ids, hidden}; {op:'setLayout', id, layout} (slots the new layout lacks are dropped and reported); {op:'setSlot', id, slot, value}; {op:'clearSlot', id, slot}; {op:'setNotes', id, notes}; {op:'setTheme', theme}; {op:'split', id} (moves the second half of a list onto a new slide after it); {op:'merge', ids: [a, b]} (same layout; b's list joins a's). Layouts, slot values and pictures are as in glance_create. The result has the new slide ids and the design check's findings.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tab": { "type": "string", "description": "Tab id or path of an open deck, from glance_list_open. Default: the active tab." },
+          "ops": { "type": "array", "description": "The operations, in order.", "items": { "type": "object" } }
+        },
+        "required": ["ops"]
+      },
+      "annotations": { "readOnlyHint": false, "destructiveHint": false, "openWorldHint": false }
+    },
+    {
+      "name": "glance_deck_check",
+      "title": "Check a deck's design",
+      "description": "Lists what to fix in a deck open in Glance before the user sees it: missing required slots, text too long for its layout, lists with too many entries, three slides in a row with the same layout, no title slide, and pictures without alt text. Each finding names the slide id and says what to do. An empty list means the deck passes.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tab": { "type": "string", "description": "Tab id or path of an open deck, from glance_list_open. Default: the active tab." }
+        },
+        "required": []
+      },
+      "annotations": { "readOnlyHint": true, "openWorldHint": false }
+    },
+    {
+      "name": "glance_deck_render",
+      "title": "Look at slides",
+      "description": "Returns slides of a deck open in Glance as images, exactly as the user sees them, so you can check your work. Up to 12 slides per call.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tab": { "type": "string", "description": "Tab id or path of an open deck, from glance_list_open. Default: the active tab." },
+          "slides": { "type": "string", "description": "Slide numbers like \"1-3,7\", or slide ids separated by commas. Default: the slide the user is on." },
+          "max_size": { "type": "integer", "minimum": 160, "maximum": 1920, "description": "Width of each image in pixels. Default 960." }
+        },
+        "required": []
+      },
+      "annotations": { "readOnlyHint": true, "openWorldHint": false }
     }
   ]
 }

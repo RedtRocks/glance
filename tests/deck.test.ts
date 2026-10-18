@@ -113,3 +113,15 @@ describe('checkDeck', () => {
     expect(checkDeck(emptyDeck()).map((f) => f.code)).toEqual(['empty'])
   })
 })
+
+describe('the AI apps’ deck catalog', () => {
+  it('names every layout and slot in glance_create, so AI apps can fill them', async () => {
+    const { LAYOUTS } = await import('../src/core/deck/model')
+    const { default: catalog } = await import('../src/core/mcp/tools.json')
+    const create = catalog.tools.find((t) => t.name === 'glance_create')!.description
+    for (const [layout, slots] of Object.entries(LAYOUTS)) {
+      expect(create, layout).toContain(`${layout}`)
+      for (const s of slots) expect(create, `${layout}.${s.name}`).toMatch(new RegExp(`\\b${s.name}${s.required ? '\\*' : ''}`))
+    }
+  })
+})
