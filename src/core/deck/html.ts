@@ -36,8 +36,11 @@ export function slideHtml(slide: Slide, theme: DeckTheme, opts: HtmlOptions): st
 function boxHtml(box: Box, theme: DeckTheme, opts: HtmlOptions): string {
   const at = `position:absolute;left:${px(box.x)};top:${px(box.y)};width:${px(box.w)};height:${px(box.h)};`
   switch (box.type) {
-    case 'rect':
-      return `<div style="${escapeHtml(`${at}background:${box.fill};border-radius:${px(box.radius)}`)}"></div>`
+    case 'rect': {
+      // Outlines are drawn inside the box, as the exports draw them.
+      const line = box.line ? `box-sizing:border-box;border:${px(box.line.width)} solid ${box.line.colour};` : ''
+      return `<div style="${escapeHtml(`${at}${line}background:${box.fill === 'none' ? 'transparent' : box.fill};border-radius:${px(box.radius)};pointer-events:none`)}"></div>`
+    }
     case 'image': {
       const key = escapeHtml(refKey(box.ref))
       const url = box.image ? opts.resolveSrc(box.image.src) : null
@@ -56,6 +59,7 @@ function boxHtml(box: Box, theme: DeckTheme, opts: HtmlOptions): string {
       const justify = { top: 'flex-start', middle: 'center', bottom: 'flex-end' }[box.valign]
       const font = box.font === 'heading' ? `font-family:${theme.headingFont};font-weight:${theme.headingWeight};` : 'font-weight:400;'
       const look = `${at}display:flex;flex-direction:column;justify-content:${justify};text-align:${box.align};font-size:${px(box.size)};line-height:${box.lineHeight};color:${box.colour};${font}gap:0.3em;overflow-wrap:anywhere`
+      if (box.decor) return `<div style="${escapeHtml(`${look};pointer-events:none`)}">${box.paragraphs.map((p) => `<p style="margin:0">${escapeHtml(p)}</p>`).join('')}</div>`
       const key = escapeHtml(refKey(box.ref))
       const cls = `deck-box deck-text${box.placeholder ? ' empty' : ''}`
       if (box.placeholder) {

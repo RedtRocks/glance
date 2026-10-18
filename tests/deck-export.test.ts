@@ -103,8 +103,8 @@ describe('deck to PowerPoint', () => {
     const first = await xml('ppt/slides/slide1.xml')
     expect(first).toContain('Bake Sale Results')
     expect(first).toContain('latin typeface="Urbanist"')
-    // A title beside a picture is 110 slide units, which is 55 pt.
-    expect(first).toMatch(/sz="5500"/)
+    // A title beside a picture is 120 slide units, which is 60 pt.
+    expect(first).toMatch(/sz="6000"/)
     // Rounded picture corners: the title picture has the theme's radius.
     expect(first).toMatch(/<p:pic>[\s\S]*prst="roundRect"[\s\S]*<\/p:pic>/)
 

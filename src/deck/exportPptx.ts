@@ -47,7 +47,7 @@ function addBox(s: PptxSlide, box: Box, theme: DeckTheme, media: Map<string, Uin
   const at = { x: box.x * IN, y: box.y * IN, w: box.w * IN, h: box.h * IN }
   switch (box.type) {
     case 'rect':
-      return addRect(s, at, box.radius, box.fill)
+      return addRect(s, at, box.radius, box.fill, box.line)
     case 'image': {
       const bytes = box.image ? media.get(box.image.src) : undefined
       const pic = bytes ? picture(bytes) : null
@@ -70,12 +70,20 @@ function addBox(s: PptxSlide, box: Box, theme: DeckTheme, media: Map<string, Uin
   }
 }
 
-function addRect(s: PptxSlide, at: { x: number; y: number; w: number; h: number }, radius: number, fill: string) {
+function addRect(s: PptxSlide, at: { x: number; y: number; w: number; h: number }, radius: number, fill: string, line?: { colour: string; width: number }) {
   const r = Math.min(radius * IN, at.w / 2, at.h / 2)
   const round = Math.abs(at.w - at.h) < 1e-6 && r >= at.w / 2 - 1e-6
   const shape = round ? 'ellipse' : r > 0 ? 'roundRect' : 'rect'
   // pptxgenjs takes rectRadius in inches, whatever its types say.
-  s.addShape(shape as never, { ...at, fill: { color: hex(fill) }, line: { type: 'none' }, ...(shape === 'roundRect' ? { rectRadius: r } : {}) })
+  // PowerPoint centres an outline on the shape's edge; html.ts draws it inside, so inset by half.
+  const inset = line ? (line.width * IN) / 2 : 0
+  const box = line ? { x: at.x + inset, y: at.y + inset, w: at.w - 2 * inset, h: at.h - 2 * inset } : at
+  s.addShape(shape as never, {
+    ...box,
+    fill: fill === 'none' ? { type: 'none' } : { color: hex(fill) },
+    line: line ? { color: hex(line.colour), width: line.width * PT } : { type: 'none' },
+    ...(shape === 'roundRect' ? { rectRadius: Math.max(0, r - inset) } : {})
+  })
 }
 
 function addText(s: PptxSlide, box: TextBox, at: { x: number; y: number; w: number; h: number }, theme: DeckTheme) {

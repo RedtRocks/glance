@@ -7,7 +7,7 @@
  */
 import {
   PDFDocument, PDFOperator, PDFOperatorNames, appendBezierCurve, beginText, clip, closePath, endPath, endText, fill, lineTo,
-  moveText, moveTo, popGraphicsState, pushGraphicsState, rgb, setFillingColor, setFontAndSize,
+  moveText, moveTo, popGraphicsState, pushGraphicsState, rgb, setFillingColor, setFontAndSize, setLineWidth, setStrokingColor, stroke,
   type PDFFont, type PDFHexString, type PDFImage, type PDFName, type PDFPage, type RGB
 } from '@cantoo/pdf-lib'
 import fontkit from '@cantoo/fontkit'
@@ -53,7 +53,15 @@ export async function deckToPdf(deck: Deck, media: Map<string, Uint8Array>, font
 async function drawBox(page: PDFPage, box: Box, theme: DeckTheme, type: Typeface, imageOf: (src: string) => Promise<PDFImage | null>) {
   switch (box.type) {
     case 'rect':
-      fillRect(page, box.x, box.y, box.w, box.h, box.radius, colour(box.fill))
+      if (box.fill !== 'none') fillRect(page, box.x, box.y, box.w, box.h, box.radius, colour(box.fill))
+      if (box.line) {
+        // Drawn inside the box, like html.ts's border.
+        const i = box.line.width / 2
+        page.pushOperators(
+          pushGraphicsState(), setStrokingColor(colour(box.line.colour)), setLineWidth(box.line.width * S),
+          ...roundRect(box.x + i, box.y + i, box.w - 2 * i, box.h - 2 * i, Math.max(0, box.radius - i)), stroke(), popGraphicsState()
+        )
+      }
       return
     case 'image': {
       const img = box.image ? await imageOf(box.image.src) : null

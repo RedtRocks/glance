@@ -10,7 +10,7 @@ let n = 0
 const slideOf = (layout: (typeof layoutIds)[number], slots: Record<string, unknown> = {}) =>
   applyOps(emptyDeck(), [{ op: 'add', layout, slots }], () => `s${++n}`).deck.slides[0]
 
-const texts = (boxes: ReturnType<typeof layoutSlide>) => boxes.filter((b): b is TextBox => b.type === 'text')
+const texts = (boxes: ReturnType<typeof layoutSlide>) => boxes.filter((b): b is TextBox => b.type === 'text' && !b.decor)
 
 describe('wrappedLines and fitSize', () => {
   it('wraps at spaces and breaks words longer than a line', () => {
@@ -30,9 +30,9 @@ describe('wrappedLines and fitSize', () => {
 })
 
 describe('layoutSlide', () => {
-  it('keeps every box of every layout on the slide', () => {
+  it('keeps every box of every layout on the slide, decoration aside', () => {
     for (const layout of layoutIds) {
-      for (const b of layoutSlide(slideOf(layout), theme)) {
+      for (const b of layoutSlide(slideOf(layout), theme).filter((b) => b.type === 'image' || !b.decor)) {
         expect(b.x, `${layout} x`).toBeGreaterThanOrEqual(0)
         expect(b.y, `${layout} y`).toBeGreaterThanOrEqual(0)
         expect(b.x + b.w, `${layout} right`).toBeLessThanOrEqual(SLIDE_W)
@@ -64,6 +64,21 @@ describe('layoutSlide', () => {
     const short = texts(layoutSlide(slideOf('bullets', { title: 'Hi', bullets: ['a'] }), theme))[0]
     const long = texts(layoutSlide(slideOf('bullets', { title: 'A much longer title that runs across the slide twice over', bullets: ['a'] }), theme))[0]
     expect(long.size).toBeLessThan(short.size)
+  })
+})
+
+describe('decoration', () => {
+  it('blocks colour in the theme\'s pops, and varies the look from slide to slide', () => {
+    for (const t of Object.values(THEMES)) expect(t.pops.length, t.id).toBeGreaterThanOrEqual(3)
+    const fills = (id: string) => layoutSlide({ ...slideOf('title', { title: 'T' }), id }, theme).filter((b) => b.type === 'rect' && b.decor).map((b) => (b.type === 'rect' ? `${b.x},${b.y}` : ''))
+    const looks = new Set(['s1', 's2', 's3', 's4', 's5', 's6'].map((id) => fills(id).join(' ')))
+    expect(looks.size).toBeGreaterThan(1)
+  })
+
+  it('keeps decoration out of the editor: no slot refs on it', () => {
+    const html = slideHtml(slideOf('threeCards', { title: 'T' }), theme, { resolveSrc: () => null })
+    expect(html).toContain('>01<')
+    expect(html).not.toContain('data-ref=""')
   })
 })
 
