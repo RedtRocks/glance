@@ -4589,6 +4589,49 @@ input[type='range'] {
 .make-kind-sub {
   font-size: 13px;
 }
+.make-templates-title {
+  font-size: 20px;
+  font-weight: 400;
+  margin: 8px 0 0;
+  width: min(960px, 100%);
+}
+.make-templates {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  width: min(960px, 100%);
+}
+.make-template {
+  border: 0;
+  border-radius: 20px;
+  padding: 8px 8px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  text-align: left;
+  font: inherit;
+  background: var(--subtle);
+  color: var(--text);
+  cursor: pointer;
+}
+.make-template .slide-frame {
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 10px;
+  box-shadow: 0 0 0 1px var(--stroke);
+}
+.make-template .make-kind-name {
+  font-size: 18px;
+  padding: 0 8px;
+}
+.make-template .make-kind-sub {
+  padding: 0 8px;
+  color: var(--text-2);
+}
+.make-template:hover {
+  background: var(--subtle-hover);
+}
 .make-ask input:focus-visible {
   outline: none;
 }

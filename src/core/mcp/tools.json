@@ -313,7 +313,7 @@
         "properties": {
           "kind": { "type": "string", "enum": ["deck"], "description": "What to create. Only deck for now." },
           "title": { "type": "string", "description": "The deck's name, used for its file name. Default: the first slide's title." },
-          "theme": { "type": "string", "enum": ["wollo", "wolloDark"], "description": "wollo (default): ink on white with violet. wolloDark: light text on near black." },
+          "theme": { "type": "string", "enum": ["wollo", "wolloDark", "sunrise", "blossom", "ink"], "description": "wollo (default): ink on white with violet. wolloDark: light text on near black with soft violet. sunrise: warm cream with orange, for classes and clubs. blossom: white with pink, for celebrations and stories. ink: near black with yellow, for numbers and reports." },
           "slides": { "type": "array", "description": "The slides in order: {layout, slots: {slot name: value}, notes?}. Slot values are text, a list of text, a list of {heading, body}, rows of text cells, or a picture, as the layout says.", "items": { "type": "object" } },
           "output_path": { "type": "string", "description": "Absolute path ending in .gdeck to save the deck at. Default: the deck opens unsaved, and the user picks where to save it." },
           "overwrite": { "type": "boolean", "description": "Replace output_path if it exists. Default false." }

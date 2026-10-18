@@ -22,3 +22,15 @@ export function deckPrompt(request: string, tab: string): string {
     "If you don't have facts you need, use clear placeholders like [date] rather than inventing them."
   ].join('\n')
 }
+
+/** The first message for a deck started from a template, open in Glance as `tab`. */
+export function templatePrompt(request: string, template: string, tab: string): string {
+  return [
+    `Make slides for me in Glance from the ${template} template: ${request.trim()}`,
+    '',
+    `The template is open in Glance (tab ${tab}). Read it with glance_deck_outline and change it with glance_deck_edit; don't write files, code or a .pptx yourself.`,
+    'Replace every [bracketed] placeholder with real words for my request, and add, remove or reorder slides where the request needs it. Keep its theme and keep one idea per slide in short phrases.',
+    'Then call glance_deck_check and fix every finding, look at the slides with glance_deck_render and fix anything that looks wrong, and finish by telling me in a sentence or two what you made.',
+    "If you don't have facts you need, leave a clear placeholder like [date] rather than inventing them."
+  ].join('\n')
+}

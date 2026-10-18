@@ -30,3 +30,19 @@ export function layoutLabel(id: LayoutId): string {
       return t('Timeline')
   }
 }
+
+/** What each deck theme is called in the theme menu. */
+export function themeLabel(id: string): string {
+  switch (id) {
+    case 'wolloDark':
+      return t('Wollo dark')
+    case 'sunrise':
+      return t('Sunrise')
+    case 'blossom':
+      return t('Blossom')
+    case 'ink':
+      return t('Ink')
+    default:
+      return t('Wollo')
+  }
+}

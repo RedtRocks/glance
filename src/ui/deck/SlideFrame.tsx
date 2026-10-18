@@ -54,3 +54,14 @@ export function SlideFrame({ doc, slide, width, hints = false }: { doc: DeckDoc;
     </div>
   )
 }
+
+/** A slide that isn't in an open deck yet, like a template's first slide. It has no pictures. */
+export function SlidePreview({ slide, theme, width }: { slide: Slide; theme: string; width: number }) {
+  const html = useMemo(() => slideHtml(slide, themeOf(theme), { resolveSrc: () => '' }), [slide, theme])
+  const scale = width / SLIDE_W
+  return (
+    <div class="slide-frame" style={{ width: `${width}px`, height: `${SLIDE_H * scale}px` }}>
+      <div class="slide-frame-inner" style={{ transform: `scale(${scale})`, '--deck-scale': scale }} dangerouslySetInnerHTML={{ __html: html }} />
+    </div>
+  )
+}

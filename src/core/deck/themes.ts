@@ -53,6 +53,51 @@ export const THEMES: Record<string, DeckTheme> = {
     surface: '#1a1920',
     stroke: '#34323d',
     radius: 28
+  },
+  /** Wollo with the website's orange: warm, for classes and clubs. */
+  sunrise: {
+    id: 'sunrise',
+    headingFont: URBANIST,
+    bodyFont: URBANIST,
+    headingWeight: 400,
+    bg: '#fffaf5',
+    text: '#0a0a0a',
+    muted: '#6b6b6b',
+    accent: '#f47933',
+    onAccent: '#0a0a0a',
+    surface: '#fdeee2',
+    stroke: '#ecd9c8',
+    radius: 28
+  },
+  /** Wollo with the website's pink: for celebrations and stories. */
+  blossom: {
+    id: 'blossom',
+    headingFont: URBANIST,
+    bodyFont: URBANIST,
+    headingWeight: 400,
+    bg: '#ffffff',
+    text: '#0a0a0a',
+    muted: '#6b6b6b',
+    accent: '#d63d8c',
+    onAccent: '#ffffff',
+    surface: '#fdeef6',
+    stroke: '#f1d3e3',
+    radius: 28
+  },
+  /** Near black with the website's yellow: for numbers and reports. */
+  ink: {
+    id: 'ink',
+    headingFont: URBANIST,
+    bodyFont: URBANIST,
+    headingWeight: 400,
+    bg: '#0a0a0a',
+    text: '#f4f3f7',
+    muted: '#a9a6b3',
+    accent: '#f8d32c',
+    onAccent: '#0a0a0a',
+    surface: '#1a1920',
+    stroke: '#34323d',
+    radius: 28
   }
 }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { deckPrompt, nameFromRequest } from '../src/core/ai/make'
+import { deckPrompt, nameFromRequest, templatePrompt } from '../src/core/ai/make'
 
 describe('making from a request', () => {
   it('names the file after the first words, safely', () => {
@@ -13,5 +13,13 @@ describe('making from a request', () => {
     expect(p).toContain('Make slides for me in Glance: a talk on bees')
     expect(p).toContain('tab doc7')
     for (const tool of ['glance_deck_edit', 'glance_deck_check', 'glance_deck_render']) expect(p).toContain(tool)
+  })
+
+  it('asks the AI to fill a template\'s placeholders', () => {
+    const p = templatePrompt('our school fair', 'Event Plan', 'doc3')
+    expect(p).toContain('from the Event Plan template: our school fair')
+    expect(p).toContain('tab doc3')
+    expect(p).toContain('[bracketed]')
+    expect(p).toContain('glance_deck_outline')
   })
 })

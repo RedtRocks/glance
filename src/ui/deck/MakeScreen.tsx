@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from 'preact/hooks'
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import * as platform from '../../platform'
 import * as ai from '../../state/ai'
 import * as voice from '../../state/voice'
 import { aiOpen, makeOpen } from '../../state/ui'
 import { newDeck, change } from '../../state/deck'
-import { deckPrompt, nameFromRequest } from '../../core/ai/make'
+import { deckPrompt, nameFromRequest, templatePrompt } from '../../core/ai/make'
+import { TEMPLATES, templateDeck, type Template } from '../../state/templates'
+import { SlidePreview } from './SlideFrame'
 import { msg, t } from '../../i18n'
 import { Icon } from '../Icon'
 
@@ -22,24 +24,33 @@ function aiState(): 'ready' | 'signIn' | 'none' {
   return s === 'signIn' || s === 'missing' || s === 'failed' ? 'signIn' : 'ready'
 }
 
-function makeByHand(request: string): void {
-  const doc = newDeck(nameFromRequest(request, t('Untitled deck')))
-  change(doc, msg('New Deck'), [{ op: 'add', layout: 'title', slots: request.trim() ? { title: nameFromRequest(request, '') } : {} }])
+/** The new deck's tab, empty or from a template. */
+function startDeck(request: string, tpl: Template | null) {
+  const name = nameFromRequest(request, tpl ? t(tpl.name) : t('Untitled deck'))
+  return newDeck(name, tpl ? (templateDeck(tpl.id) ?? undefined) : undefined)
+}
+
+const promptFor = (request: string, tpl: Template | null, tab: string) => (tpl ? templatePrompt(request, tpl.name, tab) : deckPrompt(request, tab))
+
+function makeByHand(request: string, tpl: Template | null): void {
+  const doc = startDeck(request, tpl)
+  if (!tpl) change(doc, msg('New Deck'), [{ op: 'add', layout: 'title', slots: request.trim() ? { title: nameFromRequest(request, '') } : {} }])
   makeOpen.value = false
 }
 
-async function makeWithAi(request: string): Promise<void> {
-  const doc = newDeck(nameFromRequest(request, t('Untitled deck')))
+async function makeWithAi(request: string, tpl: Template | null): Promise<void> {
+  const doc = startDeck(request, tpl)
   makeOpen.value = false
   aiOpen.value = true
   ai.startNewChat()
-  await ai.sendWhenReady(deckPrompt(request, doc.id))
+  await ai.sendWhenReady(promptFor(request, tpl, doc.id))
 }
 
 /** File → New: "What do you want to make?", AI first. */
 export function MakeScreen() {
   const [text, setText] = useState('')
   const [asked, setAsked] = useState(false)
+  const [picked, setPicked] = useState<Template | null>(null)
   const input = useRef<HTMLInputElement>(null)
   const latest = useRef('')
   latest.current = text
@@ -60,16 +71,18 @@ export function MakeScreen() {
     }
   }, [])
 
-  const make = (_kind: Kind, request = latest.current) => {
-    if (state === 'ready') return void makeWithAi(request)
-    if (state === 'none' || !request.trim()) return makeByHand(request)
+  const make = (_kind: Kind, tpl: Template | null = null, request = latest.current) => {
+    // A template with nothing typed opens as it is, ready to fill in by hand.
+    if (state === 'ready' && (request.trim() || !tpl)) return void makeWithAi(request, tpl)
+    if (state === 'none' || !request.trim()) return makeByHand(request, tpl)
+    setPicked(tpl)
     setAsked(true)
   }
 
   const signIn = () => {
     // The Ask AI sidebar signs in; the request waits there and goes once it's done.
-    const doc = newDeck(nameFromRequest(latest.current, t('Untitled deck')))
-    ai.pendingPrompt.value = deckPrompt(latest.current, doc.id)
+    const doc = startDeck(latest.current, picked)
+    ai.pendingPrompt.value = promptFor(latest.current, picked, doc.id)
     makeOpen.value = false
     aiOpen.value = true
   }
@@ -118,7 +131,7 @@ export function MakeScreen() {
             <button class="btn primary" onClick={signIn}>
               <Icon name="sparkle" size={16} /> {t('Sign in to an AI')}
             </button>
-            <button class="btn" onClick={() => makeByHand(latest.current)}>
+            <button class="btn" onClick={() => makeByHand(latest.current, picked)}>
               {t('Make it myself')}
             </button>
           </div>
@@ -133,6 +146,23 @@ export function MakeScreen() {
           </span>
         </button>
       </div>
+      <h2 class="make-templates-title">{t('Or start from a template')}</h2>
+      <div class="make-templates">
+        {TEMPLATES.map((tpl) => (
+          <TemplateTile key={tpl.id} tpl={tpl} onPick={() => make('slides', tpl)} />
+        ))}
+      </div>
     </div>
+  )
+}
+
+function TemplateTile({ tpl, onPick }: { tpl: Template; onPick: () => void }) {
+  const first = useMemo(() => templateDeck(tpl.id)?.slides[0], [tpl.id])
+  return (
+    <button class="make-template" onClick={onPick}>
+      {first && <SlidePreview slide={first} theme={tpl.theme} width={284} />}
+      <span class="make-kind-name">{t(tpl.name)}</span>
+      <span class="make-kind-sub">{t(tpl.blurb)}</span>
+    </button>
   )
 }

@@ -9,7 +9,8 @@ import { SLIDE_H, SLIDE_W } from '../../core/deck/layout'
 import * as platform from '../../platform'
 import { msg, t } from '../../i18n'
 import { SlideFrame } from './SlideFrame'
-import { layoutLabel } from './labels'
+import { layoutLabel, themeLabel } from './labels'
+import { THEMES } from '../../core/deck/themes'
 import { Icon } from '../Icon'
 
 const PAD = 32
@@ -29,6 +30,16 @@ interface Editing {
 function layoutMenu(e: MouseEvent, run: (id: LayoutId) => void): void {
   const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
   contextMenu.value = { x: r.left, y: r.bottom + 4, items: layoutIds.map((id) => ({ label: layoutLabel(id), run: () => run(id) })) }
+}
+
+function themeMenu(e: MouseEvent, doc: DeckDoc): void {
+  const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  const now = doc.deck.peek().theme
+  contextMenu.value = {
+    x: r.left,
+    y: r.bottom + 4,
+    items: Object.keys(THEMES).map((id) => ({ label: id === now ? `✓ ${themeLabel(id)}` : themeLabel(id), run: () => id !== now && change(doc, msg('Change Theme'), [{ op: 'setTheme', theme: id }]) }))
+  }
 }
 
 async function pickPicture(doc: DeckDoc, slideId: string, slot: string): Promise<void> {
@@ -54,7 +65,6 @@ export function DeckView({ doc }: { doc: DeckDoc }) {
   const box = useRef<HTMLTextAreaElement>(null)
   const slides = doc.deck.value.slides
   const slide = slides[doc.current.value]
-  const dark = doc.deck.value.theme === 'wolloDark'
 
   useLayoutEffect(() => {
     const el = stage.current
@@ -123,13 +133,9 @@ export function DeckView({ doc }: { doc: DeckDoc }) {
           <Icon name="grid" size={16} />
           {slide ? layoutLabel(slide.layout) : t('Layout')}
         </button>
-        <button
-          class="deck-bar-button"
-          aria-pressed={dark}
-          onClick={() => change(doc, msg('Change Theme'), [{ op: 'setTheme', theme: dark ? 'wollo' : 'wolloDark' }])}
-        >
-          <Icon name={dark ? 'moon' : 'sun'} size={16} />
-          {dark ? t('Dark slides') : t('Light slides')}
+<button class="deck-bar-button" aria-label={t('Theme')} title={t('Theme')} onClick={(e) => themeMenu(e, doc)}>
+          <Icon name="paintBrush" size={16} />
+          {themeLabel(doc.deck.value.theme)}
         </button>
       </div>
       <div class="deck-stage" ref={stage}>
