@@ -66,6 +66,28 @@ A new image composed from several images arranged on a layout.
 **Quartz Filter**:
 An appearance filter applied at export time (Black & White, Sepia, Reduce File Size, and so on).
 
+## Creating
+
+**Template**:
+A finished deck or document, with sample content, that a person or an AI app starts from.
+_Avoid_: Blank, starter, preset
+
+**Theme**:
+The fonts, colours, sizes and spacing a deck or document uses. Switching theme restyles every slide at once.
+_Avoid_: Style, skin, look (that means the app's own Wollo or Windows look)
+
+**Brand Kit**:
+A person's own logo, colours, fonts and tone, which every template and theme can use.
+_Avoid_: Brand, style guide
+
+**Skill**:
+Know-how for one kind of work, such as slide design or writing a resume, that Glance gives to whichever AI is helping.
+_Avoid_: Prompt, plugin
+
+**Check**:
+An automatic review of a file, such as design, spelling or accessibility, that lists what to fix.
+_Avoid_: Lint, validation
+
 ## Inspection
 
 **Inspector**:

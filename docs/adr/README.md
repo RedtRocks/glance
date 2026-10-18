@@ -19,6 +19,8 @@ Each file records one decision: the problem, what was chosen and why, and what f
 - [0015](0015-ai-edits-as-matching-markup.md): AI edits text as markup that matches the page
 - [0016](0016-anonymous-install-count.md): Count installs with one anonymous daily check-in
 - [0017](0017-linux-builds.md): Ship Linux as RPM and .deb packages
+- [0018](0018-own-formats-for-decks-and-documents.md): Decks and documents Glance creates use its own formats, with Office and PDF as exports
+- [0019](0019-skills-given-to-any-agent.md): Glance gives design and writing skills to whichever agent is running
 
 ## Writing one
 
