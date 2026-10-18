@@ -35,6 +35,7 @@
     "marked": "^18.0.14",
     "pdfjs-dist": "6.3.289",
     "postal-mime": "^2.7.6",
+    "pptxgenjs": "^4.0.1",
     "preact": "10.29.8",
     "three": "0.180.0"
   },

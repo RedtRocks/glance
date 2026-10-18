@@ -4457,3 +4457,142 @@ input[type='range'] {
   background: var(--subtle-hover);
   color: var(--text);
 }
+.welcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* File → New: "What do you want to make?" (ui/deck/MakeScreen.tsx) */
+.make-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  padding: 72px 24px 40px;
+  overflow: auto;
+  background: var(--bg-solid);
+  color: var(--text);
+}
+.make-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+.make-screen h1 {
+  margin: 0;
+  font: 400 clamp(32px, 5vw, 52px) / 1.12 var(--font-display);
+  letter-spacing: -0.5px;
+  text-align: center;
+}
+.make-ask {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(760px, 100%);
+  padding: 8px 8px 8px 24px;
+  box-sizing: border-box;
+  border-radius: 9999px;
+  background: var(--subtle);
+}
+.make-ask input {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 17px;
+  outline: none;
+}
+.make-ask input::placeholder {
+  color: var(--text-3);
+}
+.make-mic,
+.make-go {
+  flex: none;
+  height: 48px;
+  border: 0;
+  border-radius: 9999px;
+  font: inherit;
+}
+.make-mic {
+  width: 48px;
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.make-mic.on {
+  outline: 3px solid var(--selection);
+}
+.make-go {
+  padding: 0 28px;
+  background: var(--text);
+  color: var(--bg-solid);
+  font-size: 15px;
+}
+.make-signin {
+  width: min(760px, 100%);
+  box-sizing: border-box;
+  padding: 16px 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--stroke);
+  text-align: center;
+}
+.make-signin p {
+  margin: 0 0 12px;
+}
+.make-signin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.make-kinds {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  width: min(960px, 100%);
+}
+.make-kind {
+  height: 168px;
+  border: 0;
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  text-align: left;
+  font: inherit;
+  background: var(--subtle);
+  color: var(--text);
+}
+.make-kind.slides {
+  background: #6312f6;
+  color: #ffffff;
+}
+.make-kind > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.make-kind-name {
+  font-size: 24px;
+}
+.make-kind-sub {
+  font-size: 13px;
+}
+.make-ask input:focus-visible {
+  outline: none;
+}
+.make-ask:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

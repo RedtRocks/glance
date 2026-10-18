@@ -14,7 +14,7 @@ import { makeDefault } from './defaultApp'
 import { versionsOpen } from './versions'
 import { activeDoc, activeId, docs, type Doc, type ViewMode } from './documents'
 import { settings, updateSettings } from './settings'
-import { feedbackOpen, cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, findOpen, inspectorOpen, aiOpen, signaturesOpen, promptText, redactTextOpen, toast, settingsOpen, sidebarVisible, slideshow } from './ui'
+import { makeOpen, feedbackOpen, cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, findOpen, inspectorOpen, aiOpen, signaturesOpen, promptText, redactTextOpen, toast, settingsOpen, sidebarVisible, slideshow } from './ui'
 import { parsePageInput } from '../core/pageControls'
 import { printDoc } from './print'
 import { applyRedactions } from './actions'
@@ -123,7 +123,10 @@ function cycleTab(dir: 1 | -1): void {
 export const COMMANDS: Command[] = [
   // File
   { id: 'file.open', label: msg('Open…'), keys: ['Ctrl+O'], run: actions.openWithDialog },
-  { id: 'file.newDeck', label: msg('New Deck'), run: () => void deckActions.newDeck() },
+  { id: 'file.new', label: msg('New…'), keys: ['Ctrl+Shift+M'], run: () => void (makeOpen.value = true) },
+  { id: 'deck.exportPdf', label: msg('Export as PDF…'), run: () => deckActions.exportDeck(deck()!, 'pdf'), enabled: () => !!deck()?.pageCount.value },
+  { id: 'deck.exportPptx', label: msg('Export as PowerPoint…'), run: () => deckActions.exportDeck(deck()!, 'pptx'), enabled: () => !!deck()?.pageCount.value },
+  { id: 'deck.exportPng', label: msg('Export as Pictures…'), run: () => deckActions.exportDeck(deck()!, 'png'), enabled: () => !!deck()?.pageCount.value },
   { id: 'file.newFromClipboard', label: msg('New from Clipboard'), keys: ['Ctrl+N'], run: () => img.newFromClipboard(), enabled: () => platform.isTauri },
   { id: 'file.scan', label: msg('Import from Scanner…'), run: () => void (scanOpen.value = true), enabled: () => platform.scanAvailable },
   { id: 'file.newWindow', label: msg('New Window'), keys: ['Ctrl+Shift+N'], run: () => platform.openNewWindow([]) },
@@ -356,11 +359,12 @@ const VISIBILITY: [(() => boolean), string[]][] = [
   [ifViewable, ['view.inspector']],
   [() => ifPdf() || anyImage() || isDeck(), ['file.versions']],
   [ifViewable, ['view.zoomIn', 'view.zoomOut', 'view.zoomToFit', 'view.fullscreen']],
-  [() => ifPdf() || anyImage(), ['file.print', 'tools.rotateLeft', 'tools.rotateRight']],
+  [() => ifPdf() || anyImage() || isDeck(), ['file.print']],
+  [() => ifPdf() || anyImage(), ['tools.rotateLeft', 'tools.rotateRight']],
   [() => ifPdf() || anyImage() || isDeck(), ['view.actualSize', 'view.slideshow']],
   [() => activeDoc.value?.kind === 'model', ['model.wireframe', 'model.autoRotate', 'model.resetView', 'model.shadow', 'model.grid', 'model.view.front', 'model.view.back', 'model.view.left', 'model.view.right', 'model.view.top', 'model.view.bottom']],
   [() => ifPdf() || isImage() || isDeck(), ['file.save', 'file.saveAs', 'edit.undo', 'edit.redo', 'edit.delete']],
-  [isDeck, ['deck.newSlide', 'deck.duplicateSlide', 'deck.hideSlide', 'deck.moveUp', 'deck.moveDown']],
+  [isDeck, ['deck.exportPdf', 'deck.exportPptx', 'deck.exportPng', 'deck.newSlide', 'deck.duplicateSlide', 'deck.hideSlide', 'deck.moveUp', 'deck.moveDown']],
   [() => ifPdf() || isImage() || !!model(), ['file.export']],
   [ifPdf, [
     'file.exportPages', 'file.split', 'edit.selectAll', 'edit.find', 'edit.insertBlank', 'edit.insertFile', 'edit.duplicatePages', 'edit.stamps',

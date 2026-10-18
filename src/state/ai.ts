@@ -371,6 +371,7 @@ async function startChat(c: Chat): Promise<boolean> {
     if (chat.peek().id !== c.id) return false
     signInMethods.value = []
     status.value = 'ready'
+    if (pendingPrompt.peek()) queueMicrotask(() => void flushPending())
     return true
   } catch (e) {
     if (chat.peek().id !== c.id) return false
@@ -453,6 +454,30 @@ function docContext(doc: Doc | null): Parameters<typeof preamble>[0] {
 function retell(parts: Part[]): string {
   const lines = parts.flatMap((p) => (p.kind === 'user' ? [`User: ${p.text}`] : p.kind === 'text' ? [`You: ${p.text}`] : []))
   return lines.length ? `Earlier in this chat:\n\n${lines.join('\n\n')}` : ''
+}
+
+/** A message waiting for the chat to be ready: a "make" request asked before signing in. */
+export const pendingPrompt = signal<string | null>(null)
+let flushing = false
+
+/** Sends `text` now if the AI is ready, or as soon as the user has signed in. */
+export function sendWhenReady(text: string): Promise<boolean> {
+  pendingPrompt.value = text
+  return flushPending()
+}
+
+async function flushPending(): Promise<boolean> {
+  const text = pendingPrompt.peek()
+  if (!text || flushing) return false
+  flushing = true
+  try {
+    if (!(await ensureSession()) || pendingPrompt.peek() !== text) return false
+    pendingPrompt.value = null
+    await send(text)
+    return true
+  } finally {
+    flushing = false
+  }
 }
 
 export async function send(text: string): Promise<void> {

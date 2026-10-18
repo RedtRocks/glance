@@ -13,7 +13,7 @@ import { applyOps, DeckError, type DeckOp } from '../core/deck/ops'
 import { THEMES } from '../core/deck/themes'
 import * as platform from '../platform'
 import { activeDoc, activeId, DeckDoc, docs } from './documents'
-import { deckBytes, newDeck } from './deck'
+import { deckBytes, exportBytes, exportPictures, newDeck } from './deck'
 import * as versions from './versions'
 import { toast } from './ui'
 import { msg, t } from '../i18n'
@@ -206,10 +206,26 @@ const render: ToolHandler = async ({ tab, slides, max_size }) => {
   return { content }
 }
 
+const exportTool: ToolHandler = async ({ tab, format, output_path, overwrite }) => {
+  const doc = findDeck(tab)
+  const out = String(output_path)
+  const want = String(format)
+  if (extension(out) !== want) throw new ToolError(`output_path must end in .${want}`)
+  if (!doc.deck.peek().slides.some((s) => !s.hidden)) throw new ToolError('The deck has no slides to export.')
+  checkOutput(out, doc.path.peek() ? [doc.path.peek()!] : [], (await platform.fileStamp(out)) !== null, overwrite === true, platform.pathPolicy)
+  if (want === 'png') {
+    const n = await exportPictures(doc, out)
+    return `Wrote ${n} PNG ${n === 1 ? 'picture' : 'pictures'} next to ${out}`
+  }
+  await platform.writeFile(out, await exportBytes(doc, want as 'pdf' | 'pptx'))
+  return `Wrote ${out}`
+}
+
 export const deckHandlers: Record<string, ToolHandler> = {
   glance_create: create,
   glance_deck_outline: read,
   glance_deck_edit: edit,
   glance_deck_check: check,
-  glance_deck_render: render
+  glance_deck_render: render,
+  glance_export: exportTool
 }

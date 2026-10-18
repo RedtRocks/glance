@@ -1,7 +1,7 @@
 import { useEffect } from 'preact/hooks'
 import { activeDoc, activeId, docs, findByPath } from '../state/documents'
 import { isDark, settings } from '../state/settings'
-import { feedbackOpen, cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, inspectorOpen, aiOpen, narrowWindow, signaturesOpen, redactTextOpen, findOpen, settingsOpen, sidebarVisible, slideshow, toast } from '../state/ui'
+import { makeOpen, feedbackOpen, cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, inspectorOpen, aiOpen, narrowWindow, signaturesOpen, redactTextOpen, findOpen, settingsOpen, sidebarVisible, slideshow, toast } from '../state/ui'
 import { confirmCloseWindow, openFiles } from '../state/actions'
 import { startAutosave } from '../state/autosave'
 import { restoreSession } from '../state/session'
@@ -68,6 +68,7 @@ import { PdfExportDialog } from './dialogs/PdfExportDialog'
 import { AdjustColorPanel } from './image/AdjustColorPanel'
 import { AdjustSizeDialog } from './image/AdjustSizeDialog'
 import { DeckView } from './deck/DeckView'
+import { MakeScreen } from './deck/MakeScreen'
 import { ExportDialog } from './image/ExportDialog'
 
 function Viewer() {
@@ -263,6 +264,7 @@ export function App() {
       {activeDoc.value instanceof PdfDoc && cleanupOpen.value && <CleanupDialog doc={activeDoc.value} />}
       {activeDoc.value instanceof PdfDoc && reduceOpen.value && <ReduceDialog doc={activeDoc.value} />}
       {activeDoc.value instanceof PdfDoc && stampOpen.value && <StampDialog doc={activeDoc.value} />}
+      {makeOpen.value && <MakeScreen />}
       {activeDoc.value instanceof ImageDoc && exportOpen.value && <ExportDialog doc={activeDoc.value} />}
       {activeDoc.value instanceof PdfDoc && exportOpen.value && <PdfExportDialog doc={activeDoc.value} />}
       {platform.isWeb && <OpeningOverlay />}

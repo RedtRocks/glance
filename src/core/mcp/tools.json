@@ -376,6 +376,22 @@
         "required": []
       },
       "annotations": { "readOnlyHint": true, "openWorldHint": false }
+    },
+    {
+      "name": "glance_export",
+      "title": "Export a deck",
+      "description": "Saves a deck open in Glance as a PDF, a PowerPoint file (.pptx, with speaker notes and hidden slides kept) or PNG pictures, one per shown slide (named \"<output_path stem> 01.png\" and so on). Exports look the same as the deck in Glance. PowerPoint shows the deck's fonts only where they are installed.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tab": { "type": "string", "description": "Tab id or path of an open deck, from glance_list_open. Default: the active tab." },
+          "format": { "type": "string", "enum": ["pdf", "pptx", "png"], "description": "pdf, pptx or png." },
+          "output_path": { "type": "string", "description": "Absolute path for the file, ending in .pdf, .pptx or .png." },
+          "overwrite": { "type": "boolean", "description": "Replace files that exist. Default false." }
+        },
+        "required": ["format", "output_path"]
+      },
+      "annotations": { "readOnlyHint": false, "destructiveHint": false, "openWorldHint": false }
     }
   ]
 }

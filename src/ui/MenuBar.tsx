@@ -22,7 +22,7 @@ const ZOOM: Entry[] = ['view.zoomIn', 'view.zoomOut', 'view.actualSize', 'view.z
 /** Each kind of file gets its own menu bar, like separate apps would. */
 export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'preview' | 'deck' | 'notice', Record<string, Entry[]>> = {
   none: {
-    File: ['file.open', 'file.newDeck', 'file.newFromClipboard', 'file.scan', 'file.newWindow', '-', 'file.batch', 'file.collage', '-', 'file.makeDefault', 'file.settings'],
+    File: ['file.open', 'file.new', 'file.newFromClipboard', 'file.scan', 'file.newWindow', '-', 'file.batch', 'file.collage', '-', 'file.makeDefault', 'file.settings'],
     Help: HELP
   },
   pdf: {
@@ -72,7 +72,7 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'preview' | 'dec
     Help: HELP
   },
   deck: {
-    File: ['file.open', 'file.openWith', 'file.newDeck', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.versions', '-', 'file.close', '-', 'file.makeDefault', 'file.settings'],
+    File: ['file.open', 'file.openWith', 'file.new', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.versions', '-', 'deck.exportPdf', 'deck.exportPptx', 'deck.exportPng', '-', 'file.print', '-', 'file.close', '-', 'file.makeDefault', 'file.settings'],
     Edit: ['edit.undo', 'edit.redo', '-', 'edit.delete'],
     Slide: ['deck.newSlide', 'deck.duplicateSlide', 'deck.hideSlide', '-', 'deck.moveUp', 'deck.moveDown'],
     View: ['view.hideSidebar', 'view.thumbnails', '-', ...ZOOM, '-', 'view.collapseTabs', 'view.fullscreen', 'view.slideshow', '-', 'view.askAi'],

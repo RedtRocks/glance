@@ -166,3 +166,55 @@ export function setSlideLayout(doc: DeckDoc, layout: LayoutId): void {
   const lost = r?.dropped.reduce((n, d) => n + d.slots.length, 0) ?? 0
   if (lost) toast(t('{count, plural, one {# part didn’t fit the new layout. Undo to get it back.} other {# parts didn’t fit the new layout. Undo to get them back.}}', { count: lost }))
 }
+
+// ---------------------------------------------------------------------------
+// Exports: PDF, PowerPoint and pictures (ADR 0018). The engines load only when used.
+
+export type DeckExport = 'pdf' | 'pptx' | 'png'
+
+export async function deckFontBytes(): Promise<Uint8Array> {
+  const { default: url } = await import('../styles/fonts/urbanist.woff2?url')
+  return new Uint8Array(await (await fetch(url)).arrayBuffer())
+}
+
+export async function exportBytes(doc: DeckDoc, format: 'pdf' | 'pptx'): Promise<Uint8Array> {
+  const deck = doc.deck.peek()
+  if (format === 'pdf') return (await import('../deck/exportPdf')).deckToPdf(deck, doc.media, { regular: await deckFontBytes() })
+  return (await import('../deck/exportPptx')).deckToPptx(deck, doc.media)
+}
+
+/** PNG of every shown slide, 1920 wide, named "<deck> 01.png" and so on. */
+export async function exportPictures(doc: DeckDoc, first: string): Promise<number> {
+  const { slideCanvas } = await import('../deck/raster')
+  const deck = doc.deck.peek()
+  const shown = deck.slides.filter((s) => !s.hidden)
+  const stem = first.replace(/(\s*\d+)?\.png$/i, '')
+  for (const [i, slide] of shown.entries()) {
+    const c = await slideCanvas(deck, slide, doc.media, 1920)
+    const blob = await new Promise<Blob | null>((res) => c.toBlob(res, 'image/png'))
+    if (!blob) continue
+    const path = shown.length === 1 ? `${stem}.png` : `${stem} ${String(i + 1).padStart(2, '0')}.png`
+    await platform.writeFile(path, new Uint8Array(await blob.arrayBuffer()))
+  }
+  return shown.length
+}
+
+export async function exportDeck(doc: DeckDoc, format: DeckExport): Promise<void> {
+  const base = doc.name.peek().replace(/\.[^.]+$/, '')
+  const filter = { pdf: { name: msg('PDF document'), extensions: ['pdf'] }, pptx: { name: msg('PowerPoint presentation'), extensions: ['pptx'] }, png: { name: msg('PNG pictures'), extensions: ['png'] } }[format]
+  const target = await platform.saveDialog(`${base}.${format}`, [filter])
+  if (!target) return
+  try {
+    if (format === 'png') {
+      const n = await withBusy(t('Exporting…'), () => exportPictures(doc, target))
+      toast(t('{count, plural, one {Exported # slide as a picture} other {Exported # slides as pictures}}', { count: n }))
+      return
+    }
+    const bytes = await withBusy(t('Exporting…'), () => exportBytes(doc, format))
+    await platform.writeFile(target, bytes)
+    toast(t('Exported {file}', { file: platform.baseName(target) }))
+  } catch (e) {
+    console.error(e)
+    toast(t('Couldn’t export: {error}', { error: String((e as Error).message ?? e) }), 'error')
+  }
+}

@@ -1,6 +1,7 @@
 import { openWithDialog } from '../../state/actions'
 import { fileDragOver } from '../dragState'
 import { Icon } from '../Icon'
+import { makeOpen } from '../../state/ui'
 import { t } from '../../i18n'
 
 /** Resolved against the page, so the app also works from a subfolder on a website. */
@@ -16,9 +17,14 @@ export function Welcome() {
       {/* i18n-ignore: product name */}
       <h1>Glance</h1>
       <p>{touch ? t('Open a PDF, image, camera RAW or 3D model from this device.') : t('Open a PDF, image, camera RAW or 3D model, or drop files anywhere in this window.')}</p>
-      <button class="btn primary" onClick={() => void openWithDialog()}>
-        <Icon name="open" size={16} /> {t('Open…')}
-      </button>
+      <div class="welcome-actions">
+        <button class="btn primary" onClick={() => void openWithDialog()}>
+          <Icon name="open" size={16} /> {t('Open…')}
+        </button>
+        <button class="btn" onClick={() => (makeOpen.value = true)}>
+          <Icon name="add" size={16} /> {t('Make something new')}
+        </button>
+      </div>
       {!touch && <p class="hint">{t('Tip: drag pages between documents to merge them, or out of the window to create a new PDF.')}</p>}
       {touch && <p class="hint">{t('Files you open stay on this device. Nothing is uploaded.')}</p>}
     </div>

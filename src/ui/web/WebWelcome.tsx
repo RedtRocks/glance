@@ -1,4 +1,5 @@
 import { openWithDialog } from '../../state/actions'
+import { makeOpen } from '../../state/ui'
 import { activeId, docs } from '../../state/documents'
 import { narrowWindow } from '../../state/ui'
 import { toast } from '../../state/ui'
@@ -87,6 +88,10 @@ function DesktopStart() {
           <button class="w-btn ink big" onClick={() => void openWithDialog()}>
             <Icon name="folderOpen" />
             {t('Choose Files')}
+          </button>
+          <button class="w-btn big" onClick={() => (makeOpen.value = true)}>
+            <Icon name="add" />
+            {t('Make Slides')}
           </button>
           {canInstall() && (
             <button class="w-btn big" onClick={() => void onInstall()}>
