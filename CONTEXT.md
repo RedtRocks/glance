@@ -5,12 +5,20 @@ A free, open-source reader and light editor for documents, images, 3D models and
 ## Documents
 
 **Document**:
-One opened file, shown in its own tab. It is a *PDF document*, an *image document*, or a *model document*.
+One opened file, shown in its own tab. It is a *PDF document*, an *image document*, a *model document*, or a *deck*.
 _Avoid_: File (on-disk only), tab (UI only)
 
 **Page**:
 One page of a PDF document or of a multi-page TIFF. Pages can be reordered, rotated, deleted, and dragged between documents.
-_Avoid_: Slide, sheet
+_Avoid_: Slide (that belongs to a deck), sheet
+
+**Deck**:
+A document Glance creates and edits as a set of slides, which people or AI apps build, rearrange and restyle, and export as PowerPoint, PDF or images. A PowerPoint file that is only viewed is not a deck until it is converted.
+_Avoid_: Presentation, slideshow, PPT
+
+**Slide**:
+One part of a deck: a layout with its content filled in. Slides can be added, reordered, restyled, hidden and deleted.
+_Avoid_: Page (that belongs to page-based documents), card
 
 **Frame**:
 One still image of an animated GIF. Frames are shown for inspection and export but can't be reordered or edited.
