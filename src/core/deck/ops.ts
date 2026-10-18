@@ -3,7 +3,7 @@
  * glance_deck_edit, the Ask AI sidebar, or the person dragging a slide. A list of them is
  * applied all or nothing, so one AI turn is one undo step.
  */
-import { LAYOUTS, isLayout, type Deck, type LayoutId, type Slide, type SlotKind, type SlotSpec, type SlotValue } from './model'
+import { LAYOUTS, isLayout, isMediaPath, type Deck, type LayoutId, type Slide, type SlotKind, type SlotSpec, type SlotValue } from './model'
 
 export type DeckOp =
   /** A new slide, at the end unless `after` names a slide (null puts it first). */
@@ -184,7 +184,7 @@ function listSlot(slide: Slide): string {
 const isText = (v: unknown): v is string => typeof v === 'string'
 
 /** Checks a value against the slot's kind, so a bad AI call fails with a reason instead of saving junk. */
-function slotValue(layout: LayoutId, name: string, value: unknown): SlotValue {
+export function slotValue(layout: LayoutId, name: string, value: unknown): SlotValue {
   const spec = specOf(layout, name)
   if (!spec) throw new DeckError(`layout ${layout} has no slot ${name}; it has ${(LAYOUTS[layout] as SlotSpec[]).map((s) => s.name).join(', ')}`)
   const bad = (shape: string) => new DeckError(`slot ${name} takes ${shape}`)
@@ -199,6 +199,7 @@ function slotValue(layout: LayoutId, name: string, value: unknown): SlotValue {
     case 'image': {
       const v = value as { src?: unknown; alt?: unknown; focus?: { x?: unknown; y?: unknown } }
       if (!v || !isText(v.src) || !v.src) throw bad('an image: { src, alt }')
+      if (!isMediaPath(v.src)) throw new DeckError(`picture ${v.src} must be a file in the deck's media/ folder, like media/photo.jpg`)
       const focus = v.focus && typeof v.focus.x === 'number' && typeof v.focus.y === 'number'
         ? { x: clamp01(v.focus.x), y: clamp01(v.focus.y) }
         : undefined

@@ -69,11 +69,11 @@ describe('layoutSlide', () => {
 
 describe('slideHtml', () => {
   it('escapes text, alt text and picture paths', () => {
-    const slide = slideOf('imageLeft', { title: '<b>Hi</b> & "you"', image: { src: 'media/"x".jpg', alt: '<img onerror=1>' } })
-    const html = slideHtml(slide, theme, { resolveSrc: (src) => `blob:${src}` })
+    const slide = slideOf('imageLeft', { title: '<b>Hi</b> & "you"', image: { src: 'media/x.jpg', alt: '<img onerror=1>' } })
+    const html = slideHtml(slide, theme, { resolveSrc: (src) => `blob:"${src}"` })
     expect(html).toContain('&lt;b&gt;Hi&lt;/b&gt; &amp; &quot;you&quot;')
     expect(html).toContain('alt="&lt;img onerror=1&gt;"')
-    expect(html).toContain('src="blob:media/&quot;x&quot;.jpg"')
+    expect(html).toContain('src="blob:&quot;media/x.jpg&quot;"')
     expect(html).not.toContain('<b>')
   })
 

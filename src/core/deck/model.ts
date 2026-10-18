@@ -10,6 +10,11 @@ export const DECK_VERSION = 1
 
 export type SlotKind = 'text' | 'list' | 'image' | 'items' | 'table'
 
+/** Pictures a deck can name: media/ then a plain file name, no folders. */
+const MEDIA_PATH = /^media\/\w[\w .()-]{0,120}\.(png|jpe?g|webp|gif|avif|svg)$/i
+
+export const isMediaPath = (src: string) => MEDIA_PATH.test(src) && !src.includes('..')
+
 export interface ImageRef {
   /** A path inside the deck's media/ folder. */
   src: string
@@ -82,4 +87,10 @@ export const isLayout = (id: string): id is LayoutId => Object.hasOwn(LAYOUTS, i
 
 export function emptyDeck(theme = 'wollo'): Deck {
   return { version: DECK_VERSION, theme, slides: [] }
+}
+
+/** A short id for a new slide ("s7"), so AI apps can name slides back easily. */
+export function slideIdMaker(deck: Deck): () => string {
+  let n = Math.max(0, ...deck.slides.map((s) => Number(/^s(\d+)$/.exec(s.id)?.[1] ?? 0)))
+  return () => `s${++n}`
 }
