@@ -67,6 +67,7 @@ import { ScanDialog } from './dialogs/ScanDialog'
 import { PdfExportDialog } from './dialogs/PdfExportDialog'
 import { AdjustColorPanel } from './image/AdjustColorPanel'
 import { AdjustSizeDialog } from './image/AdjustSizeDialog'
+import { DeckView } from './deck/DeckView'
 import { ExportDialog } from './image/ExportDialog'
 
 function Viewer() {
@@ -89,6 +90,7 @@ function Viewer() {
           {doc.kind === 'notice' && <NoticeView doc={doc} />}
           {doc.kind === 'model' && <ModelView key={doc.id} doc={doc} />}
           {doc.kind === 'preview' && <PreviewView key={doc.id} doc={doc} />}
+          {doc.kind === 'deck' && <DeckView key={doc.id} doc={doc} />}
         </div>
         {aiOpen.value && selectingArea.value && <AreaSelect doc={doc} />}
         {phone && <PageCounter doc={doc} />}

@@ -10,6 +10,9 @@ import { t } from '../i18n'
 import type { Affine } from '../core/image/transform'
 import { previewExt, previewFlavor, type PreviewFlavor } from '../core/previews'
 import { pathKey } from '../core/paths'
+import { emptyDeck, slideIdMaker, type Deck } from '../core/deck/model'
+import { applyOps, type ApplyResult, type DeckOp } from '../core/deck/ops'
+import { releaseMedia } from './deckMedia'
 
 let seq = 0
 const nextId = (): string => `doc${++seq}`
@@ -372,7 +375,73 @@ export class PreviewDoc extends BaseDoc {
   }
 }
 
-export type Doc = PdfDoc | ImageDoc | NoticeDoc | ModelDoc | PreviewDoc
+/**
+ * A deck (.gdeck, ADR 0018). Every change, the person's or an AI app's, is a list of deck
+ * operations applied as one undo step.
+ */
+export class DeckDoc extends BaseDoc {
+  readonly kind = 'deck' as const
+  readonly deck = signal<Deck>(emptyDeck())
+  /** Pictures by media/ path. Only grows while open; saving keeps the ones slides use. */
+  readonly media = new Map<string, Uint8Array>()
+  /** Bumped when media changes, so views re-read picture URLs. */
+  readonly mediaVersion = signal(0)
+  readonly current = signal(0)
+  readonly pageCount = computed(() => this.deck.value.slides.length)
+  /** Times the fitted size, as in previews. */
+  readonly zoom = signal(1)
+  /** Slides picked in the slide sorter, for moving or deleting several at once. */
+  readonly selection = signal<string[]>([])
+  readonly history = new History<Deck>(80)
+  readonly historyVersion = signal(0)
+  constructor(name: string, path: string | null) {
+    super(name, path)
+    this.sidebar.value = 'thumbnails'
+  }
+
+  /** Applies `ops` as one undo step. Throws DeckError, changing nothing, if any is invalid. */
+  apply(label: string, ops: DeckOp[]): ApplyResult {
+    const before = this.deck.peek()
+    const result = applyOps(before, ops, slideIdMaker(before))
+    this.history.push(label, before)
+    this.deck.value = result.deck
+    this.dirty.value = true
+    this.historyVersion.value++
+    this.current.value = Math.min(this.current.peek(), Math.max(0, result.deck.slides.length - 1))
+    return result
+  }
+
+  /** Stores a picture under a media/ name no other picture uses, and returns that path. */
+  addMedia(fileName: string, bytes: Uint8Array): string {
+    const dot = fileName.lastIndexOf('.')
+    const ext = (dot > 0 ? fileName.slice(dot + 1) : 'png').toLowerCase()
+    const stem = (dot > 0 ? fileName.slice(0, dot) : fileName).replace(/[^\w .()-]/g, '').replace(/^[^\w]+/, '').slice(0, 60) || 'picture'
+    let path = `media/${stem}.${ext}`
+    for (let n = 2; this.media.has(path); n++) path = `media/${stem} (${n}).${ext}`
+    this.media.set(path, bytes)
+    this.mediaVersion.value++
+    return path
+  }
+
+  undo(): void {
+    const e = this.history.undo(this.deck.peek())
+    if (e) this.restore(e.state)
+  }
+
+  redo(): void {
+    const e = this.history.redo(this.deck.peek())
+    if (e) this.restore(e.state)
+  }
+
+  private restore(deck: Deck): void {
+    this.deck.value = deck
+    this.dirty.value = true
+    this.historyVersion.value++
+    this.current.value = Math.min(this.current.peek(), Math.max(0, deck.slides.length - 1))
+  }
+}
+
+export type Doc = PdfDoc | ImageDoc | NoticeDoc | ModelDoc | PreviewDoc | DeckDoc
 
 export const docs = signal<Doc[]>([])
 export const activeId = signal<string | null>(null)
@@ -389,6 +458,7 @@ export function removeDoc(id: string): void {
   if (idx < 0) return
   const doc = list[idx]
   if (doc.kind === 'pdf') void doc.proxy.peek()?.loadingTask.destroy()
+  if (doc.kind === 'deck') releaseMedia(doc)
   const path = doc.path.peek() ?? (doc.kind === 'pdf' ? doc.convertedFrom : null)
   if (path) {
     void releaseFile(path)

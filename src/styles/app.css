@@ -4327,3 +4327,133 @@ input[type='range'] {
   border-bottom: 2px solid var(--accent);
   background: var(--layer-alt);
 }
+
+/* ---------- Decks (src/ui/deck) ---------- */
+.slide-frame {
+  position: relative;
+  overflow: hidden;
+  flex: none;
+}
+.slide-frame-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1920px;
+  height: 1080px;
+  transform-origin: 0 0;
+}
+.deck-view {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+.deck-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--stroke);
+  background: var(--chrome);
+}
+.deck-bar-gap {
+  width: 12px;
+}
+.deck-bar-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+}
+.deck-bar-button:hover:not(:disabled) {
+  background: var(--subtle-hover);
+}
+.deck-bar-button:disabled {
+  color: var(--text-3);
+}
+.deck-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  background: var(--canvas);
+}
+.deck-current,
+.deck-empty {
+  margin: auto;
+}
+.deck-current {
+  padding: 32px;
+}
+.deck-current .slide-frame {
+  box-shadow: var(--page-shadow);
+  border-radius: 4px;
+}
+.deck-current .deck-box {
+  cursor: text;
+}
+.deck-current .deck-image {
+  cursor: pointer;
+}
+.deck-current .deck-box:hover {
+  outline: calc(2px / var(--deck-scale, 1)) dashed var(--accent);
+  outline-offset: calc(4px / var(--deck-scale, 1));
+}
+.deck-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-2);
+}
+.deck-typing {
+  position: absolute;
+  z-index: 3;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  background: transparent;
+  resize: none;
+  overflow: hidden;
+}
+.hidden-slide .slide-frame {
+  opacity: 0.45;
+}
+.slide-thumb .thumb-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.slide-thumb .slide-frame {
+  border-radius: 4px;
+  box-shadow: var(--page-shadow);
+}
+.slide-thumb.current .slide-frame {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.slide-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(100% - 16px);
+  height: 40px;
+  margin: 4px 8px 12px;
+  border: 1px dashed var(--stroke-strong);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-2);
+}
+.slide-add:hover {
+  background: var(--subtle-hover);
+  color: var(--text);
+}

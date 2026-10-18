@@ -3,6 +3,7 @@ import { activeDoc } from '../../state/documents'
 import { imageUrl, toggleFullscreen } from '../../platform'
 import { slideshow } from '../../state/ui'
 import { t } from '../../i18n'
+import { SlideFrame } from '../deck/SlideFrame'
 
 /** Full-screen, one page at a time. Arrows/space advance, Esc exits. */
 export function Slideshow() {
@@ -10,14 +11,22 @@ export function Slideshow() {
   const canvas = useRef<HTMLCanvasElement>(null)
   const page = doc && doc.kind !== 'notice' ? doc.current.value : 0
 
+  /** The next page, or for a deck the next slide that isn't hidden. */
+  const step = (dir: 1 | -1): void => {
+    if (!doc || doc.kind === 'notice') return
+    const n = doc.pageCount.value
+    let i = doc.current.value + dir
+    if (doc.kind === 'deck') while (i >= 0 && i < n && doc.deck.value.slides[i].hidden) i += dir
+    if (i >= 0 && i < n) doc.current.value = i
+  }
+
   useEffect(() => {
     void toggleFullscreen()
     const key = (e: KeyboardEvent): void => {
       if (!doc || doc.kind === 'notice') return
-      const n = doc.pageCount.value
       if (e.key === 'Escape') slideshow.value = false
-      else if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(e.key)) doc.current.value = Math.min(n - 1, doc.current.value + 1)
-      else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) doc.current.value = Math.max(0, doc.current.value - 1)
+      else if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(e.key)) step(1)
+      else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) step(-1)
       else return
       e.preventDefault()
       e.stopPropagation()
@@ -55,8 +64,14 @@ export function Slideshow() {
 
   if (!doc || doc.kind === 'notice') return null
   return (
-    <div class="slideshow" onClick={() => (doc.current.value = Math.min(doc.pageCount.value - 1, doc.current.value + 1))}>
-      {doc.kind === 'pdf' ? <canvas ref={canvas} /> : <img src={imageUrl(doc.probe, page)} alt="" />}
+    <div class="slideshow" onClick={() => step(1)}>
+      {doc.kind === 'pdf' ? (
+        <canvas ref={canvas} />
+      ) : doc.kind === 'deck' ? (
+        doc.deck.value.slides[page] && <SlideFrame doc={doc} slide={doc.deck.value.slides[page]} width={Math.min(window.innerWidth, (window.innerHeight * 16) / 9)} />
+      ) : (
+        <img src={imageUrl(doc.probe, page)} alt="" />
+      )}
       <div class="slideshow-hint">{t('{page} / {count} · Esc to exit', { page: page + 1, count: doc.pageCount.value })}</div>
     </div>
   )

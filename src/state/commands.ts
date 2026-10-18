@@ -22,6 +22,7 @@ import { markupBar, restyle, selectedId, setTool, SHAPE_TOOLS, signatureDialog, 
 import { bookmarksFor, setBookmarks } from './bookmarks'
 import { adjustColorOpen, adjustSizeOpen, exportOpen, imageSelection, straighten } from './imageState'
 import * as img from './imageActions'
+import * as deckActions from './deck'
 
 export interface Command {
   id: string
@@ -46,6 +47,7 @@ export function stepZoom(current: number, dir: 1 | -1): number {
 }
 
 const pdf = () => (activeDoc.value?.kind === 'pdf' ? activeDoc.value : null)
+const deck = () => (activeDoc.value?.kind === 'deck' ? activeDoc.value : null)
 const model = () => (activeDoc.value?.kind === 'model' ? activeDoc.value : null)
 /** The sidebar pane actually on screen, or null when hidden. */
 const sidebarShown = () => {
@@ -72,7 +74,7 @@ function zoom(dir: 1 | -1): void {
   const d = activeDoc.value
   if (!d || d.kind === 'notice') return
   if (d.kind === 'model') return void (d.viewRequest.value = { kind: 'zoom', dir })
-  if (d.kind === 'preview') return void (d.zoom.value = stepZoom(d.zoom.value, dir))
+  if (d.kind === 'preview' || d.kind === 'deck') return void (d.zoom.value = stepZoom(d.zoom.value, dir))
   const next = stepZoom(d.effectiveScale.value, dir)
   if (d.kind === 'pdf') d.zoom.value = next
   else d.zoom.value = next
@@ -82,7 +84,7 @@ function setZoom(mode: 'actual' | 'fit'): void {
   const d = activeDoc.value
   if (!d || d.kind === 'notice') return
   if (d.kind === 'model') return void (d.viewRequest.value = { kind: 'reset' })
-  if (d.kind === 'preview') return void (d.zoom.value = 1)
+  if (d.kind === 'preview' || d.kind === 'deck') return void (d.zoom.value = 1)
   if (d.kind === 'pdf') d.zoom.value = mode === 'actual' ? 1 : 'fit-page'
   else d.zoom.value = mode === 'actual' ? 1 : 'fit'
 }
@@ -121,11 +123,12 @@ function cycleTab(dir: 1 | -1): void {
 export const COMMANDS: Command[] = [
   // File
   { id: 'file.open', label: msg('Open…'), keys: ['Ctrl+O'], run: actions.openWithDialog },
+  { id: 'file.newDeck', label: msg('New Deck'), run: () => void deckActions.newDeck() },
   { id: 'file.newFromClipboard', label: msg('New from Clipboard'), keys: ['Ctrl+N'], run: () => img.newFromClipboard(), enabled: () => platform.isTauri },
   { id: 'file.scan', label: msg('Import from Scanner…'), run: () => void (scanOpen.value = true), enabled: () => platform.scanAvailable },
   { id: 'file.newWindow', label: msg('New Window'), keys: ['Ctrl+Shift+N'], run: () => platform.openNewWindow([]) },
-  { id: 'file.save', label: msg('Save'), keys: ['Ctrl+S'], run: () => actions.save(), enabled: () => isPdf() || isImage() },
-  { id: 'file.saveAs', label: msg('Save As…'), keys: ['Ctrl+Shift+S'], run: () => actions.saveAs(), enabled: () => isPdf() || isImage() },
+  { id: 'file.save', label: msg('Save'), keys: ['Ctrl+S'], run: () => actions.save(), enabled: () => isPdf() || isImage() || !!deck() },
+  { id: 'file.saveAs', label: msg('Save As…'), keys: ['Ctrl+Shift+S'], run: () => actions.saveAs(), enabled: () => isPdf() || isImage() || !!deck() },
   {
     id: 'file.export',
     label: msg('Export…'),
@@ -154,8 +157,8 @@ export const COMMANDS: Command[] = [
   },
   { id: 'file.settings', label: msg('Settings'), keys: ['Ctrl+,'], run: () => void (settingsOpen.value = true) },
   // Edit
-  { id: 'edit.undo', label: msg('Undo'), keys: ['Ctrl+Z'], run: () => actions.undo(), enabled: () => !!(pdf() ?? image())?.history.canUndo },
-  { id: 'edit.redo', label: msg('Redo'), keys: ['Ctrl+Y', 'Ctrl+Shift+Z'], run: () => actions.redo(), enabled: () => !!(pdf() ?? image())?.history.canRedo },
+  { id: 'edit.undo', label: msg('Undo'), keys: ['Ctrl+Z'], run: () => actions.undo(), enabled: () => !!(pdf() ?? image() ?? deck())?.history.canUndo },
+  { id: 'edit.redo', label: msg('Redo'), keys: ['Ctrl+Y', 'Ctrl+Shift+Z'], run: () => actions.redo(), enabled: () => !!(pdf() ?? image() ?? deck())?.history.canRedo },
   { id: 'edit.selectAll', label: msg('Select All Pages'), keys: ['Ctrl+A'], run: () => actions.selectAllPages(), enabled: isPdf },
   { id: 'edit.find', label: msg('Find…'), keys: ['Ctrl+F'], run: () => void (findOpen.value = true), enabled: isPdf },
   { id: 'edit.insertBlank', label: msg('Insert Blank Page'), run: () => actions.insertBlankPage(), enabled: isPdf },
@@ -180,8 +183,10 @@ export const COMMANDS: Command[] = [
       if (im && imageSelection.peek()) return void img.deleteSelection(im)
       const d = pdf()
       if (d && d.selection.peek().length) return actions.deletePages()
+      const k = deck()
+      if (k) return deckActions.deleteSlides(k)
     },
-    enabled: () => isPdf() || isImage()
+    enabled: () => isPdf() || isImage() || !!deck()
   },
   { id: 'edit.invertSelection', label: msg('Invert Selection'), keys: ['Ctrl+Shift+I'], run: () => void img.invertSelection(image()!), enabled: () => isImage() && !!imageSelection.value },
   { id: 'edit.deletePages', label: msg('Delete Selected Pages'), run: () => actions.deletePages(), enabled: isPdf },
@@ -246,6 +251,11 @@ export const COMMANDS: Command[] = [
   { id: 'view.signatures', label: msg('Signatures'), run: () => void (signaturesOpen.value = !signaturesOpen.value), checked: () => signaturesOpen.value },
   { id: 'view.customizeToolbar', label: msg('Customize Toolbar…'), run: () => void (customizeOpen.value = true) },
   // Go
+  { id: 'deck.newSlide', label: msg('New Slide'), keys: ['Ctrl+M'], run: () => deckActions.addSlide(deck()!), enabled: () => !!deck() },
+  { id: 'deck.duplicateSlide', label: msg('Duplicate Slide'), keys: ['Ctrl+Shift+D'], run: () => deckActions.duplicateSlides(deck()!), enabled: () => !!deck()?.pageCount.value },
+  { id: 'deck.hideSlide', label: msg('Hide or Show Slide'), run: () => deckActions.toggleHidden(deck()!), enabled: () => !!deck()?.pageCount.value },
+  { id: 'deck.moveUp', label: msg('Move Slide Up'), keys: ['Alt+Up'], run: () => deckActions.nudgeSlides(deck()!, -1), enabled: () => !!deck()?.pageCount.value },
+  { id: 'deck.moveDown', label: msg('Move Slide Down'), keys: ['Alt+Down'], run: () => deckActions.nudgeSlides(deck()!, 1), enabled: () => !!deck()?.pageCount.value },
   { id: 'go.previous', label: msg('Previous Page'), keys: ['Ctrl+Up', 'PageUp'], run: () => goPage(-1), enabled: multiPage },
   { id: 'go.next', label: msg('Next Page'), keys: ['Ctrl+Down', 'PageDown'], run: () => goPage(1), enabled: multiPage },
   { id: 'go.first', label: msg('First Page'), keys: ['Home'], run: () => goPage('first'), enabled: multiPage },
@@ -338,16 +348,19 @@ export const COMMANDS: Command[] = [
 const ifPdf = () => activeDoc.value?.kind === 'pdf'
 const ifViewable = () => !!activeDoc.value && activeDoc.value.kind !== 'notice'
 const ifMarkup = () => ifPdf() || isImage()
-const ifPaged = () => ifPdf() || multiPage()
+const isDeck = () => activeDoc.value?.kind === 'deck'
+const ifPaged = () => ifPdf() || multiPage() || isDeck()
 const VISIBILITY: [(() => boolean), string[]][] = [
   [hasDoc, ['file.close', 'file.openWith', 'view.customizeToolbar']],
   [() => ifPdf() || anyImage() || activeDoc.value?.kind === 'preview', ['file.share']],
   [ifViewable, ['view.inspector']],
-  [() => ifPdf() || anyImage(), ['file.versions']],
+  [() => ifPdf() || anyImage() || isDeck(), ['file.versions']],
   [ifViewable, ['view.zoomIn', 'view.zoomOut', 'view.zoomToFit', 'view.fullscreen']],
-  [() => ifPdf() || anyImage(), ['file.print', 'view.actualSize', 'view.slideshow', 'tools.rotateLeft', 'tools.rotateRight']],
+  [() => ifPdf() || anyImage(), ['file.print', 'tools.rotateLeft', 'tools.rotateRight']],
+  [() => ifPdf() || anyImage() || isDeck(), ['view.actualSize', 'view.slideshow']],
   [() => activeDoc.value?.kind === 'model', ['model.wireframe', 'model.autoRotate', 'model.resetView', 'model.shadow', 'model.grid', 'model.view.front', 'model.view.back', 'model.view.left', 'model.view.right', 'model.view.top', 'model.view.bottom']],
-  [() => ifPdf() || isImage(), ['file.save', 'file.saveAs', 'edit.undo', 'edit.redo', 'edit.delete']],
+  [() => ifPdf() || isImage() || isDeck(), ['file.save', 'file.saveAs', 'edit.undo', 'edit.redo', 'edit.delete']],
+  [isDeck, ['deck.newSlide', 'deck.duplicateSlide', 'deck.hideSlide', 'deck.moveUp', 'deck.moveDown']],
   [() => ifPdf() || isImage() || !!model(), ['file.export']],
   [ifPdf, [
     'file.exportPages', 'file.split', 'edit.selectAll', 'edit.find', 'edit.insertBlank', 'edit.insertFile', 'edit.duplicatePages', 'edit.stamps',

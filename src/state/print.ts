@@ -34,7 +34,8 @@ async function pdfPages(doc: Extract<Doc, { kind: 'pdf' }>, root: HTMLElement): 
 }
 
 export async function printDoc(doc: Doc | null): Promise<void> {
-  if (!doc || doc.kind === 'notice') return
+  // Decks print through their PDF export.
+  if (!doc || doc.kind === 'notice' || doc.kind === 'deck') return
   const root = document.getElementById('print-root') ?? Object.assign(document.createElement('div'), { id: 'print-root' })
   document.body.appendChild(root)
   root.replaceChildren()
