@@ -1,4 +1,5 @@
 import type { LayoutId } from '../../core/deck/model'
+import type { Purpose } from '../../core/deck/design'
 import { t } from '../../i18n'
 
 /** What each layout is called in pickers and menus. */
@@ -28,6 +29,8 @@ export function layoutLabel(id: LayoutId): string {
       return t('Table')
     case 'timeline':
       return t('Timeline')
+    case 'design':
+      return t('Designed slide')
   }
 }
 
@@ -44,5 +47,23 @@ export function themeLabel(id: string): string {
       return t('Ink')
     default:
       return t('Wollo')
+  }
+}
+
+/** What each template purpose is called on the start screen's tabs. */
+export function purposeLabel(p: Purpose | 'All'): string {
+  switch (p) {
+    case 'School':
+      return t('School')
+    case 'Work':
+      return t('Work')
+    case 'Events':
+      return t('Events')
+    case 'Personal':
+      return t('Personal')
+    case 'Clubs':
+      return t('Clubs')
+    default:
+      return t('All')
   }
 }

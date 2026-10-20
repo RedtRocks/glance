@@ -40,6 +40,8 @@ export interface Slide {
   /** Stable across edits, so "move s7 after s2" still means the same slides later. */
   id: string
   layout: LayoutId
+  /** For layout 'design': the designed slide it is drawn from, like "bakeSale.2" (see design.ts). */
+  design?: string
   slots: Record<string, SlotValue>
   notes: string
   hidden: boolean
@@ -59,6 +61,8 @@ export interface SlotSpec {
   maxChars?: number
   /** Entries that fit, for list, items and table (rows) slots. */
   maxItems?: number
+  /** What goes here, for AI apps: a designed slide's sample text. */
+  hint?: string
 }
 
 const slot = (name: string, kind: SlotKind, required: boolean, maxChars?: number, maxItems?: number): SlotSpec => ({ name, kind, required, maxChars, maxItems })
@@ -76,12 +80,15 @@ export const LAYOUTS = {
   threeCards: [slot('title', 'text', true, 60), slot('items', 'items', true, 80, 3)],
   quote: [slot('quote', 'text', true, 220), slot('attribution', 'text', false, 60)],
   comparison: [slot('title', 'text', true, 60), slot('table', 'table', true, 40, 7)],
-  timeline: [slot('title', 'text', true, 60), slot('items', 'items', true, 60, 6)]
+  timeline: [slot('title', 'text', true, 60), slot('items', 'items', true, 60, 6)],
+  /** A designed slide: its slots come from its design (slotSpecsOf in design.ts), not from here. */
+  design: []
 } satisfies Record<string, SlotSpec[]>
 
 export type LayoutId = keyof typeof LAYOUTS
 
-export const layoutIds = Object.keys(LAYOUTS) as LayoutId[]
+/** The layouts a picker offers; designed slides are added from a template instead. */
+export const layoutIds = (Object.keys(LAYOUTS) as LayoutId[]).filter((id) => id !== 'design')
 
 export const isLayout = (id: string): id is LayoutId => Object.hasOwn(LAYOUTS, id)
 

@@ -2,7 +2,8 @@
  * Typing on a slide: the text a box shows, and the operation that puts edited text back.
  * Lists are one entry per line, so editing a bullet list feels like editing text.
  */
-import { LAYOUTS, type Item, type Slide, type SlotSpec } from './model'
+import { type Item, type Slide, type SlotSpec } from './model'
+import { noDesigns, slotSpecsOf, type DesignLookup } from './design'
 import type { DeckOp } from './ops'
 import type { SlotRef } from './layout'
 
@@ -16,7 +17,7 @@ export function parseRefKey(key: string): SlotRef {
   return ref
 }
 
-const specOf = (slide: Slide, slot: string): SlotSpec | undefined => (LAYOUTS[slide.layout] as SlotSpec[]).find((s) => s.name === slot)
+const specOf = (slide: Slide, slot: string, designs: DesignLookup): SlotSpec | undefined => slotSpecsOf(slide, designs).find((s) => s.name === slot)
 
 /** What the editor starts with for this box. */
 export function slotText(slide: Slide, ref: SlotRef): string {
@@ -37,8 +38,8 @@ export function slotText(slide: Slide, ref: SlotRef): string {
 }
 
 /** The operations that store `text` in the box, or none when nothing changed. */
-export function editOps(slide: Slide, ref: SlotRef, text: string): DeckOp[] {
-  const spec = specOf(slide, ref.slot)
+export function editOps(slide: Slide, ref: SlotRef, text: string, designs: DesignLookup = noDesigns): DeckOp[] {
+  const spec = specOf(slide, ref.slot, designs)
   if (!spec || slotText(slide, ref) === text) return []
   const id = slide.id
   const v = slide.slots[ref.slot]

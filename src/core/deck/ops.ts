@@ -4,17 +4,21 @@
  * applied all or nothing, so one AI turn is one undo step.
  */
 import { LAYOUTS, isLayout, isMediaPath, type Deck, type LayoutId, type Slide, type SlotKind, type SlotSpec, type SlotValue } from './model'
+import { DESIGN_ID, noDesigns, slotSpecsOf, type DesignLookup } from './design'
 
 export type DeckOp =
-  /** A new slide, at the end unless `after` names a slide (null puts it first). */
-  | { op: 'add'; layout: LayoutId; slots?: Record<string, unknown>; notes?: string; after?: string | null }
+  /**
+   * A new slide, at the end unless `after` names a slide (null puts it first). Give a
+   * layout, or a template's design (layout may then be left out or be 'design').
+   */
+  | { op: 'add'; layout?: LayoutId; design?: string; slots?: Record<string, unknown>; notes?: string; after?: string | null }
   /** Moves slides, keeping their order, to just after `after` (null: to the start). */
   | { op: 'move'; ids: string[]; after: string | null }
   | { op: 'delete'; ids: string[] }
   | { op: 'duplicate'; id: string }
   | { op: 'hide'; ids: string[]; hidden: boolean }
-  /** Keeps the slots the new layout also has; the others are reported as dropped. */
-  | { op: 'setLayout'; id: string; layout: LayoutId }
+  /** Keeps the slots the new layout (or design) also has; the others are reported as dropped. */
+  | { op: 'setLayout'; id: string; layout?: LayoutId; design?: string }
   | { op: 'setSlot'; id: string; slot: string; value: unknown }
   | { op: 'clearSlot'; id: string; slot: string }
   | { op: 'setNotes'; id: string; notes: string }
@@ -34,8 +38,11 @@ export interface ApplyResult {
   dropped: { id: string; slots: string[] }[]
 }
 
-/** Applies `ops` in order to a copy of `deck`. Throws DeckError, changing nothing, if any op is invalid. */
-export function applyOps(deck: Deck, ops: DeckOp[], newId: () => string): ApplyResult {
+/**
+ * Applies `ops` in order to a copy of `deck`. Throws DeckError, changing nothing, if any
+ * op is invalid. `designs` finds the designs designed slides use; they must be loaded.
+ */
+export function applyOps(deck: Deck, ops: DeckOp[], newId: () => string, designs: DesignLookup = noDesigns): ApplyResult {
   const next = structuredClone(deck)
   const added: string[] = []
   const dropped: ApplyResult['dropped'] = []
@@ -47,7 +54,7 @@ export function applyOps(deck: Deck, ops: DeckOp[], newId: () => string): ApplyR
   }
   ops.forEach((op, i) => {
     try {
-      apply(next, op, fresh, dropped)
+      apply(next, op, fresh, dropped, designs)
     } catch (e) {
       if (e instanceof DeckError) throw new DeckError(`Operation ${i + 1} (${op.op}): ${e.message}`)
       throw e
@@ -56,12 +63,12 @@ export function applyOps(deck: Deck, ops: DeckOp[], newId: () => string): ApplyR
   return { deck: next, added, dropped }
 }
 
-function apply(deck: Deck, op: DeckOp, fresh: () => string, dropped: ApplyResult['dropped']): void {
+function apply(deck: Deck, op: DeckOp, fresh: () => string, dropped: ApplyResult['dropped'], designs: DesignLookup): void {
   const slides = deck.slides
   switch (op.op) {
     case 'add': {
-      const slide: Slide = { id: fresh(), layout: layoutOf(op.layout), slots: {}, notes: op.notes ?? '', hidden: false }
-      for (const [name, value] of Object.entries(op.slots ?? {})) slide.slots[name] = slotValue(slide.layout, name, value)
+      const slide: Slide = { id: fresh(), ...shapeOf(op, designs), slots: {}, notes: op.notes ?? '', hidden: false }
+      for (const [name, value] of Object.entries(op.slots ?? {})) slide.slots[name] = slotValue(slide, name, value, designs)
       slides.splice(op.after === undefined ? slides.length : op.after === null ? 0 : index(deck, op.after) + 1, 0, slide)
       return
     }
@@ -92,27 +99,30 @@ function apply(deck: Deck, op: DeckOp, fresh: () => string, dropped: ApplyResult
       return
     case 'setLayout': {
       const slide = slides[index(deck, op.id)]
-      const layout = layoutOf(op.layout)
+      const shape = shapeOf(op, designs)
+      const specs = slotSpecsOf(shape, designs)
       const lost: string[] = []
       for (const [name, value] of Object.entries(slide.slots)) {
-        const spec = specOf(layout, name)
+        const spec = specs.find((s) => s.name === name)
         if (!spec || spec.kind !== value.kind) {
           lost.push(name)
           delete slide.slots[name]
         }
       }
-      slide.layout = layout
+      slide.layout = shape.layout
+      if (shape.design) slide.design = shape.design
+      else delete slide.design
       if (lost.length) dropped.push({ id: slide.id, slots: lost })
       return
     }
     case 'setSlot': {
       const slide = slides[index(deck, op.id)]
-      slide.slots[op.slot] = slotValue(slide.layout, op.slot, op.value)
+      slide.slots[op.slot] = slotValue(slide, op.slot, op.value, designs)
       return
     }
     case 'clearSlot': {
       const slide = slides[index(deck, op.id)]
-      if (!specOf(slide.layout, op.slot)) throw new DeckError(`layout ${slide.layout} has no slot ${op.slot}`)
+      if (!specOf(slide, op.slot, designs)) throw new DeckError(`${shapeName(slide)} has no slot ${op.slot}`)
       delete slide.slots[op.slot]
       return
     }
@@ -127,7 +137,7 @@ function apply(deck: Deck, op: DeckOp, fresh: () => string, dropped: ApplyResult
     case 'split': {
       const i = index(deck, op.id)
       const slide = slides[i]
-      const name = listSlot(slide)
+      const name = listSlot(slide, designs)
       const value = slide.slots[name] as Extract<SlotValue, { kind: 'list' | 'items' }>
       if (value.value.length < 2) throw new DeckError(`${slide.id} has fewer than 2 entries in ${name}`)
       const half = Math.ceil(value.value.length / 2)
@@ -141,8 +151,8 @@ function apply(deck: Deck, op: DeckOp, fresh: () => string, dropped: ApplyResult
     case 'merge': {
       const [a, b] = op.ids.map((id) => slides[index(deck, id)])
       if (a === b) throw new DeckError('merge needs two different slides')
-      if (a.layout !== b.layout) throw new DeckError(`${a.id} is ${a.layout} and ${b.id} is ${b.layout}; merge needs the same layout`)
-      const name = listSlot(a)
+      if (a.layout !== b.layout || a.design !== b.design) throw new DeckError(`${a.id} is ${shapeName(a)} and ${b.id} is ${shapeName(b)}; merge needs the same layout`)
+      const name = listSlot(a, designs)
       const into = a.slots[name] as Extract<SlotValue, { kind: 'list' | 'items' }>
       const from = b.slots[name] as typeof into | undefined
       if (from) into.value = [...into.value, ...from.value] as never
@@ -165,18 +175,36 @@ function unique(ids: string[]): string[] {
   return [...new Set(ids)]
 }
 
-function layoutOf(id: string): LayoutId {
-  if (!isLayout(id)) throw new DeckError(`no layout ${id}; layouts are ${Object.keys(LAYOUTS).join(', ')}`)
+type Shape = Pick<Slide, 'layout' | 'design'>
+
+/** The layout, or design, an add or setLayout asks for, checked. */
+function shapeOf(op: { layout?: unknown; design?: unknown }, designs: DesignLookup): { layout: LayoutId; design?: string } {
+  if (op.design !== undefined || op.layout === 'design') {
+    if (op.layout !== undefined && op.layout !== 'design') throw new DeckError('give a layout or a design, not both')
+    const id = op.design
+    if (typeof id !== 'string' || !DESIGN_ID.test(id)) throw new DeckError('design must be a design id from glance_templates, like bakeSale.2')
+    if (!designs(id)) throw new DeckError(`no design ${id}; glance_templates lists the designs`)
+    return { layout: 'design', design: id }
+  }
+  return { layout: layoutOf(op.layout) }
+}
+
+function layoutOf(id: unknown): LayoutId {
+  const ids = Object.keys(LAYOUTS).filter((l) => l !== 'design')
+  if (typeof id !== 'string' || !isLayout(id) || id === 'design') throw new DeckError(`no layout ${String(id)}; layouts are ${ids.join(', ')}`)
   return id
 }
 
-function specOf(layout: LayoutId, name: string): SlotSpec | undefined {
-  return (LAYOUTS[layout] as SlotSpec[]).find((s) => s.name === name)
+/** "layout bullets" or "design bakeSale.2", for messages. */
+const shapeName = (s: Shape) => (s.layout === 'design' ? `design ${s.design}` : `layout ${s.layout}`)
+
+function specOf(slide: Shape, name: string, designs: DesignLookup): SlotSpec | undefined {
+  return slotSpecsOf(slide, designs).find((s) => s.name === name)
 }
 
 /** The slot split and merge work on: the layout's list or items slot that has content. */
-function listSlot(slide: Slide): string {
-  const spec = (LAYOUTS[slide.layout] as SlotSpec[]).find((s) => (s.kind === 'list' || s.kind === 'items') && slide.slots[s.name])
+function listSlot(slide: Slide, designs: DesignLookup): string {
+  const spec = slotSpecsOf(slide, designs).find((s) => (s.kind === 'list' || s.kind === 'items') && slide.slots[s.name])
   if (!spec) throw new DeckError(`${slide.id} has no list to split or merge`)
   return spec.name
 }
@@ -184,9 +212,13 @@ function listSlot(slide: Slide): string {
 const isText = (v: unknown): v is string => typeof v === 'string'
 
 /** Checks a value against the slot's kind, so a bad AI call fails with a reason instead of saving junk. */
-export function slotValue(layout: LayoutId, name: string, value: unknown): SlotValue {
-  const spec = specOf(layout, name)
-  if (!spec) throw new DeckError(`layout ${layout} has no slot ${name}; it has ${(LAYOUTS[layout] as SlotSpec[]).map((s) => s.name).join(', ')}`)
+export function slotValue(slide: Shape, name: string, value: unknown, designs: DesignLookup = noDesigns): SlotValue {
+  const specs = slotSpecsOf(slide, designs)
+  const spec = specs.find((s) => s.name === name)
+  if (!spec) {
+    if (slide.layout === 'design' && slide.design && !designs(slide.design)) throw new DeckError(`no design ${slide.design}`)
+    throw new DeckError(`${shapeName(slide)} has no slot ${name}; it has ${specs.map((s) => s.name).join(', ')}`)
+  }
   const bad = (shape: string) => new DeckError(`slot ${name} takes ${shape}`)
   const kind: SlotKind = spec.kind
   switch (kind) {

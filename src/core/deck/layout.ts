@@ -65,8 +65,8 @@ export type TextBox = Extract<Box, { type: 'text' }>
 const CHAR_W = 0.5
 
 /** Lines `paragraphs` wrap to in a box `w` wide at `size`, wrapping at spaces like a browser. */
-export function wrappedLines(paragraphs: string[], w: number, size: number, indent = 0): number {
-  const perLine = Math.max(1, Math.floor((w - indent) / (size * CHAR_W)))
+export function wrappedLines(paragraphs: string[], w: number, size: number, indent = 0, charW = CHAR_W): number {
+  const perLine = Math.max(1, Math.floor((w - indent) / (size * charW)))
   let lines = 0
   for (const p of paragraphs) {
     let line = 0
