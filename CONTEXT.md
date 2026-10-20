@@ -69,8 +69,12 @@ An appearance filter applied at export time (Black & White, Sepia, Reduce File S
 ## Creating
 
 **Template**:
-A finished deck or document, with sample content, that a person or an AI app starts from.
+A finished deck or document, with sample content, that a person or an AI app starts from. A deck template is a set of designs; its look (like "Confetti") names their style, which a theme doesn't change.
 _Avoid_: Blank, starter, preset
+
+**Design**:
+One hand-made slide of a template: its art and its text boxes. A slide made from it is a designed slide; its slots are the design's text boxes, not a layout's, and a deck can use a design as often as it likes.
+_Avoid_: Master, slide layout
 
 **Theme**:
 The fonts, colours, sizes and spacing a deck or document uses. Switching theme restyles every slide at once.

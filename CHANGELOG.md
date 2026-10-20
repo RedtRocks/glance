@@ -6,6 +6,7 @@ What changed in each version of Glance, newest first. Downloads for every versio
 
 ## New in 0.7.1
 
+- **Slide templates that look designed.** **File → New** offers 18 templates for school, work, events, personal projects and clubs, such as a book report, a quarterly review, a charity run and a club newsletter, each with six hand-made slides. Pick one to see all its slides, then use it as it is and type over the sample words, or ask the AI to make it about your own subject. Longer words shrink to fit, and the slides export to PDF, PowerPoint and pictures looking the same. AI apps can use the templates' slides too, in any order and as often as they like.
 - **Safer with untrusted files and websites.** Websites shown in the Ask AI sidebar can no longer reach the files on your PC. A 3D model that wants textures from the web now asks first, and a comic book (.cbz) page too large to be real warns you before it opens.
 
 ## New in 0.7.0

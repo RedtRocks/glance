@@ -45,6 +45,11 @@ On Linux, the .deb and .rpm install `/usr/bin/glance-mcp`. The Flatpak's command
 | `glance_edit_text` | Changes or deletes text in an open PDF or image in the same style; the words after it move along |
 | `glance_add_text` | Writes new text after or before a paragraph, or at a point, in the page's own style |
 | `glance_erase` | Removes a paragraph or an area by covering it with its background |
+| `glance_templates` | Lists the designed deck templates and each slide design's text slots, with sample text and how many characters fit |
+| `glance_create` | Makes a deck from layouts, or from a template's designs in any order, and opens it in Glance |
+| `glance_deck_outline`, `glance_deck_edit` | Read a deck and change it: add, move, restyle and fill slides, as one step you can undo |
+| `glance_deck_check`, `glance_deck_render` | List what to fix in a deck, and look at its slides as pictures |
+| `glance_export` | Saves a deck as PDF, PowerPoint or PNG pictures |
 
 The four editing tools add markup to the open document, so you can see, undo or keep each change before saving ([ADR 0015](adr/0015-ai-edits-as-matching-markup.md)).
 
