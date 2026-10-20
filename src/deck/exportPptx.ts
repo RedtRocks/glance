@@ -3,12 +3,24 @@
  * HTML view (src/core/deck/html.ts). Shapes, text boxes and pictures stay editable;
  * PowerPoint wraps the text itself, so line breaks can differ a little from Glance.
  *
+ * A designed slide is its art as one full-slide picture, with each text box as a real,
+ * editable text box over it in the design's font (shown where that font is installed).
+ *
  * pptxgenjs is loaded only when a deck is exported.
  */
 import JSZip from 'jszip'
 import { layoutSlide, type Box, type TextBox } from '../core/deck/layout'
 import { type Deck } from '../core/deck/model'
 import { themeOf, type DeckTheme } from '../core/deck/themes'
+import { placeTexts, shownText, type Design, type DesignLookup, type MeasureText, type PlacedText } from '../core/deck/design'
+
+/** What designed slides need: the designs, and their art as PNG (`over` on a clear background). */
+export interface PptxDesigns {
+  designs: DesignLookup
+  art: (design: Design) => Promise<{ art: Uint8Array; over?: Uint8Array }>
+  /** Fits longer text as Glance shows it (PowerPoint keeps the size it is given). */
+  measure?: MeasureText
+}
 
 /** Inches per slide unit: a 1920 by 1080 slide is 13.333 by 7.5 in. */
 const IN = 1 / 144
@@ -19,7 +31,7 @@ type Pptx = InstanceType<typeof import('pptxgenjs').default>
 type PptxSlide = ReturnType<Pptx['addSlide']>
 type TextRun = Exclude<Parameters<PptxSlide['addText']>[0], string>[number]
 
-export async function deckToPptx(deck: Deck, media: Map<string, Uint8Array>): Promise<Uint8Array> {
+export async function deckToPptx(deck: Deck, media: Map<string, Uint8Array>, designed?: PptxDesigns): Promise<Uint8Array> {
   const { default: PptxGenJS } = await import('pptxgenjs')
   const theme = themeOf(deck.theme)
   const pptx = new PptxGenJS()
@@ -35,7 +47,18 @@ export async function deckToPptx(deck: Deck, media: Map<string, Uint8Array>): Pr
     s.background = { color: hex(theme.bg) }
     s.hidden = slide.hidden
     const radii: number[] = []
-    for (const box of layoutSlide(slide, theme)) addBox(s, box, theme, media, radii)
+    const design = slide.layout === 'design' && slide.design ? designed?.designs(slide.design) : undefined
+    if (design && designed) {
+      s.background = { color: hex(design.bg) }
+      const { art, over } = await designed.art(design)
+      const full = { x: 0, y: 0, w: 1920 * IN, h: 1080 * IN }
+      s.addImage({ data: `data:image/png;base64,${base64(art)}`, ...full })
+      const placed = placeTexts(slide, design, designed.measure).filter((p) => !p.placeholder)
+      for (const p of placed) if (p.box.under) addDesignText(s, p)
+      if (over) s.addImage({ data: `data:image/png;base64,${base64(over)}`, ...full })
+      for (const p of placed) if (!p.box.under) addDesignText(s, p)
+      // Pictures get no rounded corners on designed slides, so none are listed.
+    } else for (const box of layoutSlide(slide, theme)) addBox(s, box, theme, media, radii)
     if (slide.notes.trim()) s.addNotes(slide.notes)
     pictureRadii.push(radii)
   }
@@ -118,6 +141,37 @@ function addText(s: PptxSlide, box: TextBox, at: { x: number; y: number; w: numb
     margin: [0, 0, 0, 0],
     fit: 'none',
     wrap: true
+  })
+}
+
+/** One design text box as a PowerPoint text box, turned about its centre as in Glance. */
+function addDesignText(s: PptxSlide, p: PlacedText) {
+  const t = p.box
+  const size = p.size * PT
+  const shadow = t.shadow ? /rgba?\(([^)]+)\)\s+(-?[\d.]+)px\s+(-?[\d.]+)px(?:\s+([\d.]+)px)?/.exec(t.shadow) : null
+  const shadowHex = shadow ? shadow[1].split(/[,\s/]+/).filter(Boolean).slice(0, 3).map((n) => Math.round(Number(n)).toString(16).padStart(2, '0')).join('') : ''
+  s.addText(shownText(t, p.text), {
+    x: t.x * IN, y: t.y * IN, w: t.w * IN, h: t.h * IN,
+    rotate: t.rotate || undefined,
+    fontFace: t.font,
+    fontSize: size,
+    bold: t.weight >= 600,
+    italic: t.italic,
+    color: hex(t.colour),
+    transparency: t.opacity < 1 ? Math.round((1 - t.opacity) * 100) : undefined,
+    charSpacing: t.letterSpacing ? ((t.letterSpacing / t.size) * p.size * PT) : undefined,
+    align: t.align,
+    valign: t.valign,
+    lineSpacing: size * t.lineHeight,
+    margin: [0, 0, 0, 0],
+    fit: 'none',
+    wrap: !t.wrap,
+    ...(shadow ? {
+      shadow: {
+        type: 'outer', color: shadowHex.toUpperCase(), opacity: 1, blur: Number(shadow[4] ?? 0) * PT,
+        offset: Math.hypot(Number(shadow[2]), Number(shadow[3])) * PT, angle: ((Math.atan2(Number(shadow[3]), Number(shadow[2])) * 180) / Math.PI + 360) % 360
+      }
+    } : {})
   })
 }
 

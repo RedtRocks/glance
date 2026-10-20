@@ -5,6 +5,8 @@
 import * as platform from '../platform'
 import { addDoc, DeckDoc } from './documents'
 import * as versions from './versions'
+import { findDesign, loadDesigns } from './designs'
+import { designIds, type Design } from '../core/deck/design'
 import { toast, withBusy } from './ui'
 import { msg, t } from '../i18n'
 import type { Deck, LayoutId } from '../core/deck/model'
@@ -14,7 +16,7 @@ const deckFile = () => import('../core/deck/file')
 
 export async function openDeck(probe: platform.Probe): Promise<DeckDoc> {
   const { readDeck } = await deckFile()
-  const { deck, media, warnings } = await readDeck(await platform.readFile(probe.path))
+  const { deck, media, warnings } = await readDeck(await platform.readFile(probe.path), loadDesigns)
   const doc = new DeckDoc(probe.name, probe.path)
   doc.deck.value = deck
   for (const [path, bytes] of media) doc.media.set(path, bytes)
@@ -108,9 +110,14 @@ export function goToSlide(doc: DeckDoc, id: string): void {
   if (i >= 0) doc.current.value = i
 }
 
-export function addSlide(doc: DeckDoc, layout: LayoutId = 'bullets'): void {
+/** A layout, or a template's design. */
+export type SlideShape = { layout: LayoutId; design?: string }
+
+/** Adds a slide after the current one. Without a shape: bullets, or on a designed slide the same design, empty. */
+export function addSlide(doc: DeckDoc, shape?: SlideShape): void {
   const current = doc.deck.peek().slides[doc.current.peek()]
-  const r = change(doc, msg('Add Slide'), [{ op: 'add', layout, after: current?.id }])
+  const { layout, design } = shape ?? (current?.layout === 'design' ? { layout: 'design' as const, design: current.design } : { layout: 'bullets' as const })
+  const r = change(doc, msg('Add Slide'), [design ? { op: 'add', design, after: current?.id } : { op: 'add', layout, after: current?.id }])
   if (r) {
     doc.selection.value = []
     goToSlide(doc, r.added[0])
@@ -160,9 +167,9 @@ export function nudgeSlides(doc: DeckDoc, dir: -1 | 1): void {
   moveSlides(doc, ids, anchor < 0 ? null : rest[anchor].id)
 }
 
-export function setSlideLayout(doc: DeckDoc, layout: LayoutId): void {
+export function setSlideLayout(doc: DeckDoc, shape: SlideShape): void {
   const ids = targetIds(doc)
-  const r = change(doc, msg('Change Layout'), ids.map((id) => ({ op: 'setLayout', id, layout })))
+  const r = change(doc, msg('Change Layout'), ids.map((id) => (shape.design ? { op: 'setLayout', id, design: shape.design } : { op: 'setLayout', id, layout: shape.layout })))
   const lost = r?.dropped.reduce((n, d) => n + d.slots.length, 0) ?? 0
   if (lost) toast(t('{count, plural, one {# part didn’t fit the new layout. Undo to get it back.} other {# parts didn’t fit the new layout. Undo to get them back.}}', { count: lost }))
 }
@@ -177,10 +184,25 @@ export async function deckFontBytes(): Promise<Uint8Array> {
   return new Uint8Array(await (await fetch(url)).arrayBuffer())
 }
 
+/** Designed slides' art for the exports, drawn at twice the PDF page's pixels (1920 wide). */
+async function designedArt() {
+  const { designArt } = await import('../deck/raster')
+  const { measureDesignText } = await import('../deck/measure')
+  return { designs: findDesign, art: (d: Design) => designArt(d, 1920), measure: measureDesignText }
+}
+
 export async function exportBytes(doc: DeckDoc, format: 'pdf' | 'pptx'): Promise<Uint8Array> {
   const deck = doc.deck.peek()
-  if (format === 'pdf') return (await import('../deck/exportPdf')).deckToPdf(deck, doc.media, { regular: await deckFontBytes() })
-  return (await import('../deck/exportPptx')).deckToPptx(deck, doc.media)
+  await loadDesigns(designIds(deck.slides))
+  if (format === 'pdf') {
+    const { fontFile, hasItalic } = await import('../deck/fonts')
+    const file = async (family: string, italic: boolean) => {
+      const bytes = await fontFile(family, italic)
+      return bytes ? { bytes, italic: italic && hasItalic(family) } : null
+    }
+    return (await import('../deck/exportPdf')).deckToPdf(deck, doc.media, { regular: await deckFontBytes(), file }, await designedArt())
+  }
+  return (await import('../deck/exportPptx')).deckToPptx(deck, doc.media, await designedArt())
 }
 
 /** PNG of every shown slide, 1920 wide, named "<deck> 01.png" and so on. */

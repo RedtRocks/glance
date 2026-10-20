@@ -12,6 +12,7 @@ import { previewExt, previewFlavor, type PreviewFlavor } from '../core/previews'
 import { pathKey } from '../core/paths'
 import { emptyDeck, slideIdMaker, type Deck } from '../core/deck/model'
 import { applyOps, type ApplyResult, type DeckOp } from '../core/deck/ops'
+import { findDesign } from './designs'
 import { releaseMedia } from './deckMedia'
 
 let seq = 0
@@ -402,7 +403,7 @@ export class DeckDoc extends BaseDoc {
   /** Applies `ops` as one undo step. Throws DeckError, changing nothing, if any is invalid. */
   apply(label: string, ops: DeckOp[]): ApplyResult {
     const before = this.deck.peek()
-    const result = applyOps(before, ops, slideIdMaker(before))
+    const result = applyOps(before, ops, slideIdMaker(before), findDesign)
     this.history.push(label, before)
     this.deck.value = result.deck
     this.dirty.value = true

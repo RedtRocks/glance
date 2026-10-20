@@ -3,24 +3,43 @@
  * view (src/core/deck/html.ts), so the export looks like the deck in Glance. Text is real
  * text in the deck's font, wrapped here with the font's own widths.
  *
+ * A designed slide is its art as a picture (drawn by the caller at twice the page's
+ * pixels, see raster.ts), with each text box as real text over it in the design's own
+ * font: variable fonts are set to the box's weight, and turned boxes are turned.
+ *
  * Only call this through a dynamic import: it pulls in pdf-lib and fontkit.
  */
 import {
   PDFDocument, PDFOperator, PDFOperatorNames, appendBezierCurve, beginText, clip, closePath, endPath, endText, fill, lineTo,
-  moveText, moveTo, popGraphicsState, pushGraphicsState, rgb, setFillingColor, setFontAndSize, setLineWidth, setStrokingColor, stroke,
-  type PDFFont, type PDFHexString, type PDFImage, type PDFName, type PDFPage, type RGB
+  concatTransformationMatrix, moveText, moveTo, popGraphicsState, pushGraphicsState, rgb, setCharacterSpacing, setFillingColor, setFontAndSize,
+  setGraphicsState, setLineWidth, setStrokingColor, setTextMatrix, stroke,
+  PDFName, type PDFFont, type PDFHexString, type PDFImage, type PDFPage, type RGB
 } from '@cantoo/pdf-lib'
 import fontkit from '@cantoo/fontkit'
 import { SLIDE_H, SLIDE_W, layoutSlide, type Box, type TextBox } from '../core/deck/layout'
-import { type Deck } from '../core/deck/model'
+import { type Deck, type Slide } from '../core/deck/model'
 import { themeOf, type DeckTheme } from '../core/deck/themes'
+import { DESIGN_SCALE, placeTexts, shownText, type Design, type DesignLookup, type MeasureText, type PlacedText } from '../core/deck/design'
 
 /** PDF points per slide unit: a 1920 by 1080 slide becomes a 960 by 540 pt page. */
 const S = 0.5
 const PAGE_W = SLIDE_W * S
 const PAGE_H = SLIDE_H * S
 
-export async function deckToPdf(deck: Deck, media: Map<string, Uint8Array>, fonts: { regular: Uint8Array }): Promise<Uint8Array> {
+export interface PdfFonts {
+  /** The layouts' font. */
+  regular: Uint8Array
+  /** A designed slide's font file, and whether it is the italic one (an upright file is slanted). */
+  file?: (family: string, italic: boolean) => Promise<{ bytes: Uint8Array; italic: boolean } | null>
+}
+
+/** What designed slides need: the designs, and their art as PNG (`over` on a clear background). */
+export interface PdfDesigns {
+  designs: DesignLookup
+  art: (design: Design) => Promise<{ art: Uint8Array; over?: Uint8Array }>
+}
+
+export async function deckToPdf(deck: Deck, media: Map<string, Uint8Array>, fonts: PdfFonts, designed?: PdfDesigns): Promise<Uint8Array> {
   const theme = themeOf(deck.theme)
   const doc = await PDFDocument.create()
   doc.registerFontkit(fontkit as never)
@@ -36,8 +55,14 @@ export async function deckToPdf(deck: Deck, media: Map<string, Uint8Array>, font
   }
 
   const shown = deck.slides.filter((s) => !s.hidden)
+  const designedPage = designed ? designedPages(doc, fonts, designed, type) : null
   for (const slide of shown) {
     const page = doc.addPage([PAGE_W, PAGE_H])
+    const design = slide.layout === 'design' && slide.design ? designed?.designs(slide.design) : undefined
+    if (design && designedPage) {
+      await designedPage(page, slide, design)
+      continue
+    }
     fillRect(page, 0, 0, SLIDE_W, SLIDE_H, 0, colour(theme.bg))
     for (const box of layoutSlide(slide, theme)) await drawBox(page, box, theme, type, imageOf)
   }
@@ -113,6 +138,150 @@ function drawText(page: PDFPage, box: TextBox, theme: DeckTheme, type: Typeface)
     }
     top += gap
   }
+}
+
+// Designed slides
+
+/** Draws designed slides: art, the text boxes under `over`, `over`, then the other text boxes. */
+function designedPages(doc: PDFDocument, fonts: PdfFonts, designed: PdfDesigns, fallback: Typeface) {
+  const arts = new Map<string, Promise<{ art: PDFImage; over?: PDFImage }>>()
+  const artOf = (d: Design) => {
+    if (!arts.has(d.id)) {
+      arts.set(d.id, designed.art(d).then(async ({ art, over }) => ({ art: await doc.embedPng(art), over: over ? await doc.embedPng(over) : undefined })))
+    }
+    return arts.get(d.id)!
+  }
+  const faces = new Map<string, Promise<DesignFace>>()
+  const faceOf = (p: PlacedText) => {
+    const box = p.box
+    // As html.ts sets it: the optical size of the drawn size on the 640 by 360 board.
+    const axes = { wght: box.weight, opsz: Math.round(p.size / DESIGN_SCALE) }
+    const key = `${box.font}|${box.italic}|${axes.wght}|${axes.opsz}`
+    if (!faces.has(key)) faces.set(key, designFace(doc, fonts, box.font, box.italic, axes, fallback))
+    return faces.get(key)!
+  }
+  // Text is fitted with the fonts' own widths, at the design's optical size.
+  const shapers = new Map<string, FontkitFont | null>()
+  const shaperKey = (b: PlacedText['box']) => `${b.font}|${b.italic}|${b.weight}|${Math.round(b.size / DESIGN_SCALE)}`
+  const loadShapers = async (d: Design) => {
+    for (const b of d.texts) {
+      const key = shaperKey(b)
+      if (shapers.has(key)) continue
+      const file = await fonts.file?.(b.font, b.italic)
+      shapers.set(key, file ? instanceFont(file.bytes, { wght: b.weight, opsz: Math.round(b.size / DESIGN_SCALE) }).face : null)
+    }
+  }
+  const measure: MeasureText = (b, line, size) => {
+    const f = shapers.get(shaperKey(b))
+    const spacing = ((b.letterSpacing / b.size) * size) * [...line].length
+    if (!f) return line.length * size * b.charW + spacing
+    return (f.layout(line).positions.reduce((n, p) => n + p.xAdvance, 0) / f.unitsPerEm) * size + spacing
+  }
+  let states = 0
+  return async (page: PDFPage, slide: Slide, design: Design) => {
+    fillRect(page, 0, 0, SLIDE_W, SLIDE_H, 0, colour(design.bg))
+    const { art, over } = await artOf(design)
+    page.drawImage(art, { x: 0, y: 0, width: PAGE_W, height: PAGE_H })
+    await loadShapers(design)
+    const placed = placeTexts(slide, design, measure).filter((p) => !p.placeholder)
+    const draw = async (under: boolean) => {
+      for (const p of placed.filter((q) => !!q.box.under === under)) await drawDesignText(page, p, await faceOf(p), () => `GlanceA${++states}`)
+    }
+    await draw(true)
+    if (over) page.drawImage(over, { x: 0, y: 0, width: PAGE_W, height: PAGE_H })
+    await draw(false)
+  }
+}
+
+interface DesignFace {
+  type: Typeface
+  /** No italic file: the upright one is slanted, as browsers do. */
+  slant: boolean
+}
+
+async function designFace(doc: PDFDocument, fonts: PdfFonts, family: string, italic: boolean, axes: { wght: number; opsz: number }, fallback: Typeface): Promise<DesignFace> {
+  const file = await fonts.file?.(family, italic)
+  if (!file) return { type: fallback, slant: italic }
+  const { ttf, face: shaper } = instanceFont(file.bytes, axes)
+  const face = fontkit.create(ttf as never) as unknown as FontkitFont
+  return { type: typeface(doc, face, await doc.embedFont(ttf, { subset: true }), shaper), slant: italic && !file.italic }
+}
+
+/**
+ * A font file as plain TrueType for embedding: WOFF2 unpacked, and a variable font set to
+ * `axes` (clamped to its ranges; axes it lacks are ignored) and saved without variations.
+ * `face` lays text out at those axes, kerning included, as a browser does.
+ */
+export function instanceFont(bytes: Uint8Array, axes: Record<string, number>): { ttf: Uint8Array; face: FontkitFont } {
+  const ttf = isWoff2(bytes) ? woff2ToTtf(fontkit.create(bytes as never) as unknown as FontkitFont) : bytes
+  const base = fontkit.create(ttf as never) as unknown as FontkitFont
+  const vary = base.variationAxes ?? {}
+  if (!Object.keys(vary).length) return { ttf, face: base }
+  const coords: Record<string, number> = {}
+  for (const [tag, want] of Object.entries(axes)) {
+    const a = vary[tag]
+    if (a) coords[tag] = Math.min(a.max, Math.max(a.min, want))
+  }
+  const face = base.getVariation!(coords)
+  return { ttf: rebuildTtf(face, true), face }
+}
+
+/** One design text box: wrapped with the font's widths, aligned as html.ts does, turned about its centre. */
+async function drawDesignText(page: PDFPage, p: PlacedText, face: DesignFace, stateName: () => string) {
+  const t = p.box
+  const size = p.size * S
+  const spacing = (t.letterSpacing / t.size) * p.size * S
+  const font = { widthOfTextAtSize: (s: string, z: number) => face.type.widthOfTextAtSize(s, z) + spacing * [...s].length }
+  const w = t.w * S
+  const h = t.h * S
+  const indent = ((t.indent ?? 0) * p.size * S) / t.size
+  const lh = size * t.lineHeight
+  const lines: { text: string; indent: number }[] = []
+  shownText(t, p.text).split('\n').forEach((para, i) => {
+    const first = i === 0 ? indent : 0
+    if (t.wrap) return void lines.push({ text: para, indent: first })
+    const head = wrap(para, w - first, size, font)
+    lines.push({ text: head[0], indent: first })
+    if (head.length > 1) for (const line of wrap(para.slice(para.indexOf(head[0]) + head[0].length).trim(), w, size, font)) lines.push({ text: line, indent: 0 })
+  })
+  const free = h - lines.length * lh
+  let top = t.y * S + (t.valign === 'top' ? 0 : t.valign === 'middle' ? free / 2 : free)
+  const baseline = (lh - (face.type.ascent + face.type.descent) * size) / 2 + face.type.ascent * size
+  const ops: PDFOperator[] = [pushGraphicsState()]
+  if (t.rotate) {
+    // CSS turns clockwise with y down; PDF's y goes up, so the angle flips.
+    const cx = (t.x + t.w / 2) * S
+    const cy = PAGE_H - (t.y + t.h / 2) * S
+    const a = (-t.rotate * Math.PI) / 180
+    const [cos, sin] = [Math.cos(a), Math.sin(a)]
+    ops.push(concatTransformationMatrix(cos, sin, -sin, cos, cx - cos * cx + sin * cy, cy - sin * cx - cos * cy))
+  }
+  if (t.opacity < 1) {
+    const name = stateName()
+    page.node.setExtGState(PDFName.of(name), page.doc.context.obj({ ca: t.opacity, CA: t.opacity }))
+    ops.push(setGraphicsState(name))
+  }
+  page.pushOperators(...ops)
+  const shadow = t.shadow ? parseShadow(t.shadow) : null
+  for (const line of lines) {
+    const lw = font.widthOfTextAtSize(line.text, size)
+    const x = t.x * S + (t.align === 'center' ? (w - lw) / 2 : t.align === 'right' ? w - lw : line.indent)
+    const y = PAGE_H - top - baseline
+    if (line.text) {
+      if (shadow) face.type.draw(page, line.text, x + shadow.dx * S, y - shadow.dy * S, size, shadow.colour, { spacing, slant: face.slant })
+      face.type.draw(page, line.text, x, y, size, colour(t.colour), { spacing, slant: face.slant })
+    }
+    top += lh
+  }
+  page.pushOperators(popGraphicsState())
+}
+
+/** The first of a CSS text-shadow list, when it is sharp enough to draw as a second copy. */
+function parseShadow(css: string): { colour: RGB; dx: number; dy: number } | null {
+  const m = /rgba?\(([^)]+)\)\s+(-?[\d.]+)px\s+(-?[\d.]+)px(?:\s+([\d.]+)px)?/.exec(css)
+  if (!m || Number(m[4] ?? 0) > 4) return null
+  const [r, g, b] = m[1].split(/[,\s/]+/).filter(Boolean).map(Number)
+  return { colour: rgb(r / 255, g / 255, b / 255), dx: Number(m[2]), dy: Number(m[3]) }
 }
 
 /** Breaks one paragraph into lines no wider than `width`, at spaces, or anywhere in a word too long for a line. */
@@ -195,7 +364,7 @@ function colour(css: string): RGB {
 // Fonts
 
 /** The parts of a fontkit font this file reads, some of them internal (fontkit 2.0.12). */
-interface FontkitFont {
+export interface FontkitFont {
   unitsPerEm: number
   numGlyphs: number
   hhea: { ascent: number; descent: number }
@@ -203,7 +372,9 @@ interface FontkitFont {
   directory: { tables: Record<string, { offset: number; length: number; transformed?: boolean } | undefined> }
   stream: { buffer: Uint8Array }
   _decompress?: () => void
-  getGlyph(id: number): { _decode(): DecodedGlyph | null }
+  getGlyph(id: number): { _decode(): DecodedGlyph | null; advanceWidth: number }
+  variationAxes?: Record<string, { min: number; max: number; default: number }>
+  getVariation?(coords: Record<string, number>): FontkitFont
   layout(text: string): { glyphs: { codePoints: number[]; advanceWidth: number }[]; positions: { xAdvance: number }[] }
 }
 
@@ -222,10 +393,16 @@ interface Typeface {
   ascent: number
   descent: number
   widthOfTextAtSize(text: string, size: number): number
-  draw(page: PDFPage, text: string, x: number, y: number, size: number, color: RGB): void
+  /** spacing: letter spacing in points; slant: an oblique made from upright glyphs. */
+  draw(page: PDFPage, text: string, x: number, y: number, size: number, color: RGB, opts?: { spacing?: number; slant?: boolean }): void
 }
 
-function typeface(doc: PDFDocument, face: FontkitFont, font: PDFFont): Typeface {
+/**
+ * `face` is the font as embedded; `shaper`, if given, is the variable font it was made
+ * from, at the same axes, whose layout has the browser's widths and kerning (fontkit's
+ * varied glyphs don't know their characters, so the characters come from `face`).
+ */
+function typeface(doc: PDFDocument, face: FontkitFont, font: PDFFont, shaper: FontkitFont = face): Typeface {
   const os2 = face['OS/2']
   const [asc, desc] = os2?.fsSelection?.useTypoMetrics ? [os2.typoAscender, os2.typoDescender] : [face.hhea.ascent, face.hhea.descent]
   const em = face.unitsPerEm
@@ -233,21 +410,25 @@ function typeface(doc: PDFDocument, face: FontkitFont, font: PDFFont): Typeface 
   return {
     ascent: asc / em,
     descent: Math.abs(desc) / em,
-    widthOfTextAtSize: (text, size) => (face.layout(text).positions.reduce((n, p) => n + p.xAdvance, 0) / em) * size,
-    draw(page, text, x, y, size, color) {
+    widthOfTextAtSize: (text, size) => (shaper.layout(text).positions.reduce((n, p) => n + p.xAdvance, 0) / em) * size,
+    draw(page, text, x, y, size, color, opts = {}) {
       const run = face.layout(text)
+      const shaped = shaper === face ? run : shaper.layout(text)
+      const positions = shaped.positions.length === run.glyphs.length ? shaped.positions : run.positions
       // TJ: each glyph, then how far the kerning pulls the next one back, in 1/1000 em.
       const parts: (PDFHexString | number)[] = []
       run.glyphs.forEach((g, i) => {
         if (!g.codePoints.length) return
         parts.push(font.encodeText(String.fromCodePoint(...g.codePoints)))
-        const kern = run.positions[i].xAdvance - g.advanceWidth
+        const kern = positions[i].xAdvance - g.advanceWidth
         if (kern) parts.push((-kern / em) * 1000)
       })
       if (!keys.has(page)) keys.set(page, page.node.newFontDictionary(font.name, font.ref))
       const key = keys.get(page)!
       page.pushOperators(
-        pushGraphicsState(), beginText(), setFillingColor(color), setFontAndSize(key, size), moveText(x, y),
+        pushGraphicsState(), beginText(), setFillingColor(color), setFontAndSize(key, size),
+        ...(opts.spacing ? [setCharacterSpacing(opts.spacing)] : []),
+        opts.slant ? setTextMatrix(1, 0, 0.2, 1, x, y) : moveText(x, y),
         PDFOperator.of(PDFOperatorNames.ShowTextAdjusted, [doc.context.obj(parts)]), endText(), popGraphicsState()
       )
     }
@@ -262,12 +443,25 @@ const isWoff2 = (b: Uint8Array) => b[0] === 0x77 && b[1] === 0x4f && b[2] === 0x
  * other table is copied as is; glyf and loca are written again from the decoded glyphs.
  */
 export function woff2ToTtf(face: FontkitFont): Uint8Array {
+  return rebuildTtf(face, false)
+}
+
+/** Tables a plain instance of a variable font leaves out, so viewers don't vary it again. */
+const VARIATION_TABLES = ['fvar', 'gvar', 'avar', 'HVAR', 'VVAR', 'MVAR', 'STAT', 'cvar']
+
+/**
+ * Writes `face` as TrueType from its decoded glyphs. With `instance`, `face` is a variable
+ * font at some coordinates (fontkit's getVariation): its glyphs and advances at those
+ * coordinates are written, without the variation tables.
+ */
+function rebuildTtf(face: FontkitFont, instance: boolean): Uint8Array {
   face._decompress?.()
   const tables = face.directory.tables
   const data = face.stream.buffer
   const out = new Map<string, Uint8Array>()
   for (const [tag, entry] of Object.entries(tables)) {
     if (!entry || tag === 'glyf' || tag === 'loca') continue
+    if (instance && (VARIATION_TABLES.includes(tag) || tag === 'hmtx')) continue
     if (entry.transformed) throw new Error(`WOFF2 fonts with a transformed ${tag} table are not supported; use a TTF`)
     out.set(tag, data.slice(entry.offset, entry.offset + entry.length))
   }
@@ -297,6 +491,24 @@ export function woff2ToTtf(face: FontkitFont): Uint8Array {
   loca.setUint32(glyphs.length * 4, at)
   out.set('glyf', concat(glyphs))
   out.set('loca', new Uint8Array(loca.buffer))
+  if (instance) {
+    // Advances at these coordinates, one long metric per glyph.
+    const hmtx = new DataView(new ArrayBuffer(face.numGlyphs * 4))
+    let widest = 0
+    for (let id = 0; id < face.numGlyphs; id++) {
+      const adv = Math.max(0, Math.round(face.getGlyph(id).advanceWidth))
+      widest = Math.max(widest, adv)
+      hmtx.setUint16(id * 4, adv)
+      hmtx.setInt16(id * 4 + 2, bbox(id)[0])
+    }
+    out.set('hmtx', new Uint8Array(hmtx.buffer))
+    const hhea = out.get('hhea')
+    if (hhea) {
+      const v = new DataView(hhea.buffer, hhea.byteOffset, hhea.byteLength)
+      v.setUint16(10, widest)
+      v.setUint16(34, face.numGlyphs)
+    }
+  }
   const head = out.get('head')
   if (!head) throw new Error('font has no head table')
   const hv = new DataView(head.buffer, head.byteOffset, head.byteLength)

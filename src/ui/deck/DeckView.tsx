@@ -1,8 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks'
 import type { DeckDoc } from '../../state/documents'
 import { contextMenu } from '../../state/ui'
-import { addSlide, change, setSlideLayout } from '../../state/deck'
-import { layoutIds, LAYOUTS, type LayoutId, type SlotSpec } from '../../core/deck/model'
+import { addSlide, change, setSlideLayout, type SlideShape } from '../../state/deck'
+import { layoutIds, type Deck, type LayoutId } from '../../core/deck/model'
+import { boardOf, designIds, slotSpecsOf } from '../../core/deck/design'
+import { boardInfo, designsVersion, findDesign, loadedBoard } from '../../state/designs'
 import { editOps, parseRefKey, slotText } from '../../core/deck/edit'
 import type { SlotRef } from '../../core/deck/layout'
 import { SLIDE_H, SLIDE_W } from '../../core/deck/layout'
@@ -23,13 +25,29 @@ interface Editing {
   multiline: boolean
   key: string
   rect: { left: number; top: number; width: number; height: number }
-  style: { fontSize: string; fontFamily: string; color: string; lineHeight: string; textAlign: string; paddingTop: string }
+  style: Record<string, string>
   text: string
 }
 
-function layoutMenu(e: MouseEvent, run: (id: LayoutId) => void): void {
+/** The layouts, then the designs of the templates the deck already uses. */
+function layoutMenu(e: MouseEvent, deck: Deck, run: (shape: SlideShape) => void): void {
   const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
-  contextMenu.value = { x: r.left, y: r.bottom + 4, items: layoutIds.map((id) => ({ label: layoutLabel(id), run: () => run(id) })) }
+  const boards = [...new Set(designIds(deck.slides).map(boardOf))].flatMap((id) => {
+    const board = loadedBoard(id)
+    return board ? [board] : []
+  })
+  const designed = boards.flatMap((b) => b.designs.map((d, i) => ({
+    label: boards.length > 1 ? t('{template}: {n}. {role}', { template: t(boardInfo(b.id)?.name ?? b.id), n: i + 1, role: t(d.role) }) : t('{n}. {role}', { n: i + 1, role: t(d.role) }),
+    run: () => run({ layout: 'design', design: d.id })
+  })))
+  const layouts = layoutIds.map((id) => ({ label: layoutLabel(id), run: () => run({ layout: id }) }))
+  contextMenu.value = { x: r.left, y: r.bottom + 4, items: designed.length ? [...designed, '-' as const, ...layouts] : layouts }
+}
+
+/** What the slide button says: the layout, or the design's role. */
+function shapeLabel(slide: { layout: LayoutId; design?: string }): string {
+  const d = slide.design ? findDesign(slide.design) : undefined
+  return d ? t(d.role) : layoutLabel(slide.layout)
 }
 
 function themeMenu(e: MouseEvent, doc: DeckDoc): void {
@@ -65,6 +83,8 @@ export function DeckView({ doc }: { doc: DeckDoc }) {
   const box = useRef<HTMLTextAreaElement>(null)
   const slides = doc.deck.value.slides
   const slide = slides[doc.current.value]
+  // Redraw once a template's designs have loaded.
+  void designsVersion.value
 
   useLayoutEffect(() => {
     const el = stage.current
@@ -89,7 +109,8 @@ export function DeckView({ doc }: { doc: DeckDoc }) {
     setEditing(null)
     const target = doc.deck.peek().slides.find((s) => s.id === e.slideId)
     if (!target) return
-    const ops = editOps(target, e.ref, text)
+    // Enter in a box that takes several lines adds one; a line left empty at the end isn't meant.
+    const ops = editOps(target, e.ref, text.replace(/\n+$/, ''), findDesign)
     if (ops.length) change(doc, msg('Typing'), ops)
   }
 
@@ -99,10 +120,11 @@ export function DeckView({ doc }: { doc: DeckDoc }) {
     if (!el || !stage.current) return
     const ref = parseRefKey(el.dataset.ref!)
     if (el.classList.contains('deck-image')) return void pickPicture(doc, slide.id, ref.slot)
-    const spec = (LAYOUTS[slide.layout] as SlotSpec[]).find((s) => s.name === ref.slot)
-    const r = el.getBoundingClientRect()
+    const spec = slotSpecsOf(slide, findDesign).find((s) => s.name === ref.slot)
     const s = stage.current.getBoundingClientRect()
     const cs = getComputedStyle(el)
+    if (slide.layout === 'design') return void editDesigned(el, ref, spec?.maxChars ?? 0, s, cs)
+    const r = el.getBoundingClientRect()
     const scale = r.width / el.offsetWidth
     // Start the typing where the text sits, so a bottom-aligned title doesn't jump.
     const first = el.firstElementChild as HTMLElement | null
@@ -118,6 +140,31 @@ export function DeckView({ doc }: { doc: DeckDoc }) {
     })
   }
 
+  /** A designed slide's text box may be turned, so the typing box takes its unturned size and turns the same way. */
+  const editDesigned = (el: HTMLElement, ref: SlotRef, maxChars: number, s: DOMRect, cs: CSSStyleDeclaration) => {
+    if (!slide || !stage.current) return
+    const frame = el.closest<HTMLElement>('.deck-slide')!.getBoundingClientRect()
+    const k = frame.width / SLIDE_W
+    const first = el.firstElementChild as HTMLElement | null
+    const offset = first && !el.classList.contains('empty') ? first.offsetTop * k : 0
+    const lines = el.offsetHeight / (parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.2)
+    setEditing({
+      slideId: slide.id,
+      ref,
+      key: el.dataset.ref!,
+      multiline: lines >= 1.8 || maxChars > 60,
+      rect: { left: frame.left - s.left + stage.current.scrollLeft + el.offsetLeft * k, top: frame.top - s.top + stage.current.scrollTop + el.offsetTop * k, width: el.offsetWidth * k, height: el.offsetHeight * k },
+      style: {
+        fontSize: `${parseFloat(cs.fontSize) * k}px`, fontFamily: cs.fontFamily, fontWeight: cs.fontWeight, fontStyle: cs.fontStyle,
+        fontVariationSettings: cs.fontVariationSettings, letterSpacing: cs.letterSpacing === 'normal' ? 'normal' : `${parseFloat(cs.letterSpacing) * k}px`,
+        textTransform: cs.textTransform, color: cs.webkitTextFillColor === 'rgba(0, 0, 0, 0)' ? '' : cs.color,
+        lineHeight: `${(parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.2) * k}px`, textAlign: cs.textAlign, paddingTop: `${offset}px`,
+        transform: cs.transform === 'none' ? '' : el.style.transform, transformOrigin: 'center'
+      },
+      text: slotText(slide, ref)
+    })
+  }
+
   return (
     <div class="deck-view">
       <div class="deck-bar" role="toolbar" aria-label={t('Slide')}>
@@ -125,18 +172,21 @@ export function DeckView({ doc }: { doc: DeckDoc }) {
           <Icon name="add" size={16} />
           {t('New slide')}
         </button>
-        <button class="deck-bar-button" aria-label={t('New slide with a layout')} onClick={(e) => layoutMenu(e, (id) => addSlide(doc, id))}>
+        <button class="deck-bar-button" aria-label={t('New slide with a layout')} onClick={(e) => layoutMenu(e, doc.deck.peek(), (shape) => addSlide(doc, shape))}>
           <Icon name="down" size={12} />
         </button>
         <span class="deck-bar-gap" />
-        <button class="deck-bar-button" disabled={!slide} onClick={(e) => layoutMenu(e, (id) => setSlideLayout(doc, id))}>
+        <button class="deck-bar-button" disabled={!slide} onClick={(e) => layoutMenu(e, doc.deck.peek(), (shape) => setSlideLayout(doc, shape))}>
           <Icon name="grid" size={16} />
-          {slide ? layoutLabel(slide.layout) : t('Layout')}
+          {slide ? shapeLabel(slide) : t('Layout')}
         </button>
-<button class="deck-bar-button" aria-label={t('Theme')} title={t('Theme')} onClick={(e) => themeMenu(e, doc)}>
-          <Icon name="paintBrush" size={16} />
-          {themeLabel(doc.deck.value.theme)}
-        </button>
+{/* A designed slide keeps its template's look, so the theme is offered on layout slides only. */}
+        {slide?.layout !== 'design' && (
+          <button class="deck-bar-button" aria-label={t('Theme')} title={t('Theme')} onClick={(e) => themeMenu(e, doc)}>
+            <Icon name="paintBrush" size={16} />
+            {themeLabel(doc.deck.value.theme)}
+          </button>
+        )}
       </div>
       <div class="deck-stage" ref={stage}>
         {slide ? (
@@ -146,7 +196,7 @@ export function DeckView({ doc }: { doc: DeckDoc }) {
         ) : (
           <div class="deck-empty">
             <p>{t('This deck has no slides yet.')}</p>
-            <button class="primary" onClick={() => addSlide(doc, 'title')}>
+            <button class="primary" onClick={() => addSlide(doc, { layout: 'title' })}>
               {t('Add a title slide')}
             </button>
           </div>

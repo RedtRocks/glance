@@ -15,11 +15,13 @@ describe('making from a request', () => {
     for (const tool of ['glance_deck_edit', 'glance_deck_check', 'glance_deck_render']) expect(p).toContain(tool)
   })
 
-  it('asks the AI to fill a template\'s placeholders', () => {
+  it('asks the AI to replace a template\'s sample text within each slot\'s maxChars', () => {
     const p = templatePrompt('our school fair', 'Event Plan', 'doc3')
     expect(p).toContain('from the Event Plan template: our school fair')
     expect(p).toContain('tab doc3')
-    expect(p).toContain('[bracketed]')
+    expect(p).toContain('maxChars')
+    expect(p).toContain('glance_templates')
+    expect(p).toContain('add with design')
     expect(p).toContain('glance_deck_outline')
   })
 })

@@ -5,10 +5,13 @@ import type { Slide } from '../../core/deck/model'
 import { themeOf } from '../../core/deck/themes'
 import type { DeckDoc } from '../../state/documents'
 import { mediaUrl } from '../../state/deckMedia'
+import { designsVersion, findDesign, sampleText } from '../../state/designs'
+import { measureDesignText } from '../../deck/measure'
 import { t } from '../../i18n'
 
-/** The hint an empty slot shows while editing. */
-export function slotHint(ref: SlotRef): string {
+/** The hint an empty slot shows while editing: a designed slide's own sample, or a word on what goes there. */
+export function slotHint(ref: SlotRef, sample?: string): string {
+  if (sample) return sampleText(sample)
   switch (ref.slot) {
     case 'title':
       return t('Add a title')
@@ -43,9 +46,10 @@ export function slotHint(ref: SlotRef): string {
 export function SlideFrame({ doc, slide, width, hints = false }: { doc: DeckDoc; slide: Slide; width: number; hints?: boolean }) {
   const theme = doc.deck.value.theme
   const version = doc.mediaVersion.value
+  const designs = designsVersion.value
   const html = useMemo(
-    () => slideHtml(slide, themeOf(theme), { resolveSrc: (src) => mediaUrl(doc, src), placeholder: hints ? slotHint : undefined }),
-    [slide, theme, version, hints]
+    () => slideHtml(slide, themeOf(theme), { resolveSrc: (src) => mediaUrl(doc, src), placeholder: hints ? slotHint : undefined, designs: findDesign, measure: measureDesignText }),
+    [slide, theme, version, hints, designs]
   )
   const scale = width / SLIDE_W
   return (
@@ -57,7 +61,8 @@ export function SlideFrame({ doc, slide, width, hints = false }: { doc: DeckDoc;
 
 /** A slide that isn't in an open deck yet, like a template's first slide. It has no pictures. */
 export function SlidePreview({ slide, theme, width }: { slide: Slide; theme: string; width: number }) {
-  const html = useMemo(() => slideHtml(slide, themeOf(theme), { resolveSrc: () => '' }), [slide, theme])
+  const designs = designsVersion.value
+  const html = useMemo(() => slideHtml(slide, themeOf(theme), { resolveSrc: () => '', designs: findDesign, measure: measureDesignText }), [slide, theme, designs])
   const scale = width / SLIDE_W
   return (
     <div class="slide-frame" style={{ width: `${width}px`, height: `${SLIDE_H * scale}px` }}>

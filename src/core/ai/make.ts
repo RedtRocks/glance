@@ -29,8 +29,8 @@ export function templatePrompt(request: string, template: string, tab: string): 
     `Make slides for me in Glance from the ${template} template: ${request.trim()}`,
     '',
     `The template is open in Glance (tab ${tab}). Read it with glance_deck_outline and change it with glance_deck_edit; don't write files, code or a .pptx yourself.`,
-    'Replace every [bracketed] placeholder with real words for my request, and add, remove or reorder slides where the request needs it. Keep its theme and keep one idea per slide in short phrases.',
+    "Its slides are designed slides: each slot holds the template's sample text. Replace every slot's text with real words for my request, keeping each within the slot's maxChars (glance_templates lists the slots). Add more slides with the same template's designs (glance_deck_edit add with design), repeat a design where it helps, and remove or reorder slides where the request needs it. Keep one idea per slide in short phrases.",
     'Then call glance_deck_check and fix every finding, look at the slides with glance_deck_render and fix anything that looks wrong, and finish by telling me in a sentence or two what you made.',
-    "If you don't have facts you need, leave a clear placeholder like [date] rather than inventing them."
+    "If you don't have facts you need, leave a clear placeholder like [date] rather than inventing them, and don't leave the template's sample names, dates or numbers in."
   ].join('\n')
 }

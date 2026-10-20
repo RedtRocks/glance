@@ -4639,3 +4639,98 @@ input[type='range'] {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+.make-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: min(960px, 100%);
+  margin-top: -12px;
+}
+.make-tab {
+  height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--subtle);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.make-tab:hover {
+  background: var(--subtle-hover);
+}
+.make-tab.on {
+  background: var(--text);
+  color: var(--bg-solid);
+}
+.make-template-empty {
+  display: block;
+  width: 284px;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  background: var(--subtle-hover);
+}
+/* A template up close: its slides, then use it or make it about something. */
+.make-preview {
+  position: fixed;
+  inset: 0;
+  z-index: 91;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 32px 24px 40px;
+  overflow: auto;
+  background: var(--bg-solid);
+}
+.make-preview-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: min(960px, 100%);
+}
+.make-preview-head h2 {
+  margin: 0;
+  font: 400 28px / 1.2 var(--font-display);
+}
+.make-preview-head p {
+  margin: 4px 0 0;
+  color: var(--text-2);
+}
+.make-preview-slides {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  width: min(960px, 100%);
+  justify-items: center;
+}
+.make-preview-slides .slide-frame {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--stroke);
+}
+.make-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  width: min(960px, 100%);
+}
+.make-preview-actions .btn {
+  height: 48px;
+  padding: 0 24px;
+  border-radius: 9999px;
+}
+.make-about {
+  flex: 1;
+  min-width: 280px;
+  width: auto;
+}
+.make-about .make-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
