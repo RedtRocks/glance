@@ -8,7 +8,11 @@ import { ToolError, type Content, type ToolHandler, type ToolResult } from '../c
 import { checkInput, checkOutput, extension, parsePages, toBase64 } from '../core/mcp/helpers'
 import { samePath } from '../core/paths'
 import { checkDeck } from '../core/deck/check'
-import { LAYOUTS, emptyDeck, isLayout, isMediaPath, slideIdMaker, type Deck, type SlotSpec } from '../core/deck/model'
+import { emptyDeck, isLayout, isMediaPath, slideIdMaker, type Deck } from '../core/deck/model'
+import { DESIGN_ID, slotSpecsOf, type Board } from '../core/deck/design'
+import { checkOneTemplate, createSlideOps, templateCatalog } from '../core/deck/template'
+import { BOARDS } from '../deck/designs'
+import { findDesign, loadAllBoards, loadBoard, loadDesigns } from './designs'
 import { applyOps, DeckError, type DeckOp } from '../core/deck/ops'
 import { THEMES } from '../core/deck/themes'
 import * as platform from '../platform'
@@ -41,7 +45,7 @@ function opsOf(value: unknown): DeckOp[] {
  * Copies pictures the AI names by local path into the deck's media, rewriting each src to
  * its media/ path. Runs before the ops are applied, so a bad path fails the whole call.
  */
-async function importPictures(ops: DeckOp[], layoutOf: (op: DeckOp) => string | undefined, add: (name: string, bytes: Uint8Array) => string): Promise<DeckOp[]> {
+async function importPictures(ops: DeckOp[], layoutOf: (op: DeckOp) => { layout: string; design?: string } | undefined, add: (name: string, bytes: Uint8Array) => string): Promise<DeckOp[]> {
   const copied = new Map<string, string>()
   const pictureOf = async (value: unknown): Promise<unknown> => {
     const v = value as { src?: unknown }
@@ -56,8 +60,8 @@ async function importPictures(ops: DeckOp[], layoutOf: (op: DeckOp) => string | 
   }
   const out: DeckOp[] = []
   for (const op of ops) {
-    const layout = layoutOf(op)
-    const specs = layout && isLayout(layout) ? (LAYOUTS[layout] as SlotSpec[]) : []
+    const shape = layoutOf(op)
+    const specs = shape && isLayout(shape.layout) ? slotSpecsOf({ layout: shape.layout, design: shape.design }, findDesign) : []
     const isPicture = (slot: string) => specs.some((s) => s.name === slot && s.kind === 'image')
     if (op.op === 'add' && op.slots) {
       const slots: Record<string, unknown> = {}
@@ -69,8 +73,47 @@ async function importPictures(ops: DeckOp[], layoutOf: (op: DeckOp) => string | 
   return out
 }
 
-/** The layout each op's slots belong to: its own for add, the slide's for setSlot. */
-const layoutFinder = (deck: Deck) => (op: DeckOp) => (op.op === 'add' ? op.layout : op.op === 'setSlot' ? deck.slides.find((s) => s.id === op.id)?.layout : undefined)
+/** The layout (or design) each op's slots belong to: its own for add, the slide's for setSlot. */
+const layoutFinder = (deck: Deck) => (op: DeckOp): { layout: string; design?: string } | undefined => {
+  if (op.op === 'add') return op.design ? { layout: 'design', design: op.design } : op.layout ? { layout: op.layout } : undefined
+  if (op.op === 'setSlot') return deck.slides.find((s) => s.id === op.id) as { layout: string; design?: string } | undefined
+  return undefined
+}
+
+/** Loads the template boards the ops name designs from, so they can be checked. */
+async function loadOpDesigns(ops: DeckOp[]): Promise<void> {
+  const ids = ops.flatMap((op) => ('design' in op && typeof op.design === 'string' && DESIGN_ID.test(op.design) ? [op.design] : []))
+  await loadDesigns(ids)
+}
+
+const templates: ToolHandler = async ({ template }) => {
+  const boards = template !== undefined && template !== '' ? [await loadBoard(String(template))] : await loadAllBoards()
+  if (!boards[0]) throw new ToolError(`no template ${String(template)}; templates are ${BOARDS.map((b) => b.id).join(', ')}`)
+  const list = boards.flatMap((b) => {
+    const info = b && BOARDS.find((x) => x.id === b.id)
+    return b && info ? [templateCatalog(b, info)] : []
+  })
+  // Compact: the full list is long, and an AI app reads it as data.
+  return { content: [{ type: 'text', text: JSON.stringify({ templates: list }) }], structuredContent: { templates: list } }
+}
+
+/** The slides glance_create asks for, with the designs they name loaded and checked. */
+async function createOps(template: unknown, slides: unknown): Promise<DeckOp[]> {
+  let board: Board | undefined
+  if (template !== undefined && template !== null && template !== '') {
+    board = await loadBoard(String(template))
+    if (!board) throw new ToolError(`no template ${String(template)}; glance_templates lists them (${BOARDS.map((b) => b.id).join(', ')})`)
+  }
+  try {
+    const ops = createSlideOps(board, slides)
+    await loadOpDesigns(ops)
+    checkOneTemplate(ops, board)
+    return ops
+  } catch (e) {
+    if (e instanceof DeckError) throw new ToolError(e.message)
+    throw e
+  }
+}
 
 function outline(doc: DeckDoc) {
   const deck = doc.deck.peek()
@@ -85,6 +128,7 @@ function outline(doc: DeckDoc) {
       id: s.id,
       number: i + 1,
       layout: s.layout,
+      ...(s.design ? { design: s.design } : {}),
       slots: Object.fromEntries(Object.entries(s.slots).map(([k, v]) => [k, v.value])),
       ...(s.notes ? { notes: s.notes } : {}),
       ...(s.hidden ? { hidden: true } : {})
@@ -92,9 +136,8 @@ function outline(doc: DeckDoc) {
   }
 }
 
-const create: ToolHandler = async ({ kind, title, theme, slides, output_path, overwrite }) => {
+const create: ToolHandler = async ({ kind, title, theme, template, slides, output_path, overwrite }) => {
   if (kind !== 'deck') throw new ToolError('kind must be "deck"')
-  if (!Array.isArray(slides)) throw new ToolError('slides must be a list of {layout, slots, notes?}')
   if (theme !== undefined && !Object.hasOwn(THEMES, String(theme))) throw new ToolError(`theme must be one of ${Object.keys(THEMES).join(', ')}`)
   let out: string | null = null
   if (output_path !== undefined) {
@@ -102,7 +145,7 @@ const create: ToolHandler = async ({ kind, title, theme, slides, output_path, ov
     if (extension(out) !== 'gdeck') throw new ToolError('output_path must end in .gdeck')
     checkOutput(out, [], (await platform.fileStamp(out)) !== null, overwrite === true, platform.pathPolicy)
   }
-  const ops = opsOf(slides.map((s: Record<string, unknown>) => ({ ...s, op: 'add' })))
+  const ops = await createOps(template, slides)
   // Pictures go into a scratch map first: the deck tab only appears once everything is valid.
   const media = new Map<string, Uint8Array>()
   const add = (name: string, bytes: Uint8Array) => {
@@ -114,7 +157,7 @@ const create: ToolHandler = async ({ kind, title, theme, slides, output_path, ov
   const start = emptyDeck(theme ? String(theme) : undefined)
   let deck: Deck
   try {
-    deck = applyOps(start, await importPictures(ops, layoutFinder(start), add), slideIdMaker(start)).deck
+    deck = applyOps(start, await importPictures(ops, layoutFinder(start), add), slideIdMaker(start), findDesign).deck
   } catch (e) {
     if (e instanceof DeckError) throw new ToolError(e.message.replace(/^Operation (\d+) \(add\)/, 'Slide $1'))
     throw e
@@ -139,8 +182,8 @@ const create: ToolHandler = async ({ kind, title, theme, slides, output_path, ov
   return json({
     tab: doc.id,
     path: out,
-    slides: deck.slides.map((s, i) => ({ id: s.id, number: i + 1, layout: s.layout })),
-    findings: checkDeck(deck),
+    slides: deck.slides.map((s, i) => ({ id: s.id, number: i + 1, layout: s.layout, ...(s.design ? { design: s.design } : {}) })),
+    findings: checkDeck(deck, findDesign),
     ...(out ? {} : { note: 'The deck is open in Glance and not saved yet; the user can save it, or pass output_path next time.' })
   })
 }
@@ -149,7 +192,9 @@ const read: ToolHandler = async ({ tab }) => json(outline(findDeck(tab)))
 
 const edit: ToolHandler = async ({ tab, ops }) => {
   const doc = findDeck(tab)
-  const list = await importPictures(opsOf(ops), layoutFinder(doc.deck.peek()), (name, bytes) => doc.addMedia(name, bytes))
+  const asked = opsOf(ops)
+  await loadOpDesigns(asked)
+  const list = await importPictures(asked, layoutFinder(doc.deck.peek()), (name, bytes) => doc.addMedia(name, bytes))
   let r
   try {
     r = doc.apply(msg('AI Edit'), list)
@@ -163,12 +208,12 @@ const edit: ToolHandler = async ({ tab, ops }) => {
     added: r.added,
     ...(r.dropped.length ? { dropped: r.dropped } : {}),
     slide_count: r.deck.slides.length,
-    findings: checkDeck(r.deck)
+    findings: checkDeck(r.deck, findDesign)
   })
 }
 
 const check: ToolHandler = async ({ tab }) => {
-  const findings = checkDeck(findDeck(tab).deck.peek())
+  const findings = checkDeck(findDeck(tab).deck.peek(), findDesign)
   return json({ findings, passes: findings.length === 0 })
 }
 
@@ -200,7 +245,7 @@ const render: ToolHandler = async ({ tab, slides, max_size }) => {
     const blob = await new Promise<Blob | null>((res) => c.toBlob(res, 'image/png'))
     if (!blob) throw new ToolError(`couldn't draw slide ${i + 1}`)
     // i18n-ignore: read by the AI app, not shown in Glance
-    content.push({ type: 'text', text: `Slide ${i + 1} (${slide.id}, ${slide.layout}${slide.hidden ? ', hidden' : ''})` })
+    content.push({ type: 'text', text: `Slide ${i + 1} (${slide.id}, ${slide.design ?? slide.layout}${slide.hidden ? ', hidden' : ''})` })
     content.push({ type: 'image', data: toBase64(new Uint8Array(await blob.arrayBuffer())), mimeType: 'image/png' })
   }
   return { content }
@@ -222,6 +267,7 @@ const exportTool: ToolHandler = async ({ tab, format, output_path, overwrite }) 
 }
 
 export const deckHandlers: Record<string, ToolHandler> = {
+  glance_templates: templates,
   glance_create: create,
   glance_deck_outline: read,
   glance_deck_edit: edit,
