@@ -1,0 +1,113 @@
+{
+  "_": "Input for scripts/build-templates.mjs: which boards become templates, in the order the start screen shows them, and the words the start screen uses. purpose and look come from the board's title in canvas.json (\"Sample · Purpose · Look\") unless given here.",
+  "boards": [
+    {
+      "board": "Pitch",
+      "id": "pitch",
+      "name": "Pitch Deck",
+      "blurb": "Win over investors or your boss"
+    },
+    {
+      "board": "BookReport",
+      "id": "bookReport",
+      "name": "Book Report",
+      "blurb": "Tell the class about a book"
+    },
+    {
+      "board": "Science",
+      "id": "science",
+      "name": "Science Fair Project",
+      "blurb": "Question, test, results, chart"
+    },
+    {
+      "board": "Weekly",
+      "id": "weekly",
+      "name": "Weekly Update",
+      "blurb": "Numbers, wins, risks, next week"
+    },
+    {
+      "board": "BakeSale",
+      "id": "bakeSale",
+      "name": "Event Plan",
+      "blurb": "Bake sale, party or club night"
+    },
+    {
+      "board": "Trip",
+      "id": "trip",
+      "name": "Trip Recap",
+      "blurb": "Route, days, photos, best moment"
+    },
+    {
+      "board": "Lesson",
+      "id": "lesson",
+      "name": "Class Lesson",
+      "blurb": "Teach one idea, with a check at the end"
+    },
+    {
+      "board": "Portfolio",
+      "id": "portfolio",
+      "name": "Portfolio",
+      "blurb": "Your best work and how you work"
+    },
+    {
+      "board": "Wedding",
+      "id": "wedding",
+      "name": "Wedding Guide",
+      "blurb": "Everything your guests need to know"
+    },
+    {
+      "board": "Launch",
+      "id": "launch",
+      "name": "Product Launch",
+      "blurb": "Show off something new"
+    },
+    {
+      "board": "Recipe",
+      "id": "recipe",
+      "name": "Family Recipe",
+      "blurb": "A dish worth passing on, step by step"
+    },
+    {
+      "board": "Season",
+      "id": "season",
+      "name": "Season Review",
+      "blurb": "A club’s year: results, players and thanks"
+    },
+    {
+      "board": "Talk",
+      "id": "talk",
+      "name": "Tech Talk",
+      "blurb": "Share what you built with a room of people"
+    },
+    {
+      "board": "Quarterly",
+      "id": "quarterly",
+      "name": "Quarterly Review",
+      "blurb": "Goals, numbers and the plan for next quarter"
+    },
+    {
+      "board": "History",
+      "id": "history",
+      "name": "History Project",
+      "blurb": "A time in history, told as a story"
+    },
+    {
+      "board": "Party",
+      "id": "party",
+      "name": "Party Invite",
+      "blurb": "Invite everyone and say what’s happening"
+    },
+    {
+      "board": "FunRun",
+      "id": "funRun",
+      "name": "Charity Run",
+      "blurb": "Route, times, sponsors and how to sign up"
+    },
+    {
+      "board": "Garden",
+      "id": "garden",
+      "name": "Club Newsletter",
+      "blurb": "News, jobs and dates for your members"
+    }
+  ]
+}
