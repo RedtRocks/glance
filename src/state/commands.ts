@@ -163,8 +163,8 @@ export const COMMANDS: Command[] = [
   },
   { id: 'file.settings', label: msg('Settings'), keys: ['Ctrl+,'], run: () => void (settingsOpen.value = true) },
   // Edit
-  { id: 'edit.undo', label: msg('Undo'), keys: ['Ctrl+Z'], run: () => actions.undo(), enabled: () => !!(pdf() ?? image() ?? deck())?.history.canUndo },
-  { id: 'edit.redo', label: msg('Redo'), keys: ['Ctrl+Y', 'Ctrl+Shift+Z'], run: () => actions.redo(), enabled: () => !!(pdf() ?? image() ?? deck())?.history.canRedo },
+  { id: 'edit.undo', label: msg('Undo'), keys: ['Ctrl+Z'], run: () => actions.undo(), enabled: () => !!(pdf() ?? image() ?? deck() ?? sheetHistory())?.history.canUndo },
+  { id: 'edit.redo', label: msg('Redo'), keys: ['Ctrl+Y', 'Ctrl+Shift+Z'], run: () => actions.redo(), enabled: () => !!(pdf() ?? image() ?? deck() ?? sheetHistory())?.history.canRedo },
   { id: 'edit.selectAll', label: msg('Select All Pages'), keys: ['Ctrl+A'], run: () => actions.selectAllPages(), enabled: isPdf },
   { id: 'edit.find', label: msg('Find…'), keys: ['Ctrl+F'], run: () => void (findOpen.value = true), enabled: isPdf },
   { id: 'edit.insertBlank', label: msg('Insert Blank Page'), run: () => actions.insertBlankPage(), enabled: isPdf },
@@ -417,6 +417,13 @@ const ifViewable = () => !!activeDoc.value && activeDoc.value.kind !== 'notice'
 const ifMarkup = () => ifPdf() || isImage()
 const isDeck = () => activeDoc.value?.kind === 'deck'
 const isSheet = () => activeDoc.value?.kind === 'sheet'
+/** A sheet's history; reading historyVersion keeps Undo's enabled state current. */
+function sheetHistory(): { history: { canUndo: boolean; canRedo: boolean } } | undefined {
+  const d = activeDoc.value
+  if (d?.kind !== 'sheet') return undefined
+  void d.historyVersion.value
+  return d
+}
 const ifPaged = () => ifPdf() || multiPage() || isDeck()
 const VISIBILITY: [(() => boolean), string[]][] = [
   [hasDoc, ['file.close', 'file.openWith', 'view.customizeToolbar']],

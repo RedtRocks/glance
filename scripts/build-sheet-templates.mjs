@@ -294,6 +294,26 @@ function toSheet(x, name, families) {
     if (run.color) f.color = run.color.hex
     return f
   }
+  // Text placed off the grid (a title over a banner) goes into the cell under its top-left, so it
+  // stays editable: into that cell's box when it has no text of its own, else into a new cell.
+  const cellOf = (f) => ({
+    c: x.edgesX.findIndex((e, i) => f.rect.x >= e - 1 && f.rect.x < (x.edgesX[i + 1] ?? Infinity)),
+    r: x.edgesY.findIndex((e, i) => f.rect.y >= e - 1 && f.rect.y < (x.edgesY[i + 1] ?? Infinity))
+  })
+  const placed = new Set()
+  for (const f of x.floats) {
+    const { c, r } = cellOf(f)
+    if (c < 0 || r < 0 || !f.runs.some((q) => q.text.trim())) continue
+    const box = x.cells.find((b) => b.c1 <= c && c <= b.c2 && b.r1 <= r && r <= b.r2)
+    if (box && box.runs.some((q) => q.text.trim()) && !box.floated) continue
+    if (box) {
+      box.runs = [...box.runs, ...f.runs]
+      box.h = 'left'
+      box.floated = true
+    } else x.cells.push({ c1: c, r1: r, c2: c, r2: r, fill: null, borders: {}, h: 'left', v: 'middle', padLeft: 0, runs: f.runs, floated: true })
+    placed.add(f)
+  }
+  x.floats = x.floats.filter((f) => !placed.has(f))
   for (const c of x.cells) {
     const key = name1(c.c1, c.r1)
     if (c.r2 > c.r1 || c.c2 > c.c1) merges.push(`${key}:${name1(c.c2, c.r2)}`)
@@ -385,6 +405,7 @@ for (const entry of config.boards) {
   const report = []
   for (let i = 0; i < count; i++) {
     const x = await page.evaluate(extract, i)
+    const floatTops = x.floats.filter((f) => f.runs.some((q) => q.text.trim())).map((f) => f.rect)
     const active = x.tabs.find((t) => t.active) ?? x.tabs[i]
     const name = (overlay.names?.[i]) ?? active?.name ?? `Sheet${i + 1}`
     const sheet = toSheet(x, name, families)
@@ -408,7 +429,16 @@ for (const entry of config.boards) {
       const range = `${colName(a.i)}${b.i + 1}:${colName(c.d ? c.i : Math.max(a.i, c.i - 1))}${(d.d ? d.i : Math.max(b.i, d.i - 1)) + 1}`
       const id = `${entry.id}-${i + 1}-${pic.n}`
       report.push(`  picture ${pic.n} (${pic.why}) ${range} ${Math.round(pic.rect.w)}x${Math.round(pic.rect.h)}${drop.has(String(pic.n)) || drop.has(range) ? ' dropped' : ''}`)
-      if (drop.has(String(pic.n)) || drop.has(range)) continue
+      // A band drawn behind floating text is the text's backdrop: pictures sit over cells in Glance
+      // and Excel alike, so it would hide the text, now in cells. The cells' fill shows instead.
+      const band = pic.rect.w >= 2 * pic.rect.h
+      const textIn = () => {
+        for (let r = b.i; r <= d.i; r++) for (let cc = a.i; cc <= c.i; cc++) if (String(sheet.cells[`${colName(cc)}${r + 1}`]?.v ?? '').trim()) return true
+        return false
+      }
+      const backdrop = band && ((pic.why === 'svg' && floatTops.some((f) => f.x >= pic.rect.x && f.x < pic.rect.x + pic.rect.w && f.y >= pic.rect.y && f.y < pic.rect.y + pic.rect.h)) || (pic.why === 'svg-in-cell' && textIn()))
+      if (backdrop) report[report.length - 1] += ' dropped (behind text)'
+      if (backdrop || drop.has(String(pic.n)) || drop.has(range)) continue
       const png = await shoot(page, i, pic.n)
       media[`media/${id}.png`] = png.toString('base64')
       images.push({ id: `picture${images.length + 1}`, media: `media/${id}.png`, anchor: { from: { r: b.i, c: a.i, dx: a.d, dy: b.d }, to: { r: d.i, c: c.i, dx: c.d, dy: d.d } } })

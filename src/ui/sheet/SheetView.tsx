@@ -3,7 +3,7 @@
  * takes the pointer and keyboard. Frozen rows and columns stay put; every change goes
  * through sheet operations, so it can be undone and an AI app sees the same thing.
  */
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks'
 import type { SheetDoc, SheetSelection } from '../../state/sheetDoc'
 import { t } from '../../i18n'
 import { cellName, colName } from '../../core/sheet/address'
@@ -58,6 +58,17 @@ export function SheetView({ doc }: { doc: SheetDoc }) {
   const [scroll, setScroll] = useState({ x: 0, y: 0 })
   const [size, setSize] = useState({ w: 800, h: 600 })
   const [editing, setEditing] = useState<string | null>(null)
+  const editor = useRef<HTMLInputElement>(null)
+  const closed = useRef(false)
+  const isEditing = editing !== null
+  // Focus the in-cell editor as soon as it appears, so fast typing isn't lost to the grid.
+  useLayoutEffect(() => {
+    const el = editor.current
+    if (isEditing) closed.current = false
+    if (!isEditing || !el || document.activeElement !== scroller.current) return
+    el.focus()
+    el.setSelectionRange(el.value.length, el.value.length)
+  }, [isEditing])
   const [pictures, setPictures] = useState<Map<string, CanvasImageSource>>(new Map())
   const [list, setList] = useState<string[] | null>(null)
   const [, redraw] = useState(0)
@@ -220,6 +231,8 @@ export function SheetView({ doc }: { doc: SheetDoc }) {
     const { r, c } = sel
     const ref = cellName(r, c)
     const before = entryText(s, r, c)
+    // Moving focus blurs the editor, whose stale handler would commit the same edit again.
+    closed.current = true
     setEditing(null)
     if (text !== before) {
       const op = text.startsWith('=') && text.length > 1 ? { op: 'set' as const, sheet: s.name, cell: ref, formula: text } : { op: 'set' as const, sheet: s.name, cell: ref, value: text }
@@ -318,6 +331,12 @@ export function SheetView({ doc }: { doc: SheetDoc }) {
       const v = getCell(s, sel.r, sel.c)?.v
       return void sheet.change(doc, t('Tick {cell}', { cell: cellName(sel.r, sel.c) }), [{ op: 'set', sheet: s.name, cell: cellName(sel.r, sel.c), value: v !== true }])
     }
+    // The app's shortcuts don't see keys the grid takes, so undo and redo are handled here.
+    if (mod && (e.key === 'z' || e.key === 'Z' || e.key === 'y')) {
+      e.preventDefault()
+      e.stopPropagation()
+      return void (e.key === 'y' || e.shiftKey ? doc.redo() : doc.undo())
+    }
     if (mod && (e.key === 'b' || e.key === 'i')) {
       e.preventDefault()
       e.stopPropagation()
@@ -329,7 +348,7 @@ export function SheetView({ doc }: { doc: SheetDoc }) {
     if (!mod && !e.altKey && e.key.length === 1) {
       e.stopPropagation()
       e.preventDefault()
-      setEditing(e.key)
+      setEditing((now) => (now === null ? e.key : now + e.key))
     }
   }
 
@@ -391,6 +410,7 @@ export function SheetView({ doc }: { doc: SheetDoc }) {
           onKeyDown={(e) => {
             if (e.key === 'Enter') commit(editing ?? '', 'down')
             if (e.key === 'Escape') {
+              closed.current = true
               setEditing(null)
               scroller.current?.focus()
             }
@@ -452,8 +472,8 @@ export function SheetView({ doc }: { doc: SheetDoc }) {
         )}
         {editing !== null && (
           <input
+            ref={editor}
             class="sheet-editor"
-            autoFocus
             style={{ left: `${activeRect.x}px`, top: `${activeRect.y}px`, minWidth: `${activeRect.w}px`, height: `${activeRect.h}px`, font: cssFont(st?.font, zoom) }}
             value={editing}
             onInput={(e) => setEditing((e.currentTarget as HTMLInputElement).value)}
@@ -466,13 +486,14 @@ export function SheetView({ doc }: { doc: SheetDoc }) {
                 e.preventDefault()
                 commit(editing, 'right')
               } else if (e.key === 'Escape') {
+                closed.current = true
                 setEditing(null)
                 scroller.current?.focus()
               }
             }}
             onBlur={(e) => {
               if ((e.relatedTarget as HTMLElement | null)?.closest?.('.sheet-bar')) return
-              if (editing !== null) commit(editing, 'none')
+              if (editing !== null && !closed.current) commit(editing, 'none')
             }}
           />
         )}
