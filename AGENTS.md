@@ -70,7 +70,7 @@ tests/           Vitest tests and fixtures
 ## Don'ts
 
 - Don't bump the version, tag, or run the Release workflow unless the maintainer asks. Releases are cut by the maintainer once all in-progress work has merged. When asked, the version lives in `package.json`, `package-lock.json` (two fields at the top), `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and `src-tauri/Cargo.lock`; the Release workflow fails if the tag doesn't match or `CHANGELOG.md` lacks `## New in <version>`.
-- Don't hand-edit generated files: `package-lock.json` and `Cargo.lock` (use npm and cargo), the per-format site pages under `site/*-viewer/` and `site/sitemap.xml` (regenerate with `node scripts/build-format-pages.mjs`), `packaging/` manifests produced by `scripts/packaging.ts`, and the deck templates' designs in `src/deck/designs/` (regenerate with `node scripts/build-templates.mjs <boards folder>`; the boards are listed in `scripts/templates.config.json`).
+- Don't hand-edit generated files: `package-lock.json` and `Cargo.lock` (use npm and cargo), the per-format site pages under `site/*-viewer/` and `site/sitemap.xml` (regenerate with `node scripts/build-format-pages.mjs`), `packaging/` manifests produced by `scripts/packaging.ts`, and the deck templates' designs in `src/deck/designs/` (regenerate with `node scripts/build-templates.mjs <boards folder>`; the boards are listed in `scripts/templates.config.json`), and the document looks in `src/doc/designs/` (regenerate with `node scripts/build-doc-templates.mjs <boards folder>`; the boards are listed in `scripts/doc-templates.config.json`).
 - Don't change `.github/workflows/` to make a check pass; fix the cause.
 - Don't commit build output (`dist/`, `dist-web/`, `src-tauri/target/`).
 
