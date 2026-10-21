@@ -58,6 +58,11 @@ export interface Cell {
   s?: Style
   /** Text in more than one font; v holds the plain text. */
   rich?: Run[]
+  /**
+   * Glance's own: small text drawn above or below the value, like a tile's heading over
+   * its total. Saved in the workbook for Glance; Excel shows just the value.
+   */
+  label?: { above?: Run[]; below?: Run[] }
 }
 
 export interface Size {

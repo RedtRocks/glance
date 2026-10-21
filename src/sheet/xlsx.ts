@@ -60,7 +60,7 @@ export interface ReadResult {
 
 interface Extras {
   v: 1
-  sheets: Record<string, { charts?: Chart[]; chartPictures?: number[]; checkboxes?: string[] }>
+  sheets: Record<string, { charts?: Chart[]; chartPictures?: number[]; checkboxes?: string[]; labels?: Record<string, NonNullable<Cell['label']>> }>
 }
 
 export async function readXlsx(bytes: Uint8Array): Promise<ReadResult> {
@@ -284,6 +284,7 @@ function readSheet(xb: XWorkbook, ws: XWorksheet, ex: Extras['sheets'][string] |
     })
   })
   s.charts = ex?.charts ?? []
+  for (const [k, label] of Object.entries(ex?.labels ?? {})) if (s.cells[k]) s.cells[k] = { ...s.cells[k], label }
   return s
 }
 
@@ -460,6 +461,7 @@ export async function writeXlsx(wb: Workbook, media: Map<string, Uint8Array>, op
     }
     for (const r of s.filterHidden ?? []) ws.getRow(r + 1).hidden = true
     for (const [k, c] of Object.entries(s.cells)) {
+      if (c.label) ((extras.sheets[s.name] ??= {}).labels ??= {})[k] = c.label
       const cell = ws.getCell(k)
       cell.value = xValue(c)
       const st = c.s ?? s.rows[Number(/\d+/.exec(k)![0]) - 1]?.s ?? s.cols[colIndex(/^[A-Z]+/.exec(k)![0])]?.s

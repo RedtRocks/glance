@@ -300,7 +300,11 @@ export function parseEntry(text: string, opts: { dayFirst?: boolean; year?: numb
     const isNeg = /[-−]/.test(num[1] + num[3])
     const n = Number(num[4].replace(/,/g, '')) * (isNeg ? sign : 1) / (num[5] ? 100 : 1)
     const dec = (num[4].split('.')[1] ?? '').length
-    if (num[2]) return { value: n, numFmt: `${num[2]}#,##0${dec ? '.' + '0'.repeat(Math.min(dec, 2) === 1 ? 2 : Math.min(dec, 2)) : ''}` }
+    if (num[2]) {
+      const body = `${num[2]}#,##0${dec ? '.00' : ''}`
+      // A typed true minus sign (−£62) keeps showing as one.
+      return { value: n, numFmt: /−/.test(num[1] + num[3]) ? `${body};−${body}` : body }
+    }
     if (num[5]) return { value: n, numFmt: dec ? `0.${'0'.repeat(dec)}%` : '0%' }
     if (num[4].includes(',')) return { value: n, numFmt: dec ? `#,##0.${'0'.repeat(dec)}` : '#,##0' }
     return { value: n }
@@ -321,8 +325,12 @@ function parseDate(s: string, opts: { dayFirst?: boolean; year?: number }): { va
     const [d, mo] = opts.dayFirst === false ? [+m[2], +m[1]] : [+m[1], +m[2]]
     return ok(y, mo, d, opts.dayFirst === false ? 'm/d/yyyy' : 'dd/mm/yyyy')
   }
-  m = /^(?:[A-Za-z]{3,9},?\s+)?(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]{3,9})\.?,?(?:\s+(\d{2,4}))?$/.exec(s)
-  if (m && MONTH_INDEX(m[2]) >= 0) return ok(m[3] ? (m[3].length === 2 ? 2000 + +m[3] : +m[3]) : year, MONTH_INDEX(m[2]) + 1, +m[1], m[3] ? 'd mmm yyyy' : 'd mmm')
+  m = /^(?:([A-Za-z]{3,9}),?\s+)?(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]{3,9})\.?,?(?:\s+(\d{2,4}))?$/.exec(s)
+  if (m && MONTH_INDEX(m[3]) >= 0 && (!m[1] || DAYS.some((d) => d.toLowerCase().startsWith(m![1].toLowerCase().slice(0, 3))))) {
+    // Keep the shape it was typed in: "Thu 01 Oct" stays a weekday, a padded day and a short month.
+    const fmt = `${m[1] ? (m[1].length > 3 ? 'dddd ' : 'ddd ') : ''}${m[2].length === 2 ? 'dd' : 'd'} ${m[3].length > 3 ? 'mmmm' : 'mmm'}${m[4] ? (m[4].length === 2 ? ' yy' : ' yyyy') : ''}`
+    return ok(m[4] ? (m[4].length === 2 ? 2000 + +m[4] : +m[4]) : year, MONTH_INDEX(m[3]) + 1, +m[2], fmt)
+  }
   m = /^([A-Za-z]{3,9})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?(?:\s+(\d{4}))?$/.exec(s)
   if (m && MONTH_INDEX(m[1]) >= 0) return ok(m[3] ? +m[3] : year, MONTH_INDEX(m[1]) + 1, +m[2], m[3] ? 'mmm d, yyyy' : 'mmm d')
   return null

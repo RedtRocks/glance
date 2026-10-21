@@ -480,7 +480,7 @@ class Draft {
         const problem = v && validationProblem(v, next.v ?? null, (ref) => this.listValues(s, ref))
         if (problem) throw new SheetError(`${k}: ${problem}`)
       }
-      if (next.v === undefined && !next.f && !next.s && !next.rich) delete s.cells[k]
+      if (next.v === undefined && !next.f && !next.s && !next.rich && !next.label) delete s.cells[k]
       else s.cells[k] = next
     }
     if (op.formula !== undefined) {
@@ -523,7 +523,7 @@ class Draft {
 
   /** A typed or AI-given value as a cell, keeping the old cell's style. */
   private cellFrom(raw: unknown, old: Cell | undefined): Cell {
-    const keep: Cell = old?.s ? { s: old.s } : {}
+    const keep: Cell = { ...(old?.s ? { s: old.s } : {}), ...(old?.label ? { label: old.label } : {}) }
     if (raw === null || raw === undefined || raw === '') return keep
     if (typeof raw === 'string' && raw.startsWith('=') && raw.length > 1) return { ...keep, f: raw.slice(1) }
     if (typeof raw === 'number') {
@@ -564,7 +564,7 @@ class Draft {
       if (!inRange(r, a.r, a.c)) continue
       if (what === 'all') delete s.cells[k]
       else if (what === 'contents') {
-        if (c.s) s.cells[k] = { s: c.s }
+        if (c.s) s.cells[k] = { s: c.s, ...(c.label ? { label: c.label } : {}) }
         else delete s.cells[k]
       } else {
         const { s: _s, ...rest } = c
