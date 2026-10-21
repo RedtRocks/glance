@@ -12,6 +12,8 @@ import * as platform from '../platform'
 import { activeDoc, activeId, docs } from './documents'
 import { SheetDoc } from './sheetDoc'
 import { deckHandlers } from './deckTools'
+import { registerGuideContext } from './guideContext'
+import { findPlaceholders, validationHint } from '../core/ai/guide'
 import { newSheet, sheetBytes, sheetSelection, usedRange, loadFunctions } from './sheet'
 import { SHEET_TEMPLATES, sheetTemplate } from './sheetTemplates'
 import * as versions from './versions'
@@ -19,7 +21,7 @@ import { toast } from './ui'
 import { msg, t } from '../i18n'
 import { applyOps, SheetError, type SheetOp } from '../core/sheet/ops'
 import { checkWorkbook } from '../core/sheet/check'
-import { cellName, parseRange } from '../core/sheet/address'
+import { cellName, overlaps, parseRange } from '../core/sheet/address'
 import { describeRule } from '../core/sheet/validate'
 import { emptyWorkbook, findSheet, plainText, styleAt, type Sheet, type Workbook } from '../core/sheet/model'
 import { todaySerial } from '../core/sheet/recalc'
@@ -217,6 +219,31 @@ const exportTool: ToolHandler = async (args) => {
   await platform.writeFile(out, await sheetBytes(doc, want as 'xlsx' | 'csv' | 'pdf' | 'png'))
   return `Wrote ${out}`
 }
+
+// Guided AI requests about an open spreadsheet get its sheets, the picked cells and their rules.
+registerGuideContext((doc) => {
+  if (!(doc instanceof SheetDoc)) return null
+  const sel = sheetSelection(doc)
+  const s = doc.activeSheet.peek()
+  const picked = parseRange(sel.range)
+  const validation = s.validations
+    .filter((v) => !picked || v.ref.split(/\s+/).some((x) => {
+      const g = parseRange(x)
+      return !!g && overlaps(g, picked)
+    }))
+    .map((v) => `${v.ref}: ${v.source ? `one of the values in ${v.source}` : validationHint(v)}`)
+  const path = doc.path.peek()
+  const text = doc.wb.peek().sheets.flatMap((x) => Object.values(x.cells).map((c) => plainText(c?.v))).join('\n')
+  return {
+    kind: 'spreadsheet',
+    tab: doc.id,
+    name: doc.name.peek(),
+    ...(path && !path.startsWith('browser:') ? { path } : {}),
+    count: doc.wb.peek().sheets.length,
+    selection: { kind: 'spreadsheet', sheet: sel.sheet, range: sel.range, values: sel.values, formulas: sel.formulas, ...(validation.length ? { validation } : {}) },
+    placeholders: findPlaceholders(text)
+  }
+})
 
 export const sheetHandlers: Record<string, ToolHandler> = {
   glance_templates: templates,

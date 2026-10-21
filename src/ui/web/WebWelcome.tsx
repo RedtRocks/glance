@@ -91,7 +91,7 @@ function DesktopStart() {
           </button>
           <button class="w-btn big" onClick={() => (makeOpen.value = true)}>
             <Icon name="add" />
-            {t('Make Slides')}
+            {t('Make Slides, Documents or Spreadsheets')}
           </button>
           {canInstall() && (
             <button class="w-btn big" onClick={() => void onInstall()}>

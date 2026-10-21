@@ -10,11 +10,15 @@ import { msg, t } from '../i18n'
 import * as ai from './ai'
 import { activeSkills } from './skills'
 import { fileContext } from './guideContext'
-import { DeckDoc, docs, type Doc } from './documents'
+import { DeckDoc, GDoc, docs, type Doc } from './documents'
 import { TEMPLATES, templateDeck } from './templates'
 import { THEMES } from '../core/deck/themes'
 import { change } from './deck'
 import { aiOpen, makeOpen } from './ui'
+import { SheetDoc } from './sheetDoc'
+import { DOC_BOARDS } from '../doc/designs'
+import { setLook } from './gdoc'
+import { SHEET_TEMPLATES, sheetTemplate } from './sheetTemplates'
 
 export interface Planning {
   request: string
@@ -75,12 +79,28 @@ async function applyDeckLook(doc: DeckDoc, look: string): Promise<void> {
   }
 }
 
+/** Puts a document template's look on a new document. */
+async function applyDocLook(doc: GDoc, look: string): Promise<void> {
+  if (doc.doc.peek().look === look || !DOC_BOARDS.some((b) => b.id === look)) return
+  await setLook(doc, look)
+}
+
+/** Starts a new, still empty spreadsheet from the template the person picked. */
+async function applySheetLook(doc: SheetDoc, look: string): Promise<void> {
+  if (!SHEET_TEMPLATES.some((x) => x.id === look)) return
+  if (doc.wb.peek().sheets.some((s) => Object.keys(s.cells).length)) return
+  const start = await sheetTemplate(look)
+  if (start) doc.replace(msg('Change Look'), start.wb, start.media)
+}
+
 /** Build: sends the plan as the person left it. */
 export async function buildPlan(plan: Plan, density: Density): Promise<void> {
   const p = planning.peek()
   if (!p) return
   const doc = tabDoc(p.tab)
   if (doc instanceof DeckDoc && plan.look) await applyDeckLook(doc, plan.look)
+  if (doc instanceof GDoc && plan.look) await applyDocLook(doc, plan.look)
+  if (doc instanceof SheetDoc && plan.look) await applySheetLook(doc, plan.look)
   const ctx = (doc && fileContext(doc)) ?? { kind: p.kind, tab: p.tab }
   const guided = guideCreate(p.request, ctx, { plan, density, skills: await activeSkills(), sent: ai.sentSkills() })
   planning.value = null

@@ -56,6 +56,12 @@ export function SheetTemplates({ canAsk, onUse, onAbout }: { canAsk: boolean; on
   )
 }
 
+/** A spreadsheet template's first sheet, for the Outline screen's looks. */
+export function SheetLookThumb({ id, width }: { id: string; width: number }) {
+  const [first] = useSheetPictures(id, 0.5, false)
+  return first ? <img class="sheet-thumb" src={first} alt="" style={{ width: `${width}px` }} /> : <span class="outline-look-empty" style={{ width: `${width}px` }} />
+}
+
 function SheetTile({ tpl, onPick }: { tpl: SheetTemplateInfo; onPick: () => void }) {
   const [first] = useSheetPictures(tpl.id, 0.5, false)
   return (

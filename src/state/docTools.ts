@@ -16,7 +16,7 @@ import { findLook, loadLook, loadLookWithFonts } from './docLooks'
 import { gdocBytes, gdocExportBytes, gdocPictures, newGdoc, pagesOf, readAspects } from './gdoc'
 import { checkDoc } from '../core/doc/check'
 import { DocError, type DocOp } from '../core/doc/ops'
-import { allBlocks, isMediaPath, runsToText, type Block, type Doc } from '../core/doc/model'
+import { allBlocks, blockText, isMediaPath, runsToText, type Block, type Doc } from '../core/doc/model'
 import { findDocDesign } from '../core/doc/look'
 import { boardDoc, lookCatalog, pageDoc } from '../core/doc/template'
 import { measureDocText } from '../doc/measure'
@@ -24,6 +24,8 @@ import * as versions from './versions'
 import { toast } from './ui'
 import { msg, t } from '../i18n'
 import { deckHandlers } from './deckTools'
+import { registerGuideContext } from './guideContext'
+import { findPlaceholders } from '../core/ai/guide'
 
 const PICTURES = ['png', 'jpg', 'jpeg', 'webp', 'gif', 'avif', 'svg']
 const MAX_RENDER = 12
@@ -384,8 +386,7 @@ const wordReplace: ToolHandler = async ({ path, find, replace, output_path, over
 }
 
 /** What the person has picked in the document on screen, for the AI request guide. */
-export function gdocSelection(): { kind: 'document'; tab: string; page: number; section?: string; block?: string; box?: string; text?: string } | null {
-  const g = activeDoc.value
+export function gdocSelection(g: unknown = activeDoc.value): { kind: 'document'; tab: string; page: number; section?: string; block?: string; box?: string; text?: string } | null {
   if (!(g instanceof GDoc)) return null
   const sel = g.selection.peek()
   const doc = g.doc.peek()
@@ -394,6 +395,29 @@ export function gdocSelection(): { kind: 'document'; tab: string; page: number; 
   const text = block ? JSON.stringify(blockOutline(block)) : sel?.box ? section?.texts[sel.box] : undefined
   return { kind: 'document', tab: g.id, page: g.current.peek() + 1, ...(sel ?? {}), ...(text ? { text } : {}) }
 }
+
+// Guided AI requests about an open document get its template, pages and what is picked.
+registerGuideContext((doc) => {
+  const sel = gdocSelection(doc)
+  if (!sel || !(doc instanceof GDoc)) return null
+  const data = doc.doc.peek()
+  const info = DOC_BOARDS.find((b) => b.id === data.look)
+  const design = findDocDesign(findLook(data.look), data.sections.find((x) => x.id === sel.section)?.design ?? '')
+  const maxChars = sel.box ? design?.texts.find((x) => x.name === sel.box)?.maxChars : undefined
+  const picked = sel.block ? { id: sel.block, type: 'block', text: sel.text ?? '' } : sel.box ? { id: sel.box, type: 'text box', text: sel.text ?? '', ...(maxChars ? { maxChars } : {}) } : null
+  const path = doc.path.peek()
+  const text = data.sections.flatMap((x) => [...Object.values(x.texts), ...[...(x.blocks ?? [])].map(blockText)]).join('\n')
+  return {
+    kind: 'document',
+    tab: doc.id,
+    name: doc.name.peek(),
+    ...(path && !path.startsWith('browser:') ? { path } : {}),
+    ...(info ? { template: { id: info.id, name: info.name, look: data.look } } : { look: data.look }),
+    count: doc.pageCount.peek(),
+    selection: { kind: 'document', page: sel.page, blocks: picked ? [picked] : [] },
+    placeholders: findPlaceholders(text)
+  }
+})
 
 export const docHandlers: Record<string, ToolHandler> = {
   glance_templates: templates,

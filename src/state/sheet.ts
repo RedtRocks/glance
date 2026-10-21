@@ -174,7 +174,7 @@ export function sheetSelection(doc: SheetDoc): { kind: 'spreadsheet'; tab: strin
     values.push(vr)
     formulas.push(fr)
   }
-  return { kind: 'spreadsheet', tab: doc.name.peek(), sheet: sheet.name, range: selectionRange(s), values, formulas }
+  return { kind: 'spreadsheet', tab: doc.id, sheet: sheet.name, range: selectionRange(s), values, formulas }
 }
 
 /** The used area of a sheet, as a range like A1:H30. */

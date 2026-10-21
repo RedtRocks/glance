@@ -9,11 +9,29 @@ import { SlidePreview } from '../deck/SlideFrame'
 import { themeLabel } from '../deck/labels'
 import { t } from '../../i18n'
 import { Icon } from '../Icon'
+import { DOC_BOARDS } from '../../doc/designs'
+import { SHEET_TEMPLATES } from '../../state/sheetTemplates'
+import { DocLookThumb } from '../doc/DocTemplates'
+import { SheetLookThumb } from '../sheet/SheetTemplates'
+import type { FileKind } from '../../core/ai/guide'
 
 const DOTS = ['#f47933', '#f258a8', '#6312f6', '#f8d32c']
 
-/** A look's picture: a template's cover, or a title slide in a theme. */
-function LookPreview({ look, width }: { look: string; width: number }) {
+/** The looks a new file of each kind can start from: templates, and for decks themes too. */
+function looksFor(kind: FileKind): string[] {
+  if (kind === 'document') return DOC_BOARDS.map((x) => x.id)
+  if (kind === 'spreadsheet') return SHEET_TEMPLATES.map((x) => x.id)
+  return [...TEMPLATES.map((x) => x.id), ...Object.keys(THEMES)]
+}
+
+/** A look's picture: a template's first page or sheet, a deck template's cover, or a title slide in a theme. */
+function LookPreview({ kind, look, width }: { kind: FileKind; look: string; width: number }) {
+  if (kind === 'document') return <DocLookThumb id={look} width={width} />
+  if (kind === 'spreadsheet') return <SheetLookThumb id={look} width={width} />
+  return <DeckLookPreview look={look} width={width} />
+}
+
+function DeckLookPreview({ look, width }: { look: string; width: number }) {
   void designsVersion.value
   const board = loadedBoard(look)
   useEffect(() => void loadBoard(look), [look])
@@ -24,7 +42,10 @@ function LookPreview({ look, width }: { look: string; width: number }) {
   return <SlidePreview slide={{ id: 'look', layout: 'title', slots: { title: { kind: 'text', value: t('Your Title Here') } }, notes: '', hidden: false }} theme={look} width={width} />
 }
 
-const lookName = (id: string): string => {
+const lookName = (kind: FileKind, id: string): string => {
+  const named = kind === 'document' ? DOC_BOARDS.find((x) => x.id === id) : kind === 'spreadsheet' ? SHEET_TEMPLATES.find((x) => x.id === id) : undefined
+  if (named) return t(named.name)
+  if (kind !== 'deck') return id
   const tpl = TEMPLATES.find((x) => x.id === id)
   return tpl ? t(tpl.look) : themeLabel(id)
 }
@@ -47,7 +68,8 @@ export function OutlineScreen() {
   if (!p) return null
   const deck = p.kind === 'deck'
   const unit = (n: number) => (deck ? t('{count, plural, one {# slide} other {# slides}}', { count: n }) : p.kind === 'document' ? t('{count, plural, one {# section} other {# sections}}', { count: n }) : t('{count, plural, one {# sheet} other {# sheets}}', { count: n }))
-  const looks = deck ? [...new Set([...(look ? [look] : []), ...TEMPLATES.map((x) => x.id), ...Object.keys(THEMES)])] : []
+  const known = looksFor(p.kind)
+  const looks = [...new Set([...(look && known.includes(look) ? [look] : []), ...known])]
   const move = (i: number, d: -1 | 1) => {
     const j = i + d
     if (j < 0 || j >= items.length) return
@@ -56,7 +78,7 @@ export function OutlineScreen() {
     setItems(next)
   }
   const add = () => {
-    setItems([...items, { title: deck ? t('New slide') : t('New section') }])
+    setItems([...items, { title: deck ? t('New slide') : p.kind === 'spreadsheet' ? t('New sheet') : t('New section') }])
     setEditing(items.length)
   }
   const build = () => {
@@ -139,21 +161,21 @@ export function OutlineScreen() {
             )}
           </div>
           <div class="outline-side">
-            {deck && (
+            {looks.length > 0 && (
               <>
                 <h2>{t('Pick a Look')}</h2>
-                <span class="outline-asked">{t('Shown with your first slide. You can switch any time.')}</span>
+                <span class="outline-asked">{deck ? t('Shown with your first slide. You can switch any time.') : p.kind === 'document' ? t('Shown with its first page. You can switch any time.') : t('Shown with its first sheet.')}</span>
                 {look && (
                   <button class="outline-look big" aria-pressed="true">
-                    <LookPreview look={look} width={356} />
-                    <span>{lookName(look)}</span>
+                    <LookPreview kind={p.kind} look={look} width={356} />
+                    <span>{lookName(p.kind, look)}</span>
                   </button>
                 )}
                 <div class="outline-looks">
                   {looks.filter((l) => l !== look).map((l) => (
                     <button key={l} class="outline-look" aria-pressed="false" onClick={() => setLook(l)}>
-                      <LookPreview look={l} width={168} />
-                      <span>{lookName(l)}</span>
+                      <LookPreview kind={p.kind} look={l} width={168} />
+                      <span>{lookName(p.kind, l)}</span>
                     </button>
                   ))}
                 </div>

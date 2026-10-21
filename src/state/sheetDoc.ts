@@ -59,6 +59,14 @@ export class SheetDoc extends BaseDoc {
     return result
   }
 
+  /** Starts the file over from a template's workbook, as one undo step. */
+  replace(label: string, wb: Workbook, media: Map<string, Uint8Array>): void {
+    this.history.push(label, this.wb.peek())
+    for (const [k, v] of media) this.media.set(k, v)
+    this.mediaVersion.value++
+    this.restore(wb)
+  }
+
   undo(): void {
     const e = this.history.undo(this.wb.peek())
     if (e) this.restore(e.state)

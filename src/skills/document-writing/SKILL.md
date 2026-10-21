@@ -1,6 +1,6 @@
 ---
 name: document-writing
-description: How to write and lay out a Glance document (.gdoc) that reads well and looks designed, such as a letter, report, essay, CV, newsletter, menu, poster or certificate. Use when making a new document or adding to one, with glance_create kind document and the glance_doc tools.
+description: How to write and lay out a Glance document (.gdoc) that reads well and looks designed, such as a letter, report, essay, CV, newsletter, menu, poster or certificate. Use when making a new document or adding to one, with glance_create kind document and glance_doc_outline, glance_doc_edit, glance_doc_check and glance_doc_render.
 metadata:
   kinds: document
   when: create, edit
@@ -9,6 +9,14 @@ metadata:
 # Document writing
 
 A Glance document is a look (fonts, colours, page art) plus pages and blocks. You send words and structure; the look decides how it is drawn, and long text flows onto new pages in the same look by itself. Never set fonts, sizes or colours in the text, never squeeze text to fit a page, and never write a .docx, HTML or code yourself.
+
+## Tools
+
+- New document: glance_create with kind document and a template id from glance_templates (default essay). Pass pages ({design, texts?, tables?, blocks?}) or blocks alone for one flowing section; pass from (a .docx path) to convert a Word file. Leave both out to start from the template's sample text.
+- Read it first with glance_doc_outline: sections, text boxes with maxChars, table rows and block ids.
+- Change it with glance_doc_edit and a list of ops, applied as one step: addBlocks, replaceBlock, moveBlocks, deleteBlocks, setText (a fixed page's text box), addSection, deleteSection, moveSection, setLook, addRow, deleteRow, setCell and setRows.
+- Blocks: heading (level 1 to 3), paragraph (style?), list (items, ordered?), quote (cite?), callout, table (rows, header?, footer?), picture (src, alt, caption?), chart (bar, line or pie, rows), divider, columns and pageBreak. Text takes **bold**, *italic* and [links](https://...).
+- Save as PDF, Word or pictures with glance_export (pdf, docx or png).
 
 ## Pick the shape for the kind of document
 

@@ -1,6 +1,6 @@
 ---
 name: spreadsheet-building
-description: How to build or change a spreadsheet in Glance (.xlsx or .csv) so it is clear, correct and stays live, such as a budget, a project plan, a grade book or a tracker. Covers structure, formulas, number formats, charts and validation. Use with glance_create kind spreadsheet and the glance_sheet tools.
+description: How to build or change a spreadsheet in Glance (.xlsx or .csv) so it is clear, correct and stays live, such as a budget, a project plan, a grade book or a tracker. Covers structure, formulas, number formats, charts and validation. Use with glance_create kind spreadsheet and glance_sheet_read, glance_sheet_edit, glance_sheet_check and glance_sheet_render.
 metadata:
   kinds: spreadsheet
   when: create, edit
@@ -9,6 +9,13 @@ metadata:
 # Spreadsheet building
 
 Glance edits .xlsx and .csv files directly. You set cells, formulas, formats and rules with glance_sheet_edit; Glance recalculates and draws them. Never write a file, a script or a macro yourself, and never type a result that a formula should compute.
+
+## Tools
+
+- New workbook: glance_create with kind spreadsheet, a title, optionally a spreadsheet template id from glance_templates (it starts with sample data and live formulas), ops to fill it, and an output_path ending in .xlsx.
+- Read it first with glance_sheet_read: sheets, used ranges, tables and headers, drop-downs and rules, charts, the selection and the cells with their values and formulas.
+- Change it with glance_sheet_edit and a list of ops, applied as one step: set (cell and value or formula, or range and values), clear, fill, insertRows, deleteRows, insertCols, deleteCols, addSheet, deleteSheet, renameSheet, moveSheet, format (bold, italic, color, fill, numFmt, align, wrap, border, fontSize), merge, unmerge, colWidth, rowHeight, hide, show, addCf, clearCf, addValidation, clearValidation, addChart, updateChart, deleteChart, sort, filter, freeze, tabColor and activate.
+- Save as .xlsx, .csv, PDF or a picture with glance_export (xlsx, csv, pdf or png).
 
 ## Structure
 

@@ -11,7 +11,7 @@ import { SheetLayout } from '../../core/sheet/layout'
 import { CfEngine } from '../../core/sheet/cf'
 import { formatValue } from '../../core/sheet/format'
 import { getCell, plainText, styleAt, usedBounds, type Sheet, type Validation } from '../../core/sheet/model'
-import { listChoices, describeRule } from '../../core/sheet/validate'
+import { listChoices } from '../../core/sheet/validate'
 import { todaySerial } from '../../core/sheet/recalc'
 import { listValues } from '../../core/sheet/ops'
 import { inRange, parseRange } from '../../core/sheet/address'
@@ -31,6 +31,30 @@ function ruleAt(s: Sheet, r: number, c: number): Validation | undefined {
     const g = parseRange(x)
     return !!g && inRange(g, r, c)
   }))
+}
+
+/**
+ * The picked cell's rule in a few words, under the formula bar. It says what
+ * validationHint (core/ai/guide.ts) tells the AI, in the person’s language.
+ */
+function ruleLabel(v: Validation): string {
+  const show = (n: number) => (v.type === 'date' ? formatValue(n, 'd mmm yyyy').text : String(n))
+  const min = v.min !== undefined ? show(v.min) : undefined
+  const max = v.max !== undefined ? show(v.max) : undefined
+  switch (v.type) {
+    case 'list':
+      return v.source ? t('Pick one of the values in {range}', { range: v.source }) : t('Pick one of: {choices}', { choices: (v.values ?? []).join(', ') })
+    case 'checkbox':
+      return t('A tick box (TRUE or FALSE)')
+    case 'textLength':
+      return max !== undefined ? t('Text of at most {max} characters', { max }) : t('Text')
+    case 'whole':
+      return min !== undefined && max !== undefined ? t('A whole number from {min} to {max}', { min, max }) : min !== undefined ? t('A whole number of at least {min}', { min }) : max !== undefined ? t('A whole number of at most {max}', { max }) : t('A whole number')
+    case 'date':
+      return min !== undefined && max !== undefined ? t('A date from {min} to {max}', { min, max }) : min !== undefined ? t('A date of at least {min}', { min }) : max !== undefined ? t('A date of at most {max}', { max }) : t('A date')
+    default:
+      return min !== undefined && max !== undefined ? t('A number from {min} to {max}', { min, max }) : min !== undefined ? t('A number of at least {min}', { min }) : max !== undefined ? t('A number of at most {max}', { max }) : t('A number')
+  }
 }
 
 /** What the formula bar and editor start from: the formula, or the value as typed. */
@@ -417,7 +441,7 @@ export function SheetView({ doc }: { doc: SheetDoc }) {
           }}
         />
       </div>
-      {rule && (rule.prompt || rule.type !== 'checkbox') && <div class="sheet-hint">{rule.prompt ?? describeRule(rule)}</div>}
+      {rule && (rule.prompt || rule.type !== 'checkbox') && <div class="sheet-hint">{rule.prompt ?? ruleLabel(rule)}</div>}
       <div class="sheet-grid" ref={wrap}>
         <canvas ref={canvas} class="sheet-canvas" style={{ width: `${size.w}px`, height: `${size.h}px` }} />
         <div

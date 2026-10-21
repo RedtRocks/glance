@@ -69,6 +69,13 @@ function Page({ html, width }: { html: string; width: number }) {
   )
 }
 
+/** A document template's first page, for the Outline screen's looks. */
+export function DocLookThumb({ id, width }: { id: string; width: number }) {
+  const info = DOC_BOARDS.find((b) => b.id === id)
+  const first = useTemplatePages(info ?? DOC_BOARDS[0])[0]
+  return info && first ? <Page html={first} width={width} /> : <span class="outline-look-empty" style={{ width: `${width}px` }} />
+}
+
 export function DocTemplateTile({ info, onPick }: { info: DocBoardInfo; onPick: () => void }) {
   const first = useTemplatePages(info)[0]
   return (
