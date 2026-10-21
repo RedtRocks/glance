@@ -8,7 +8,7 @@
  * Only call this through a dynamic import: it pulls in docx.
  */
 import {
-  AlignmentType, BorderStyle, Document, ExternalHyperlink, FrameAnchorType, HeadingLevel, HorizontalPositionRelativeFrom, ImageRun,
+  AlignmentType, BorderStyle, Document, ExternalHyperlink, Header, HeightRule, FrameAnchorType, HeadingLevel, HorizontalPositionRelativeFrom, ImageRun,
   LevelFormat, Packer, PageBreak, Paragraph, ShadingType, Table, TableAnchorType, TableCell, TableRow, TextRun, VerticalPositionRelativeFrom,
   WidthType, type FileChild, type ParagraphChild
 } from 'docx'
@@ -21,8 +21,8 @@ export interface DocxInput {
   doc: Doc
   board: DocBoard | undefined
   media: Map<string, Uint8Array>
-  /** A section's first page art (no text) as PNG, or null for none. */
-  art: (section: Section) => Promise<Uint8Array | null>
+  /** A section's page art (no text) as PNG: its first page's, and the following pages' when they differ. */
+  art: (section: Section) => Promise<{ first: Uint8Array | null; rest?: Uint8Array | null }>
   /** A picture's width over its height. */
   aspect?: (src: string) => number | undefined
   title?: string
@@ -38,9 +38,12 @@ const hex = (c: string | undefined) => {
 const align = (a: string | undefined) => (a === 'center' ? AlignmentType.CENTER : a === 'right' ? AlignmentType.RIGHT : AlignmentType.LEFT)
 
 function runsOf(runs: Run[], st: TextStyle, palette: Record<string, string>, extra: { bold?: boolean; italics?: boolean } = {}): ParagraphChild[] {
-  return runs.filter((r) => r.text).map((r) => {
+  // A line break inside a run becomes Word's own break.
+  const split = runs.flatMap((r) => r.text.split('\n').map((text, i) => ({ ...r, text, brk: i > 0 })))
+  return split.filter((r) => r.text || r.brk).map((r) => {
     const run = new TextRun({
       text: st.transform === 'uppercase' ? r.text.toUpperCase() : r.text,
+      ...(r.brk ? { break: 1 } : {}),
       bold: r.b || st.weight >= 600 || extra.bold,
       italics: r.i || st.italic || extra.italics,
       underline: r.u || r.href ? {} : undefined,
@@ -216,12 +219,14 @@ function frames(d: DocDesign, s: Section, board: DocBoard | undefined): Paragrap
     const text = values[t.name] ?? s.texts[t.name] ?? ''
     if (!text.trim() || d.auto?.[t.name]) return []
     const st: TextStyle = { font: t.font, size: t.size, weight: t.weight, italic: t.italic, colour: t.colour, lineHeight: t.lineHeight, letterSpacing: t.letterSpacing, transform: t.transform as TextStyle['transform'], align: t.align as TextStyle['align'], before: 0, after: 0 }
-    const p = para([{ text: text.replace(/\n/g, ' ') }], st, board?.palette ?? {}, {
+    const p = para([{ text }], st, board?.palette ?? {}, {
       frame: {
         type: 'absolute',
         position: { x: Math.round(t.x * TW), y: Math.round(t.y * TW) },
         width: Math.round(t.w * TW),
+        // At least the box's height: where Word sets the text wider, the frame grows rather than cutting it off.
         height: Math.round(t.h * TW),
+        rule: HeightRule.ATLEAST,
         anchor: { horizontal: FrameAnchorType.PAGE, vertical: FrameAnchorType.PAGE }
       }
     })
@@ -237,14 +242,15 @@ export async function docToDocx({ doc, board, media, art, aspect, title }: DocxI
     const d = findDocDesign(board, s.design)
     const flow = d?.flow ?? { x: 56, y: 56, w: PAGE_W - 112, h: PAGE_H - 112 }
     const children: FileChild[] = []
-    const png = await art(s)
-    if (png) {
-      children.push(new Paragraph({ children: [new ImageRun({
-        type: 'png', data: png, transformation: { width: PAGE_W * PX, height: PAGE_H * PX },
-        floating: { horizontalPosition: { relative: HorizontalPositionRelativeFrom.PAGE, offset: 0 }, verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, offset: 0 }, behindDocument: true, allowOverlap: true },
-        altText: { name: 'Page art', description: '', title: '' }
-      } as never)], spacing: { after: 0, line: 20 } }))
-    }
+    // The art sits in the page header, behind the text, so it repeats on every page the section fills.
+    const pngs = await art(s)
+    const behind = (png: Uint8Array) => new Header({ children: [new Paragraph({ children: [new ImageRun({
+      type: 'png', data: png, transformation: { width: PAGE_W * PX, height: PAGE_H * PX },
+      floating: { horizontalPosition: { relative: HorizontalPositionRelativeFrom.PAGE, offset: 0 }, verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, offset: 0 }, behindDocument: true, allowOverlap: true },
+      altText: { name: 'Page art', description: '', title: '' }
+    } as never)] })] })
+    const rest = pngs.rest === undefined ? pngs.first : pngs.rest
+    const headers = pngs.first || rest ? { first: pngs.first ? behind(pngs.first) : new Header({ children: [] }), default: rest ? behind(rest) : new Header({ children: [] }) } : undefined
     if (d) children.push(...frames(d, s, board))
     if (d) {
       for (const region of d.tables) {
@@ -255,7 +261,9 @@ export async function docToDocx({ doc, board, media, art, aspect, title }: DocxI
     if (s.blocks) children.push(...(await blocksOf(s.blocks, ctx, flow.w)))
     if (!children.length) children.push(new Paragraph(''))
     sections.push({
+      ...(headers ? { headers } : {}),
       properties: {
+        titlePage: !!headers,
         page: {
           size: { width: Math.round(PAGE_W * TW), height: Math.round(PAGE_H * TW) },
           margin: { top: Math.round(flow.y * TW), left: Math.round(flow.x * TW), right: Math.round((PAGE_W - flow.x - flow.w) * TW), bottom: Math.round((PAGE_H - flow.y - flow.h) * TW) }

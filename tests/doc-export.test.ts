@@ -67,14 +67,17 @@ describe('document to PDF', () => {
 describe('document to Word', () => {
   it('writes real headings, lists, tables, frames and page art', async () => {
     const { board, doc } = await sample('businessPack')
-    const bytes = await docToDocx({ doc, board, media: new Map(), art: async () => png, title: 'T' })
+    const bytes = await docToDocx({ doc, board, media: new Map(), art: async () => ({ first: png }), title: 'T' })
     const zip = await JSZip.loadAsync(bytes)
     const xml = await zip.file('word/document.xml')!.async('string')
     expect(xml).toContain('Exported heading')
     expect(xml).toContain('<w:tbl>')
     expect(xml).toContain('<w:numPr>')
     expect(xml).toContain('w:framePr')
-    expect(xml).toContain('behindDoc="1"')
+    // The page art sits behind the text in each section's headers, so it repeats on every page.
+    const headers = await Promise.all(Object.keys(zip.files).filter((f) => /^word\/header\d+\.xml$/.test(f)).map((f) => zip.file(f)!.async('string')))
+    expect(headers.some((h) => h.includes('behindDoc="1"'))).toBe(true)
+    expect(xml).toContain('<w:titlePg')
     expect(xml).toMatch(/<w:hyperlink /)
     expect((xml.match(/<w:sectPr/g) ?? []).length).toBe(doc.sections.length)
     const styles = await zip.file('word/styles.xml')!.async('string')
@@ -86,7 +89,7 @@ describe('Word to a Glance document', () => {
   it('reads headings, lists, tables and links back from a Word file, and says what is lost', async () => {
     const { importDocx } = await import('../src/core/doc/importDocx')
     const { board, doc } = await sample('essay')
-    const bytes = await docToDocx({ doc, board, media: new Map(), art: async () => null })
+    const bytes = await docToDocx({ doc, board, media: new Map(), art: async () => ({ first: null }) })
     const r = await importDocx(bytes, 'essay', 'essay.plain')
     const blocks = r.doc.sections[0].blocks!
     const heading = blocks.find((b) => b.type === 'heading' && b.runs.map((x) => x.text).join('') === 'Exported heading')
@@ -100,7 +103,7 @@ describe('Word to a Glance document', () => {
   it('replaces text in a Word file without touching the rest', async () => {
     const { replaceInDocx } = await import('../src/core/doc/importDocx')
     const { board, doc } = await sample('essay')
-    const bytes = await docToDocx({ doc, board, media: new Map(), art: async () => null })
+    const bytes = await docToDocx({ doc, board, media: new Map(), art: async () => ({ first: null }) })
     const r = await replaceInDocx(bytes, 'Second point', 'Point two & more')
     expect(r.count).toBe(1)
     const xml = await (await JSZip.loadAsync(r.bytes)).file('word/document.xml')!.async('string')

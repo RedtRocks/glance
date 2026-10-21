@@ -2,6 +2,7 @@
  * Opening, saving, creating and exporting Glance documents (.gdoc, ADR 0018). The zip,
  * PDF and Word code loads only when it is used, so it stays off the startup path.
  */
+import { signal } from '@preact/signals'
 import * as platform from '../platform'
 import { addDoc, GDoc } from './documents'
 import * as versions from './versions'
@@ -193,8 +194,9 @@ export async function gdocExportBytes(g: GDoc, format: 'pdf' | 'docx'): Promise<
     // The page's art with nothing of the document on it: only the design's drawing.
     art: async (s) => {
       const p = firsts.get(s.id)
-      if (!p?.design?.art) return null
-      return canvasPng(await pageCanvas({ ...p, items: [] }, board, g.media, 595 * 2))
+      const draw = async (page: PageLayout | undefined) => (page?.design?.art ? canvasPng(await pageCanvas({ ...page, items: [] }, board, g.media, 595 * 2)) : null)
+      const next = pages.find((x) => x.section === s.id && !x.first)
+      return { first: await draw(p), ...(next && next.design?.id !== p?.design?.id ? { rest: await draw(next) } : {}) }
     }
   })
 }
@@ -235,6 +237,9 @@ export async function exportGdoc(g: GDoc, format: GdocExport): Promise<void> {
 // ---------------------------------------------------------------------------
 // Editing: the editor's toolbar, menus and shortcuts come through here.
 
+/** A block the editor should start typing in once it is drawn (a new heading, paragraph or list). */
+export const editRequest = signal<string | null>(null)
+
 /** Adds a block after the picked one (or at the end of the section on screen). */
 export function addBlock(g: GDoc, block: Record<string, unknown>, label = msg('Add Block')): string | null {
   const sel = g.selection.peek()
@@ -249,6 +254,7 @@ export function addBlock(g: GDoc, block: Record<string, unknown>, label = msg('A
   const r = changeGdoc(g, label, [{ op: 'addBlocks', section: s.id, ...(after ? { after } : {}), blocks: [block] }])
   if (!r) return null
   g.selection.value = { section: s.id, block: r.added[0] }
+  if (['heading', 'paragraph', 'list', 'quote'].includes(String(block.type))) editRequest.value = r.added[0]
   return r.added[0]
 }
 

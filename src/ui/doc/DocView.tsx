@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/ho
 import type { GDoc } from '../../state/documents'
 import { contextMenu } from '../../state/ui'
 import { findLook, lookInfo, looksVersion, loadLook } from '../../state/docLooks'
-import { addBlock, changeGdoc, deleteBlock, nudgeBlock, pagesOf, readAspects } from '../../state/gdoc'
+import { addBlock, changeGdoc, deleteBlock, editRequest, nudgeBlock, pagesOf, readAspects } from '../../state/gdoc'
 import { addPicture, lookPicker, pagePicker } from '../../state/gdocCommands'
 import { allBlocks, runsToText, type Block } from '../../core/doc/model'
 import { findDocDesign, PAGE_H, PAGE_W } from '../../core/doc/look'
@@ -133,7 +133,8 @@ export function DocView({ doc: g }: { doc: GDoc }) {
     box.current?.focus()
   }, [editing])
 
-  const fit = Math.max(0.2, Math.min(1.6, (width - 2 * GAP) / PAGE_W))
+  // Fits the page's width, up to about its printed size.
+  const fit = Math.max(0.2, Math.min(1.3, (width - 2 * GAP) / PAGE_W))
   const scale = fit * g.zoom.value
 
   // The page strip and Go commands move `current`; scroll to it when it changes from outside.
@@ -183,8 +184,13 @@ export function DocView({ doc: g }: { doc: GDoc }) {
     }
     if (tg.kind === 'cell') {
       g.selection.value = { section }
+      // The region's hits count its header row; the section's rows don't hold it.
+      const region = page.design?.tables.find((x) => x.name === tg.table)
+      const row = tg.row - (region?.header ? 1 : 0)
+      if (row < 0 || region?.calc?.some((c) => c.col === tg.col)) return
       const s = g.doc.peek().sections.find((x) => x.id === section)
-      setEditing({ page: page.number - 1, target: tg, section, rect: { x: hit.x, y: hit.y, w: hit.w, h: hit.h }, size: 10, font: 'Urbanist', text: s?.tables[tg.table]?.[tg.row]?.[tg.col] ?? '', multiline: false })
+      const target = { ...tg, row }
+      setEditing({ page: page.number - 1, target, section, rect: { x: hit.x, y: hit.y, w: hit.w, h: hit.h }, size: region?.style.text.size ?? 10, font: region?.style.text.font ?? 'Urbanist', text: s?.tables[tg.table]?.[row]?.[tg.col] ?? '', multiline: true })
       return
     }
     g.selection.value = { section, block: tg.id }
@@ -200,6 +206,19 @@ export function DocView({ doc: g }: { doc: GDoc }) {
     const st = board?.styles[('style' in b && b.style) || (b.type === 'heading' ? `h${b.level}` : b.type === 'quote' ? 'quote' : b.type === 'list' ? 'list' : 'body')] ?? board?.styles.body
     setEditing({ page: page.number - 1, target: tg, section, rect, size: tg.row !== undefined ? 10 : st?.size ?? 11, font: st?.font ?? 'Urbanist', text, multiline: b.type !== 'heading' && tg.row === undefined })
   }
+
+  // A block just added from the toolbar opens for typing once it is laid out.
+  useEffect(() => {
+    const id = editRequest.value
+    if (!id) return
+    const page = pages.find((p) => p.hits.some((h) => h.target.kind === 'block' && h.target.id === id))
+    const hit = page?.hits.find((h) => h.target.kind === 'block' && h.target.id === id)
+    if (!page || !hit) return
+    editRequest.value = null
+    const el = stage.current
+    if (el) el.scrollTop = Math.max(0, offsetOf(page.number - 1) + hit.y * scale - el.clientHeight / 3)
+    startEdit(page, hit)
+  }, [pages, editRequest.value])
 
   const onPageClick = (ev: MouseEvent) => {
     const frame = (ev.target as HTMLElement).closest<HTMLElement>('.doc-frame')
@@ -245,6 +264,7 @@ export function DocView({ doc: g }: { doc: GDoc }) {
   const blockLabel = (b: Block) => b.type === 'heading' ? t('Heading {n}', { n: b.level }) : b.type === 'paragraph' ? (b.style && b.style !== 'body' ? b.style : t('Paragraph')) : b.type === 'quote' ? t('Quote') : b.type === 'list' ? t('List') : b.type === 'table' ? t('Table') : b.type === 'picture' ? t('Picture') : b.type === 'chart' ? t('Chart') : t('Block')
   const tableOps = selectedBlock?.type === 'table' ? selectedBlock : null
   const ai = g.aiChange.value
+  const flowing = data.sections.some((s) => s.blocks)
 
   return (
     <div class="deck-view doc-view">
@@ -254,11 +274,15 @@ export function DocView({ doc: g }: { doc: GDoc }) {
           {lookName ? t(lookName) : data.look}
         </button>
         <span class="deck-bar-gap" />
-        <button class="deck-bar-button" onClick={() => void addBlock(g, { type: 'heading', level: 2, text: '' })}>{t('Heading')}</button>
-        <button class="deck-bar-button" onClick={() => void addBlock(g, { type: 'paragraph', text: '' })}>{t('Paragraph')}</button>
-        <button class="deck-bar-button" onClick={() => void addBlock(g, { type: 'list', items: [''] })}>{t('List')}</button>
-        <button class="deck-bar-button" onClick={() => void addBlock(g, { type: 'table', header: true, rows: [['', '', ''], ['', '', '']] })}>{t('Table')}</button>
-        <button class="deck-bar-button" onClick={() => void addPicture(g)}><Icon name="image" size={16} />{t('Picture')}</button>
+        {flowing && (
+          <>
+            <button class="deck-bar-button" onClick={() => void addBlock(g, { type: 'heading', level: 2, text: '' })}>{t('Heading')}</button>
+            <button class="deck-bar-button" onClick={() => void addBlock(g, { type: 'paragraph', text: '' })}>{t('Paragraph')}</button>
+            <button class="deck-bar-button" onClick={() => void addBlock(g, { type: 'list', items: [''] })}>{t('List')}</button>
+            <button class="deck-bar-button" onClick={() => void addBlock(g, { type: 'table', header: true, rows: [['', '', ''], ['', '', '']] })}>{t('Table')}</button>
+            <button class="deck-bar-button" onClick={() => void addPicture(g)}><Icon name="image" size={16} />{t('Picture')}</button>
+          </>
+        )}
         <button class="deck-bar-button" onClick={() => void pagePicker(g)}><Icon name="addPage" size={16} />{t('Page')}</button>
         {selectedBlock && (
           <>
