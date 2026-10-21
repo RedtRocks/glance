@@ -50,6 +50,15 @@ On Linux, the .deb and .rpm install `/usr/bin/glance-mcp`. The Flatpak's command
 | `glance_deck_outline`, `glance_deck_edit` | Read a deck and change it: add, move, restyle and fill slides, as one step you can undo |
 | `glance_deck_check`, `glance_deck_render` | List what to fix in a deck, and look at its slides as pictures |
 | `glance_export` | Saves a deck as PDF, PowerPoint or PNG pictures |
+| `glance_plan` | Shows the AI's plan for a new file on Glance's Outline screen, for you to change before it builds |
+
+### Skills and prompts
+
+Glance gives every AI app the same design and writing guidance ([ADR 0019](adr/0019-skills-given-to-any-agent.md)). Its skills (src/skills: `slide-design`, `document-writing`, `spreadsheet-building` and `editing`, each a `SKILL.md` in the shape of Claude's Agent Skills, with examples) are MCP resources at `skill://glance/<name>/SKILL.md`, and the server's instructions tell agents to read the matching one first. Four MCP prompts start the work with the right tools, rules and skills: `create-deck`, `create-document`, `create-spreadsheet` and `edit-file`.
+
+Settings → AI apps lists the skills with an on/off switch, opens the skills folder where you can add your own (a folder with a `SKILL.md`; it replaces Glance's skill of the same name), and can install the skills that are on for Claude Code (`~/.claude/skills/glance-*`) with a note in Codex's `~/.codex/AGENTS.md`, so they are there before the first tool call. Glance never downloads skills.
+
+In the Ask AI sidebar, a request about an open deck (and, once they ship, a document or spreadsheet) reaches the agent with a `<glance-context>` block: the file and tab, what is selected, the template and each slot's maxChars, the tools to use, the check, render and fix loop, the placeholder rule and the skills that fit (src/core/ai/guide.ts).
 
 The four editing tools add markup to the open document, so you can see, undo or keep each change before saving ([ADR 0015](adr/0015-ai-edits-as-matching-markup.md)).
 
@@ -59,7 +68,7 @@ Turn **Let AI apps use Glance** off in Settings → AI apps to refuse all reques
 
 ## How it works
 
-AI apps start `glance-mcp.exe` and talk JSON-RPC over its standard input and output. `glance-mcp` (src-tauri/mcp-bridge, a few hundred kilobytes) answers the handshake and the tool list itself and relays tool calls to the Glance app over a loopback connection that only your Windows user can open: Glance listens on a random local port and writes the port and a secret token to `%LOCALAPPDATA%\io.github.redtrocks.glance\mcp-endpoint`; `glance-mcp` must present the token.
+AI apps start `glance-mcp.exe` and talk JSON-RPC over its standard input and output. `glance-mcp` (src-tauri/mcp-bridge, a few hundred kilobytes) answers the handshake, the tool and prompt lists and Glance's own skills itself and relays tool calls to the Glance app over a loopback connection that only your Windows user can open: Glance listens on a random local port and writes the port and a secret token to `%LOCALAPPDATA%\io.github.redtrocks.glance\mcp-endpoint`; `glance-mcp` must present the token.
 
 You never need to open Glance for an AI app: when a tool is first used and Glance isn't running, `glance-mcp` starts it with its window hidden, and if you quit Glance, the next tool call starts it again. Glance quits again a few seconds after the last AI app disconnects, unless a tool or you showed the window. The tools run in Glance itself (src/state/mcpTools.ts), with the same decoders, PDF engine, OCR and redaction as the app ([ADR 0014](adr/0014-ai-apps-through-mcp.md)).
 
