@@ -47,6 +47,9 @@ export interface ChartInput {
   labels?: boolean
   target?: { value: number; label?: string; color?: string }
   centre?: string
+  /** Colours of the chart area and its text. */
+  bg?: string
+  ink?: string
 }
 
 type On = { sheet?: string }
@@ -352,7 +355,7 @@ class Draft {
         const i = s.charts.findIndex((c) => c.id === op.id)
         if (i < 0) throw new SheetError(`no chart ${op.id} on ${s.name}; charts are ${s.charts.map((c) => c.id).join(', ') || 'none'}`)
         const old = s.charts[i]
-        const base: ChartInput = { type: old.type, title: old.title, range: anchorRange(old.anchor), categories: old.categories, series: old.series, colors: old.colors, legend: old.legend, stacked: old.stacked, labels: old.labels, target: old.target, centre: old.centre }
+        const base: ChartInput = { type: old.type, title: old.title, range: anchorRange(old.anchor), categories: old.categories, series: old.series, colors: old.colors, legend: old.legend, stacked: old.stacked, labels: old.labels, target: old.target, centre: old.centre, bg: old.bg, ink: old.ink }
         const next = this.chart(old.id, { ...base, ...op.chart }, s)
         s.charts[i] = { ...old, ...next, anchor: op.chart.range ? next.anchor : old.anchor }
         return
@@ -766,7 +769,9 @@ class Draft {
       ...(input.stacked ? { stacked: true } : {}),
       ...(input.labels ? { labels: true } : {}),
       ...(input.target ? { target: input.target } : {}),
-      ...(input.centre ? { centre: String(input.centre) } : {})
+      ...(input.centre ? { centre: String(input.centre) } : {}),
+      ...(input.bg ? { bg: String(input.bg) } : {}),
+      ...(input.ink ? { ink: String(input.ink) } : {})
     }
   }
 

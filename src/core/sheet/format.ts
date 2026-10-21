@@ -237,6 +237,8 @@ function roundHalfUp(x: number, dp: number): string {
 }
 
 function formatDate(serial: number, body: string): string {
+  // Without fractions of a second shown, times round to the nearest second, as in Excel.
+  if (!/\.0/.test(body)) serial = Math.round(serial * 86400) / 86400
   const d = dateFromSerial(serial)
   const ampm = /AM\/PM|A\/P/i.test(body)
   let out = ''
@@ -310,6 +312,14 @@ export function parseEntry(text: string, opts: { dayFirst?: boolean; year?: numb
     return { value: n }
   }
   if (/^[-+]?\d+(\.\d+)?[eE][-+]?\d+$/.test(s)) return { value: Number(s) }
+  const time = /^(\d{1,3}):([0-5]\d)(?::([0-5]\d))?\s*([ap]m)?$/i.exec(s)
+  if (time) {
+    let h = +time[1]
+    if (time[4]) h = (h % 12) + (/p/i.test(time[4]) ? 12 : 0)
+    const secs = h * 3600 + +time[2] * 60 + +(time[3] ?? 0)
+    const numFmt = time[4] ? 'h:mm AM/PM' : `${h >= 24 ? '[h]' : /^0\d/.test(time[1]) ? 'hh' : 'h'}:mm${time[3] ? ':ss' : ''}`
+    return { value: secs / 86400, numFmt }
+  }
   const date = parseDate(s, opts)
   if (date) return date
   return { value: s }

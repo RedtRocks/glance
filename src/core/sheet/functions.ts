@@ -73,6 +73,15 @@ function roundTo(x: number, digits: number, mode: 'near' | 'up' | 'down'): numbe
 // ---------------------------------------------------------------------------
 // Criteria, as COUNTIF, SUMIF and friends read them.
 
+/** IFERROR and IFNA: the fallback for each failing value, cell by cell over a range. */
+function orElse(args: Node[], ev: Evaluator, bad: (x: V) => boolean): EvalValue {
+  const v = ev.eval(args[0] ?? { t: 'empty' })
+  let other: EvalValue | undefined
+  const alt = (): V => scalar((other ??= args[1] ? ev.eval(args[1]) : ''))
+  if (isMatrix(v)) return { m: v.m.map((row) => row.map((x) => (bad(x) ? alt() : x))) }
+  return bad(v) ? (args[1] ? ev.eval(args[1]) : '') : v
+}
+
 export function criterion(c: V): (v: V) => boolean {
   if (typeof c === 'number' || typeof c === 'boolean') return (v) => v !== null && compare(v, c) === 0 && typeof v === typeof c
   if (c === null) return (v) => v === null || v === ''
@@ -481,6 +490,13 @@ const eager: Record<string, Fn> = {
     const i = matchIn(list, want, type)
     return i < 0 ? NA() : i + 1
   },
+  LOOKUP: (args) => {
+    const want = scalar(args[0] ?? null)
+    const keys = flat(args[1] ?? null)
+    const result = args[2] === undefined ? keys : flat(args[2])
+    const i = matchIn(keys, want, 1)
+    return i < 0 || i >= result.length ? NA() : result[i]
+  },
   XLOOKUP: (args) => {
     const want = scalar(args[0] ?? null)
     const keys = flat(args[1] ?? null)
@@ -679,15 +695,8 @@ const lazy: Record<string, LazyFn> = {
     }
     return NA()
   },
-  IFERROR: (args, ev) => {
-    const v = ev.eval(args[0] ?? { t: 'empty' })
-    return isError(scalar(v)) ? (args[1] ? ev.eval(args[1]) : '') : v
-  },
-  IFNA: (args, ev) => {
-    const v = ev.eval(args[0] ?? { t: 'empty' })
-    const s = scalar(v)
-    return isError(s) && s.error === '#N/A' ? (args[1] ? ev.eval(args[1]) : '') : v
-  },
+  IFERROR: (args, ev) => orElse(args, ev, (x) => isError(x)),
+  IFNA: (args, ev) => orElse(args, ev, (x) => isError(x) && x.error === '#N/A'),
   SWITCH: (args, ev) => {
     const want = scalar(ev.eval(args[0] ?? { t: 'empty' }))
     if (isError(want)) return want
