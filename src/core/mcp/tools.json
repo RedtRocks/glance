@@ -1,5 +1,5 @@
 {
-  "instructions": "Glance is the user's document and image viewer on Windows. Use it to look at and work with local files: see any page or image (PDF, camera RAW, HEIC, PSD, JPEG XL, EPS, XPS, TIFF, comics and 40+ other formats), read text with OCR, combine, split, rotate and reorder PDF pages, convert images, and redact text so it is really removed. Paths are absolute Windows paths and pages are numbered from 1. Tools never change the files you pass in: every edit writes a new file at output_path. The glance_open, glance_list_open, glance_current_view, glance_go_to_page, glance_mark_redactions, glance_text_layout, glance_edit_text, glance_add_text and glance_erase tools work with what the user has open in the Glance window; the editing ones change the open document in its own style, for the user to review and save. Glance also creates and edits slide decks (glance_create, glance_deck_edit): send the content and pick layouts, and Glance does the design. For a polished deck, prefer a template's designed slides (glance_templates lists them) and keep each slot's text within its maxChars. Use these tools whenever the user asks about a local document or image, or about what they're looking at, even if they don't mention Glance. Glance starts in the background by itself when a tool needs it, so never ask the user to open it first.",
+  "instructions": "Glance is the user's document and image viewer on Windows. Use it to look at and work with local files: see any page or image (PDF, camera RAW, HEIC, PSD, JPEG XL, EPS, XPS, TIFF, comics and 40+ other formats), read text with OCR, combine, split, rotate and reorder PDF pages, convert images, and redact text so it is really removed. Paths are absolute Windows paths and pages are numbered from 1. Tools never change the files you pass in: every edit writes a new file at output_path. The glance_open, glance_list_open, glance_current_view, glance_go_to_page, glance_mark_redactions, glance_text_layout, glance_edit_text, glance_add_text and glance_erase tools work with what the user has open in the Glance window; the editing ones change the open document in its own style, for the user to review and save. Glance also creates and edits slide decks (glance_create, glance_deck_edit): send the content and pick layouts, and Glance does the design. For a polished deck, prefer a template's designed slides (glance_templates lists them) and keep each slot's text within its maxChars. Before making or changing a deck, document or spreadsheet, read the matching Glance skill (resources skill://glance/slide-design/SKILL.md, skill://glance/document-writing/SKILL.md, skill://glance/spreadsheet-building/SKILL.md, and skill://glance/editing/SKILL.md for changes) or use the create-deck, create-document, create-spreadsheet and edit-file prompts: they hold Glance's design and writing rules. Write a placeholder like [date] for any fact you don't have instead of inventing it. Use these tools whenever the user asks about a local document or image, or about what they're looking at, even if they don't mention Glance. Glance starts in the background by itself when a tool needs it, so never ask the user to open it first.",
   "tools": [
     {
       "name": "glance_info",
@@ -305,6 +305,25 @@
       "annotations": { "readOnlyHint": false, "destructiveHint": false, "openWorldHint": false }
     },
     {
+      "name": "glance_plan",
+      "title": "Show a plan",
+      "description": "Shows your plan for a new deck, document or spreadsheet on Glance's Outline screen, where the user can reorder, rename, delete and add items, answer your questions, pick a look and choose how many words, then build it. Use it when Glance asks you to plan first (the Ask AI sidebar does for new files), then stop and wait: the user's next message says to build it, with their changes, or what to change. Each item is one slide, section or page, or sheet, with a short title and a line on what goes there; for a template, also the design id it uses. Ask at most three short questions, only for facts only the user knows (a date, a place, a price); anything left unanswered becomes a placeholder like [date].",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tab": { "type": "string", "description": "Tab id of the new file, from Glance's message or glance_list_open. Default: the active tab." },
+          "kind": { "type": "string", "enum": ["deck", "document", "spreadsheet"], "description": "What the plan is for." },
+          "title": { "type": "string", "description": "The file's title." },
+          "audience": { "type": "string", "description": "Who it is for and the one thing they should take away, in a line." },
+          "items": { "type": "array", "description": "The slides, sections or sheets in order: {title, detail?, design?}. detail says what goes there in a line; design is a template design id like \"bakeSale.2\".", "items": { "type": "object" } },
+          "look": { "type": "string", "description": "The look you suggest: a template id from glance_templates, or for a deck without a template a theme (wollo, wolloDark, sunrise, blossom, ink)." },
+          "questions": { "type": "array", "description": "Up to three short questions for facts only the user knows.", "items": { "type": "string" } }
+        },
+        "required": ["kind", "items"]
+      },
+      "annotations": { "readOnlyHint": true, "openWorldHint": false }
+    },
+    {
       "name": "glance_templates",
       "title": "List deck templates",
       "description": "Lists Glance's designed deck templates for glance_create and glance_deck_edit. Each template has an id, name, purpose (School, Work, Events, Personal or Clubs) and look, and its designs: designed slides with an id (like \"bakeSale.2\"), what the slide is for (cover, stats, timeline, map, thank you and so on) and its text slots, each with a name, a hint (the template's own sample text, which shows what goes there and how long it is) and maxChars, the most characters that fit at the design's size. Prefer these designs for a polished deck, fill every slot, and keep each within its maxChars.",
@@ -366,7 +385,7 @@
     {
       "name": "glance_deck_check",
       "title": "Check a deck's design",
-      "description": "Lists what to fix in a deck open in Glance before the user sees it: missing required slots (every slot of a designed slide), text too long for its layout or design, lists with too many entries, three slides in a row with the same layout, no title slide, and pictures without alt text. Each finding names the slide id and says what to do. An empty list means the deck passes.",
+      "description": "Lists what to fix in a deck open in Glance before the user sees it: missing required slots (every slot of a designed slide), text too long for its layout or design, lists with too many entries, three slides in a row with the same layout, no title slide, and pictures without alt text. Each finding names the slide id and says what to do. An empty list means the deck passes. Placeholders in square brackets like [date] are listed separately (placeholders): they are left for the user to fill, so leave them unless you know the fact.",
       "inputSchema": {
         "type": "object",
         "properties": {

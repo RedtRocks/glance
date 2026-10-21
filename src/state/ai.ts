@@ -7,6 +7,9 @@ import { signal } from '@preact/signals'
 import type * as acp from '@agentclientprotocol/sdk'
 import * as platform from '../platform'
 import { applyUpdate, chatTitle, modelOption, preamble, type Choice, type Part } from '../core/ai/transcript'
+import { guideEdit } from '../core/ai/guide'
+import { fileContext } from './guideContext'
+import { activeSkills } from './skills'
 import { changeCount, changesSince, keep as keepChanges, undoChanges } from './aiChanges'
 import { activeDoc, ImageDoc, PdfDoc, type Doc } from './documents'
 import { settings } from './settings'
@@ -456,31 +459,53 @@ function retell(parts: Part[]): string {
   return lines.length ? `Earlier in this chat:\n\n${lines.join('\n\n')}` : ''
 }
 
+/**
+ * A message already shaped for the AI (core/ai/guide.ts): the chat shows `display`, the
+ * agent gets `agent`, and `skills` are the skills given in full in it.
+ */
+export interface Outgoing {
+  display: string
+  agent: string
+  skills?: string[]
+}
+
 /** A message waiting for the chat to be ready: a "make" request asked before signing in. */
-export const pendingPrompt = signal<string | null>(null)
+export const pendingPrompt = signal<Outgoing | null>(null)
 let flushing = false
 
-/** Sends `text` now if the AI is ready, or as soon as the user has signed in. */
-export function sendWhenReady(text: string): Promise<boolean> {
-  pendingPrompt.value = text
+/** Sends a message now if the AI is ready, or as soon as the user has signed in. */
+export function sendWhenReady(out: Outgoing): Promise<boolean> {
+  pendingPrompt.value = out
   return flushPending()
 }
 
 async function flushPending(): Promise<boolean> {
-  const text = pendingPrompt.peek()
-  if (!text || flushing) return false
+  const out = pendingPrompt.peek()
+  if (!out || flushing) return false
   flushing = true
   try {
-    if (!(await ensureSession()) || pendingPrompt.peek() !== text) return false
+    if (!(await ensureSession()) || pendingPrompt.peek() !== out) return false
     pendingPrompt.value = null
-    await send(text)
+    await send(out.display, out)
     return true
   } finally {
     flushing = false
   }
 }
 
-export async function send(text: string): Promise<void> {
+/** Skills each chat's agent already has in full, so later messages only name them. */
+const given = new Map<string, Set<string>>()
+
+/** The skills the current chat's agent already has. */
+export function sentSkills(): ReadonlySet<string> {
+  return given.get(chat.peek().id) ?? new Set()
+}
+
+/**
+ * Sends what the person typed. While a deck, document or spreadsheet is the active tab,
+ * the agent gets it guided: with the file, the selection, the rules and the skills.
+ */
+export async function send(text: string, shaped?: Outgoing): Promise<void> {
   text = text.trim()
   const files = attachments.peek()
   if (!text && !files.length) return
@@ -491,6 +516,16 @@ export async function send(text: string): Promise<void> {
   const sessionId = c.sessionId!
   const first = !c.parts.some((p) => p.kind === 'user')
   const blocks: acp.ContentBlock[] = []
+  // A new session (first message, or a chat carried over to a new one) has no skills yet.
+  if (first || carryOver.has(c.id)) given.delete(c.id)
+  let agentText = shaped?.agent
+  let skillsGiven = shaped?.skills ?? []
+  const ctx = !shaped && text ? fileContext(activeDoc.peek()) : null
+  if (ctx) {
+    const guided = guideEdit(text, ctx, { skills: await activeSkills(), sent: given.get(c.id) })
+    agentText = guided.text
+    skillsGiven = guided.skills
+  }
   if (first || carryOver.has(c.id)) {
     const intro = [preamble(docContext(activeDoc.peek())), carryOver.has(c.id) ? retell(c.parts) : ''].filter(Boolean).join('\n\n')
     blocks.push({ type: 'text', text: intro })
@@ -506,7 +541,8 @@ export async function send(text: string): Promise<void> {
     // i18n-ignore: for the agent, not the user
     blocks.push({ type: 'text', text: 'This agent can’t receive images here; use the glance_current_view tool to see the page.' })
   }
-  blocks.push({ type: 'text', text: text || 'Please look at what I attached.' })
+  blocks.push({ type: 'text', text: agentText || text || 'Please look at what I attached.' })
+  if (skillsGiven.length) given.set(c.id, new Set([...(given.get(c.id) ?? []), ...skillsGiven]))
   attachments.value = []
   chat.value = { ...c, parts: [...c.parts, { kind: 'user', text, context: files.map((a) => a.label) }], updatedAt: Date.now() }
   status.value = 'working'

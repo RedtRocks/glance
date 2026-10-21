@@ -46,6 +46,8 @@ export interface Settings {
   aiApps: boolean
   /** Send the anonymous daily check-in that counts installs (state/installCount.ts). */
   countInstall: boolean
+  /** Skills turned off in Settings → AI apps, by name (state/skills.ts). */
+  skillsOff: string[]
 }
 
 export const DEFAULT_TOOLBAR = ['sidebar', 'pageControls', 'spacer', 'zoomOut', 'zoomIn', 'rotate', 'highlight', 'markup', 'askAi', 'search', 'overflow']
@@ -69,7 +71,8 @@ const DEFAULTS: Settings = {
   language: 'system',
   reopenTabs: false,
   aiApps: true,
-  countInstall: true
+  countInstall: true,
+  skillsOff: []
 }
 
 const KEY = 'glance.settings.v1'
@@ -86,7 +89,8 @@ function withValidColours(s: Settings): Settings {
     strength: unit(s.strength, 0),
     grain: unit(s.grain, 0),
     tabs: s.tabs === 'side' ? 'side' : 'top',
-    tabsCollapsed: s.tabsCollapsed === true
+    tabsCollapsed: s.tabsCollapsed === true,
+    skillsOff: Array.isArray(s.skillsOff) ? s.skillsOff.filter((n) => typeof n === 'string') : []
   }
 }
 

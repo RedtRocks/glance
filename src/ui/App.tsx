@@ -69,6 +69,8 @@ import { AdjustColorPanel } from './image/AdjustColorPanel'
 import { AdjustSizeDialog } from './image/AdjustSizeDialog'
 import { DeckView } from './deck/DeckView'
 import { MakeScreen } from './deck/MakeScreen'
+import { OutlineScreen } from './ai/OutlineScreen'
+import { planning } from '../state/plan'
 import { ExportDialog } from './image/ExportDialog'
 
 function Viewer() {
@@ -265,6 +267,7 @@ export function App() {
       {activeDoc.value instanceof PdfDoc && reduceOpen.value && <ReduceDialog doc={activeDoc.value} />}
       {activeDoc.value instanceof PdfDoc && stampOpen.value && <StampDialog doc={activeDoc.value} />}
       {makeOpen.value && <MakeScreen />}
+      {planning.value && !makeOpen.value && <OutlineScreen />}
       {activeDoc.value instanceof ImageDoc && exportOpen.value && <ExportDialog doc={activeDoc.value} />}
       {activeDoc.value instanceof PdfDoc && exportOpen.value && <PdfExportDialog doc={activeDoc.value} />}
       {platform.isWeb && <OpeningOverlay />}

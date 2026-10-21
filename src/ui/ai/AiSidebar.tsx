@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { marked } from 'marked'
-import type { Doc } from '../../state/documents'
+import { DeckDoc, type Doc } from '../../state/documents'
+import { fileContext } from '../../state/guideContext'
+import { chipText, composerHints } from './hints'
 import { aiOpen, dialog, menuOpen, settingsOpen, toast } from '../../state/ui'
 import * as ai from '../../state/ai'
 import * as changes from '../../state/aiChanges'
@@ -540,6 +542,19 @@ function Composer({ doc }: { doc: Doc }) {
   const listening = voice.voiceState.value !== 'off'
   const heard = voice.partial.value
   const problem = voice.voiceProblem.value
+  // Decks, documents and spreadsheets get hints that follow what is selected.
+  if (doc instanceof DeckDoc) void (doc.selection.value, doc.current.value, doc.historyVersion.value)
+  const hints = composerHints(fileContext(doc))
+  const fill = (chip: string): void => {
+    const next = chipText(chip)
+    setText((latest.current = next))
+    requestAnimationFrame(() => {
+      const el = input.current
+      if (!el) return
+      el.focus()
+      el.setSelectionRange(next.length, next.length)
+    })
+  }
   useEffect(() => input.current?.focus(), [ai.chat.value.id])
   useEffect(() => () => void voice.stopVoice(), [])
   const send = (value = latest.current): void => {
@@ -606,6 +621,15 @@ function Composer({ doc }: { doc: Doc }) {
           )}
         </div>
       )}
+      {hints && !text && !working && !listening && (
+        <div class="ai-starts" role="group" aria-label={t('Ideas')}>
+          {hints.chips.map((c) => (
+            <button key={c} class="ai-start" onClick={() => fill(c)}>
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
       <div class={`ai-input${listening ? ' listening' : ''}`}>
         <label class="sr-only" for="ai-ask">
           {t('Ask about this document, or say what to change')}
@@ -615,7 +639,7 @@ function Composer({ doc }: { doc: Doc }) {
           ref={input}
           rows={2}
           value={text}
-          placeholder={listening ? t('Listening…') : canShow ? t('Ask, or tell the AI what to change…') : t('Ask about this document…')}
+          placeholder={listening ? t('Listening…') : hints ? hints.placeholder : canShow ? t('Ask, or tell the AI what to change…') : t('Ask about this document…')}
           onInput={(e) => {
             setText((e.target as HTMLTextAreaElement).value)
             if (listening) voice.holdSend()

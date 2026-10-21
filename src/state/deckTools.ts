@@ -8,6 +8,7 @@ import { ToolError, type Content, type ToolHandler, type ToolResult } from '../c
 import { checkInput, checkOutput, extension, parsePages, toBase64 } from '../core/mcp/helpers'
 import { samePath } from '../core/paths'
 import { checkDeck } from '../core/deck/check'
+import { placeholderSpots } from '../core/ai/deckContext'
 import { emptyDeck, isLayout, isMediaPath, slideIdMaker, type Deck } from '../core/deck/model'
 import { DESIGN_ID, slotSpecsOf, type Board } from '../core/deck/design'
 import { checkOneTemplate, createSlideOps, templateCatalog } from '../core/deck/template'
@@ -212,9 +213,16 @@ const edit: ToolHandler = async ({ tab, ops }) => {
   })
 }
 
+/** Placeholders like [date] the AI left for the person: listed, not findings, since only the person knows them. */
+function placeholders(deck: Parameters<typeof placeholderSpots>[0]): Record<string, unknown> {
+  const spots = placeholderSpots(deck)
+  return spots.length ? { placeholders: spots, placeholders_note: 'Left for the user to fill; Glance highlights them. Fill one only if you know the fact.' } : {}
+}
+
 const check: ToolHandler = async ({ tab }) => {
-  const findings = checkDeck(findDeck(tab).deck.peek(), findDesign)
-  return json({ findings, passes: findings.length === 0 })
+  const deck = findDeck(tab).deck.peek()
+  const findings = checkDeck(deck, findDesign)
+  return json({ findings, passes: findings.length === 0, ...placeholders(deck) })
 }
 
 /** Slide numbers ("1-3,7") or ids ("s2,s5") to indexes. */

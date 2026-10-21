@@ -48,7 +48,7 @@ export function SlideFrame({ doc, slide, width, hints = false }: { doc: DeckDoc;
   const version = doc.mediaVersion.value
   const designs = designsVersion.value
   const html = useMemo(
-    () => slideHtml(slide, themeOf(theme), { resolveSrc: (src) => mediaUrl(doc, src), placeholder: hints ? slotHint : undefined, designs: findDesign, measure: measureDesignText }),
+    () => slideHtml(slide, themeOf(theme), { resolveSrc: (src) => mediaUrl(doc, src), placeholder: hints ? slotHint : undefined, designs: findDesign, measure: measureDesignText, markPlaceholders: hints }),
     [slide, theme, version, hints, designs]
   )
   const scale = width / SLIDE_W

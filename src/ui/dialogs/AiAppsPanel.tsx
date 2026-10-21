@@ -5,6 +5,52 @@ import { toast } from '../../state/ui'
 import { t } from '../../i18n'
 import { Icon } from '../Icon'
 import { SettingsCard, Toggle } from './SettingsDialog'
+import { allSkills, installSkillsForAgents, refreshSkills, setSkillOn, skillProblems } from '../../state/skills'
+
+/** Settings → AI apps → Skills: Glance's design and writing guidance for agents, each on or off. */
+function SkillsPanel() {
+  const [installed, setInstalled] = useState(false)
+  const [busy, setBusy] = useState(false)
+  useEffect(() => {
+    void refreshSkills()
+    void platform.skillsInstalled().then(setInstalled)
+  }, [])
+  const off = new Set(settings.value.skillsOff)
+  const run = async (f: () => Promise<unknown>, done: string) => {
+    setBusy(true)
+    try {
+      await f()
+      toast(done)
+    } catch (e) {
+      toast(String((e as Error).message ?? e), 'error')
+    } finally {
+      setBusy(false)
+      void platform.skillsInstalled().then(setInstalled)
+    }
+  }
+  return (
+    <>
+      <h3 class="settings-subhead">{t('Skills')}</h3>
+      <p class="settings-note">{t('Skills are Glance’s design and writing guidance for making slides, documents and spreadsheets. Glance gives the ones that are on to the AI with each request, and to AI apps.')}</p>
+      {allSkills.value.map((s) => (
+        <SettingsCard key={s.name} icon="sparkle" title={s.source === 'user' ? t('{name} (yours)', { name: s.name }) : s.name} description={s.description}>
+          <Toggle checked={!off.has(s.name)} label={s.name} onChange={(v) => setSkillOn(s.name, v)} />
+        </SettingsCard>
+      ))}
+      {skillProblems.value.length > 0 && <p class="settings-note">{t('These folders have no usable SKILL.md (it needs a name and a description): {folders}', { folders: skillProblems.value.join(', ') })}</p>}
+      <SettingsCard icon="open" title={t('Your own skills')} description={t('Add a folder with a SKILL.md to the skills folder, in the same shape as Claude’s Agent Skills. Glance reads it next time you open this page.')}>
+        <button class="btn" onClick={() => void platform.skillsFolder().then(platform.revealInExplorer).catch((e) => toast(String(e), 'error'))}>{t('Open skills folder')}</button>
+      </SettingsCard>
+      <SettingsCard icon="apps" title={t('Give the skills to Claude Code and Codex')}
+        description={installed ? t('Installed as Claude Code skills and a note in Codex’s AGENTS.md. Install again after changing skills.') : t('Copies the skills that are on to Claude Code’s skills folder and adds a note to Codex’s AGENTS.md, so they have them before they first use Glance.')}>
+        <div class="settings-card-buttons">
+          <button class="btn primary" disabled={busy} onClick={() => void run(installSkillsForAgents, t('Skills installed'))}>{installed ? t('Install again') : t('Install')}</button>
+          {installed && <button class="btn" disabled={busy} onClick={() => void run(platform.uninstallSkills, t('Skills removed'))}>{t('Remove')}</button>}
+        </div>
+      </SettingsCard>
+    </>
+  )
+}
 
 /** Settings → AI apps: lets AI apps (Claude, Codex, Cursor, …) use Glance through MCP. */
 export function AiAppsPanel() {
@@ -67,6 +113,7 @@ export function AiAppsPanel() {
           <Icon name="infoFilled" /> {t('Also supported when installed: {apps}', { apps: missing.map((a) => a.name).join(', ') })}
         </p>
       )}
+      <SkillsPanel />
     </div>
   )
 }

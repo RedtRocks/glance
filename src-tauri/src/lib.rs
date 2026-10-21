@@ -18,6 +18,7 @@ mod scan;
 mod protocol;
 mod shell;
 mod signatures;
+mod skills;
 mod subject;
 mod website;
 
@@ -200,6 +201,11 @@ pub fn run() {
             mcp::apps::ai_apps,
             mcp::apps::ai_app_connect,
             mcp::apps::ai_app_disconnect,
+            skills::skills_user_list,
+            skills::skills_folder,
+            skills::skills_install,
+            skills::skills_uninstall,
+            skills::skills_installed,
             agents::agents_list,
             agents::agent_add,
             agents::agent_remove,
