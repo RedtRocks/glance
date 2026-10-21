@@ -98,7 +98,7 @@ function cmp(op: string, a: number, b: number): boolean {
 export function formatValue(v: Value | undefined, fmt: string | undefined): Formatted {
   if (v === null || v === undefined) return { text: '' }
   if (isError(v)) return { text: v.error }
-  if (typeof v === 'boolean') return { text: v ? 'TRUE' : 'FALSE' }
+  if (typeof v === 'boolean') return { text: v ? 'TRUE' : 'FALSE' } // i18n-ignore: Excel's own spelling
   const code = fmt && fmt.toLowerCase() !== 'general' ? fmt : ''
   const secs = code ? sections(code) : []
   if (typeof v === 'string') {

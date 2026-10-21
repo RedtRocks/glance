@@ -103,7 +103,7 @@ export function tokenize(f: string): Token[] {
       }
       if (/^#REF!/i.test(rest.slice(m[0].length))) {
         const len = m[0].length + 5
-        out.push({ type: 'err', text: '#REF!', start: i })
+        out.push({ type: 'err', text: '#REF!', start: i }) // i18n-ignore
         i += len
         continue
       }

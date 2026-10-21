@@ -67,6 +67,7 @@ export type SheetOp =
   | (On & { op: 'merge' | 'unmerge'; range: string })
   | (On & { op: 'colWidth'; cols: string; width: number })
   | (On & { op: 'rowHeight'; rows: string; height: number })
+  /** Without cols or rows, hides or shows the sheet itself. */
   | (On & { op: 'hide' | 'show'; cols?: string; rows?: string })
   | (On & { op: 'addCf'; range: string; rule: CfRule })
   | (On & { op: 'clearCf'; range: string })
@@ -310,7 +311,12 @@ class Draft {
           if (!r || r.r2 - r.r1 > 5000) throw new SheetError('rows must be like "3" or "3:5"')
           set(s.rows, r.r1, r.r2)
         }
-        if (!op.cols && !op.rows) throw new SheetError('say which cols or rows')
+        // Neither: the sheet itself, keeping at least one sheet in view.
+        if (!op.cols && !op.rows) {
+          if (op.op === 'show') delete s.hidden
+          else if (this.sheets.filter((x) => !x.hidden && x !== s).length === 0) throw new SheetError("can't hide the only sheet in view")
+          else s.hidden = true
+        }
         return
       }
       case 'addCf': {

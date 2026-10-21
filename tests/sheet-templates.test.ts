@@ -44,6 +44,14 @@ describe('spreadsheet templates', () => {
           if (squash(got) !== squash(want)) problems.push(`${s.name}!${ref} =${cell.f} gives ${got}, board shows ${want}`)
         }
       }
+      // Figures the overlay names where the board can't show them (cells that moved, hidden rows).
+      for (const [where, want] of Object.entries((t.checks.values ?? {}) as Record<string, string>)) {
+        const [name, ref] = where.split('!')
+        const sheet = wb.sheets.find((x) => x.name === name)!
+        const { r, c } = parseCell(ref)!
+        const got = formatValue(sheet.cells[ref]?.v, styleAt(sheet, r, c)?.numFmt).text
+        if (squash(got) !== squash(want)) problems.push(`${where} gives ${got}, should be ${want}`)
+      }
       const errors = checkWorkbook(wb).filter((f) => f.kind === 'error' || f.kind === 'brokenRef' || f.kind === 'unknownFunction')
       for (const e of errors) problems.push(`${e.sheet}!${e.cell}: ${e.message}`)
       expect(problems).toEqual([])

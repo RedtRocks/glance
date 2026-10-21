@@ -59,13 +59,16 @@ export function templateWorkbook(t: SheetTemplate, translate: (s: string) => str
 /** Splits rich text into lines of runs. */
 function lines(rich: Run[]): Run[][] {
   const out: Run[][] = [[]]
-  for (const r of rich) {
+  // A tile drawn as blocks with no line breaks: each change of type size starts a line.
+  const bySize = !rich.some((r) => r.text.includes('\n'))
+  rich.forEach((r, k) => {
+    if (bySize && k > 0 && r.font?.size !== rich[k - 1].font?.size) out.push([])
     const parts = r.text.split('\n')
     parts.forEach((p, i) => {
       if (i > 0) out.push([])
       if (p) out[out.length - 1].push({ ...r, text: p })
     })
-  }
+  })
   return out.filter((l) => l.length)
 }
 
