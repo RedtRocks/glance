@@ -611,7 +611,7 @@ function rowLines(row: string[], cells: CellBox[], text: TextStyle, padX: number
   return { parts, h: Math.max(0, ...parts.map((p) => p.h)) }
 }
 
-function drawRow(r: ReturnType<typeof rowLines>, cells: CellBox[], x: number, y: number, h: number, padX: number, out: Out, bars: number[]) {
+function drawRow(r: ReturnType<typeof rowLines>, cells: CellBox[], x: number, y: number, h: number, padX: number, out: Out, bars: number[][]) {
   r.parts.forEach((p, i) => {
     const c = cells[i]
     const inner = c.w - 2 * padX
@@ -628,7 +628,7 @@ function drawRow(r: ReturnType<typeof rowLines>, cells: CellBox[], x: number, y:
     }
     let lx = x + c.x + padX
     if (p.bar) {
-      const max = Math.max(...bars.filter((v) => Number.isFinite(v)), 1)
+      const max = Math.max(...(bars[i] ?? []).filter((v) => Number.isFinite(v)), 1)
       const v = parseFloat(p.value.replace(/[^\d.-]/g, ''))
       const bw = Number.isFinite(v) ? Math.max(2, (v / max) * inner * 0.5) : 0
       out.items.push({ kind: 'rect', x: lx, y: y + h / 2 - 3, w: bw, h: 6, fill: p.bar, radius: 3 })
@@ -696,7 +696,7 @@ function tableUnits(id: string | null, region: string | null, rows: string[][], 
         if (isFoot && style.foot?.line?.w) out.items.push({ kind: 'rect', x, y, w: width, h: style.foot.line.w, fill: style.foot.line.colour })
         else if (style.line && !isFoot) out.items.push({ kind: 'rect', x, y: y + h - style.line.w, w: width, h: style.line.w, fill: style.line.colour })
         if (style.colLine) for (const c of cells.slice(1)) out.items.push({ kind: 'rect', x: x + c.x, y, w: style.colLine.w, h, fill: style.colLine.colour })
-        drawRow(r, cells, x, y, h, padX, out, bars[0] ? bars.flat() : [])
+        drawRow(r, cells, x, y, h, padX, out, bars)
         const before = out.hits.length
         cellHits(y, h, index, out)
         for (const hit of out.hits.slice(before)) hit.x += x
