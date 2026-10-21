@@ -4734,3 +4734,49 @@ input[type='range'] {
   align-items: center;
   gap: 6px;
 }
+
+/* Guided editing: the character count beside a slot being typed in, and placeholders like [date]. */
+.deck-count {
+  position: absolute;
+  z-index: 4;
+  transform: translateX(-100%);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--flyout);
+  color: var(--text-2);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+.deck-count.near {
+  color: var(--text);
+}
+.deck-count.over {
+  background: #c42b1c;
+  color: #fff;
+}
+.deck-placeholder {
+  background: rgba(255, 214, 0, 0.5);
+  color: inherit;
+  border-radius: 0.12em;
+  box-shadow: 0 0 0 0.06em rgba(255, 214, 0, 0.5);
+}
+/* Starts for a request about a deck, document or spreadsheet; one fills the box to finish. */
+.ai-starts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 8px;
+}
+.ai-start {
+  padding: 4px 10px;
+  border: 1px solid var(--stroke-strong);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--text);
+  font: 12px var(--font);
+  cursor: pointer;
+}
+.ai-start:hover { background: var(--subtle-hover); }

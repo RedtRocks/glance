@@ -14,6 +14,7 @@ import { SlideFrame } from './SlideFrame'
 import { layoutLabel, themeLabel } from './labels'
 import { THEMES } from '../../core/deck/themes'
 import { Icon } from '../Icon'
+import { charCount } from '../../core/ai/guide'
 
 const PAD = 32
 const PICTURES = ['png', 'jpg', 'jpeg', 'webp', 'gif', 'avif', 'svg']
@@ -27,6 +28,9 @@ interface Editing {
   rect: { left: number; top: number; width: number; height: number }
   style: Record<string, string>
   text: string
+  /** The slot's limit, for the counter beside the box; list slots count their longest line. */
+  maxChars?: number
+  perLine?: boolean
 }
 
 /** The layouts, then the designs of the templates the deck already uses. */
@@ -81,6 +85,7 @@ export function DeckView({ doc }: { doc: DeckDoc }) {
     setEditingState(e)
   }
   const box = useRef<HTMLTextAreaElement>(null)
+  const [typed, setTyped] = useState('')
   const slides = doc.deck.value.slides
   const slide = slides[doc.current.value]
   // Redraw once a template's designs have loaded.
@@ -99,7 +104,9 @@ export function DeckView({ doc }: { doc: DeckDoc }) {
   useEffect(() => {
     box.current?.focus()
     box.current?.select()
+    setTyped(editing?.text ?? '')
   }, [editing?.slideId, editing && editing.ref])
+  const count = editing ? charCount(typed, editing.maxChars, editing.perLine) : null
 
   const fit = Math.max(0, Math.min((size.w - 2 * PAD) / SLIDE_W, (size.h - 2 * PAD) / SLIDE_H))
   const width = Math.round(SLIDE_W * fit * doc.zoom.value)
@@ -134,6 +141,9 @@ export function DeckView({ doc }: { doc: DeckDoc }) {
       ref,
       key: el.dataset.ref!,
       multiline: spec?.kind === 'list' || (spec?.maxChars ?? 0) > 100,
+      // Cards and table cells share their limit with their neighbours, so only text and list slots count.
+      maxChars: spec?.kind === 'text' || spec?.kind === 'list' ? spec.maxChars : undefined,
+      perLine: spec?.kind === 'list',
       rect: { left: r.left - s.left + stage.current.scrollLeft, top: r.top - s.top + stage.current.scrollTop, width: r.width, height: r.height },
       style: { fontSize: `${parseFloat(cs.fontSize) * scale}px`, fontFamily: cs.fontFamily, color: cs.color, lineHeight: cs.lineHeight, textAlign: cs.textAlign, paddingTop: `${offset}px` },
       text: slotText(slide, ref)
@@ -153,6 +163,7 @@ export function DeckView({ doc }: { doc: DeckDoc }) {
       ref,
       key: el.dataset.ref!,
       multiline: lines >= 1.8 || maxChars > 60,
+      maxChars: maxChars || undefined,
       rect: { left: frame.left - s.left + stage.current.scrollLeft + el.offsetLeft * k, top: frame.top - s.top + stage.current.scrollTop + el.offsetTop * k, width: el.offsetWidth * k, height: el.offsetHeight * k },
       style: {
         fontSize: `${parseFloat(cs.fontSize) * k}px`, fontFamily: cs.fontFamily, fontWeight: cs.fontWeight, fontStyle: cs.fontStyle,
@@ -211,6 +222,7 @@ export function DeckView({ doc }: { doc: DeckDoc }) {
             aria-label={t('Slide text')}
             style={{ ...editing.style, left: `${editing.rect.left}px`, top: `${editing.rect.top}px`, width: `${editing.rect.width}px`, height: `${editing.rect.height}px` }}
             defaultValue={editing.text}
+            onInput={(e) => setTyped(e.currentTarget.value)}
             onBlur={(e) => commit(editing, (e.currentTarget as HTMLTextAreaElement).value)}
             onKeyDown={(e) => {
               e.stopPropagation()
@@ -221,6 +233,17 @@ export function DeckView({ doc }: { doc: DeckDoc }) {
               }
             }}
           />
+        )}
+        {editing && count && (
+          <span
+            class={`deck-count${count.over ? ' over' : count.near ? ' near' : ''}`}
+            aria-live="polite"
+            style={{ left: `${editing.rect.left + editing.rect.width}px`, top: `${editing.rect.top + editing.rect.height + 10}px` }}
+          >
+            {count.over
+              ? t('{used} of {max}: too long', { used: count.used, max: count.max })
+              : t('{used} of {max}', { used: count.used, max: count.max })}
+          </span>
         )}
       </div>
     </div>

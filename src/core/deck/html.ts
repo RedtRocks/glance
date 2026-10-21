@@ -9,6 +9,7 @@
 import { SLIDE_H, SLIDE_W, layoutSlide, type Box, type SlotRef } from './layout'
 import { type Slide } from './model'
 import { type DeckTheme } from './themes'
+import { placeholderRuns } from '../ai/guide'
 import { DESIGN_SCALE, fontStack, noDesigns, placeTexts, type Design, type DesignLookup, type DesignText, type MeasureText } from './design'
 
 export interface HtmlOptions {
@@ -20,10 +21,18 @@ export interface HtmlOptions {
   designs?: DesignLookup
   /** Measures design text in its real font, so longer text shrinks just enough (see fitDesignText). */
   measure?: MeasureText
+  /** Highlights placeholders like [date] for the person to fill (the editor, not exports). */
+  markPlaceholders?: boolean
 }
 
 const ESC: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
 export const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => ESC[c])
+
+/** Escaped text, with placeholders wrapped in a mark when asked. */
+function textHtml(s: string, opts: HtmlOptions): string {
+  if (!opts.markPlaceholders) return escapeHtml(s)
+  return placeholderRuns(s).map((r) => (r.placeholder ? `<mark class="deck-placeholder">${escapeHtml(r.text)}</mark>` : escapeHtml(r.text))).join('')
+}
 
 const px = (n: number) => `${Math.round(n * 100) / 100}px`
 
@@ -73,10 +82,10 @@ function boxHtml(box: Box, theme: DeckTheme, opts: HtmlOptions): string {
       }
       if (box.bullets) {
         const dot = `position:absolute;left:0;top:${box.lineHeight / 2}em;width:0.32em;height:0.32em;margin-top:-0.16em;border-radius:50%;background:${theme.accent}`
-        const items = box.paragraphs.map((p) => `<li style="position:relative;padding-left:1.1em"><span style="${escapeHtml(dot)}"></span>${escapeHtml(p)}</li>`).join('')
+        const items = box.paragraphs.map((p) => `<li style="position:relative;padding-left:1.1em"><span style="${escapeHtml(dot)}"></span>${textHtml(p, opts)}</li>`).join('')
         return `<div class="${cls}" data-ref="${key}" style="${escapeHtml(look)}"><ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0.5em">${items}</ul></div>`
       }
-      const paras = box.paragraphs.map((p) => `<p style="margin:0;white-space:pre-wrap">${escapeHtml(p)}</p>`).join('')
+      const paras = box.paragraphs.map((p) => `<p style="margin:0;white-space:pre-wrap">${textHtml(p, opts)}</p>`).join('')
       return `<div class="${cls}" data-ref="${key}" style="${escapeHtml(look)}">${paras}</div>`
     }
   }
@@ -129,5 +138,5 @@ function designTextHtml(t: DesignText, text: string, size: number, placeholder: 
     const hint = opts.placeholder!({ slot: t.name }, t.sample)
     return `<div class="deck-box deck-text empty" data-ref="${key}" style="${escapeHtml(`${look};opacity:${0.35 * t.opacity}`)}"><p style="margin:0">${escapeHtml(hint)}</p></div>`
   }
-  return `<div class="deck-box deck-text" data-ref="${key}" style="${escapeHtml(look)}"><p style="margin:0">${escapeHtml(text)}</p></div>`
+  return `<div class="deck-box deck-text" data-ref="${key}" style="${escapeHtml(look)}"><p style="margin:0">${textHtml(text, opts)}</p></div>`
 }

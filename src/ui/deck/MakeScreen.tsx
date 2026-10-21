@@ -4,7 +4,8 @@ import * as ai from '../../state/ai'
 import * as voice from '../../state/voice'
 import { aiOpen, makeOpen } from '../../state/ui'
 import { newDeck, change } from '../../state/deck'
-import { deckPrompt, nameFromRequest, templatePrompt } from '../../core/ai/make'
+import { nameFromRequest } from '../../core/ai/make'
+import { lastRequest, planMessage, startPlan } from '../../state/plan'
 import { TEMPLATES, templateDeck, type Template } from '../../state/templates'
 import { designsVersion, loadBoard, loadedBoard, sampleText } from '../../state/designs'
 import { PURPOSES, type Purpose } from '../../core/deck/design'
@@ -35,8 +36,6 @@ async function startDeck(request: string, tpl: Template | null) {
   return newDeck(name, tpl ? ((await templateDeck(tpl.id)) ?? undefined) : undefined)
 }
 
-const promptFor = (request: string, tpl: Template | null, tab: string) => (tpl ? templatePrompt(request, tpl.name, tab) : deckPrompt(request, tab))
-
 async function makeByHand(request: string, tpl: Template | null): Promise<void> {
   const doc = await startDeck(request, tpl)
   if (!tpl) change(doc, msg('New Deck'), [{ op: 'add', layout: 'title', slots: request.trim() ? { title: nameFromRequest(request, '') } : {} }])
@@ -46,14 +45,13 @@ async function makeByHand(request: string, tpl: Template | null): Promise<void> 
 async function makeWithAi(request: string, tpl: Template | null): Promise<void> {
   const doc = await startDeck(request, tpl)
   makeOpen.value = false
-  aiOpen.value = true
-  ai.startNewChat()
-  await ai.sendWhenReady(promptFor(request, tpl, doc.id))
+  // The AI plans first; the person checks the plan on the Outline screen, then it builds.
+  await startPlan(request, 'deck', doc)
 }
 
 /** File → New: "What do you want to make?", AI first. */
 export function MakeScreen() {
-  const [text, setText] = useState('')
+  const [text, setText] = useState(lastRequest.peek())
   const [asked, setAsked] = useState(false)
   const [picked, setPicked] = useState<Template | null>(null)
   const [tab, setTab] = useState<Purpose | 'All'>('All')
@@ -97,7 +95,7 @@ export function MakeScreen() {
   const signIn = async () => {
     // The Ask AI sidebar signs in; the request waits there and goes once it's done.
     const doc = await startDeck(latest.current, picked)
-    ai.pendingPrompt.value = promptFor(latest.current, picked, doc.id)
+    ai.pendingPrompt.value = await planMessage(latest.current, 'deck', doc)
     makeOpen.value = false
     aiOpen.value = true
   }
