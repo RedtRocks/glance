@@ -47,3 +47,27 @@ export function docTemplatePrompt(request: string, template: string, tab: string
     "If you don't have facts you need, leave a clear placeholder like [date] rather than inventing them, and don't leave the template's sample names, dates or numbers in."
   ].join('\n')
 }
+
+/** The first message for a new, empty spreadsheet, open in Glance as `tab`. */
+export function sheetPrompt(request: string, tab: string): string {
+  return [
+    `Make a spreadsheet for me in Glance: ${request.trim()}`,
+    '',
+    `A new, empty workbook is open in Glance (tab ${tab}). Build it with glance_sheet_edit; don't write files, code or an .xlsx yourself.`,
+    'First plan it: the sheets, the columns of each table and which figures are worked out. Put headers in the first row of each table, freeze them, type numbers as numbers with a number format, and use formulas (SUM, SUMIF, AVERAGE and so on) for every total, so it stays right when I change the data. Add drop-downs and tick boxes where I would pick from a list, and a chart where a picture helps.',
+    'Then call glance_sheet_check and fix every finding, look at it with glance_sheet_render and fix anything that looks wrong, and finish by telling me in a sentence or two what you made.',
+    "If you don't have facts you need, use clear placeholders like [amount] rather than inventing them."
+  ].join('\n')
+}
+
+/** The first message for a spreadsheet started from a template, open in Glance as `tab`. */
+export function sheetTemplatePrompt(request: string, template: string, tab: string): string {
+  return [
+    `Make a spreadsheet for me in Glance from the ${template} template: ${request.trim()}`,
+    '',
+    `The template is open in Glance (tab ${tab}). Read it with glance_sheet_read and change it with glance_sheet_edit; don't write files, code or an .xlsx yourself.`,
+    "Its cells hold sample data. Replace the sample names, items, dates and amounts with ones for my request, keep its formulas, formats, drop-downs and charts working (change data cells, not the formula cells), and add or remove rows inside its tables where the request needs it so the totals still cover them.",
+    'Then call glance_sheet_check and fix every finding, look at it with glance_sheet_render and fix anything that looks wrong, and finish by telling me in a sentence or two what you made.',
+    "If you don't have facts you need, leave a clear placeholder like [amount] rather than inventing them, and don't leave the template's sample names in."
+  ].join('\n')
+}

@@ -15,10 +15,14 @@ import { SlidePreview } from './SlideFrame'
 import { purposeLabel } from './labels'
 import { msg, t } from '../../i18n'
 import { Icon } from '../Icon'
+import { SheetTemplates } from '../sheet/SheetTemplates'
+import { newSheet } from '../../state/sheet'
+import { sheetTemplate } from '../../state/sheetTemplates'
+import type { SheetTemplateInfo } from '../../core/sheet/template'
 import { DocTemplatePreview, DocTemplateTile, docTemplatesFor, makeGdocByHand, makeGdocWithAi, startGdoc } from '../doc/DocTemplates'
 import type { DocBoardInfo } from '../../core/doc/look'
 
-type Kind = 'slides' | 'document'
+type Kind = 'slides' | 'document' | 'sheet'
 
 /**
  * Whether the AI can make things right now. AI first (redt's rule): when an AI is signed
@@ -49,6 +53,17 @@ async function makeWithAi(request: string, tpl: Template | null): Promise<void> 
   makeOpen.value = false
   // The AI plans first; the person checks the plan on the Outline screen, then it builds.
   await startPlan(request, 'deck', doc)
+}
+
+/** A new spreadsheet, empty or from a template; with a request and an AI, the AI fills it. */
+async function makeSheet(request: string, tpl: SheetTemplateInfo | null, withAi: boolean): Promise<void> {
+  const name = nameFromRequest(request, tpl ? t(tpl.name) : t('Untitled spreadsheet'))
+  const start = tpl ? await sheetTemplate(tpl.id) : null
+  const doc = newSheet(name, start?.wb, start?.media)
+  makeOpen.value = false
+  if (!withAi) return
+  // The AI plans first, as for decks and documents.
+  await startPlan(request, 'spreadsheet', doc)
 }
 
 /** File → New: "What do you want to make?", AI first. */
@@ -96,6 +111,7 @@ export function MakeScreen() {
       setAsked(true)
       return
     }
+    if (want === 'sheet') return void makeSheet(request, null, state === 'ready' && !!request.trim())
     // A template with nothing typed opens as it is, ready to fill in by hand.
     if (state === 'ready' && (request.trim() || !tpl)) return void makeWithAi(request, tpl)
     if (state === 'none' || !request.trim()) return void makeByHand(request, tpl)
@@ -181,6 +197,13 @@ export function MakeScreen() {
             <span class="make-kind-sub">{t('Letters, reports, posters and forms')}</span>
           </span>
         </button>
+        <button class="make-kind sheet" onClick={() => make('sheet')}>
+          <Icon name="table" size={32} />
+          <span>
+            <span class="make-kind-name">{t('Spreadsheet')}</span>
+            <span class="make-kind-sub">{t('Budgets, lists, plans and trackers')}</span>
+          </span>
+        </button>
       </div>
       <h2 class="make-templates-title">{t('Or start from a template')}</h2>
       <div class="make-tabs make-kind-tabs" role="tablist" aria-label={t('Kind of template')}>
@@ -201,6 +224,7 @@ export function MakeScreen() {
         {kind === 'document' && docTemplatesFor(tab).map((info) => <DocTemplateTile key={info.id} info={info} onPick={() => setDocPreview(info)} />)}
       </div>
       {docPreview && <DocTemplatePreview info={docPreview} aiReady={state === 'ready'} onClose={() => setDocPreview(null)} />}
+      <SheetTemplates canAsk={state === 'ready'} onUse={(x) => void makeSheet('', x, false)} onAbout={(x, about) => void makeSheet(about, x, true)} />
       {preview && (
         <TemplatePreview
           tpl={preview}

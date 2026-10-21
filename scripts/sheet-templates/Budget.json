@@ -1,0 +1,43 @@
+{
+  "today": "2026-10-20",
+  "sheets": { "October": { "dropPictures": [1] } },
+  "ops": [
+    { "op": "set", "sheet": "October", "range": "E7:E10", "formula": "=D7-C7", "style": { "numFmt": "+£#,##0;−£#,##0;\"on plan\"" } },
+    { "op": "set", "sheet": "October", "cell": "C11", "formula": "=SUM(C7:C10)" },
+    { "op": "set", "sheet": "October", "cell": "D11", "formula": "=SUM(D7:D10)" },
+    { "op": "set", "sheet": "October", "cell": "D22", "formula": "=SUM(D15:D21)" },
+    { "op": "set", "sheet": "October", "cell": "I11", "value": 101.6 },
+    { "op": "set", "sheet": "October", "range": "J7:J14", "formula": "=I7/H7", "style": { "numFmt": "0%" } },
+    { "op": "set", "sheet": "October", "cell": "H15", "formula": "=SUM(H7:H14)" },
+    { "op": "set", "sheet": "October", "cell": "I15", "formula": "=SUM(I7:I14)" },
+    { "op": "set", "sheet": "October", "cell": "J15", "formula": "=H15-I15", "style": { "numFmt": "£#,##0\" under\";£#,##0\" over\"" } },
+    { "op": "set", "sheet": "October", "cell": "D25", "formula": "=D11" },
+    { "op": "set", "sheet": "October", "cell": "D26", "formula": "=-D22", "style": { "numFmt": "£#,##0;−£#,##0" } },
+    { "op": "set", "sheet": "October", "cell": "D27", "formula": "=-I15", "style": { "numFmt": "£#,##0;−£#,##0" } },
+    { "op": "set", "sheet": "October", "cell": "D28", "formula": "=SUM(D25:D27)" },
+    { "op": "set", "sheet": "October", "cell": "B3", "formula": "=D11" },
+    { "op": "set", "sheet": "October", "cell": "D3", "formula": "=D22" },
+    { "op": "set", "sheet": "October", "cell": "G3", "formula": "=I15" },
+    { "op": "set", "sheet": "October", "cell": "I3", "formula": "=D28" },
+    { "op": "addCf", "sheet": "October", "range": "J7:J14", "rule": { "type": "dataBar", "color": "#e8a33d", "min": 0, "max": 1.2 } },
+    { "op": "addCf", "sheet": "October", "range": "J7:J14", "rule": { "type": "cellIs", "operator": "greaterThan", "values": [1], "style": { "font": { "color": "#b23a2b", "bold": true } } } },
+    { "op": "addChart", "sheet": "October", "chart": { "type": "doughnut", "range": "G18:H28", "categories": "G7:G14", "series": [{ "name": "Spent", "values": "I7:I14" }], "colors": ["#2f5d50", "#e8a33d", "#c8553d", "#8fb8a8", "#f2c879", "#6b8f71", "#d98f6f", "#4a7c8c"], "legend": "bottom" } },
+    { "op": "addValidation", "sheet": "October", "range": "E15:E21", "rule": { "type": "list", "values": ["Paid", "Due in 4 days", "Due in 8 days", "Not due yet"] } },
+
+    { "op": "set", "sheet": "Categories", "range": "B2:C13", "values": [["CATEGORY", "MONTHLY BUDGET"], ["Income", null], ["Bills", null], ["Groceries", 550], ["Transport", 200], ["Kids’ clubs", 140], ["Fun & gifts", 100], ["Health", 80], ["Eating out", 120], ["Household", 120], ["Clothes", 100], ["Savings", null]] },
+    { "op": "format", "sheet": "Categories", "range": "B2:C2", "style": { "bold": true, "fill": "#2f5d50", "color": "#fff8ea" } },
+    { "op": "format", "sheet": "Categories", "range": "C3:C13", "style": { "numFmt": "£#,##0" } },
+    { "op": "colWidth", "sheet": "Categories", "cols": "B:C", "width": 150 },
+
+    { "op": "set", "sheet": "Transactions", "cell": "H6", "formula": "=B3+F6+G6" },
+    { "op": "set", "sheet": "Transactions", "range": "H7:H27", "formula": "=H6+F7+G7" },
+    { "op": "set", "sheet": "Transactions", "cell": "D3", "formula": "=SUM(F6:F27)" },
+    { "op": "set", "sheet": "Transactions", "cell": "F3", "formula": "=-SUM(G6:G27)" },
+    { "op": "set", "sheet": "Transactions", "cell": "H3", "formula": "=B3+D3-F3" },
+    { "op": "set", "sheet": "Transactions", "cell": "F28", "formula": "=SUM(F6:F27)" },
+    { "op": "set", "sheet": "Transactions", "cell": "G28", "formula": "=SUM(G6:G27)" },
+    { "op": "set", "sheet": "Transactions", "cell": "H28", "formula": "=H3" },
+    { "op": "addValidation", "sheet": "Transactions", "range": "D6:D27", "rule": { "type": "list", "source": "Categories!$B$3:$B$13" } },
+    { "op": "activate", "sheet": "October" }
+  ]
+}

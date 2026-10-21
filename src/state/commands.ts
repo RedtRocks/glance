@@ -24,6 +24,9 @@ import { adjustColorOpen, adjustSizeOpen, exportOpen, imageSelection, straighten
 import * as img from './imageActions'
 import * as deckActions from './deck'
 import * as gdocActions from './gdocCommands'
+import * as sheetActions from './sheet'
+import type { SheetDoc } from './sheetDoc'
+import type { StyleInput } from '../core/sheet/ops'
 
 export interface Command {
   id: string
@@ -69,14 +72,14 @@ const hasDoc = () => activeDoc.value !== null
 const isPdf = () => pdf() !== null
 const multiPage = () => {
   const d = activeDoc.value
-  return !!d && d.kind !== 'notice' && d.pageCount.value > 1
+  return !!d && d.kind !== 'notice' && d.kind !== 'sheet' && d.pageCount.value > 1
 }
 
 function zoom(dir: 1 | -1): void {
   const d = activeDoc.value
   if (!d || d.kind === 'notice') return
   if (d.kind === 'model') return void (d.viewRequest.value = { kind: 'zoom', dir })
-  if (d.kind === 'preview' || d.kind === 'deck' || d.kind === 'gdoc') return void (d.zoom.value = stepZoom(d.zoom.value, dir))
+  if (d.kind === 'preview' || d.kind === 'deck' || d.kind === 'gdoc' || d.kind === 'sheet') return void (d.zoom.value = stepZoom(d.zoom.value, dir))
   const next = stepZoom(d.effectiveScale.value, dir)
   if (d.kind === 'pdf') d.zoom.value = next
   else d.zoom.value = next
@@ -86,14 +89,14 @@ function setZoom(mode: 'actual' | 'fit'): void {
   const d = activeDoc.value
   if (!d || d.kind === 'notice') return
   if (d.kind === 'model') return void (d.viewRequest.value = { kind: 'reset' })
-  if (d.kind === 'preview' || d.kind === 'deck' || d.kind === 'gdoc') return void (d.zoom.value = 1)
+  if (d.kind === 'preview' || d.kind === 'deck' || d.kind === 'gdoc' || d.kind === 'sheet') return void (d.zoom.value = 1)
   if (d.kind === 'pdf') d.zoom.value = mode === 'actual' ? 1 : 'fit-page'
   else d.zoom.value = mode === 'actual' ? 1 : 'fit'
 }
 
 function goPage(delta: number | 'first' | 'last'): void {
   const d = activeDoc.value
-  if (!d || d.kind === 'notice') return
+  if (!d || d.kind === 'notice' || d.kind === 'sheet') return
   const n = d.pageCount.value
   const target = delta === 'first' ? 0 : delta === 'last' ? n - 1 : d.current.value + delta
   if (d.kind === 'pdf') d.goTo(target)
@@ -166,8 +169,8 @@ export const COMMANDS: Command[] = [
   },
   { id: 'file.settings', label: msg('Settings'), keys: ['Ctrl+,'], run: () => void (settingsOpen.value = true) },
   // Edit
-  { id: 'edit.undo', label: msg('Undo'), keys: ['Ctrl+Z'], run: () => actions.undo(), enabled: () => !!(pdf() ?? image() ?? deck() ?? gdoc())?.history.canUndo },
-  { id: 'edit.redo', label: msg('Redo'), keys: ['Ctrl+Y', 'Ctrl+Shift+Z'], run: () => actions.redo(), enabled: () => !!(pdf() ?? image() ?? deck() ?? gdoc())?.history.canRedo },
+  { id: 'edit.undo', label: msg('Undo'), keys: ['Ctrl+Z'], run: () => actions.undo(), enabled: () => !!(pdf() ?? image() ?? deck() ?? gdoc() ?? sheetHistory())?.history.canUndo },
+  { id: 'edit.redo', label: msg('Redo'), keys: ['Ctrl+Y', 'Ctrl+Shift+Z'], run: () => actions.redo(), enabled: () => !!(pdf() ?? image() ?? deck() ?? gdoc() ?? sheetHistory())?.history.canRedo },
   { id: 'edit.selectAll', label: msg('Select All Pages'), keys: ['Ctrl+A'], run: () => actions.selectAllPages(), enabled: isPdf },
   { id: 'edit.find', label: msg('Find…'), keys: ['Ctrl+F'], run: () => void (findOpen.value = true), enabled: isPdf },
   { id: 'edit.insertBlank', label: msg('Insert Blank Page'), run: () => actions.insertBlankPage(), enabled: isPdf },
@@ -361,8 +364,69 @@ export const COMMANDS: Command[] = [
   },
   { id: 'help.feedback', label: msg('Send Feedback…'), run: () => void (feedbackOpen.value = true) },
   { id: 'help.about', label: msg('About Glance'), run: actions.showAbout },
-  { id: 'help.github', label: msg('Glance on GitHub'), run: () => platform.openUrl('https://github.com/RedtRocks/glance') }
+  { id: 'help.github', label: msg('Glance on GitHub'), run: () => platform.openUrl('https://github.com/RedtRocks/glance') },
+  // Spreadsheets
+  ...sheetCommands()
 ]
+
+/** Spreadsheet commands: they act on the picked cells of the open workbook. */
+function sheetCommands(): Command[] {
+  const doc = () => (activeDoc.value?.kind === 'sheet' ? activeDoc.value : null)
+  const run = (fn: (d: SheetDoc) => unknown) => () => {
+    const d = doc()
+    if (d) void fn(d)
+  }
+  const fmt = (label: string, style: StyleInput) => run((d) => sheetActions.formatSelection(d, label, style))
+  const cmds: Command[] = [
+    { id: 'sheet.exportXlsx', label: msg('Export as Excel Workbook…'), run: run((d) => sheetActions.exportSheet(d, 'xlsx')) },
+    { id: 'sheet.exportCsv', label: msg('Export Sheet as CSV…'), run: run((d) => sheetActions.exportSheet(d, 'csv')) },
+    { id: 'sheet.exportPdf', label: msg('Export as PDF…'), run: run((d) => sheetActions.exportSheet(d, 'pdf')) },
+    { id: 'sheet.exportPng', label: msg('Export Sheet as PNG…'), run: run((d) => sheetActions.exportSheet(d, 'png')) },
+    { id: 'sheet.clear', label: msg('Clear Contents'), run: run(sheetActions.clearSelection) },
+    { id: 'sheet.insertRowAbove', label: msg('Insert Row Above'), run: run((d) => sheetActions.insertRows(d, false)) },
+    { id: 'sheet.insertRowBelow', label: msg('Insert Row Below'), run: run((d) => sheetActions.insertRows(d, true)) },
+    { id: 'sheet.insertColLeft', label: msg('Insert Column Left'), run: run((d) => sheetActions.insertCols(d, false)) },
+    { id: 'sheet.insertColRight', label: msg('Insert Column Right'), run: run((d) => sheetActions.insertCols(d, true)) },
+    { id: 'sheet.deleteRows', label: msg('Delete Rows'), run: run(sheetActions.deleteRows) },
+    { id: 'sheet.deleteCols', label: msg('Delete Columns'), run: run(sheetActions.deleteCols) },
+    { id: 'sheet.bold', label: msg('Bold'), run: run((d) => sheetActions.formatSelection(d, msg('Bold'), { bold: !sheetActions.selectionStyle(d)?.font?.bold })) },
+    { id: 'sheet.italic', label: msg('Italic'), run: run((d) => sheetActions.formatSelection(d, msg('Italic'), { italic: !sheetActions.selectionStyle(d)?.font?.italic })) },
+    { id: 'sheet.alignLeft', label: msg('Align Left'), run: fmt(msg('Align Left'), { align: 'left' }) },
+    { id: 'sheet.alignCenter', label: msg('Align Center'), run: fmt(msg('Align Center'), { align: 'center' }) },
+    { id: 'sheet.alignRight', label: msg('Align Right'), run: fmt(msg('Align Right'), { align: 'right' }) },
+    { id: 'sheet.wrap', label: msg('Wrap Text'), run: run((d) => sheetActions.formatSelection(d, msg('Wrap Text'), { wrap: !sheetActions.selectionStyle(d)?.align?.wrap })) },
+    { id: 'sheet.merge', label: msg('Merge Cells'), run: run(sheetActions.toggleMerge) },
+    { id: 'sheet.fmtGeneral', label: msg('General'), run: fmt(msg('Number Format'), { numFmt: null }) },
+    { id: 'sheet.fmtNumber', label: msg('Number'), run: fmt(msg('Number Format'), { numFmt: '#,##0.00' }) },
+    { id: 'sheet.fmtCurrency', label: msg('Currency'), run: fmt(msg('Number Format'), { numFmt: '£#,##0.00' }) },
+    { id: 'sheet.fmtPercent', label: msg('Percent'), run: fmt(msg('Number Format'), { numFmt: '0%' }) },
+    { id: 'sheet.fmtDate', label: msg('Date'), run: fmt(msg('Number Format'), { numFmt: 'd mmm yyyy' }) },
+    { id: 'sheet.sortAsc', label: msg('Sort A to Z'), run: run((d) => sheetActions.sortBy(d, false)) },
+    { id: 'sheet.sortDesc', label: msg('Sort Z to A'), run: run((d) => sheetActions.sortBy(d, true)) },
+    { id: 'sheet.filter', label: msg('Filter'), run: run(sheetActions.toggleFilter), checked: () => !!doc()?.activeSheet.value.filter },
+    { id: 'sheet.freeze', label: msg('Freeze Panes'), run: run(sheetActions.toggleFreeze), checked: () => !!doc()?.activeSheet.value.frozen?.rows || !!doc()?.activeSheet.value.frozen?.cols },
+    { id: 'sheet.addSheet', label: msg('Add Sheet'), run: run(sheetActions.addSheet) },
+    {
+      id: 'sheet.renameSheet',
+      label: msg('Rename Sheet…'),
+      run: run(async (d) => {
+        const name = await promptText(t('Rename Sheet'), t('Sheet name'), { initial: d.activeSheet.peek().name, ok: t('Rename') })
+        if (name != null) sheetActions.renameSheet(d, name)
+      })
+    },
+    { id: 'sheet.deleteSheet', label: msg('Delete Sheet'), run: run(sheetActions.deleteSheet), enabled: () => (doc()?.wb.value.sheets.length ?? 0) > 1 },
+    {
+      id: 'sheet.check',
+      label: msg('Check Formulas'),
+      run: run(async (d) => {
+        const found = await sheetActions.checkSheet(d)
+        toast(found.length ? t('{count, plural, one {# thing to look at: {first}} other {# things to look at, starting with {first}}}', { count: found.length, first: `${found[0].sheet}!${found[0].cell} ${found[0].message}` }) : t('No problems found'), found.length ? 'error' : 'info')
+      })
+    }
+  ]
+  for (const c of cmds) c.visible = () => doc() !== null
+  return cmds
+}
 
 // Which commands make sense for which kind of file. A PNG gets no page, outline or
 // PDF-markup commands; a PDF gets no pixel-editing tools. (Disabled means "not right
@@ -372,18 +436,27 @@ const ifViewable = () => !!activeDoc.value && activeDoc.value.kind !== 'notice'
 const ifMarkup = () => ifPdf() || isImage()
 const isDeck = () => activeDoc.value?.kind === 'deck'
 const isGdoc = () => activeDoc.value?.kind === 'gdoc'
+const isSheet = () => activeDoc.value?.kind === 'sheet'
+/** A sheet's history; reading historyVersion keeps Undo's enabled state current. */
+function sheetHistory(): { history: { canUndo: boolean; canRedo: boolean } } | undefined {
+  const d = activeDoc.value
+  if (d?.kind !== 'sheet') return undefined
+  void d.historyVersion.value
+  return d
+}
 const ifPaged = () => ifPdf() || multiPage() || isDeck() || isGdoc()
 const VISIBILITY: [(() => boolean), string[]][] = [
   [hasDoc, ['file.close', 'file.openWith', 'view.customizeToolbar']],
   [() => ifPdf() || anyImage() || activeDoc.value?.kind === 'preview', ['file.share']],
   [ifViewable, ['view.inspector']],
-  [() => ifPdf() || anyImage() || isDeck() || isGdoc(), ['file.versions']],
+  [() => ifPdf() || anyImage() || isDeck() || isGdoc() || isSheet(), ['file.versions']],
   [ifViewable, ['view.zoomIn', 'view.zoomOut', 'view.zoomToFit', 'view.fullscreen']],
-  [() => ifPdf() || anyImage() || isDeck() || isGdoc(), ['file.print']],
+  [() => ifPdf() || anyImage() || isDeck() || isGdoc() || isSheet(), ['file.print']],
   [() => ifPdf() || anyImage(), ['tools.rotateLeft', 'tools.rotateRight']],
   [() => ifPdf() || anyImage() || isDeck(), ['view.actualSize', 'view.slideshow']],
   [() => activeDoc.value?.kind === 'model', ['model.wireframe', 'model.autoRotate', 'model.resetView', 'model.shadow', 'model.grid', 'model.view.front', 'model.view.back', 'model.view.left', 'model.view.right', 'model.view.top', 'model.view.bottom']],
-  [() => ifPdf() || isImage() || isDeck() || isGdoc(), ['file.save', 'file.saveAs', 'edit.undo', 'edit.redo', 'edit.delete']],
+  [() => ifPdf() || isImage() || isDeck() || isGdoc(), ['edit.delete']],
+  [() => ifPdf() || isImage() || isDeck() || isGdoc() || isSheet(), ['file.save', 'file.saveAs', 'edit.undo', 'edit.redo']],
   [isGdoc, ['gdoc.exportPdf', 'gdoc.exportDocx', 'gdoc.exportPng', 'gdoc.addHeading', 'gdoc.addParagraph', 'gdoc.addList', 'gdoc.addTable', 'gdoc.addPicture', 'gdoc.addDivider', 'gdoc.addPageBreak', 'gdoc.addPage', 'gdoc.moveUp', 'gdoc.moveDown', 'gdoc.changeLook', 'view.actualSize']],
   [() => gdocActions.canConvert(), ['file.convertToGdoc']],
   [isDeck, ['deck.exportPdf', 'deck.exportPptx', 'deck.exportPng', 'deck.newSlide', 'deck.duplicateSlide', 'deck.hideSlide', 'deck.moveUp', 'deck.moveDown']],
@@ -518,7 +591,7 @@ async function addBookmark(): Promise<void> {
 
 async function goToPagePrompt(): Promise<void> {
   const d = activeDoc.value
-  if (!d || d.kind === 'notice') return
+  if (!d || d.kind === 'notice' || d.kind === 'sheet') return
   const text = await promptText(t('Go to Page'), t('Page number (1–{count})', { count: d.pageCount.value }), { ok: t('Go') })
   if (text == null) return
   const idx = parsePageInput(text, d.pageCount.value)

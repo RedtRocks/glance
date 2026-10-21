@@ -8,7 +8,8 @@ import { t } from '../i18n'
 export function ExternalAppBar({ doc }: { doc: Doc }) {
   const [closed, setClosed] = useState(false)
   const hint = externalHint(doc)
-  if (!hint || closed || doc.kind === 'notice') return null
+  // Spreadsheets Glance edits itself need no "open it elsewhere" hint.
+  if (!hint || closed || doc.kind === 'notice' || doc.kind === 'sheet') return null
   return (
     <InfoBar
       title={hint.kind}

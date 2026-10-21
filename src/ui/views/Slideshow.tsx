@@ -69,7 +69,7 @@ export function Slideshow() {
         <canvas ref={canvas} />
       ) : doc.kind === 'deck' ? (
         doc.deck.value.slides[page] && <SlideFrame doc={doc} slide={doc.deck.value.slides[page]} width={Math.min(window.innerWidth, (window.innerHeight * 16) / 9)} />
-      ) : doc.kind === 'gdoc' ? null : (
+      ) : doc.kind === 'gdoc' || doc.kind === 'sheet' ? null : (
         <img src={imageUrl(doc.probe, page)} alt="" />
       )}
       <div class="slideshow-hint">{t('{page} / {count} · Esc to exit', { page: page + 1, count: doc.pageCount.value })}</div>

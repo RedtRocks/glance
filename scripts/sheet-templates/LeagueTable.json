@@ -1,0 +1,37 @@
+{
+  "today": "2026-11-13",
+  "ops": [
+    { "op": "set", "sheet": "Fixtures", "range": "J6:J33", "formula": "=IF(OR(F6=\"\",H6=\"\"),\"TO PLAY\",IF(F6>H6,\"H\",IF(F6<H6,\"A\",\"D\")))" },
+    { "op": "addValidation", "sheet": "Fixtures", "range": "F6:F33", "rule": { "type": "whole", "min": 0, "max": 30, "allowBlank": true, "prompt": "Home goals, a whole number" } },
+    { "op": "addValidation", "sheet": "Fixtures", "range": "H6:H33", "rule": { "type": "whole", "min": 0, "max": 30, "allowBlank": true, "prompt": "Away goals, a whole number" } },
+    { "op": "addValidation", "sheet": "Fixtures", "range": "E6:E33", "rule": { "type": "list", "source": "Table!$B$7:$B$14" } },
+    { "op": "addValidation", "sheet": "Fixtures", "range": "I6:I33", "rule": { "type": "list", "source": "Table!$B$7:$B$14" } },
+    { "op": "addValidation", "sheet": "Fixtures", "range": "D6:D33", "rule": { "type": "list", "values": ["P1", "P2"] } },
+    { "op": "addCf", "sheet": "Fixtures", "range": "J6:J33", "rule": { "type": "cellIs", "operator": "equal", "values": ["TO PLAY"], "style": { "font": { "color": "#8a93a6", "italic": true } } } },
+    { "op": "addCf", "sheet": "Fixtures", "range": "F6:H33", "rule": { "type": "expression", "formula": "=AND(ISNUMBER($F6),ABS($F6-$H6)>=5)", "style": { "font": { "bold": true, "color": "#c8f169" } } } },
+
+    { "op": "set", "sheet": "Table", "range": "C7:C14", "formula": "=COUNTIFS(Fixtures!$E$6:$E$33,B7,Fixtures!$J$6:$J$33,\"<>TO PLAY\")+COUNTIFS(Fixtures!$I$6:$I$33,B7,Fixtures!$J$6:$J$33,\"<>TO PLAY\")" },
+    { "op": "set", "sheet": "Table", "range": "D7:D14", "formula": "=COUNTIFS(Fixtures!$E$6:$E$33,B7,Fixtures!$J$6:$J$33,\"H\")+COUNTIFS(Fixtures!$I$6:$I$33,B7,Fixtures!$J$6:$J$33,\"A\")" },
+    { "op": "set", "sheet": "Table", "range": "E7:E14", "formula": "=COUNTIFS(Fixtures!$E$6:$E$33,B7,Fixtures!$J$6:$J$33,\"D\")+COUNTIFS(Fixtures!$I$6:$I$33,B7,Fixtures!$J$6:$J$33,\"D\")" },
+    { "op": "set", "sheet": "Table", "range": "F7:F14", "formula": "=C7-D7-E7" },
+    { "op": "set", "sheet": "Table", "range": "G7:G14", "formula": "=SUMIF(Fixtures!$E$6:$E$33,B7,Fixtures!$F$6:$F$33)+SUMIF(Fixtures!$I$6:$I$33,B7,Fixtures!$H$6:$H$33)" },
+    { "op": "set", "sheet": "Table", "range": "H7:H14", "formula": "=SUMIF(Fixtures!$E$6:$E$33,B7,Fixtures!$H$6:$H$33)+SUMIF(Fixtures!$I$6:$I$33,B7,Fixtures!$F$6:$F$33)" },
+    { "op": "set", "sheet": "Table", "range": "I7:I14", "formula": "=G7-H7", "style": { "numFmt": "+0;−0;0" } },
+    { "op": "set", "sheet": "Table", "range": "J7:J14", "formula": "=D7*3+E7" },
+    { "op": "set", "sheet": "Table", "range": "A7:A14", "formula": "=1+COUNTIF($J$7:$J$14,\">\"&J7)+COUNTIFS($J$7:$J$14,J7,$I$7:$I$14,\">\"&I7)+COUNTIFS($J$7:$J$14,J7,$I$7:$I$14,I7,$G$7:$G$14,\">\"&G7)" },
+    { "op": "addCf", "sheet": "Table", "range": "A7:J14", "rule": { "type": "expression", "formula": "=$A7<=4", "style": { "fill": "#1f3b2a" } } },
+    { "op": "addCf", "sheet": "Table", "range": "I7:I14", "rule": { "type": "cellIs", "operator": "lessThan", "values": [0], "style": { "font": { "color": "#ff7a6b" } } } },
+    { "op": "addCf", "sheet": "Table", "range": "J7:J14", "rule": { "type": "dataBar", "color": "#c8f169", "min": 0, "max": 21 } },
+
+    { "op": "set", "sheet": "Squads", "range": "B2:E20", "values": [["PLAYER", "TEAM", "GOALS", "PHONE"], ["Tom Price", "Old Mill Wanderers", 14, "07700 900 101"], ["Kowal", "Old Mill Wanderers", 11, "07700 900 102"], ["Rees", "Old Mill Wanderers", 5, "07700 900 103"], ["Ella Vance", "The Night Owls", 11, "07700 900 201"], ["Achebe", "The Night Owls", 9, "07700 900 202"], ["Moss", "The Night Owls", 6, "07700 900 203"], ["Sean Doyle", "Kiln Lane FC", 9, "07700 900 301"], ["Mensah", "Kiln Lane FC", 7, "07700 900 302"], ["Pryce", "Kiln Lane FC", 6, "07700 900 303"], ["Dami Okafor", "Riverside Rovers", 7, "07700 900 401"], ["Bright", "Riverside Rovers", 6, "07700 900 402"], ["Rosa Finch", "Hatters United", 10, "07700 900 501"], ["Osei", "Hatters United", 5, "07700 900 502"], ["Quinn", "Late Kick-Offs", 6, "07700 900 601"], ["Patel", "Late Kick-Offs", 3, "07700 900 602"], ["Reid", "Ashgrove Athletic", 6, "07700 900 701"], ["Byrne", "Ashgrove Athletic", 4, "07700 900 702"], ["Murray", "Brew Crew", 6, "07700 900 801"]] },
+    { "op": "set", "sheet": "Squads", "cell": "B22", "value": "Goals by team" },
+    { "op": "set", "sheet": "Squads", "range": "C22:D22", "values": [["Old Mill Wanderers", null]] },
+    { "op": "set", "sheet": "Squads", "cell": "D22", "formula": "=SUMIF(C3:C20,C22,D3:D20)" },
+    { "op": "format", "sheet": "Squads", "range": "B2:E2", "style": { "bold": true, "fill": "#0e1726", "color": "#c8f169" } },
+    { "op": "addValidation", "sheet": "Squads", "range": "C3:C40", "rule": { "type": "list", "source": "Table!$B$7:$B$14" } },
+    { "op": "addValidation", "sheet": "Squads", "range": "C22", "rule": { "type": "list", "source": "Table!$B$7:$B$14" } },
+    { "op": "colWidth", "sheet": "Squads", "cols": "B:C", "width": 180 },
+    { "op": "colWidth", "sheet": "Squads", "cols": "E", "width": 130 },
+    { "op": "activate", "sheet": "Table" }
+  ]
+}

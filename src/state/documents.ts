@@ -17,6 +17,7 @@ import { releaseMedia } from './deckMedia'
 import { emptyDoc, type Doc as GDocData } from '../core/doc/model'
 import { applyDocOps, type DocApplyResult, type DocOp } from '../core/doc/ops'
 import { findLook } from './docLooks'
+import type { SheetDoc } from './sheetDoc'
 
 let seq = 0
 const nextId = (): string => `doc${++seq}`
@@ -25,7 +26,7 @@ export type Zoom = number | 'fit-width' | 'fit-page'
 export type ViewMode = 'continuous' | 'single' | 'two'
 export type SidebarMode = 'thumbnails' | 'toc' | 'notes' | 'bookmarks' | 'none'
 
-abstract class BaseDoc {
+export abstract class BaseDoc {
   readonly id = nextId()
   readonly name: Signal<string>
   /** On-disk path; null for documents that must be saved with Save As. */
@@ -526,7 +527,7 @@ export class GDoc extends BaseDoc {
   }
 }
 
-export type Doc = PdfDoc | ImageDoc | NoticeDoc | ModelDoc | PreviewDoc | DeckDoc | GDoc
+export type Doc = PdfDoc | ImageDoc | NoticeDoc | ModelDoc | PreviewDoc | DeckDoc | GDoc | SheetDoc
 
 export const docs = signal<Doc[]>([])
 export const activeId = signal<string | null>(null)

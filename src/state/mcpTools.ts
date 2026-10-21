@@ -34,6 +34,7 @@ import { editHandlers } from './aiEdit'
 import { deckHandlers } from './deckTools'
 import { planHandlers } from './planTools'
 import { docHandlers } from './docTools'
+import { sheetHandlers } from './sheetTools'
 import { toast } from './ui'
 import { t } from '../i18n'
 
@@ -678,5 +679,6 @@ export const handlers: Record<string, ToolHandler> = {
   ...editHandlers,
   ...deckHandlers,
   ...planHandlers,
-  ...docHandlers
+  ...docHandlers,
+  ...sheetHandlers
 }

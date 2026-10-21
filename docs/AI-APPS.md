@@ -52,7 +52,11 @@ On Linux, the .deb and .rpm install `/usr/bin/glance-mcp`. The Flatpak's command
 | `glance_doc_outline`, `glance_doc_edit` | Read a document (sections, text boxes with how many characters fit, table rows, blocks) and change it as one step you can keep or undo |
 | `glance_doc_check`, `glance_doc_render` | List what to fix in a document, and look at its pages as pictures |
 | `glance_word_replace` | Replaces text in a Word file, writing a new file |
-| `glance_export` | Saves a deck as PDF, PowerPoint or PNG pictures, or a document as PDF, Word or PNG pictures |
+| `glance_create` with kind `spreadsheet` | Makes a workbook, empty or from one of the spreadsheet templates `glance_templates` lists, and opens it in Glance |
+| `glance_sheet_read` | Reads a spreadsheet: its sheets, tables and headers, drop-downs and rules, charts, the user's selection and the cells with their values and formulas |
+| `glance_sheet_edit` | Changes a spreadsheet: cells, formulas, rows, columns, sheets, formats, rules, drop-downs, charts, sort, filter and frozen panes, as one step you can undo |
+| `glance_sheet_check`, `glance_sheet_render` | List formula errors and broken rules in a spreadsheet, and look at a sheet as a picture |
+| `glance_export` | Saves a deck as PDF, PowerPoint or PNG pictures, a document as PDF, Word or PNG pictures, or a spreadsheet as .xlsx, .csv, PDF or PNG |
 | `glance_plan` | Shows the AI's plan for a new file on Glance's Outline screen, for you to change before it builds |
 
 ### Skills and prompts
