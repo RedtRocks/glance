@@ -7,7 +7,7 @@
 import { cellName, inRange, parseRange, type Range } from '../core/sheet/address'
 import { CfEngine, type CfLook } from '../core/sheet/cf'
 import { SheetLayout } from '../core/sheet/layout'
-import { DEFAULT_FONT, isError, styleAt, type Cell, type Font, type Sheet, type Style, type Workbook, type IconSetName, type BorderSide } from '../core/sheet/model'
+import { DEFAULT_FONT, isError, styleAt, type Cell, type Font, type Sheet, type Style, type Workbook, type IconSetName, type BorderSide, type Run } from '../core/sheet/model'
 import { formatValue } from '../core/sheet/format'
 import { chartData, drawChart, roundRect, type Ctx } from './charts'
 
@@ -410,7 +410,17 @@ function drawText(ctx: Ctx, cell: Cell, st: Style | undefined, rc: { x: number; 
   const baseFont = st?.font
   const color = fmt.color ?? baseFont?.color ?? DEFAULT_FONT.color
   // Runs: rich text keeps each run's font; others take the cell's.
-  const runs = cell.rich?.length && !cell.f ? cell.rich.map((r) => ({ text: r.text, f: { ...baseFont, ...r.font } })) : [{ text: fmt.text, f: baseFont ?? {} }]
+  const runs = cell.rich?.length && !cell.f ? cell.rich.map((r) => ({ text: r.text, f: { ...baseFont, ...r.font } })) : [{ text: fmt.text, f: { ...baseFont, ...(fmt.color ? { color: fmt.color } : {}) } }]
+  // A tile's heading lines above the value and its note below (Glance's own; Excel shows the value).
+  if (cell.label && !cell.rich?.length) {
+    const lab = (rs: Run[] | undefined) => (rs ?? []).map((r) => ({ text: r.text, f: { ...baseFont, ...r.font } }))
+    const above = lab(cell.label.above)
+    const below = lab(cell.label.below)
+    if (above.length) runs[0].text = '\n' + runs[0].text
+    if (below.length) below[0].text = '\n' + below[0].text.replace(/^\n/, '')
+    runs.unshift(...above)
+    runs.push(...below)
+  }
   const lineH = (f: Font) => (((f.size ?? DEFAULT_FONT.size) * 4) / 3) * 1.22
   const avail = rc.w - PAD * 2 - indent - iconW
   // Split into lines on newlines, and on width when wrapping.

@@ -13,14 +13,14 @@ type Entry = string
 /** Menu names and group headings, marked for translation (they're shown with t()). */
 export const MENU_TEXT = [
   msg('File'), msg('Edit'), msg('View'), msg('Go'), msg('Pages'), msg('Markup'), msg('Image'), msg('Help'),
-  msg('Sidebar'), msg('Page layout')
+  msg('Sidebar'), msg('Page layout'), msg('Format'), msg('Data')
 ]
 
 const HELP: Entry[] = ['help.feedback', 'help.github', '-', 'help.updates', 'help.about']
 const ZOOM: Entry[] = ['view.zoomIn', 'view.zoomOut', 'view.actualSize', 'view.zoomToFit']
 
 /** Each kind of file gets its own menu bar, like separate apps would. */
-export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'preview' | 'deck' | 'notice', Record<string, Entry[]>> = {
+export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'preview' | 'deck' | 'sheet' | 'notice', Record<string, Entry[]>> = {
   none: {
     File: ['file.open', 'file.new', 'file.newFromClipboard', 'file.scan', 'file.newWindow', '-', 'file.batch', 'file.collage', '-', 'file.makeDefault', 'file.settings'],
     Help: HELP
@@ -77,6 +77,15 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'preview' | 'dec
     Slide: ['deck.newSlide', 'deck.duplicateSlide', 'deck.hideSlide', '-', 'deck.moveUp', 'deck.moveDown'],
     View: ['view.hideSidebar', 'view.thumbnails', '-', ...ZOOM, '-', 'view.collapseTabs', 'view.fullscreen', 'view.slideshow', '-', 'view.askAi'],
     Go: ['go.previous', 'go.next', 'go.first', 'go.last', '-', 'go.nextTab', 'go.previousTab'],
+    Help: HELP
+  },
+  sheet: {
+    File: ['file.open', 'file.openWith', 'file.new', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.versions', '-', 'sheet.exportXlsx', 'sheet.exportCsv', 'sheet.exportPdf', 'sheet.exportPng', '-', 'file.print', '-', 'file.close', '-', 'file.makeDefault', 'file.settings'],
+    Edit: ['edit.undo', 'edit.redo', '-', 'sheet.clear', '-', 'sheet.insertRowAbove', 'sheet.insertRowBelow', 'sheet.insertColLeft', 'sheet.insertColRight', 'sheet.deleteRows', 'sheet.deleteCols'],
+    Format: ['sheet.bold', 'sheet.italic', '-', 'sheet.alignLeft', 'sheet.alignCenter', 'sheet.alignRight', 'sheet.wrap', 'sheet.merge', '-', 'sheet.fmtGeneral', 'sheet.fmtNumber', 'sheet.fmtCurrency', 'sheet.fmtPercent', 'sheet.fmtDate'],
+    Data: ['sheet.sortAsc', 'sheet.sortDesc', 'sheet.filter', 'sheet.freeze', '-', 'sheet.addSheet', 'sheet.renameSheet', 'sheet.deleteSheet', '-', 'sheet.check'],
+    View: [...ZOOM, '-', 'view.collapseTabs', 'view.fullscreen', '-', 'view.askAi'],
+    Go: ['go.nextTab', 'go.previousTab'],
     Help: HELP
   },
   notice: {

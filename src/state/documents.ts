@@ -14,6 +14,7 @@ import { emptyDeck, slideIdMaker, type Deck } from '../core/deck/model'
 import { applyOps, type ApplyResult, type DeckOp } from '../core/deck/ops'
 import { findDesign } from './designs'
 import { releaseMedia } from './deckMedia'
+import type { SheetDoc } from './sheetDoc'
 
 let seq = 0
 const nextId = (): string => `doc${++seq}`
@@ -22,7 +23,7 @@ export type Zoom = number | 'fit-width' | 'fit-page'
 export type ViewMode = 'continuous' | 'single' | 'two'
 export type SidebarMode = 'thumbnails' | 'toc' | 'notes' | 'bookmarks' | 'none'
 
-abstract class BaseDoc {
+export abstract class BaseDoc {
   readonly id = nextId()
   readonly name: Signal<string>
   /** On-disk path; null for documents that must be saved with Save As. */
@@ -442,7 +443,7 @@ export class DeckDoc extends BaseDoc {
   }
 }
 
-export type Doc = PdfDoc | ImageDoc | NoticeDoc | ModelDoc | PreviewDoc | DeckDoc
+export type Doc = PdfDoc | ImageDoc | NoticeDoc | ModelDoc | PreviewDoc | DeckDoc | SheetDoc
 
 export const docs = signal<Doc[]>([])
 export const activeId = signal<string | null>(null)

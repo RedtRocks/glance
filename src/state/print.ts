@@ -51,6 +51,11 @@ export async function printDoc(doc: Doc | null): Promise<void> {
       const proxy = await openPdf(await exportBytes(doc, 'pdf'))
       await printProxy(proxy, root)
       await proxy.loadingTask.destroy()
+    } else if (doc.kind === 'sheet') {
+      const { sheetBytes } = await import('./sheet')
+      const proxy = await openPdf(await sheetBytes(doc, 'pdf'))
+      await printProxy(proxy, root)
+      await proxy.loadingTask.destroy()
     } else if (doc instanceof ImageDoc && doc.editable && (doc.raster.peek() || doc.markup.peek().length || doc.redactions.peek().length)) {
       // Print what would be saved: edits, markup and redactions burned in.
       const png = await engine.encodePng(await engine.flatten(doc))

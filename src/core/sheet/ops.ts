@@ -13,6 +13,20 @@ import { validationProblem } from './validate'
 
 export class SheetError extends Error {}
 
+/** The values a drop-down's source range holds (like "Lists!B3:B5"), read from `home` when unqualified. */
+export function listValues(sheets: Sheet[], home: Sheet, ref: string): string[] {
+  const { sheet, ref: inner } = splitSheet(ref.replace(/^=/, ''))
+  const src = sheet ? sheets.find((x) => x.name.toLowerCase() === sheet.replace(/^'|'$/g, '').toLowerCase()) : home
+  const r = parseRange(inner.replace(/\$/g, ''))
+  if (!src || !r) return []
+  const out: string[] = []
+  for (const a of cellsOf(r, Math.min(r.r2, r.r1 + 2000), Math.min(r.c2, r.c1 + 50))) {
+    const v = src.cells[cellName(a.r, a.c)]?.v
+    if (v !== null && v !== undefined && v !== '' && !isError(v)) out.push(String(v))
+  }
+  return out
+}
+
 /** Style in the flat shape people and AI apps write. */
 export interface StyleInput {
   bold?: boolean
@@ -94,7 +108,7 @@ export interface ApplyResult {
 
 export interface ApplyOptions extends RecalcOptions {
   /** Media keys the workbook has, so addImage can check them. */
-  media?: Set<string>
+  media?: { has(key: string): boolean }
   /** Typed dates are day first (03/10 is 3 October). Default true. */
   dayFirst?: boolean
 }
@@ -551,16 +565,7 @@ class Draft {
   }
 
   private listValues(s: Sheet, ref: string): string[] {
-    const { sheet, ref: inner } = splitSheet(ref.replace(/^=/, ''))
-    const src = sheet ? this.sheets.find((x) => x.name.toLowerCase() === sheet.toLowerCase()) : s
-    const r = parseRange(inner)
-    if (!src || !r) return []
-    const out: string[] = []
-    for (const a of cellsOf(r, Math.min(r.r2, r.r1 + 2000), Math.min(r.c2, r.c1 + 50))) {
-      const v = src.cells[cellName(a.r, a.c)]?.v
-      if (v !== null && v !== undefined && !isError(v)) out.push(String(v))
-    }
-    return out
+    return listValues(this.sheets, s, ref)
   }
 
   private clear(op: Extract<SheetOp, { op: 'clear' }>): void {

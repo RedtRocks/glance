@@ -21,6 +21,7 @@ type Editable = Extract<Doc, { historyVersion: unknown }>
 function fingerprint(d: Editable): Fingerprint {
   if (d instanceof ImageDoc) return [d.raster.peek(), d.markup.peek(), d.redactions.peek()]
   if (d instanceof DeckDoc) return [d.deck.peek()]
+  if (d.kind === 'sheet') return [d.wb.peek()]
   return d.formsEdited ? null : [d.bytes, d.markup.peek(), d.redactions.peek()]
 }
 
@@ -46,7 +47,7 @@ const editorOpen = (): boolean => focused('.text-box.editing, .note-editor')
 
 let running: Autosaver<Editable> | null = null
 
-const editable = (d: Doc): d is Editable => d.kind === 'pdf' || d.kind === 'image' || d.kind === 'deck'
+const editable = (d: Doc): d is Editable => d.kind === 'pdf' || d.kind === 'image' || d.kind === 'deck' || d.kind === 'sheet'
 
 /**
  * Saves edited documents now rather than when their countdown ends (all of them,
