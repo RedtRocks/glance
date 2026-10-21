@@ -924,6 +924,44 @@ export async function aiAppDisconnect(id: string): Promise<void> {
   await invoke('ai_app_disconnect', { id })
 }
 
+// Skills (src-tauri/src/skills.rs, src/state/skills.ts)
+
+/** A folder in the skills folder: its SKILL.md and the other text files in it, by relative path. */
+export interface UserSkillFolder {
+  folder: string
+  text: string
+  files: Record<string, string>
+}
+
+/** The skills the person added to Glance's skills folder. None in the browser version. */
+export async function userSkills(): Promise<UserSkillFolder[]> {
+  return isTauri ? invoke<UserSkillFolder[]>('skills_user_list') : []
+}
+
+/** The skills folder in Glance's app data, made if it doesn't exist yet. */
+export async function skillsFolder(): Promise<string> {
+  return invoke<string>('skills_folder')
+}
+
+/**
+ * Writes skills where other agents find them: one folder per skill in Claude Code's skills
+ * folder (~/.claude/skills), and `note` in Codex's AGENTS.md (~/.codex/AGENTS.md), replacing
+ * what Glance wrote there before. Returns the files written.
+ */
+export async function installSkills(skills: { name: string; text: string; files: Record<string, string> }[], note: string): Promise<string[]> {
+  return invoke<string[]>('skills_install', { skills, note })
+}
+
+/** Removes what installSkills wrote. */
+export async function uninstallSkills(): Promise<void> {
+  await invoke('skills_uninstall')
+}
+
+/** Whether Glance's skills are installed for other agents. */
+export async function skillsInstalled(): Promise<boolean> {
+  return isTauri ? invoke<boolean>('skills_installed') : false
+}
+
 // The Ask AI sidebar's agents (see src-tauri/src/agents.rs and src/state/ai)
 
 export interface AgentInfo {

@@ -1,0 +1,40 @@
+{
+  "prompts": [
+    {
+      "name": "create-deck",
+      "title": "Make slides in Glance",
+      "description": "Plans and builds a slide deck in Glance from a request, with a designed template, the slide-design skill and Glance's check.",
+      "arguments": [
+        { "name": "request", "description": "What the slides are about and who they are for.", "required": true },
+        { "name": "template", "description": "A template id from glance_templates, if the person chose one.", "required": false }
+      ]
+    },
+    {
+      "name": "create-document",
+      "title": "Make a document in Glance",
+      "description": "Plans and writes a Glance document (a letter, report, CV, newsletter and so on) from a request, with a template, the document-writing skill and Glance's check.",
+      "arguments": [
+        { "name": "request", "description": "What the document is and who it is for.", "required": true },
+        { "name": "template", "description": "A template id from glance_templates, if the person chose one.", "required": false }
+      ]
+    },
+    {
+      "name": "create-spreadsheet",
+      "title": "Make a spreadsheet in Glance",
+      "description": "Plans and builds a spreadsheet (.xlsx) in Glance from a request, with live formulas, the spreadsheet-building skill and Glance's check.",
+      "arguments": [
+        { "name": "request", "description": "What the spreadsheet tracks or works out.", "required": true },
+        { "name": "template", "description": "A template id from glance_templates, if the person chose one.", "required": false }
+      ]
+    },
+    {
+      "name": "edit-file",
+      "title": "Change a file in Glance",
+      "description": "Makes a targeted change to a deck, document or spreadsheet in Glance: only what is asked, in the file's own look, then checks and looks at it.",
+      "arguments": [
+        { "name": "request", "description": "The change to make.", "required": true },
+        { "name": "path", "description": "The file's absolute path. Default: the file open in Glance.", "required": false }
+      ]
+    }
+  ]
+}

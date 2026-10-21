@@ -1,5 +1,6 @@
 /**
- * A Model Context Protocol server (tools only), independent of where messages come from.
+ * A Model Context Protocol server (tools, plus prompts and resources when given guidance),
+ * independent of where messages come from.
  *
  * AI apps reach Glance through glance-mcp (src-tauri/mcp-bridge), which relays MCP's
  * JSON-RPC messages unchanged; src/state/mcp.ts feeds them to handle() and sends back
@@ -28,6 +29,16 @@ export interface ToolDefinition {
 }
 
 export type ToolHandler = (args: Record<string, unknown>) => Promise<ToolResult | string>
+
+/** Prompts and resources: Glance's skills and the prompts that use them (see core/mcp/guidance.ts). */
+export interface Guidance {
+  prompts(): unknown[]
+  /** Throws RpcError for an unknown prompt. */
+  getPrompt(name: string, args: Record<string, string>): Promise<{ description?: string; messages: unknown[] }>
+  resources(): Promise<unknown[]>
+  /** Throws RpcError for an unknown resource. */
+  readResource(uri: string): Promise<{ contents: unknown[] }>
+}
 
 /** A tool's mistake the AI app should see as a failed call (not a protocol error). */
 export class ToolError extends Error {}
@@ -87,7 +98,8 @@ export class McpServer {
     private readonly definitions: ToolDefinition[],
     handlers: Record<string, ToolHandler>,
     /** Returns why tools are unavailable right now (the user turned AI access off), or null. */
-    private readonly blocked: () => string | null = () => null
+    private readonly blocked: () => string | null = () => null,
+    private readonly guidance?: Guidance
   ) {
     for (const d of definitions) {
       const h = handlers[d.name]
@@ -139,7 +151,7 @@ export class McpServer {
         const asked = typeof params.protocolVersion === 'string' ? params.protocolVersion : ''
         return {
           protocolVersion: PROTOCOL_VERSIONS.includes(asked) ? asked : PROTOCOL_VERSIONS[0],
-          capabilities: { tools: { listChanged: false } },
+          capabilities: { tools: { listChanged: false }, ...(this.guidance ? { prompts: { listChanged: false }, resources: { listChanged: false } } : {}) },
           serverInfo: { name: this.info.name, title: this.info.title, version: this.info.version },
           ...(this.info.instructions ? { instructions: this.info.instructions } : {})
         }
@@ -152,11 +164,20 @@ export class McpServer {
         return this.call(params)
       // Asked by some apps even when not advertised; empty beats an error.
       case 'resources/list':
-        return { resources: [] }
+        return { resources: this.guidance ? await this.guidance.resources() : [] }
       case 'resources/templates/list':
         return { resourceTemplates: [] }
+      case 'resources/read': {
+        if (!this.guidance || typeof params.uri !== 'string') throw new RpcError(INVALID_PARAMS, `Unknown resource: ${String(params.uri)}`)
+        return this.guidance.readResource(params.uri)
+      }
       case 'prompts/list':
-        return { prompts: [] }
+        return { prompts: this.guidance ? this.guidance.prompts() : [] }
+      case 'prompts/get': {
+        if (!this.guidance || typeof params.name !== 'string') throw new RpcError(INVALID_PARAMS, `Unknown prompt: ${String(params.name)}`)
+        const args = params.arguments && typeof params.arguments === 'object' ? (params.arguments as Record<string, unknown>) : {}
+        return this.guidance.getPrompt(params.name, Object.fromEntries(Object.entries(args).map(([k, v]) => [k, String(v ?? '')])))
+      }
       default:
         throw new RpcError(METHOD_NOT_FOUND, `Method not found: ${method}`)
     }
