@@ -48,7 +48,8 @@ export const OPEN_FILTERS: platform.FileFilter[] = [
       'cr2', 'cr3', 'crw', 'nef', 'nrw', 'arw', 'srf', 'sr2', 'raf', 'orf', 'rw2', 'raw', 'dng', 'pef',
       'srw', 'x3f', 'erf', 'mef', 'mos', 'mrw', 'kdc', 'dcr', '3fr', 'fff', 'iiq', 'rwl', 'gpr',
       'glb', 'gltf', 'obj', 'stl', 'ply', 'fbx', 'usdz', 'usda', 'usdc', 'dae', '3mf', '3ds',
-      ...PREVIEWS
+      ...PREVIEWS,
+      'gdeck', 'gdoc'
     ]
   },
   { name: msg('PDF documents'), extensions: ['pdf', 'ai'] },

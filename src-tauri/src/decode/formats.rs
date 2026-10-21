@@ -15,6 +15,8 @@ pub enum Kind {
     Preview,
     /// A Glance deck (.gdeck), read and drawn by the frontend.
     Deck,
+    /// A Glance document (.gdoc), read and drawn by the frontend.
+    Gdoc,
     Unsupported,
 }
 
@@ -76,6 +78,7 @@ pub fn classify(path: &Path, head: &[u8]) -> Kind {
         "xps" | "oxps" => Kind::Xps,
         "cbz" => Kind::Archive,
         "gdeck" => Kind::Deck,
+        "gdoc" => Kind::Gdoc,
         _ if PREVIEWS.contains(&e) => Kind::Preview,
         _ if BROWSER_IMAGES.contains(&e) || BACKEND_IMAGES.contains(&e) || RAW_IMAGES.contains(&e) => {
             Kind::Image
@@ -137,6 +140,7 @@ mod tests {
         assert_eq!(classify(Path::new("a.oxps"), b""), Kind::Xps);
         assert_eq!(classify(Path::new("a.cbz"), b""), Kind::Archive);
         assert_eq!(classify(Path::new("Bake Sale.GDECK"), b"PK\x03\x04"), Kind::Deck);
+        assert_eq!(classify(Path::new("Essay.gdoc"), b"PK\x03\x04"), Kind::Gdoc);
         assert_eq!(classify(Path::new("a.xyz"), b"nothing"), Kind::Unsupported);
         assert_eq!(classify(Path::new("noext"), b"\x89PNG\r\n\x1a\n"), Kind::Image);
     }

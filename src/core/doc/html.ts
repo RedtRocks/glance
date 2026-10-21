@@ -16,6 +16,8 @@ export interface DocHtmlOptions {
   resolveSrc: (src: string) => string | null
   /** Hint text for empty text boxes; leave it out to draw nothing there (exports). */
   placeholder?: (sample: string) => string
+  /** Only what isn't text, for the PDF export, which draws the text itself. */
+  artOnly?: boolean
 }
 
 const px = (n: number) => `${Math.round(n * 100) / 100}px`
@@ -62,8 +64,9 @@ function itemHtml(it: Item, board: DocBoard | undefined, opts: DocHtmlOptions): 
 export function pageHtml(page: PageLayout, board: DocBoard | undefined, opts: DocHtmlOptions): string {
   const d = page.design
   const under = (it: Item) => it.kind === 'box' && !!it.box.under
-  const items = page.items.filter((it) => !under(it)).map((it) => itemHtml(it, board, opts)).join('')
-  const below = page.items.filter(under).map((it) => itemHtml(it, board, opts)).join('')
+  const shown = opts.artOnly ? page.items.filter((it) => it.kind !== 'text' && it.kind !== 'box') : page.items
+  const items = shown.filter((it) => !under(it)).map((it) => itemHtml(it, board, opts)).join('')
+  const below = shown.filter(under).map((it) => itemHtml(it, board, opts)).join('')
   const style = `position:relative;overflow:hidden;width:${PAGE_W}px;height:${PAGE_H}px;background:${page.bg}`
   return `<div class="doc-page" data-section="${escapeHtml(page.section)}" data-page="${page.number}" style="${escapeHtml(style)}">${d?.art ?? ''}${below}${d?.over ?? ''}${items}</div>`
 }
