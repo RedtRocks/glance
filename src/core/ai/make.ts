@@ -34,3 +34,27 @@ export function templatePrompt(request: string, template: string, tab: string): 
     "If you don't have facts you need, leave a clear placeholder like [date] rather than inventing them, and don't leave the template's sample names, dates or numbers in."
   ].join('\n')
 }
+
+/** The first message for a new document, open in Glance as `tab` in a look's plain pages. */
+export function docPrompt(request: string, tab: string): string {
+  return [
+    `Write a document for me in Glance: ${request.trim()}`,
+    '',
+    `A new document is open in Glance (tab ${tab}). Read it with glance_doc_outline and fill it with glance_doc_edit; don't write files, code or a .docx yourself.`,
+    'First plan it: who it is for, what they should take away, and its headings. Write real paragraphs, lists and tables as blocks; the look decides fonts and colours, so name its styles rather than describing formatting. Pick a better look with setLook if another fits the request (glance_templates lists them).',
+    'Then call glance_doc_check and fix every finding, look at the pages with glance_doc_render and fix anything that looks wrong, and finish by telling me in a sentence or two what you made.',
+    "If you don't have facts you need, use clear placeholders like [date] rather than inventing them."
+  ].join('\n')
+}
+
+/** The first message for a document started from a template, open in Glance as `tab`. */
+export function docTemplatePrompt(request: string, template: string, tab: string): string {
+  return [
+    `Make a document for me in Glance from the ${template} template: ${request.trim()}`,
+    '',
+    `The template is open in Glance (tab ${tab}). Read it with glance_doc_outline and change it with glance_doc_edit; don't write files, code or a .docx yourself.`,
+    "Its pages hold the template's sample text. On fixed pages, set every text box (setText) and table row with real words for my request, keeping each box within its maxChars. On flowing pages, replace the sample blocks with my content, using the look's styles. Add pages with the template's designs (addSection) where the request needs more.",
+    'Then call glance_doc_check and fix every finding, look at the pages with glance_doc_render and fix anything that looks wrong, and finish by telling me in a sentence or two what you made.',
+    "If you don't have facts you need, leave a clear placeholder like [date] rather than inventing them, and don't leave the template's sample names, dates or numbers in."
+  ].join('\n')
+}

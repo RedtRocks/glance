@@ -6,7 +6,7 @@
  * path), and for pending redactions (save() checks).
  */
 import { effect } from '@preact/signals'
-import { activeId, DeckDoc, docs, ImageDoc, type Doc } from './documents'
+import { activeId, DeckDoc, GDoc, docs, ImageDoc, type Doc } from './documents'
 import { settings } from './settings'
 import { dialog, toast } from './ui'
 import { save } from './actions'
@@ -21,6 +21,7 @@ type Editable = Extract<Doc, { historyVersion: unknown }>
 function fingerprint(d: Editable): Fingerprint {
   if (d instanceof ImageDoc) return [d.raster.peek(), d.markup.peek(), d.redactions.peek()]
   if (d instanceof DeckDoc) return [d.deck.peek()]
+  if (d instanceof GDoc) return [d.doc.peek()]
   return d.formsEdited ? null : [d.bytes, d.markup.peek(), d.redactions.peek()]
 }
 
@@ -46,7 +47,7 @@ const editorOpen = (): boolean => focused('.text-box.editing, .note-editor')
 
 let running: Autosaver<Editable> | null = null
 
-const editable = (d: Doc): d is Editable => d.kind === 'pdf' || d.kind === 'image' || d.kind === 'deck'
+const editable = (d: Doc): d is Editable => d.kind === 'pdf' || d.kind === 'image' || d.kind === 'deck' || d.kind === 'gdoc'
 
 /**
  * Saves edited documents now rather than when their countdown ends (all of them,

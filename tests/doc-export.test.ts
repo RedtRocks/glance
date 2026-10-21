@@ -81,3 +81,30 @@ describe('document to Word', () => {
     expect(styles).toContain('Heading2')
   })
 })
+
+describe('Word to a Glance document', () => {
+  it('reads headings, lists, tables and links back from a Word file, and says what is lost', async () => {
+    const { importDocx } = await import('../src/core/doc/importDocx')
+    const { board, doc } = await sample('essay')
+    const bytes = await docToDocx({ doc, board, media: new Map(), art: async () => null })
+    const r = await importDocx(bytes, 'essay', 'essay.plain')
+    const blocks = r.doc.sections[0].blocks!
+    const heading = blocks.find((b) => b.type === 'heading' && b.runs.map((x) => x.text).join('') === 'Exported heading')
+    expect(heading).toBeTruthy()
+    const list = blocks.find((b) => b.type === 'list' && b.ordered)
+    expect(list && list.type === 'list' && list.items.length).toBe(2)
+    expect(blocks.some((b) => b.type === 'table' && b.rows[1]?.[0] === 'Ada')).toBe(true)
+    expect(blocks.some((b) => b.type === 'paragraph' && b.runs.some((x) => x.href === 'https://example.org'))).toBe(true)
+    expect(r.lost.length).toBeGreaterThan(0)
+  })
+  it('replaces text in a Word file without touching the rest', async () => {
+    const { replaceInDocx } = await import('../src/core/doc/importDocx')
+    const { board, doc } = await sample('essay')
+    const bytes = await docToDocx({ doc, board, media: new Map(), art: async () => null })
+    const r = await replaceInDocx(bytes, 'Second point', 'Point two & more')
+    expect(r.count).toBe(1)
+    const xml = await (await JSZip.loadAsync(r.bytes)).file('word/document.xml')!.async('string')
+    expect(xml).toContain('Point two &amp; more')
+    expect(xml).not.toContain('Second point')
+  })
+})

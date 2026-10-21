@@ -23,6 +23,7 @@ import { bookmarksFor, setBookmarks } from './bookmarks'
 import { adjustColorOpen, adjustSizeOpen, exportOpen, imageSelection, straighten } from './imageState'
 import * as img from './imageActions'
 import * as deckActions from './deck'
+import * as gdocActions from './gdocCommands'
 
 export interface Command {
   id: string
@@ -48,6 +49,7 @@ export function stepZoom(current: number, dir: 1 | -1): number {
 
 const pdf = () => (activeDoc.value?.kind === 'pdf' ? activeDoc.value : null)
 const deck = () => (activeDoc.value?.kind === 'deck' ? activeDoc.value : null)
+const gdoc = () => (activeDoc.value?.kind === 'gdoc' ? activeDoc.value : null)
 const model = () => (activeDoc.value?.kind === 'model' ? activeDoc.value : null)
 /** The sidebar pane actually on screen, or null when hidden. */
 const sidebarShown = () => {
@@ -74,7 +76,7 @@ function zoom(dir: 1 | -1): void {
   const d = activeDoc.value
   if (!d || d.kind === 'notice') return
   if (d.kind === 'model') return void (d.viewRequest.value = { kind: 'zoom', dir })
-  if (d.kind === 'preview' || d.kind === 'deck') return void (d.zoom.value = stepZoom(d.zoom.value, dir))
+  if (d.kind === 'preview' || d.kind === 'deck' || d.kind === 'gdoc') return void (d.zoom.value = stepZoom(d.zoom.value, dir))
   const next = stepZoom(d.effectiveScale.value, dir)
   if (d.kind === 'pdf') d.zoom.value = next
   else d.zoom.value = next
@@ -84,7 +86,7 @@ function setZoom(mode: 'actual' | 'fit'): void {
   const d = activeDoc.value
   if (!d || d.kind === 'notice') return
   if (d.kind === 'model') return void (d.viewRequest.value = { kind: 'reset' })
-  if (d.kind === 'preview' || d.kind === 'deck') return void (d.zoom.value = 1)
+  if (d.kind === 'preview' || d.kind === 'deck' || d.kind === 'gdoc') return void (d.zoom.value = 1)
   if (d.kind === 'pdf') d.zoom.value = mode === 'actual' ? 1 : 'fit-page'
   else d.zoom.value = mode === 'actual' ? 1 : 'fit'
 }
@@ -124,14 +126,18 @@ export const COMMANDS: Command[] = [
   // File
   { id: 'file.open', label: msg('Open…'), keys: ['Ctrl+O'], run: actions.openWithDialog },
   { id: 'file.new', label: msg('New…'), keys: ['Ctrl+Shift+M'], run: () => void (makeOpen.value = true) },
+  { id: 'gdoc.exportPdf', label: msg('Export as PDF…'), run: () => gdocActions.exportAs(gdoc()!, 'pdf'), enabled: () => !!gdoc() },
+  { id: 'gdoc.exportDocx', label: msg('Export as Word…'), run: () => gdocActions.exportAs(gdoc()!, 'docx'), enabled: () => !!gdoc() },
+  { id: 'gdoc.exportPng', label: msg('Export as Pictures…'), run: () => gdocActions.exportAs(gdoc()!, 'png'), enabled: () => !!gdoc() },
+  { id: 'file.convertToGdoc', label: msg('Convert to Glance Document'), run: () => gdocActions.convertActive(), enabled: gdocActions.canConvert },
   { id: 'deck.exportPdf', label: msg('Export as PDF…'), run: () => deckActions.exportDeck(deck()!, 'pdf'), enabled: () => !!deck()?.pageCount.value },
   { id: 'deck.exportPptx', label: msg('Export as PowerPoint…'), run: () => deckActions.exportDeck(deck()!, 'pptx'), enabled: () => !!deck()?.pageCount.value },
   { id: 'deck.exportPng', label: msg('Export as Pictures…'), run: () => deckActions.exportDeck(deck()!, 'png'), enabled: () => !!deck()?.pageCount.value },
   { id: 'file.newFromClipboard', label: msg('New from Clipboard'), keys: ['Ctrl+N'], run: () => img.newFromClipboard(), enabled: () => platform.isTauri },
   { id: 'file.scan', label: msg('Import from Scanner…'), run: () => void (scanOpen.value = true), enabled: () => platform.scanAvailable },
   { id: 'file.newWindow', label: msg('New Window'), keys: ['Ctrl+Shift+N'], run: () => platform.openNewWindow([]) },
-  { id: 'file.save', label: msg('Save'), keys: ['Ctrl+S'], run: () => actions.save(), enabled: () => isPdf() || isImage() || !!deck() },
-  { id: 'file.saveAs', label: msg('Save As…'), keys: ['Ctrl+Shift+S'], run: () => actions.saveAs(), enabled: () => isPdf() || isImage() || !!deck() },
+  { id: 'file.save', label: msg('Save'), keys: ['Ctrl+S'], run: () => actions.save(), enabled: () => isPdf() || isImage() || !!deck() || !!gdoc() },
+  { id: 'file.saveAs', label: msg('Save As…'), keys: ['Ctrl+Shift+S'], run: () => actions.saveAs(), enabled: () => isPdf() || isImage() || !!deck() || !!gdoc() },
   {
     id: 'file.export',
     label: msg('Export…'),
@@ -160,8 +166,8 @@ export const COMMANDS: Command[] = [
   },
   { id: 'file.settings', label: msg('Settings'), keys: ['Ctrl+,'], run: () => void (settingsOpen.value = true) },
   // Edit
-  { id: 'edit.undo', label: msg('Undo'), keys: ['Ctrl+Z'], run: () => actions.undo(), enabled: () => !!(pdf() ?? image() ?? deck())?.history.canUndo },
-  { id: 'edit.redo', label: msg('Redo'), keys: ['Ctrl+Y', 'Ctrl+Shift+Z'], run: () => actions.redo(), enabled: () => !!(pdf() ?? image() ?? deck())?.history.canRedo },
+  { id: 'edit.undo', label: msg('Undo'), keys: ['Ctrl+Z'], run: () => actions.undo(), enabled: () => !!(pdf() ?? image() ?? deck() ?? gdoc())?.history.canUndo },
+  { id: 'edit.redo', label: msg('Redo'), keys: ['Ctrl+Y', 'Ctrl+Shift+Z'], run: () => actions.redo(), enabled: () => !!(pdf() ?? image() ?? deck() ?? gdoc())?.history.canRedo },
   { id: 'edit.selectAll', label: msg('Select All Pages'), keys: ['Ctrl+A'], run: () => actions.selectAllPages(), enabled: isPdf },
   { id: 'edit.find', label: msg('Find…'), keys: ['Ctrl+F'], run: () => void (findOpen.value = true), enabled: isPdf },
   { id: 'edit.insertBlank', label: msg('Insert Blank Page'), run: () => actions.insertBlankPage(), enabled: isPdf },
@@ -188,8 +194,10 @@ export const COMMANDS: Command[] = [
       if (d && d.selection.peek().length) return actions.deletePages()
       const k = deck()
       if (k) return deckActions.deleteSlides(k)
+      const g = gdoc()
+      if (g) return gdocActions.deleteBlock(g)
     },
-    enabled: () => isPdf() || isImage() || !!deck()
+    enabled: () => isPdf() || isImage() || !!deck() || !!gdoc()?.selection.value?.block
   },
   { id: 'edit.invertSelection', label: msg('Invert Selection'), keys: ['Ctrl+Shift+I'], run: () => void img.invertSelection(image()!), enabled: () => isImage() && !!imageSelection.value },
   { id: 'edit.deletePages', label: msg('Delete Selected Pages'), run: () => actions.deletePages(), enabled: isPdf },
@@ -254,6 +262,17 @@ export const COMMANDS: Command[] = [
   { id: 'view.signatures', label: msg('Signatures'), run: () => void (signaturesOpen.value = !signaturesOpen.value), checked: () => signaturesOpen.value },
   { id: 'view.customizeToolbar', label: msg('Customize Toolbar…'), run: () => void (customizeOpen.value = true) },
   // Go
+  { id: 'gdoc.addHeading', label: msg('Heading'), run: () => void gdocActions.addBlock(gdoc()!, { type: 'heading', level: 2, text: '' }), enabled: () => !!gdoc() },
+  { id: 'gdoc.addParagraph', label: msg('Paragraph'), run: () => void gdocActions.addBlock(gdoc()!, { type: 'paragraph', text: '' }), enabled: () => !!gdoc() },
+  { id: 'gdoc.addList', label: msg('List'), run: () => void gdocActions.addBlock(gdoc()!, { type: 'list', items: [''] }), enabled: () => !!gdoc() },
+  { id: 'gdoc.addTable', label: msg('Table'), run: () => void gdocActions.addBlock(gdoc()!, { type: 'table', header: true, rows: [['', '', ''], ['', '', '']] }), enabled: () => !!gdoc() },
+  { id: 'gdoc.addPicture', label: msg('Picture…'), run: () => gdocActions.addPicture(gdoc()!), enabled: () => !!gdoc() },
+  { id: 'gdoc.addDivider', label: msg('Divider'), run: () => void gdocActions.addBlock(gdoc()!, { type: 'divider' }), enabled: () => !!gdoc() },
+  { id: 'gdoc.addPageBreak', label: msg('Page Break'), keys: ['Ctrl+Enter'], run: () => void gdocActions.addBlock(gdoc()!, { type: 'pageBreak' }), enabled: () => !!gdoc() },
+  { id: 'gdoc.addPage', label: msg('New Page…'), run: () => gdocActions.pagePicker(gdoc()!), enabled: () => !!gdoc() },
+  { id: 'gdoc.moveUp', label: msg('Move Block Up'), run: () => gdocActions.nudgeBlock(gdoc()!, -1), enabled: () => !!gdoc()?.selection.value?.block },
+  { id: 'gdoc.moveDown', label: msg('Move Block Down'), run: () => gdocActions.nudgeBlock(gdoc()!, 1), enabled: () => !!gdoc()?.selection.value?.block },
+  { id: 'gdoc.changeLook', label: msg('Change Look…'), run: () => gdocActions.lookPicker(gdoc()!), enabled: () => !!gdoc() },
   { id: 'deck.newSlide', label: msg('New Slide'), keys: ['Ctrl+M'], run: () => deckActions.addSlide(deck()!), enabled: () => !!deck() },
   { id: 'deck.duplicateSlide', label: msg('Duplicate Slide'), keys: ['Ctrl+Shift+D'], run: () => deckActions.duplicateSlides(deck()!), enabled: () => !!deck()?.pageCount.value },
   { id: 'deck.hideSlide', label: msg('Hide or Show Slide'), run: () => deckActions.toggleHidden(deck()!), enabled: () => !!deck()?.pageCount.value },
@@ -352,18 +371,21 @@ const ifPdf = () => activeDoc.value?.kind === 'pdf'
 const ifViewable = () => !!activeDoc.value && activeDoc.value.kind !== 'notice'
 const ifMarkup = () => ifPdf() || isImage()
 const isDeck = () => activeDoc.value?.kind === 'deck'
-const ifPaged = () => ifPdf() || multiPage() || isDeck()
+const isGdoc = () => activeDoc.value?.kind === 'gdoc'
+const ifPaged = () => ifPdf() || multiPage() || isDeck() || isGdoc()
 const VISIBILITY: [(() => boolean), string[]][] = [
   [hasDoc, ['file.close', 'file.openWith', 'view.customizeToolbar']],
   [() => ifPdf() || anyImage() || activeDoc.value?.kind === 'preview', ['file.share']],
   [ifViewable, ['view.inspector']],
-  [() => ifPdf() || anyImage() || isDeck(), ['file.versions']],
+  [() => ifPdf() || anyImage() || isDeck() || isGdoc(), ['file.versions']],
   [ifViewable, ['view.zoomIn', 'view.zoomOut', 'view.zoomToFit', 'view.fullscreen']],
-  [() => ifPdf() || anyImage() || isDeck(), ['file.print']],
+  [() => ifPdf() || anyImage() || isDeck() || isGdoc(), ['file.print']],
   [() => ifPdf() || anyImage(), ['tools.rotateLeft', 'tools.rotateRight']],
   [() => ifPdf() || anyImage() || isDeck(), ['view.actualSize', 'view.slideshow']],
   [() => activeDoc.value?.kind === 'model', ['model.wireframe', 'model.autoRotate', 'model.resetView', 'model.shadow', 'model.grid', 'model.view.front', 'model.view.back', 'model.view.left', 'model.view.right', 'model.view.top', 'model.view.bottom']],
-  [() => ifPdf() || isImage() || isDeck(), ['file.save', 'file.saveAs', 'edit.undo', 'edit.redo', 'edit.delete']],
+  [() => ifPdf() || isImage() || isDeck() || isGdoc(), ['file.save', 'file.saveAs', 'edit.undo', 'edit.redo', 'edit.delete']],
+  [isGdoc, ['gdoc.exportPdf', 'gdoc.exportDocx', 'gdoc.exportPng', 'gdoc.addHeading', 'gdoc.addParagraph', 'gdoc.addList', 'gdoc.addTable', 'gdoc.addPicture', 'gdoc.addDivider', 'gdoc.addPageBreak', 'gdoc.addPage', 'gdoc.moveUp', 'gdoc.moveDown', 'gdoc.changeLook', 'view.actualSize']],
+  [() => gdocActions.canConvert(), ['file.convertToGdoc']],
   [isDeck, ['deck.exportPdf', 'deck.exportPptx', 'deck.exportPng', 'deck.newSlide', 'deck.duplicateSlide', 'deck.hideSlide', 'deck.moveUp', 'deck.moveDown']],
   [() => ifPdf() || isImage() || !!model(), ['file.export']],
   [ifPdf, [

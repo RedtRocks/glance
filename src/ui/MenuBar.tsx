@@ -20,7 +20,7 @@ const HELP: Entry[] = ['help.feedback', 'help.github', '-', 'help.updates', 'hel
 const ZOOM: Entry[] = ['view.zoomIn', 'view.zoomOut', 'view.actualSize', 'view.zoomToFit']
 
 /** Each kind of file gets its own menu bar, like separate apps would. */
-export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'preview' | 'deck' | 'notice', Record<string, Entry[]>> = {
+export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'preview' | 'deck' | 'gdoc' | 'notice', Record<string, Entry[]>> = {
   none: {
     File: ['file.open', 'file.new', 'file.newFromClipboard', 'file.scan', 'file.newWindow', '-', 'file.batch', 'file.collage', '-', 'file.makeDefault', 'file.settings'],
     Help: HELP
@@ -66,7 +66,7 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'preview' | 'dec
     Help: HELP
   },
   preview: {
-    File: ['file.open', 'file.openWith', 'file.newWindow', '-', 'file.share', '-', 'file.close', '-', 'file.makeDefault', 'file.settings'],
+    File: ['file.open', 'file.openWith', 'file.newWindow', '-', 'file.convertToGdoc', '-', 'file.share', '-', 'file.close', '-', 'file.makeDefault', 'file.settings'],
     View: [...ZOOM, '-', 'view.collapseTabs', 'view.fullscreen', '-', 'view.askAi'],
     Go: ['go.previous', 'go.next', 'go.first', 'go.last', '-', 'go.nextTab', 'go.previousTab'],
     Help: HELP
@@ -76,6 +76,15 @@ export const MENUS: Record<'none' | 'pdf' | 'image' | 'model' | 'preview' | 'dec
     Edit: ['edit.undo', 'edit.redo', '-', 'edit.delete'],
     Slide: ['deck.newSlide', 'deck.duplicateSlide', 'deck.hideSlide', '-', 'deck.moveUp', 'deck.moveDown'],
     View: ['view.hideSidebar', 'view.thumbnails', '-', ...ZOOM, '-', 'view.collapseTabs', 'view.fullscreen', 'view.slideshow', '-', 'view.askAi'],
+    Go: ['go.previous', 'go.next', 'go.first', 'go.last', '-', 'go.nextTab', 'go.previousTab'],
+    Help: HELP
+  },
+  gdoc: {
+    File: ['file.open', 'file.openWith', 'file.new', 'file.newWindow', '-', 'file.save', 'file.saveAs', 'file.versions', '-', 'gdoc.exportPdf', 'gdoc.exportDocx', 'gdoc.exportPng', '-', 'file.print', '-', 'file.close', '-', 'file.makeDefault', 'file.settings'],
+    Edit: ['edit.undo', 'edit.redo', '-', 'edit.delete'],
+    Insert: ['gdoc.addHeading', 'gdoc.addParagraph', 'gdoc.addList', 'gdoc.addTable', 'gdoc.addPicture', 'gdoc.addDivider', 'gdoc.addPageBreak', '-', 'gdoc.addPage'],
+    Format: ['gdoc.moveUp', 'gdoc.moveDown', '-', 'gdoc.changeLook'],
+    View: ['view.hideSidebar', 'view.thumbnails', '-', ...ZOOM, '-', 'view.collapseTabs', 'view.fullscreen', '-', 'view.askAi'],
     Go: ['go.previous', 'go.next', 'go.first', 'go.last', '-', 'go.nextTab', 'go.previousTab'],
     Help: HELP
   },

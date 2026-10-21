@@ -46,6 +46,11 @@ export async function printDoc(doc: Doc | null): Promise<void> {
   await withBusy(t('Preparing to print…'), async () => {
     if (doc.kind === 'pdf') {
       await pdfPages(doc, root)
+    } else if (doc.kind === 'gdoc') {
+      // Documents print what their PDF export draws.
+      const proxy = await openPdf(await (await import('./gdoc')).gdocExportBytes(doc, 'pdf'))
+      await printProxy(proxy, root)
+      await proxy.loadingTask.destroy()
     } else if (doc.kind === 'deck') {
       // Decks print what their PDF export draws.
       const proxy = await openPdf(await exportBytes(doc, 'pdf'))
