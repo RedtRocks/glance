@@ -15,8 +15,10 @@ import { SlidePreview } from './SlideFrame'
 import { purposeLabel } from './labels'
 import { msg, t } from '../../i18n'
 import { Icon } from '../Icon'
+import { DocTemplatePreview, DocTemplateTile, docTemplatesFor, makeGdocByHand, makeGdocWithAi, startGdoc } from '../doc/DocTemplates'
+import type { DocBoardInfo } from '../../core/doc/look'
 
-type Kind = 'slides'
+type Kind = 'slides' | 'document'
 
 /**
  * Whether the AI can make things right now. AI first (redt's rule): when an AI is signed
@@ -56,6 +58,8 @@ export function MakeScreen() {
   const [picked, setPicked] = useState<Template | null>(null)
   const [tab, setTab] = useState<Purpose | 'All'>('All')
   const [preview, setPreview] = useState<Template | null>(null)
+  const [kind, setKind] = useState<Kind>('slides')
+  const [docPreview, setDocPreview] = useState<DocBoardInfo | null>(null)
   const input = useRef<HTMLInputElement>(null)
   const latest = useRef('')
   latest.current = text
@@ -84,7 +88,14 @@ export function MakeScreen() {
     }
   }, [])
 
-  const make = (_kind: Kind, tpl: Template | null = null, request = latest.current) => {
+  const make = (want: Kind, tpl: Template | null = null, request = latest.current) => {
+    if (want === 'document') {
+      setKind('document')
+      if (state === 'ready' && request.trim()) return void makeGdocWithAi(request, null)
+      if (state === 'none' || !request.trim()) return void makeGdocByHand(request, null)
+      setAsked(true)
+      return
+    }
     // A template with nothing typed opens as it is, ready to fill in by hand.
     if (state === 'ready' && (request.trim() || !tpl)) return void makeWithAi(request, tpl)
     if (state === 'none' || !request.trim()) return void makeByHand(request, tpl)
@@ -94,8 +105,13 @@ export function MakeScreen() {
 
   const signIn = async () => {
     // The Ask AI sidebar signs in; the request waits there and goes once it's done.
-    const doc = await startDeck(latest.current, picked)
-    ai.pendingPrompt.value = await planMessage(latest.current, 'deck', doc)
+    if (kind === 'document') {
+      const g = await startGdoc(latest.current, null)
+      ai.pendingPrompt.value = await planMessage(latest.current, 'document', g)
+    } else {
+      const doc = await startDeck(latest.current, picked)
+      ai.pendingPrompt.value = await planMessage(latest.current, 'deck', doc)
+    }
     makeOpen.value = false
     aiOpen.value = true
   }
@@ -144,7 +160,7 @@ export function MakeScreen() {
             <button class="btn primary" onClick={signIn}>
               <Icon name="sparkle" size={16} /> {t('Sign in to an AI')}
             </button>
-            <button class="btn" onClick={() => void makeByHand(latest.current, picked)}>
+            <button class="btn" onClick={() => void (kind === 'document' ? makeGdocByHand(latest.current, null) : makeByHand(latest.current, picked))}>
               {t('Make it myself')}
             </button>
           </div>
@@ -158,8 +174,19 @@ export function MakeScreen() {
             <span class="make-kind-sub">{t('For class, work or a party')}</span>
           </span>
         </button>
+        <button class="make-kind document" onClick={() => make('document')}>
+          <Icon name="document" size={32} />
+          <span>
+            <span class="make-kind-name">{t('Document')}</span>
+            <span class="make-kind-sub">{t('Letters, reports, posters and forms')}</span>
+          </span>
+        </button>
       </div>
       <h2 class="make-templates-title">{t('Or start from a template')}</h2>
+      <div class="make-tabs make-kind-tabs" role="tablist" aria-label={t('Kind of template')}>
+        <button role="tab" aria-selected={kind === 'slides'} class={`make-tab${kind === 'slides' ? ' on' : ''}`} onClick={() => setKind('slides')}>{t('Slides')}</button>
+        <button role="tab" aria-selected={kind === 'document'} class={`make-tab${kind === 'document' ? ' on' : ''}`} onClick={() => setKind('document')}>{t('Documents')}</button>
+      </div>
       <div class="make-tabs" role="tablist" aria-label={t('Templates for')}>
         {(['All', ...PURPOSES] as const).map((p) => (
           <button key={p} role="tab" aria-selected={tab === p} class={`make-tab${tab === p ? ' on' : ''}`} onClick={() => setTab(p)}>
@@ -168,10 +195,12 @@ export function MakeScreen() {
         ))}
       </div>
       <div class="make-templates" role="tabpanel">
-        {TEMPLATES.filter((tpl) => tab === 'All' || tpl.purpose === tab).map((tpl) => (
+        {kind === 'slides' && TEMPLATES.filter((tpl) => tab === 'All' || tpl.purpose === tab).map((tpl) => (
           <TemplateTile key={tpl.id} tpl={tpl} onPick={() => setPreview(tpl)} />
         ))}
+        {kind === 'document' && docTemplatesFor(tab).map((info) => <DocTemplateTile key={info.id} info={info} onPick={() => setDocPreview(info)} />)}
       </div>
+      {docPreview && <DocTemplatePreview info={docPreview} aiReady={state === 'ready'} onClose={() => setDocPreview(null)} />}
       {preview && (
         <TemplatePreview
           tpl={preview}

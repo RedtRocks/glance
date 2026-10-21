@@ -192,8 +192,8 @@ describe('Linux RPM', () => {
     usdz: 'model/vnd.usdz+zip', usda: 'model/vnd.usda', dae: 'model/vnd.collada+xml',
     '3mf': 'model/3mf', '3ds': 'image/x-3ds',
   }
-  // No registered/shared MIME type exists for these formats (.gdeck is Glance's own). Never claim all unknown binary files.
-  const NO_MIME = new Set(['ply', 'fbx', 'usdc', 'gdeck'])
+  // No registered/shared MIME type exists for these formats (.gdeck and .gdoc are Glance's own). Never claim all unknown binary files.
+  const NO_MIME = new Set(['ply', 'fbx', 'usdc', 'gdeck', 'gdoc'])
   // Windows-only formats (XPS needs the XPS Rasterization Service, JPEG XR needs WIC): Linux must not claim them.
   const LINUX_UNSUPPORTED = new Set(['xps', 'oxps', 'jxr', 'wdp', 'hdp'])
 

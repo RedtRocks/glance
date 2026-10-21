@@ -10,6 +10,7 @@
 | PostScript / EPS | `.ps`, `.eps`, `.epsf` | Ghostscript if installed (external program); else embedded EPS preview |
 | XPS / OpenXPS | `.xps`, `.oxps` | Windows XPS Rasterization Service |
 | Comic book archives | `.cbz` | Zip of images, shown as pages |
+| Glance document | `.gdoc` | Glance's own (ADR 0018): a zip of `document.json` and `media/`; edited in Glance, exported to PDF, Word (`docx`, loaded on demand) and PNG |
 
 ## Office files (read-only preview)
 | Format | Extensions | Engine |

@@ -1,11 +1,11 @@
-/** Object URLs for a deck's pictures, made once per picture and freed when the deck closes. */
-import type { DeckDoc } from './documents'
+/** Object URLs for a deck's or document's pictures, made once per picture and freed when it closes. */
+type WithMedia = { media: Map<string, Uint8Array> }
 
-const urls = new WeakMap<DeckDoc, Map<string, string>>()
+const urls = new WeakMap<WithMedia, Map<string, string>>()
 
 const TYPES: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', avif: 'image/avif', svg: 'image/svg+xml' }
 
-export function mediaUrl(doc: DeckDoc, src: string): string | null {
+export function mediaUrl(doc: WithMedia, src: string): string | null {
   const bytes = doc.media.get(src)
   if (!bytes) return null
   let map = urls.get(doc)
@@ -19,7 +19,7 @@ export function mediaUrl(doc: DeckDoc, src: string): string | null {
   return url
 }
 
-export function releaseMedia(doc: DeckDoc): void {
+export function releaseMedia(doc: WithMedia): void {
   for (const url of urls.get(doc)?.values() ?? []) URL.revokeObjectURL(url)
   urls.delete(doc)
 }

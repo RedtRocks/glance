@@ -12,7 +12,7 @@ import { archivePage, archivePageCount, cachedUrl, cachedUrlAsync, decodeImage, 
 import { HEIF } from './heif'
 import { t } from '../i18n'
 
-export type Kind = 'pdf' | 'image' | 'model' | 'postscript' | 'xps' | 'archive' | 'preview' | 'deck' | 'unsupported'
+export type Kind = 'pdf' | 'image' | 'model' | 'postscript' | 'xps' | 'archive' | 'preview' | 'deck' | 'gdoc' | 'unsupported'
 
 export interface Probe {
   path: string
@@ -205,6 +205,7 @@ function classifyExt(ext: string): Kind {
   if (MODELS.includes(ext)) return 'model'
   if (ext === 'cbz') return 'archive'
   if (ext === 'gdeck') return 'deck'
+  if (ext === 'gdoc') return 'gdoc'
   if (PREVIEWS.includes(ext)) return 'preview'
   if (['ps', 'eps', 'epsf', 'epsi'].includes(ext)) return 'postscript'
   if (ext === 'xps' || ext === 'oxps') return 'xps'

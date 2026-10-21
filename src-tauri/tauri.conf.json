@@ -114,6 +114,15 @@
       },
       {
         "ext": [
+          "gdoc"
+        ],
+        "name": "Glance Document",
+        "description": "Glance document",
+        "role": "Editor",
+        "mimeType": "application/vnd.glance.document+zip"
+      },
+      {
+        "ext": [
           "jpg",
           "jpeg",
           "jfif",

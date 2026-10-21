@@ -33,6 +33,7 @@ import { pageOps, redact } from './pdfModules'
 import { editHandlers } from './aiEdit'
 import { deckHandlers } from './deckTools'
 import { planHandlers } from './planTools'
+import { docHandlers } from './docTools'
 import { toast } from './ui'
 import { t } from '../i18n'
 
@@ -676,5 +677,6 @@ export const handlers: Record<string, ToolHandler> = {
   glance_mark_redactions: markRedactions,
   ...editHandlers,
   ...deckHandlers,
-  ...planHandlers
+  ...planHandlers,
+  ...docHandlers
 }

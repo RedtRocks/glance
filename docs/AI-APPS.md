@@ -45,11 +45,14 @@ On Linux, the .deb and .rpm install `/usr/bin/glance-mcp`. The Flatpak's command
 | `glance_edit_text` | Changes or deletes text in an open PDF or image in the same style; the words after it move along |
 | `glance_add_text` | Writes new text after or before a paragraph, or at a point, in the page's own style |
 | `glance_erase` | Removes a paragraph or an area by covering it with its background |
-| `glance_templates` | Lists the designed deck templates and each slide design's text slots, with sample text and how many characters fit |
+| `glance_templates` | Lists the designed deck and document templates and each slide design's text slots, with sample text and how many characters fit |
 | `glance_create` | Makes a deck from layouts, or from a template's designs in any order, and opens it in Glance |
 | `glance_deck_outline`, `glance_deck_edit` | Read a deck and change it: add, move, restyle and fill slides, as one step you can undo |
 | `glance_deck_check`, `glance_deck_render` | List what to fix in a deck, and look at its slides as pictures |
-| `glance_export` | Saves a deck as PDF, PowerPoint or PNG pictures |
+| `glance_doc_outline`, `glance_doc_edit` | Read a document (sections, text boxes with how many characters fit, table rows, blocks) and change it as one step you can keep or undo |
+| `glance_doc_check`, `glance_doc_render` | List what to fix in a document, and look at its pages as pictures |
+| `glance_word_replace` | Replaces text in a Word file, writing a new file |
+| `glance_export` | Saves a deck as PDF, PowerPoint or PNG pictures, or a document as PDF, Word or PNG pictures |
 | `glance_plan` | Shows the AI's plan for a new file on Glance's Outline screen, for you to change before it builds |
 
 ### Skills and prompts
@@ -58,7 +61,7 @@ Glance gives every AI app the same design and writing guidance ([ADR 0019](adr/0
 
 Settings → AI apps lists the skills with an on/off switch, opens the skills folder where you can add your own (a folder with a `SKILL.md`; it replaces Glance's skill of the same name), and can install the skills that are on for Claude Code (`~/.claude/skills/glance-*`) with a note in Codex's `~/.codex/AGENTS.md`, so they are there before the first tool call. Glance never downloads skills.
 
-In the Ask AI sidebar, a request about an open deck (and, once they ship, a document or spreadsheet) reaches the agent with a `<glance-context>` block: the file and tab, what is selected, the template and each slot's maxChars, the tools to use, the check, render and fix loop, the placeholder rule and the skills that fit (src/core/ai/guide.ts).
+In the Ask AI sidebar, a request about an open deck, document or spreadsheet reaches the agent with a `<glance-context>` block: the file and tab, what is selected, the template and each slot's maxChars, the tools to use, the check, render and fix loop, the placeholder rule and the skills that fit (src/core/ai/guide.ts).
 
 The four editing tools add markup to the open document, so you can see, undo or keep each change before saving ([ADR 0015](adr/0015-ai-edits-as-matching-markup.md)).
 

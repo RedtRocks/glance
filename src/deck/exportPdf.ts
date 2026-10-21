@@ -25,6 +25,8 @@ import { DESIGN_SCALE, placeTexts, shownText, type Design, type DesignLookup, ty
 const S = 0.5
 const PAGE_W = SLIDE_W * S
 const PAGE_H = SLIDE_H * S
+const SCALE = S
+const PDF_H = PAGE_H
 
 export interface PdfFonts {
   /** The layouts' font. */
@@ -193,13 +195,13 @@ function designedPages(doc: PDFDocument, fonts: PdfFonts, designed: PdfDesigns, 
   }
 }
 
-interface DesignFace {
+export interface DesignFace {
   type: Typeface
   /** No italic file: the upright one is slanted, as browsers do. */
   slant: boolean
 }
 
-async function designFace(doc: PDFDocument, fonts: PdfFonts, family: string, italic: boolean, axes: { wght: number; opsz: number }, fallback: Typeface): Promise<DesignFace> {
+export async function designFace(doc: PDFDocument, fonts: PdfFonts, family: string, italic: boolean, axes: { wght: number; opsz: number }, fallback: Typeface): Promise<DesignFace> {
   const file = await fonts.file?.(family, italic)
   if (!file) return { type: fallback, slant: italic }
   const { ttf, face: shaper } = instanceFont(file.bytes, axes)
@@ -227,7 +229,8 @@ export function instanceFont(bytes: Uint8Array, axes: Record<string, number>): {
 }
 
 /** One design text box: wrapped with the font's widths, aligned as html.ts does, turned about its centre. */
-async function drawDesignText(page: PDFPage, p: PlacedText, face: DesignFace, stateName: () => string) {
+/** `S` and `PAGE_H` are the deck's; documents pass their own (1 point per unit, A4). */
+export async function drawDesignText(page: PDFPage, p: PlacedText, face: DesignFace, stateName: () => string, S = SCALE, PAGE_H = PDF_H) {
   const t = p.box
   const size = p.size * S
   const spacing = (t.letterSpacing / t.size) * p.size * S
@@ -353,7 +356,7 @@ async function embedImage(doc: PDFDocument, bytes: Uint8Array | undefined): Prom
   return null
 }
 
-function colour(css: string): RGB {
+export function colour(css: string): RGB {
   let hex = css.trim().replace(/^#/, '')
   if (/^[0-9a-f]{3}$/i.test(hex)) hex = [...hex].map((c) => c + c).join('')
   if (!/^[0-9a-f]{6}$/i.test(hex)) return rgb(0, 0, 0)
@@ -389,7 +392,7 @@ interface DecodedGlyph {
  * which made lines about 1.5% wider than in Glance), with ascent and descent as shares of
  * the font size for placing the baseline in a CSS line box.
  */
-interface Typeface {
+export interface Typeface {
   ascent: number
   descent: number
   widthOfTextAtSize(text: string, size: number): number
@@ -402,7 +405,7 @@ interface Typeface {
  * from, at the same axes, whose layout has the browser's widths and kerning (fontkit's
  * varied glyphs don't know their characters, so the characters come from `face`).
  */
-function typeface(doc: PDFDocument, face: FontkitFont, font: PDFFont, shaper: FontkitFont = face): Typeface {
+export function typeface(doc: PDFDocument, face: FontkitFont, font: PDFFont, shaper: FontkitFont = face): Typeface {
   const os2 = face['OS/2']
   const [asc, desc] = os2?.fsSelection?.useTypoMetrics ? [os2.typoAscender, os2.typoDescender] : [face.hhea.ascent, face.hhea.descent]
   const em = face.unitsPerEm
@@ -435,7 +438,7 @@ function typeface(doc: PDFDocument, face: FontkitFont, font: PDFFont, shaper: Fo
   }
 }
 
-const isWoff2 = (b: Uint8Array) => b[0] === 0x77 && b[1] === 0x4f && b[2] === 0x46 && b[3] === 0x32
+export const isWoff2 = (b: Uint8Array) => b[0] === 0x77 && b[1] === 0x4f && b[2] === 0x46 && b[3] === 0x32
 
 /**
  * Rebuilds a WOFF2 font as TrueType. fontkit reads WOFF2, but pdf-lib's subsetter copies
