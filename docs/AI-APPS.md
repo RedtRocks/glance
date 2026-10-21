@@ -49,7 +49,11 @@ On Linux, the .deb and .rpm install `/usr/bin/glance-mcp`. The Flatpak's command
 | `glance_create` | Makes a deck from layouts, or from a template's designs in any order, and opens it in Glance |
 | `glance_deck_outline`, `glance_deck_edit` | Read a deck and change it: add, move, restyle and fill slides, as one step you can undo |
 | `glance_deck_check`, `glance_deck_render` | List what to fix in a deck, and look at its slides as pictures |
-| `glance_export` | Saves a deck as PDF, PowerPoint or PNG pictures |
+| `glance_create` with kind `spreadsheet` | Makes a workbook, empty or from one of the spreadsheet templates `glance_templates` lists, and opens it in Glance |
+| `glance_sheet_read` | Reads a spreadsheet: its sheets, tables and headers, drop-downs and rules, charts, the user's selection and the cells with their values and formulas |
+| `glance_sheet_edit` | Changes a spreadsheet: cells, formulas, rows, columns, sheets, formats, rules, drop-downs, charts, sort, filter and frozen panes, as one step you can undo |
+| `glance_sheet_check`, `glance_sheet_render` | List formula errors and broken rules in a spreadsheet, and look at a sheet as a picture |
+| `glance_export` | Saves a deck as PDF, PowerPoint or PNG pictures, or a spreadsheet as .xlsx, .csv, PDF or PNG |
 
 The four editing tools add markup to the open document, so you can see, undo or keep each change before saving ([ADR 0015](adr/0015-ai-edits-as-matching-markup.md)).
 

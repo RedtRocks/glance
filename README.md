@@ -129,6 +129,7 @@ Click a group to open it. Everything listed works today.
 - **Ask AI sidebar:** chat with Claude, ChatGPT, Gemini, GitHub Copilot, Qwen, Kimi, Mistral, Meta's Muse or OpenCode about the open file (the whole page or a selected area), signed in with your own account or an API key, or use the company's website in the sidebar. Chats are kept per document
 - **AI edits:** type or say what to change and the AI rewrites a PDF's text in place, in the document's own font, with Keep and Undo for each change
 - **Slide decks:** start from 18 designed templates for school, work, events, personal projects and clubs, type over the sample words on the slide, or have the AI make one about your subject; export to PDF, PowerPoint or pictures
+- **Spreadsheets:** open and edit .xlsx and .csv in a grid with live formulas, sheet tabs, frozen panes, sort, filter, drop-downs, tick boxes, coloured rules and charts; start from 12 templates or have the AI make one; save as .xlsx or .csv, or export to PDF or pictures
 - **AI apps:** Claude Code, Claude Desktop, Codex, Antigravity, Muse Code, Cursor, VS Code and any MCP app can view any format, read text with OCR, convert, combine, split and redact files, and see and control what's open in Glance. One-click setup in Settings → AI apps ([how it works](docs/AI-APPS.md))
 
 </details>

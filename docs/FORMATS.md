@@ -22,6 +22,8 @@
 | Excel 97-2003 | `.xls .xlt` | `src/preview/xls.ts` (saved values, number formats, fonts, merges, column widths) |
 | CSV / TSV | `.csv .tsv` | `src/preview/render.ts` |
 
+.xlsx, .xlsm, .csv and .tsv open as editable spreadsheets instead (`src/state/sheet.ts`, `src/ui/sheet/`): ExcelJS reads and writes .xlsx, and Glance works out formulas itself (`src/core/sheet/`), with formulajs for functions it doesn't have. A file Glance can't read as a spreadsheet falls back to the preview above. Charts are kept as Glance's own model in a very hidden sheet named `_glance`, so Glance can edit them again, and each chart is also saved as a picture in the .xlsx so other apps show it; Excel shows the picture, not an Excel chart.
+
 Each shows a bar with **Open with…** (Windows app) to edit the file in Office or another app. OpenDocument files aren't previewed.
 
 ## Text, media, books, fonts and email (read-only preview)

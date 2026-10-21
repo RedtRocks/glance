@@ -380,6 +380,7 @@ export function SheetView({ doc }: { doc: SheetDoc }) {
             scroller.current?.focus()
           }}
         />
+        {/* i18n-ignore: the usual symbol for a formula */}
         <span class="sheet-fx" aria-hidden="true">fx</span>
         <input
           class="sheet-formula"
