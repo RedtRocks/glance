@@ -414,7 +414,8 @@ function collect({ index, selector, flow, charts, prefix }) {
           const stroke = svgAfter?.querySelector('[stroke]')?.getAttribute('stroke')
           if (svgAfter) st.trail = { colour: /^#[0-9a-f]{6}$/i.test(stroke ?? '') ? stroke.toLowerCase() : colourOf(cs(svgAfter).color), h: 1, gap }
         }
-        return [{ t: 'text', runs: runsOf(t), style: st, tag: t.tagName, lead }]
+        const block = { t: 'text', runs: runsOf(t), style: st, tag: t.tagName, lead }
+        return tinted ? [{ t: 'callout', box: boxStyle(el), blocks: [{ ...block, style: { ...st, before: 0, after: 0 } }] }] : [block]
       }
       const cols = kids.filter((k) => R(k).w > 3 && (visibleText(k) || isSvg(k) || k.querySelector('svg')))
       const total = cols.reduce((n, k) => n + R(k).w, 0)
@@ -450,7 +451,17 @@ function collect({ index, selector, flow, charts, prefix }) {
     const a = top.findIndex((el) => has(el, flow.start))
     const b = flow.end ? top.findIndex((el, i) => i >= a && has(el, flow.end)) : a
     if (a < 0 || b < 0) throw new Error(`page ${index + 1}: no part holding "${a < 0 ? flow.start : flow.end}"`)
-    const range = top.slice(a, b + 1).filter((el) => cs(el).display !== 'none')
+    const inDom = top.slice(a, b + 1)
+    // Parts drawn between the start and the end (a picture placed earlier in the page's code) flow with them.
+    const y0 = R(top[a]).y
+    const y1 = R(top[b]).b
+    const x0 = Math.min(...inDom.map((e) => R(e).x))
+    const x1 = Math.max(...inDom.map((e) => R(e).r))
+    const between = top.filter((el) => !inDom.includes(el) && (() => {
+      const r = R(el)
+      return r.y >= y0 - 1 && r.b <= y1 + 1 && r.x >= x0 - 8 && r.r <= x1 + 8 && r.h < S.height * 0.8 && r.w > 0
+    })())
+    const range = [...inDom, ...between].filter((el) => cs(el).display !== 'none')
     for (const el of range) el.setAttribute('data-g-skip', '')
     const rs = range.map(R)
     const x = Math.min(...rs.map((r) => r.x))
@@ -479,10 +490,10 @@ function collect({ index, selector, flow, charts, prefix }) {
       else {
         const rects = g.els.map(R)
         const inside = rects.some((p, i) => rects.some((q, j) => i !== j && q.x <= p.x + 1 && q.y <= p.y + 1 && q.r >= p.r - 1 && q.b >= p.b - 1))
-        made = inside || g.els.some((e) => !visibleText(e)) ? [artOrChart(g.els)] : [{ t: 'columns', widths: rects.map((p) => round(p.w / rects.reduce((n, q) => n + q.w, 0))), columns: g.els.map(conv), gap: 16 }]
+        made = inside || g.els.some((e) => !visibleText(e)) ? [artOrChart(g.els)] : [{ t: 'columns', widths: rects.map((p) => round(p.w / rects.reduce((n, q) => n + q.w, 0))), columns: g.els.map(conv), gap: round(Math.max(8, Math.min(...rects.slice(1).map((p, i) => p.x - rects[i].r)))) }]
       }
       // Parts placed one under another keep the gap the board has between them.
-      if (prevBottom !== null && made[0]) made[0].gap = round(g.y - prevBottom)
+      if (prevBottom !== null && made[0]) made[0].vgap = round(g.y - prevBottom)
       prevBottom = g.b
       blocks.push(...made)
     }
@@ -522,8 +533,17 @@ function nameStyles(texts) {
     const e = byKey.get(k) ?? { style: t.style, chars: 0, count: 0, sample: '' }
     const text = t.runs.map((r) => r.text).join('')
     e.chars += text.length
-    // Spacing: the most any use of the style has, as one use may sit first in its box.
-    e.style = { ...e.style, before: Math.max(e.style.before, t.style.before), after: Math.max(e.style.after, t.style.after) }
+    // Spacing: what most uses of the style have, leaving out uses that sit first in their box (0).
+    ;(e.befores ??= []).push(t.style.before)
+    ;(e.afters ??= []).push(t.style.after)
+    const mode = (xs) => {
+      const v = xs.filter((x) => x > 0)
+      if (!v.length) return 0
+      const n = new Map()
+      for (const x of v) n.set(x, (n.get(x) ?? 0) + 1)
+      return [...n].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0]
+    }
+    e.style = { ...e.style, before: mode(e.befores), after: mode(e.afters) }
     e.count++
     if (!e.sample) e.sample = text
     byKey.set(k, e)
@@ -732,7 +752,7 @@ function toBlocks(raw, ctx) {
         break
     }
     // The gap the board has above a part placed by itself.
-    if (b.gap !== undefined && out.length) ctx.gaps.set(out.at(-1).id, b.gap)
+    if (b.vgap !== undefined && out.length) ctx.gaps.set(out.at(-1).id, b.vgap)
   }
   return out
 }

@@ -101,7 +101,7 @@ function designedHtml(slide: Slide, design: Design | undefined, theme: DeckTheme
 }
 
 /** The CSS for one design text box at `size`, shared with the editor's typing box. */
-export function designTextStyle(t: DesignText, size: number): string {
+export function designTextStyle(t: DesignText, size: number, scale = DESIGN_SCALE): string {
   const justify = { top: 'flex-start', middle: 'center', bottom: 'flex-end' }[t.valign]
   const ws = t.wrap === 'nowrap' ? 'pre' : t.wrap === 'pre' ? 'pre' : 'pre-wrap'
   return [
@@ -109,8 +109,8 @@ export function designTextStyle(t: DesignText, size: number): string {
     t.rotate ? `transform:rotate(${t.rotate}deg)` : '',
     `display:flex;flex-direction:column;justify-content:${justify};text-align:${t.align}`,
     `font-family:${fontStack(t.font)};font-size:${px(size)};font-weight:${t.weight};font-style:${t.italic ? 'italic' : 'normal'}`,
-    // The design's optical size is its size on the 640 by 360 board, not on the scaled-up slide.
-    `font-optical-sizing:none;font-variation-settings:'opsz' ${Math.round((size / DESIGN_SCALE) * 10) / 10}`,
+    // The design's optical size is its size on the board (640 by 360 for slides), not on the scaled-up slide.
+    `font-optical-sizing:none;font-variation-settings:'opsz' ${Math.round((size / scale) * 10) / 10}`,
     `line-height:${t.lineHeight};letter-spacing:${Math.round((t.letterSpacing / t.size) * 1000) / 1000}em;color:${t.colour}`,
     t.opacity < 1 ? `opacity:${t.opacity}` : '',
     t.transform ? `text-transform:${t.transform}` : '',
