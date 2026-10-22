@@ -19,6 +19,7 @@ import { drawPane, cssFont } from '../../sheet/render'
 import { decodePictures } from '../../sheet/picture'
 import * as sheet from '../../state/sheet'
 import { promptText } from '../../state/ui'
+import { SheetToolbar } from './SheetToolbar'
 
 const HW = 46
 const HH = 22
@@ -470,6 +471,7 @@ export function SheetView({ doc }: { doc: SheetDoc }) {
 
   return (
     <div class="sheet-view">
+      <SheetToolbar doc={doc} />
       <div class="sheet-bar">
         <input
           class="sheet-name-box"

@@ -12,6 +12,7 @@ import { cellName, colName, inRange, parseRange, rangeName } from '../core/sheet
 import { dataBounds, emptyWorkbook, plainText, styleAt, type Style, type Chart, type Sheet, type Workbook } from '../core/sheet/model'
 import { recalc, todaySerial, useFunctions } from '../core/sheet/recalc'
 import { SheetError, type ApplyResult, type SheetOp, type StyleInput } from '../core/sheet/ops'
+import { autoSums, chartFor, stepDecimals, widthsForNumbers } from '../core/sheet/toolbar'
 import type { SheetFinding } from '../core/sheet/check'
 import { csvWorkbook, sheetToCsv, guessSeparator } from '../core/sheet/csv'
 import { extend, FUNCTIONS } from '../core/sheet/functions'
@@ -301,4 +302,36 @@ export function toggleMerge(doc: SheetDoc): void {
   })
   if (hit) change(doc, msg('Unmerge Cells'), [{ op: 'unmerge', sheet: sheet.name, range: hit }])
   else if (s.r !== s.r2 || s.c !== s.c2) change(doc, msg('Merge Cells'), [{ op: 'merge', sheet: sheet.name, range: selectionRange(s) }])
+}
+
+/** Σ: totals under the picked columns, or the sum of the numbers above the picked cell. */
+export function autoSumSelection(doc: SheetDoc): void {
+  const sums = autoSums(doc.activeSheet.peek(), bounds(doc))
+  if (!sums.length) return void toast(t('Pick the numbers to add up, or the cell under them.'))
+  change(doc, msg('Sum'), sums.map((x) => ({ op: 'set', sheet: on(doc), cell: x.cell, formula: x.formula })))
+}
+
+/** A column chart of the picked cells, beside them. */
+export function chartSelection(doc: SheetDoc): void {
+  const chart = chartFor(doc.activeSheet.peek(), bounds(doc))
+  if (!chart) return void toast(t('Pick the numbers to chart, with their labels.'))
+  change(doc, msg('Add Chart'), [{ op: 'addChart', sheet: on(doc), chart }])
+}
+
+/** A number format on the picked cells, widening columns whose numbers would no longer fit (as Excel does). */
+export function formatNumbers(doc: SheetDoc, label: string, numFmt: string | null): void {
+  const sheet = doc.activeSheet.peek()
+  const a = bounds(doc)
+  const size = styleAt(sheet, a.r1, a.c1)?.font?.size ?? 11
+  const wider = widthsForNumbers(sheet, a, numFmt, size).map((w) => ({ op: 'colWidth' as const, sheet: on(doc), cols: w.col, width: w.width }))
+  change(doc, label, [{ op: 'format', sheet: on(doc), range: selectionRange(doc.sel.peek()), style: { numFmt } }, ...wider])
+}
+
+/** One more or one fewer decimal place in the picked cells. */
+export function stepSelectionDecimals(doc: SheetDoc, dir: 1 | -1): void {
+  const s = doc.sel.peek()
+  const sheet = doc.activeSheet.peek()
+  const fmt = styleAt(sheet, s.r, s.c)?.numFmt
+  const v = sheet.cells[cellName(s.r, s.c)]?.v
+  formatNumbers(doc, dir > 0 ? msg('More Decimals') : msg('Fewer Decimals'), stepDecimals(fmt, dir, v))
 }

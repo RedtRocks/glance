@@ -114,5 +114,27 @@ import lock from '@fluentui/svg-icons/icons/lock_closed_20_regular.svg?raw'
 import sun from '@fluentui/svg-icons/icons/weather_sunny_20_regular.svg?raw'
 
 import table from '@fluentui/svg-icons/icons/table_20_regular.svg?raw'
-export const ICONS = { sidebar, zoomIn, zoomOut, rotateRight, rotateLeft, highlight, search, print, share, more, up, down, left, right, open, close, settings, grid, toc, bookmark, moon, language, save, trash, add, addPage, fullscreen, slideshow, fitPage, zoomFit, undo, redo, edit, check, copy, image, cube, info, newWindow, document, tabs, pen, markup, cursor, draw, sketch, shapes, textBox, note, signature, redact, lineWidth, strokeColor, fillColor, textStyle, underline, strike, star, oval, square, roundRect, arrow, line, bubble, polygon, bookmarkAdd, bookmarks, notes, warningFilled, infoFilled, successFilled, errorFilled, certificate, chevronSmall, crop, straighten, adjustColor, paintBrush, adjustSize, removeBg, copySubject, selectRect, selectEllipse, lasso, smartLasso, instantAlpha, flipH, flipV, exportIcon, squiggly, sparkle, sparkleFilled, apps, back, home, download, upload, folderOpen, lock, sun, history, globe, sendUp, stop, selectArea, onePage, chatAdd, mic, micFilled, eye, table }
+import alignLeft from '@fluentui/svg-icons/icons/text_align_left_20_regular.svg?raw'
+import alignCenter from '@fluentui/svg-icons/icons/text_align_center_20_regular.svg?raw'
+import alignRight from '@fluentui/svg-icons/icons/text_align_right_20_regular.svg?raw'
+import wrapText from '@fluentui/svg-icons/icons/text_wrap_20_regular.svg?raw'
+import merge from '@fluentui/svg-icons/icons/table_cells_merge_20_regular.svg?raw'
+import borders from '@fluentui/svg-icons/icons/border_all_20_regular.svg?raw'
+import bold from '@fluentui/svg-icons/icons/text_bold_20_regular.svg?raw'
+import italic from '@fluentui/svg-icons/icons/text_italic_20_regular.svg?raw'
+import underlineText from '@fluentui/svg-icons/icons/text_underline_20_regular.svg?raw'
+import chart from '@fluentui/svg-icons/icons/data_bar_vertical_20_regular.svg?raw'
+import autosum from '@fluentui/svg-icons/icons/autosum_20_regular.svg?raw'
+import filter from '@fluentui/svg-icons/icons/filter_20_regular.svg?raw'
+import sort from '@fluentui/svg-icons/icons/arrow_sort_20_regular.svg?raw'
+import textColor from '@fluentui/svg-icons/icons/text_color_20_regular.svg?raw'
+import fillBucket from '@fluentui/svg-icons/icons/paint_bucket_20_regular.svg?raw'
+import numberFormat from '@fluentui/svg-icons/icons/text_number_format_20_regular.svg?raw'
+import currency from '@fluentui/svg-icons/icons/currency_dollar_euro_20_regular.svg?raw'
+import decimalsLess from '@fluentui/svg-icons/icons/decimal_arrow_left_20_regular.svg?raw'
+import decimalsMore from '@fluentui/svg-icons/icons/decimal_arrow_right_20_regular.svg?raw'
+import link from '@fluentui/svg-icons/icons/link_20_regular.svg?raw'
+import bulletList from '@fluentui/svg-icons/icons/text_bullet_list_ltr_20_regular.svg?raw'
+
+export const ICONS = { sidebar, zoomIn, zoomOut, rotateRight, rotateLeft, highlight, search, print, share, more, up, down, left, right, open, close, settings, grid, toc, bookmark, moon, language, save, trash, add, addPage, fullscreen, slideshow, fitPage, zoomFit, undo, redo, edit, check, copy, image, cube, info, newWindow, document, tabs, pen, markup, cursor, draw, sketch, shapes, textBox, note, signature, redact, lineWidth, strokeColor, fillColor, textStyle, underline, strike, star, oval, square, roundRect, arrow, line, bubble, polygon, bookmarkAdd, bookmarks, notes, warningFilled, infoFilled, successFilled, errorFilled, certificate, chevronSmall, crop, straighten, adjustColor, paintBrush, adjustSize, removeBg, copySubject, selectRect, selectEllipse, lasso, smartLasso, instantAlpha, flipH, flipV, exportIcon, squiggly, sparkle, sparkleFilled, apps, back, home, download, upload, folderOpen, lock, sun, history, globe, sendUp, stop, selectArea, onePage, chatAdd, mic, micFilled, eye, table, alignLeft, alignCenter, alignRight, wrapText, merge, borders, bold, italic, underlineText, chart, autosum, filter, sort, textColor, fillBucket, numberFormat, currency, decimalsLess, decimalsMore, link, bulletList }
 export type IconName = keyof typeof ICONS

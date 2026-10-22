@@ -14,10 +14,10 @@ function openTip(): string {
 
 /** The file's kind as a coloured icon, so the name can drop its type (as in Word, Excel and Google Docs). */
 function kindIcon(doc: Doc) {
-  if (doc.kind === 'deck') return <span class="tab-kind deck"><Icon name="slideshow" size={16} /></span>
-  if (doc.kind === 'gdoc') return <span class="tab-kind gdoc"><Icon name="document" size={16} /></span>
-  if (doc.kind === 'sheet') return <span class="tab-kind sheet"><Icon name="table" size={16} /></span>
-  if (doc.kind === 'pdf') return <span class="tab-kind pdf"><Icon name="document" size={16} /></span>
+  if (doc.kind === 'deck') return <span class="tab-kind tab-kind-deck"><Icon name="slideshow" size={16} /></span>
+  if (doc.kind === 'gdoc') return <span class="tab-kind tab-kind-gdoc"><Icon name="document" size={16} /></span>
+  if (doc.kind === 'sheet') return <span class="tab-kind tab-kind-sheet"><Icon name="table" size={16} /></span>
+  if (doc.kind === 'pdf') return <span class="tab-kind tab-kind-pdf"><Icon name="document" size={16} /></span>
   if (doc.kind === 'image') return <Icon name="image" size={16} />
   return <Icon name="document" size={16} />
 }
