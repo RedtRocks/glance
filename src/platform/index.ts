@@ -12,7 +12,7 @@ import { archivePage, archivePageCount, cachedUrl, cachedUrlAsync, decodeImage, 
 import { HEIF } from './heif'
 import { t } from '../i18n'
 
-export type Kind = 'pdf' | 'image' | 'model' | 'postscript' | 'xps' | 'archive' | 'preview' | 'unsupported'
+export type Kind = 'pdf' | 'image' | 'model' | 'postscript' | 'xps' | 'archive' | 'preview' | 'deck' | 'gdoc' | 'unsupported'
 
 export interface Probe {
   path: string
@@ -204,6 +204,8 @@ function classifyExt(ext: string): Kind {
   if (BROWSER_NATIVE.includes(ext) || WASM_IMAGES.includes(ext) || RAW_IMAGES.includes(ext)) return 'image'
   if (MODELS.includes(ext)) return 'model'
   if (ext === 'cbz') return 'archive'
+  if (ext === 'gdeck') return 'deck'
+  if (ext === 'gdoc') return 'gdoc'
   if (PREVIEWS.includes(ext)) return 'preview'
   if (['ps', 'eps', 'epsf', 'epsi'].includes(ext)) return 'postscript'
   if (ext === 'xps' || ext === 'oxps') return 'xps'
@@ -923,6 +925,44 @@ export async function aiAppDisconnect(id: string): Promise<void> {
   await invoke('ai_app_disconnect', { id })
 }
 
+// Skills (src-tauri/src/skills.rs, src/state/skills.ts)
+
+/** A folder in the skills folder: its SKILL.md and the other text files in it, by relative path. */
+export interface UserSkillFolder {
+  folder: string
+  text: string
+  files: Record<string, string>
+}
+
+/** The skills the person added to Glance's skills folder. None in the browser version. */
+export async function userSkills(): Promise<UserSkillFolder[]> {
+  return isTauri ? invoke<UserSkillFolder[]>('skills_user_list') : []
+}
+
+/** The skills folder in Glance's app data, made if it doesn't exist yet. */
+export async function skillsFolder(): Promise<string> {
+  return invoke<string>('skills_folder')
+}
+
+/**
+ * Writes skills where other agents find them: one folder per skill in Claude Code's skills
+ * folder (~/.claude/skills), and `note` in Codex's AGENTS.md (~/.codex/AGENTS.md), replacing
+ * what Glance wrote there before. Returns the files written.
+ */
+export async function installSkills(skills: { name: string; text: string; files: Record<string, string> }[], note: string): Promise<string[]> {
+  return invoke<string[]>('skills_install', { skills, note })
+}
+
+/** Removes what installSkills wrote. */
+export async function uninstallSkills(): Promise<void> {
+  await invoke('skills_uninstall')
+}
+
+/** Whether Glance's skills are installed for other agents. */
+export async function skillsInstalled(): Promise<boolean> {
+  return isTauri ? invoke<boolean>('skills_installed') : false
+}
+
 // The Ask AI sidebar's agents (see src-tauri/src/agents.rs and src/state/ai)
 
 export interface AgentInfo {
@@ -1010,6 +1050,44 @@ export async function websiteBack(id: string): Promise<void> {
 
 export async function websiteHome(id: string): Promise<void> {
   await invoke('website_home', { id })
+}
+
+/** Opens an address on the company's own site (a pre-filled new chat); other sites are refused. */
+export async function websiteGo(id: string, url: string): Promise<void> {
+  await invoke('website_go', { id, url })
+}
+
+/** A file the user downloaded from a company website, saved in Downloads. */
+export interface WebsiteDownload {
+  site: string
+  url: string
+  path: string | null
+  ok: boolean
+}
+
+export async function onWebsiteDownload(cb: (e: WebsiteDownload) => void): Promise<() => void> {
+  if (!isTauri) return () => {}
+  const { listen } = await import('@tauri-apps/api/event')
+  return listen<WebsiteDownload>('website-download', (e) => cb(e.payload))
+}
+
+// Handing off to the AI company's agent (see src-tauri/src/handoff.rs). Not in the browser
+// version, which has no agents.
+
+/** Makes a new folder for one hand-off under Glance's app data. */
+export async function handOffFolder(name: string): Promise<string> {
+  if (!isTauri) throw new Error(t('Not available in the browser version'))
+  return invoke<string>('hand_off_folder', { name })
+}
+
+export async function handOffFiles(dir: string): Promise<{ path: string; name: string; size: number; modified: number }[]> {
+  return isTauri ? invoke('hand_off_files', { dir }) : []
+}
+
+/** Moves a handed-off file to `dir` (or Downloads) as `name`; resolves with its new path. */
+export async function handOffKeep(path: string, dir: string | null, name: string): Promise<string> {
+  if (!isTauri) throw new Error(t('Not available in the browser version'))
+  return invoke<string>('hand_off_keep', { path, dir, name })
 }
 
 /** Closes any website left over from before Glance's page reloaded. */

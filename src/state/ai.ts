@@ -7,6 +7,10 @@ import { signal } from '@preact/signals'
 import type * as acp from '@agentclientprotocol/sdk'
 import * as platform from '../platform'
 import { applyUpdate, chatTitle, modelOption, preamble, type Choice, type Part } from '../core/ai/transcript'
+import { guideEdit } from '../core/ai/guide'
+import { beyondGlance, findHandOff } from '../core/ai/handOff'
+import { fileContext } from './guideContext'
+import { activeSkills } from './skills'
 import { changeCount, changesSince, keep as keepChanges, undoChanges } from './aiChanges'
 import { activeDoc, ImageDoc, PdfDoc, type Doc } from './documents'
 import { settings } from './settings'
@@ -262,6 +266,8 @@ function client(): acp.Client {
         return
       }
       if (replaying.has(sessionId)) return
+      const task = tasks.get(sessionId)
+      if (task) return task(update)
       const c = chat.peek()
       if (c.sessionId !== sessionId) return
       const parts = applyUpdate(c.parts, update)
@@ -280,6 +286,29 @@ function client(): acp.Client {
       })
     }
   }
+}
+
+/** Hand-off sessions (state/handOff.ts): their updates go to the hand-off, not the chat. */
+const tasks = new Map<string, (update: acp.SessionNotification['update']) => void>()
+
+export interface Task {
+  done: Promise<acp.StopReason>
+  cancel: () => Promise<void>
+}
+
+/**
+ * Runs one job in a new session of company `id`'s agent, working in `cwd`, apart from the
+ * chat. Glance's own tools are not given: the job is what they can't do.
+ */
+export async function runTask(id: string, cwd: string, prompt: string, onUpdate: (update: acp.SessionNotification['update']) => void): Promise<Task> {
+  const l = await link(id)
+  const { sessionId } = await l.conn.newSession({ cwd, mcpServers: [] })
+  tasks.set(sessionId, onUpdate)
+  const done = l.conn
+    .prompt({ sessionId, prompt: [{ type: 'text', text: prompt }] })
+    .then((r) => r.stopReason)
+    .finally(() => tasks.delete(sessionId))
+  return { done, cancel: () => l.conn.cancel({ sessionId }) }
 }
 
 export const agentName = (id: string): string => agents.peek().find((a) => a.id === id)?.name ?? id
@@ -371,6 +400,7 @@ async function startChat(c: Chat): Promise<boolean> {
     if (chat.peek().id !== c.id) return false
     signInMethods.value = []
     status.value = 'ready'
+    if (pendingPrompt.peek()) queueMicrotask(() => void flushPending())
     return true
   } catch (e) {
     if (chat.peek().id !== c.id) return false
@@ -455,17 +485,79 @@ function retell(parts: Part[]): string {
   return lines.length ? `Earlier in this chat:\n\n${lines.join('\n\n')}` : ''
 }
 
-export async function send(text: string): Promise<void> {
+/**
+ * A message already shaped for the AI (core/ai/guide.ts): the chat shows `display`, the
+ * agent gets `agent`, and `skills` are the skills given in full in it.
+ */
+export interface Outgoing {
+  display: string
+  agent: string
+  skills?: string[]
+}
+
+/** A message waiting for the chat to be ready: a "make" request asked before signing in. */
+export const pendingPrompt = signal<Outgoing | null>(null)
+let flushing = false
+
+/** Sends a message now if the AI is ready, or as soon as the user has signed in. */
+export function sendWhenReady(out: Outgoing): Promise<boolean> {
+  pendingPrompt.value = out
+  return flushPending()
+}
+
+async function flushPending(): Promise<boolean> {
+  const out = pendingPrompt.peek()
+  if (!out || flushing) return false
+  flushing = true
+  try {
+    if (!(await ensureSession()) || pendingPrompt.peek() !== out) return false
+    pendingPrompt.value = null
+    await send(out.display, out)
+    return true
+  } finally {
+    flushing = false
+  }
+}
+
+/** Skills each chat's agent already has in full, so later messages only name them. */
+const given = new Map<string, Set<string>>()
+
+/** The skills the current chat's agent already has. */
+export function sentSkills(): ReadonlySet<string> {
+  return given.get(chat.peek().id) ?? new Set()
+}
+
+/**
+ * Sends what the person typed. While a deck, document or spreadsheet is the active tab,
+ * the agent gets it guided: with the file, the selection, the rules and the skills.
+ */
+export async function send(text: string, shaped?: Outgoing): Promise<void> {
   text = text.trim()
   const files = attachments.peek()
   if (!text && !files.length) return
   if (status.peek() === 'working') return
+  if (!shaped && text && !files.length && settings.peek().handOff && beyondGlance(text)) {
+    const c0 = chat.peek()
+    chat.value = { ...c0, parts: [...c0.parts, { kind: 'user', text }], updatedAt: Date.now() }
+    await (await import('./handOff')).handOffFromChat(text)
+    return
+  }
   if (!(await ensureSession())) return
   const l = await link(chat.peek().agentId)
   const c = chat.peek()
   const sessionId = c.sessionId!
   const first = !c.parts.some((p) => p.kind === 'user')
   const blocks: acp.ContentBlock[] = []
+  // A new session (first message, or a chat carried over to a new one) has no skills yet.
+  if (first || carryOver.has(c.id)) given.delete(c.id)
+  let agentText = shaped?.agent
+  let skillsGiven = shaped?.skills ?? []
+  const ctx = !shaped && text ? fileContext(activeDoc.peek()) : null
+  if (ctx) {
+    const guided = guideEdit(text, ctx, { skills: await activeSkills(), sent: given.get(c.id) })
+    agentText = guided.text
+    skillsGiven = guided.skills
+  }
   if (first || carryOver.has(c.id)) {
     const intro = [preamble(docContext(activeDoc.peek())), carryOver.has(c.id) ? retell(c.parts) : ''].filter(Boolean).join('\n\n')
     blocks.push({ type: 'text', text: intro })
@@ -481,7 +573,8 @@ export async function send(text: string): Promise<void> {
     // i18n-ignore: for the agent, not the user
     blocks.push({ type: 'text', text: 'This agent can’t receive images here; use the glance_current_view tool to see the page.' })
   }
-  blocks.push({ type: 'text', text: text || 'Please look at what I attached.' })
+  blocks.push({ type: 'text', text: agentText || text || 'Please look at what I attached.' })
+  if (skillsGiven.length) given.set(c.id, new Set([...(given.get(c.id) ?? []), ...skillsGiven]))
   attachments.value = []
   chat.value = { ...c, parts: [...c.parts, { kind: 'user', text, context: files.map((a) => a.label) }], updatedAt: Date.now() }
   status.value = 'working'
@@ -494,6 +587,12 @@ export async function send(text: string): Promise<void> {
     if (res.stopReason === 'refusal') addNotice(t('{agent} declined to answer that.', { agent: agentName(c.agentId) }), false, c.id)
     else if (res.stopReason === 'max_tokens' || res.stopReason === 'max_turn_requests') addNotice(t('{agent} stopped early. Ask it to continue.', { agent: agentName(c.agentId) }), false, c.id)
     if (here()) status.value = 'ready'
+    // The AI reached the limit of Glance's tools: hand the rest to the company's agent.
+    const last = chat.peek().parts.at(-1)
+    if (here() && last?.kind === 'text') {
+      const left = findHandOff(last.text)
+      if (left) queueMicrotask(() => void import('./handOff').then((h) => h.handOffFromChat(left)))
+    }
   } catch (e) {
     if (here() && isAuthRequired(e)) {
       signInMethods.value = usableMethods(l.init.authMethods)

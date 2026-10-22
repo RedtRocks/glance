@@ -105,6 +105,24 @@
       },
       {
         "ext": [
+          "gdeck"
+        ],
+        "name": "Glance Deck",
+        "description": "Glance slide deck",
+        "role": "Editor",
+        "mimeType": "application/vnd.glance.deck+zip"
+      },
+      {
+        "ext": [
+          "gdoc"
+        ],
+        "name": "Glance Document",
+        "description": "Glance document",
+        "role": "Editor",
+        "mimeType": "application/vnd.glance.document+zip"
+      },
+      {
+        "ext": [
           "jpg",
           "jpeg",
           "jfif",

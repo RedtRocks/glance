@@ -1,0 +1,43 @@
+{
+  "today": "2026-11-14",
+  "sheets": { "Summary": { "dropPictures": [2] } },
+  "ops": [
+    { "op": "set", "sheet": "Donations", "range": "G6:G27", "values": [[false], [true], [false], [true], [true], [false], [false], [false], [true], [false], [true], [false], [false], [true], [false], [false], [false], [true], [false], [false], [true], [true]] },
+    { "op": "addValidation", "sheet": "Donations", "range": "G6:G27", "rule": { "type": "checkbox" } },
+    { "op": "set", "sheet": "Donations", "range": "H6:H27", "formula": "=IF(G6,E6*25%,0)", "style": { "numFmt": "£#,##0.00;−£#,##0.00;\"–\"", "align": "right" } },
+    { "op": "set", "sheet": "Donations", "cell": "E28", "formula": "=SUM(E6:E27)" },
+    { "op": "set", "sheet": "Donations", "cell": "G28", "formula": "=COUNTIF(G6:G27,TRUE)", "style": { "numFmt": "0" } },
+    { "op": "set", "sheet": "Donations", "cell": "H28", "formula": "=SUM(H6:H27)" },
+    { "op": "set", "sheet": "Donations", "cell": "B3", "formula": "=E28" },
+    { "op": "set", "sheet": "Donations", "cell": "D3", "formula": "=H28" },
+    { "op": "set", "sheet": "Donations", "cell": "F3", "formula": "=12000-E28-H28" },
+    { "op": "addValidation", "sheet": "Donations", "range": "D6:D27", "rule": { "type": "list", "source": "Summary!$B$20:$B$25" } },
+    { "op": "addValidation", "sheet": "Donations", "range": "F6:F27", "rule": { "type": "list", "values": ["Cash", "Card", "Online", "Bank transfer", "Cheque"] } },
+    { "op": "addValidation", "sheet": "Donations", "range": "E6:E27", "rule": { "type": "decimal", "min": 0, "prompt": "The amount given, in pounds" } },
+
+    { "op": "set", "sheet": "Summary", "range": "D20:D25", "formula": "=SUMIF(Donations!$D$6:$D$27,B20,Donations!$E$6:$E$27)" },
+    { "op": "set", "sheet": "Summary", "range": "E20:E25", "formula": "=SUMIF(Donations!$D$6:$D$27,B20,Donations!$H$6:$H$27)", "style": { "numFmt": "£#,##0.00;−£#,##0.00;\"–\"", "align": "right" } },
+    { "op": "set", "sheet": "Summary", "range": "F20:F25", "formula": "=D20/$D$26", "style": { "numFmt": "0%" } },
+    { "op": "set", "sheet": "Summary", "cell": "D26", "formula": "=SUM(D20:D25)" },
+    { "op": "set", "sheet": "Summary", "cell": "E26", "formula": "=SUM(E20:E25)" },
+    { "op": "set", "sheet": "Summary", "cell": "F26", "formula": "=SUM(F20:F25)", "style": { "numFmt": "0%" } },
+    { "op": "set", "sheet": "Summary", "cell": "B3", "formula": "=Donations!E28+Donations!H28" },
+    { "op": "set", "sheet": "Summary", "cell": "D3", "formula": "=COUNTA(Donations!C6:C27)" },
+    { "op": "set", "sheet": "Summary", "cell": "F3", "formula": "=B3/12000", "style": { "numFmt": "0%" } },
+    { "op": "set", "sheet": "Summary", "cell": "J3", "formula": "=ROUNDDOWN((DATE(2027,3,27)-TODAY())/7,0)", "style": { "numFmt": "0" } },
+    { "op": "addCf", "sheet": "Summary", "range": "F20:F25", "rule": { "type": "dataBar", "color": "#f2b705", "min": 0, "max": 0.5 } },
+    { "op": "addChart", "sheet": "Summary", "chart": { "type": "bar", "range": "B6:F16", "categories": "B20:B25", "series": [{ "name": "Raised", "values": "D20:D25", "color": "#0b3d2e" }], "legend": "none", "labels": true } },
+
+    { "op": "set", "sheet": "Gift Aid", "range": "B2:E11", "values": [["DONOR", "DECLARATION ON FILE", "GIVEN", "GIFT AID"], ["Osei family", true, null, null], ["Gwen Morley", true, null, null], ["Daniel Price", true, null, null], ["Ruth and Alan Becker", true, null, null], ["Kowalski family", true, null, null], ["Tom Fairley", false, null, null], ["Priya Raman", true, null, null], ["Sarah Quinn", true, null, null], ["Lewis family", false, null, null]] },
+    { "op": "addValidation", "sheet": "Gift Aid", "range": "C3:C11", "rule": { "type": "checkbox" } },
+    { "op": "set", "sheet": "Gift Aid", "range": "D3:D11", "formula": "=SUMIF(Donations!$C$6:$C$27,B3,Donations!$E$6:$E$27)", "style": { "numFmt": "£#,##0.00" } },
+    { "op": "set", "sheet": "Gift Aid", "range": "E3:E11", "formula": "=SUMIF(Donations!$C$6:$C$27,B3,Donations!$H$6:$H$27)", "style": { "numFmt": "£#,##0.00" } },
+    { "op": "set", "sheet": "Gift Aid", "cell": "B12", "value": "Total to claim" },
+    { "op": "set", "sheet": "Gift Aid", "cell": "E12", "formula": "=SUM(E3:E11)", "style": { "numFmt": "£#,##0.00", "bold": true } },
+    { "op": "addCf", "sheet": "Gift Aid", "range": "B3:E11", "rule": { "type": "expression", "formula": "=NOT($C3)", "style": { "fill": "#fde2dc" } } },
+    { "op": "format", "sheet": "Gift Aid", "range": "B2:E2", "style": { "bold": true, "fill": "#0b3d2e", "color": "#ffffff" } },
+    { "op": "colWidth", "sheet": "Gift Aid", "cols": "B:C", "width": 190 },
+    { "op": "colWidth", "sheet": "Gift Aid", "cols": "D:E", "width": 100 },
+    { "op": "activate", "sheet": "Donations" }
+  ]
+}

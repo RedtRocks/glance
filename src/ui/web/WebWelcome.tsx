@@ -1,4 +1,5 @@
 import { openWithDialog } from '../../state/actions'
+import { makeOpen } from '../../state/ui'
 import { activeId, docs } from '../../state/documents'
 import { narrowWindow } from '../../state/ui'
 import { toast } from '../../state/ui'
@@ -68,6 +69,10 @@ function PhoneStart() {
           <Icon name="folderOpen" size={24} />
           {t('Choose a File')}
         </button>
+        <button class="w-btn big" onClick={() => (makeOpen.value = true)}>
+          <Icon name="add" size={24} />
+          {t('Make Slides, Documents or Spreadsheets')}
+        </button>
         <p class="ww-fine">
           <Icon name="lock" size={16} />
           {t('Works offline once installed')}
@@ -87,6 +92,10 @@ function DesktopStart() {
           <button class="w-btn ink big" onClick={() => void openWithDialog()}>
             <Icon name="folderOpen" />
             {t('Choose Files')}
+          </button>
+          <button class="w-btn big" onClick={() => (makeOpen.value = true)}>
+            <Icon name="add" />
+            {t('Make Slides, Documents or Spreadsheets')}
           </button>
           {canInstall() && (
             <button class="w-btn big" onClick={() => void onInstall()}>

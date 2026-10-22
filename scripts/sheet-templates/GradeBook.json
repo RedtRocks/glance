@@ -1,0 +1,40 @@
+{
+  "today": "2026-12-04",
+  "checks": { "differs": { "Class Summary!N6": "the board rounds attendance from the register, not from the weekly grid" } },
+  "sheets": { "Class Summary": { "dropPictures": [2] } },
+  "ops": [
+    { "op": "set", "sheet": "Boundaries", "range": "B2:H3", "values": [["TASK", "Cells & Microscopes", "Osmosis Lab Report", "Atoms & Elements", "Forces Practical", "Energy Transfer", "Mid-Term Paper"], ["OUT OF", 40, 20, 25, 30, 15, 60]] },
+    { "op": "set", "sheet": "Boundaries", "range": "B5:D11", "values": [["FROM", "GRADE", "PUPILS"], [0, "U", null], [0.45, "D", null], [0.55, "C", null], [0.65, "B", null], [0.75, "A", null], [0.85, "A*", null]] },
+    { "op": "format", "sheet": "Boundaries", "range": "B6:B11", "style": { "numFmt": "0%" } },
+    { "op": "set", "sheet": "Boundaries", "range": "D6:D11", "formula": "=COUNTIF(Marks!$J$10:$J$29,C6)" },
+    { "op": "set", "sheet": "Boundaries", "cell": "B13", "value": "Change the marks a task is out of, or where each grade starts, and the Marks sheet follows." },
+    { "op": "format", "sheet": "Boundaries", "range": "B2:H2", "style": { "bold": true, "fill": "#b3261e", "color": "#ffffff", "wrap": true } },
+    { "op": "format", "sheet": "Boundaries", "range": "B5:D5", "style": { "bold": true, "fill": "#b3261e", "color": "#ffffff" } },
+    { "op": "colWidth", "sheet": "Boundaries", "cols": "B:H", "width": 110 },
+
+    { "op": "set", "sheet": "Marks", "range": "I10:I29", "formula": "=AVERAGE(IFERROR(C10:H10/Boundaries!$C$3:$H$3,\"\"))", "style": { "numFmt": "0.0%" } },
+    { "op": "set", "sheet": "Marks", "range": "J10:J29", "formula": "=LOOKUP(I10,Boundaries!$B$6:$B$11,Boundaries!$C$6:$C$11)" },
+    { "op": "set", "sheet": "Marks", "range": "C30:H30", "formula": "=AVERAGE(C10:C29)/Boundaries!C$3", "style": { "numFmt": "0%" } },
+    { "op": "set", "sheet": "Marks", "range": "C31:H31", "formula": "=MAX(C10:C29)" },
+    { "op": "set", "sheet": "Marks", "range": "C32:H32", "formula": "=MIN(C10:C29)" },
+    { "op": "set", "sheet": "Marks", "cell": "I30", "formula": "=AVERAGE(I10:I29)", "style": { "numFmt": "0.0%" } },
+    { "op": "set", "sheet": "Marks", "cell": "J30", "formula": "=LOOKUP(I30,Boundaries!$B$6:$B$11,Boundaries!$C$6:$C$11)" },
+    { "op": "addCf", "sheet": "Marks", "range": "I10:I29", "rule": { "type": "colorScale", "colors": ["#f4b6ae", "#fff4d6", "#bfe3c6"], "min": 0.35, "max": 0.95 } },
+    { "op": "addCf", "sheet": "Marks", "range": "J10:J29", "rule": { "type": "cellIs", "operator": "equal", "values": ["D"], "style": { "font": { "color": "#b3261e", "bold": true } } } },
+    { "op": "addCf", "sheet": "Marks", "range": "J10:J29", "rule": { "type": "cellIs", "operator": "equal", "values": ["A*"], "style": { "font": { "color": "#1e6b3a", "bold": true } } } },
+    { "op": "addCf", "sheet": "Marks", "range": "C10:H29", "rule": { "type": "cellIs", "operator": "equal", "values": ["ABS"], "style": { "font": { "color": "#b3261e", "italic": true } } } },
+    { "op": "addValidation", "sheet": "Marks", "range": "C10:C29", "rule": { "type": "decimal", "min": 0, "max": 40, "allowBlank": true, "prompt": "Mark out of 40, or ABS if absent" } },
+    { "op": "addValidation", "sheet": "Marks", "range": "D10:D29", "rule": { "type": "decimal", "min": 0, "max": 20, "allowBlank": true, "prompt": "Mark out of 20, or ABS if absent" } },
+    { "op": "addValidation", "sheet": "Marks", "range": "E10:E29", "rule": { "type": "decimal", "min": 0, "max": 25, "allowBlank": true, "prompt": "Mark out of 25, or ABS if absent" } },
+    { "op": "addValidation", "sheet": "Marks", "range": "G10:G29", "rule": { "type": "decimal", "min": 0, "max": 15, "allowBlank": true, "prompt": "Mark out of 15, or ABS if absent" } },
+    { "op": "addValidation", "sheet": "Marks", "range": "H10:H29", "rule": { "type": "decimal", "min": 0, "max": 60, "allowBlank": true, "prompt": "Mark out of 60, or ABS if absent" } },
+
+    { "op": "set", "sheet": "Class Summary", "cell": "B6", "formula": "=Marks!I30", "style": { "numFmt": "0.0%" } },
+    { "op": "set", "sheet": "Class Summary", "cell": "H6", "formula": "=COUNTIF(Marks!I10:I29,\">=\"&Boundaries!B9)", "style": { "numFmt": "0\" of 20\"" } },
+    { "op": "set", "sheet": "Class Summary", "cell": "N6", "formula": "=AVERAGE(D24:P28)/100", "style": { "numFmt": "0.0%" } },
+    { "op": "addCf", "sheet": "Class Summary", "range": "D24:P28", "rule": { "type": "colorScale", "colors": ["#f4b6ae", "#fff4d6", "#bfe3c6"], "min": 88, "max": 100 } },
+    { "op": "addCf", "sheet": "Class Summary", "range": "X24:X28", "rule": { "type": "iconSet", "icons": "3Symbols", "thresholds": [0.9, 0.95], "showValue": true } },
+    { "op": "addChart", "sheet": "Class Summary", "chart": { "type": "column", "title": "Grade Distribution", "range": "B9:L20", "categories": "Boundaries!C6:C11", "series": [{ "name": "Pupils", "values": "Boundaries!D6:D11", "color": "#b3261e" }], "legend": "none", "labels": true } },
+    { "op": "activate", "sheet": "Marks" }
+  ]
+}

@@ -10,6 +10,8 @@ import { withBusy } from './ui'
 import { openPdf } from '../pdf/engine'
 import { serialize } from './actions'
 import { t } from '../i18n'
+import type { PDFDocumentProxy } from 'pdfjs-dist'
+import { exportBytes } from './deck'
 
 const PRINT_SCALE = 150 / 72 // 150 DPI keeps memory reasonable for long documents
 
@@ -17,7 +19,10 @@ async function pdfPages(doc: Extract<Doc, { kind: 'pdf' }>, root: HTMLElement): 
   // Print what would be saved: markup and filled-in form fields included.
   const needsSerialize = doc.markup.peek().length > 0 || doc.formsEdited
   const proxy = needsSerialize ? await openPdf(await serialize(doc)) : doc.proxy.value
-  if (!proxy) return
+  if (proxy) await printProxy(proxy, root)
+}
+
+async function printProxy(proxy: PDFDocumentProxy, root: HTMLElement): Promise<void> {
   for (let i = 1; i <= proxy.numPages; i++) {
     const page = await proxy.getPage(i)
     const viewport = page.getViewport({ scale: PRINT_SCALE })
@@ -41,6 +46,21 @@ export async function printDoc(doc: Doc | null): Promise<void> {
   await withBusy(t('Preparing to print…'), async () => {
     if (doc.kind === 'pdf') {
       await pdfPages(doc, root)
+    } else if (doc.kind === 'gdoc') {
+      // Documents print what their PDF export draws.
+      const proxy = await openPdf(await (await import('./gdoc')).gdocExportBytes(doc, 'pdf'))
+      await printProxy(proxy, root)
+      await proxy.loadingTask.destroy()
+    } else if (doc.kind === 'deck') {
+      // Decks print what their PDF export draws.
+      const proxy = await openPdf(await exportBytes(doc, 'pdf'))
+      await printProxy(proxy, root)
+      await proxy.loadingTask.destroy()
+    } else if (doc.kind === 'sheet') {
+      const { sheetBytes } = await import('./sheet')
+      const proxy = await openPdf(await sheetBytes(doc, 'pdf'))
+      await printProxy(proxy, root)
+      await proxy.loadingTask.destroy()
     } else if (doc instanceof ImageDoc && doc.editable && (doc.raster.peek() || doc.markup.peek().length || doc.redactions.peek().length)) {
       // Print what would be saved: edits, markup and redactions burned in.
       const png = await engine.encodePng(await engine.flatten(doc))

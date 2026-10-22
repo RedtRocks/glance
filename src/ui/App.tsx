@@ -1,7 +1,7 @@
 import { useEffect } from 'preact/hooks'
 import { activeDoc, activeId, docs, findByPath } from '../state/documents'
 import { isDark, settings } from '../state/settings'
-import { feedbackOpen, cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, inspectorOpen, aiOpen, narrowWindow, signaturesOpen, redactTextOpen, findOpen, settingsOpen, sidebarVisible, slideshow, toast } from '../state/ui'
+import { makeOpen, feedbackOpen, cleanupOpen, collageOpen, reduceOpen, scanOpen, stampOpen, customizeOpen, inspectorOpen, aiOpen, narrowWindow, signaturesOpen, redactTextOpen, findOpen, settingsOpen, sidebarVisible, slideshow, toast } from '../state/ui'
 import { confirmCloseWindow, openFiles } from '../state/actions'
 import { startAutosave } from '../state/autosave'
 import { restoreSession } from '../state/session'
@@ -50,6 +50,7 @@ import { RedactionBar } from './RedactionBar'
 import { ExternalAppBar } from './ExternalAppBar'
 import { InspectorPane } from './InspectorPane'
 import { ConflictBar } from './ConflictBar'
+import { OriginBar } from './OriginBar'
 import { SignatureBar } from './SignatureBar'
 import { SignaturesPane } from './SignaturesPane'
 import { AiSidebar } from './ai/AiSidebar'
@@ -67,6 +68,12 @@ import { ScanDialog } from './dialogs/ScanDialog'
 import { PdfExportDialog } from './dialogs/PdfExportDialog'
 import { AdjustColorPanel } from './image/AdjustColorPanel'
 import { AdjustSizeDialog } from './image/AdjustSizeDialog'
+import { SheetView } from './sheet/SheetView'
+import { DeckView } from './deck/DeckView'
+import { DocView } from './doc/DocView'
+import { MakeScreen } from './deck/MakeScreen'
+import { OutlineScreen } from './ai/OutlineScreen'
+import { planning } from '../state/plan'
 import { ExportDialog } from './image/ExportDialog'
 
 function Viewer() {
@@ -80,15 +87,19 @@ function Viewer() {
       {sidebarVisible.value && narrowWindow.value && !phone && <div class="scrim" onClick={() => (sidebarVisible.value = false)} />}
       <main class="viewer" aria-label={doc.name.value}>
         {(doc.kind === 'pdf' || doc.kind === 'image') && <RedactionBar doc={doc} />}
-        <ExternalAppBar key={doc.id} doc={doc} />
+        <ExternalAppBar key={`${doc.id}-app`} doc={doc} />
         <ConflictBar doc={doc} />
-        {doc.kind === 'pdf' && <SignatureBar key={doc.id} doc={doc} />}
+        {platform.isTauri && <OriginBar doc={doc} />}
+        {doc.kind === 'pdf' && <SignatureBar key={`${doc.id}-sig`} doc={doc} />}
         <div class="viewer-stage">
           {doc.kind === 'pdf' && <PdfView key={doc.id} doc={doc} />}
           {doc.kind === 'image' && <ImageView key={doc.id} doc={doc} />}
           {doc.kind === 'notice' && <NoticeView doc={doc} />}
           {doc.kind === 'model' && <ModelView key={doc.id} doc={doc} />}
           {doc.kind === 'preview' && <PreviewView key={doc.id} doc={doc} />}
+          {doc.kind === 'deck' && <DeckView key={doc.id} doc={doc} />}
+          {doc.kind === 'gdoc' && <DocView key={doc.id} doc={doc} />}
+          {doc.kind === 'sheet' && <SheetView key={doc.id} doc={doc} />}
         </div>
         {aiOpen.value && selectingArea.value && <AreaSelect doc={doc} />}
         {phone && <PageCounter doc={doc} />}
@@ -261,6 +272,8 @@ export function App() {
       {activeDoc.value instanceof PdfDoc && cleanupOpen.value && <CleanupDialog doc={activeDoc.value} />}
       {activeDoc.value instanceof PdfDoc && reduceOpen.value && <ReduceDialog doc={activeDoc.value} />}
       {activeDoc.value instanceof PdfDoc && stampOpen.value && <StampDialog doc={activeDoc.value} />}
+      {makeOpen.value && <MakeScreen />}
+      {planning.value && !makeOpen.value && <OutlineScreen />}
       {activeDoc.value instanceof ImageDoc && exportOpen.value && <ExportDialog doc={activeDoc.value} />}
       {activeDoc.value instanceof PdfDoc && exportOpen.value && <PdfExportDialog doc={activeDoc.value} />}
       {platform.isWeb && <OpeningOverlay />}

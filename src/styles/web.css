@@ -11,6 +11,17 @@
   font-display: swap;
 }
 
+/* The fonts of the designed deck templates (src/deck/designs), bundled so nothing loads
+   from the web. Browsers fetch each file only when a slide uses it. OFL licences are
+   next to the files. Keep in step with src/deck/fonts.ts. */
+@font-face { font-family: 'Fraunces'; font-style: normal; font-weight: 100 900; font-display: swap; src: url('./fonts/fraunces.woff2') format('woff2'); }
+@font-face { font-family: 'Fraunces'; font-style: italic; font-weight: 100 900; font-display: swap; src: url('./fonts/fraunces-italic.woff2') format('woff2'); }
+@font-face { font-family: 'Bricolage Grotesque'; font-weight: 200 800; font-display: swap; src: url('./fonts/bricolage-grotesque.woff2') format('woff2'); }
+@font-face { font-family: 'Space Grotesk'; font-weight: 300 700; font-display: swap; src: url('./fonts/space-grotesk.woff2') format('woff2'); }
+@font-face { font-family: 'Caveat'; font-weight: 400 700; font-display: swap; src: url('./fonts/caveat.woff2') format('woff2'); }
+@font-face { font-family: 'DM Serif Display'; font-style: normal; font-weight: 400; font-display: swap; src: url('./fonts/dm-serif-display.woff2') format('woff2'); }
+@font-face { font-family: 'DM Serif Display'; font-style: italic; font-weight: 400; font-display: swap; src: url('./fonts/dm-serif-display-italic.woff2') format('woff2'); }
+
 :root[data-look='wollo'] {
   --font: Urbanist, 'Helvetica Neue', Arial, sans-serif;
   --font-display: Urbanist, 'Helvetica Neue', Arial, sans-serif;

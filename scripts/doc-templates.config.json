@@ -1,0 +1,357 @@
+{
+  "_": "Input for scripts/build-doc-templates.mjs: which document boards become templates, in the order the start screen shows them, the words it uses, and each page's role. purpose and look come from the board's title in canvas.json (\"Sample · Purpose · Look\") unless given here. A page with flow is a flowing section: its top-level parts from the one holding the start text to the one holding the end text (the start one when left out) become blocks that flow across pages; next is the page the section continues on (its own page when left out, \"plain\" for a plain page). charts swaps a drawn chart (the parts around the text near) for a chart block of these rows. Tables are found by themselves: rows of three or more cells that line up.",
+  "boards": [
+    {
+      "board": "JobPack",
+      "id": "jobPack",
+      "name": "Job Application Pack",
+      "blurb": "CV, cover letter and references",
+      "pack": true,
+      "pages": [
+        {
+          "role": "CV"
+        },
+        {
+          "role": "Cover letter",
+          "flow": {
+            "start": "Priya Adebayo"
+          }
+        },
+        {
+          "role": "References"
+        }
+      ]
+    },
+    {
+      "board": "Essay",
+      "id": "essay",
+      "name": "School Report",
+      "blurb": "A cover, then chapters with figures",
+      "pages": [
+        {
+          "role": "Cover"
+        },
+        {
+          "role": "Chapters",
+          "flow": {
+            "start": "How Headlands Erode"
+          }
+        },
+        {
+          "role": "Conclusion and bibliography",
+          "flow": {
+            "start": "Results"
+          },
+          "charts": [
+            {
+              "near": "Cliff retreat per year",
+              "chart": "bar",
+              "title": "Cliff retreat per year, 2021 to 2026",
+              "rows": [
+                [
+                  "Site",
+                  "Metres a year"
+                ],
+                [
+                  "Arch Point",
+                  "1.6"
+                ],
+                [
+                  "North Cliff",
+                  "0.9"
+                ],
+                [
+                  "Sea Wall",
+                  "0.2"
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "board": "Newsletter",
+      "id": "newsletter",
+      "name": "Club Newsletter",
+      "blurb": "Front page, what's on and members' news",
+      "pages": [
+        {
+          "role": "Front page"
+        },
+        {
+          "role": "What's on"
+        },
+        {
+          "role": "Members' news and ticket form",
+          "flow": {
+            "start": "A Fond Farewell",
+            "next": "plain"
+          }
+        }
+      ]
+    },
+    {
+      "board": "EventPack",
+      "id": "eventPack",
+      "name": "Event Pack",
+      "blurb": "Poster, invitation and programme",
+      "pack": true,
+      "pages": [
+        {
+          "role": "Poster"
+        },
+        {
+          "role": "Invitation"
+        },
+        {
+          "role": "Programme"
+        }
+      ]
+    },
+    {
+      "board": "BusinessPack",
+      "id": "businessPack",
+      "name": "Small Business Pack",
+      "blurb": "Invoice, quote and letterhead",
+      "pack": true,
+      "pages": [
+        {
+          "role": "Invoice"
+        },
+        {
+          "role": "Quote"
+        },
+        {
+          "role": "Letter",
+          "flow": {
+            "start": "Join Our Winter Service Club",
+            "end": "Enc. Winter"
+          }
+        }
+      ]
+    },
+    {
+      "board": "MenuPack",
+      "id": "menuPack",
+      "name": "Dinner Party Pack",
+      "blurb": "Menu card, recipe and meal planner",
+      "pack": true,
+      "pages": [
+        {
+          "role": "Menu card"
+        },
+        {
+          "role": "Recipe"
+        },
+        {
+          "role": "Meal planner"
+        }
+      ]
+    },
+    {
+      "board": "ProjectReport",
+      "id": "projectReport",
+      "name": "Project Report",
+      "blurb": "Summary, progress and next steps",
+      "pages": [
+        {
+          "role": "Cover and summary"
+        },
+        {
+          "role": "Progress",
+          "flow": {
+            "start": "We set monthly targets",
+            "end": "Cost per tree covers"
+          },
+          "charts": [
+            {
+              "near": "Trees Planted Each Month",
+              "chart": "bar",
+              "title": "Trees Planted Each Month",
+              "rows": [
+                [
+                  "Month",
+                  "Planted",
+                  "Target"
+                ],
+                [
+                  "Oct",
+                  "412",
+                  "450"
+                ],
+                [
+                  "Nov",
+                  "640",
+                  "620"
+                ],
+                [
+                  "Dec",
+                  "731",
+                  "700"
+                ],
+                [
+                  "Jan",
+                  "508",
+                  "650"
+                ],
+                [
+                  "Feb",
+                  "615",
+                  "600"
+                ],
+                [
+                  "Mar",
+                  "506",
+                  "520"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "role": "Next steps",
+          "flow": {
+            "start": "Summer Watering",
+            "end": "Meeting Notes and Actions"
+          }
+        }
+      ]
+    },
+    {
+      "board": "Certificates",
+      "id": "certificates",
+      "name": "Certificates and Cards",
+      "blurb": "Certificate, thank-you card, reading chart",
+      "pack": true,
+      "pages": [
+        {
+          "role": "Certificate"
+        },
+        {
+          "role": "Thank-you card"
+        },
+        {
+          "role": "Reading chart"
+        }
+      ]
+    },
+    {
+      "board": "LabReport",
+      "id": "labReport",
+      "name": "Lab Report",
+      "blurb": "Aim, method, results and evaluation",
+      "pages": [
+        {
+          "role": "Cover"
+        },
+        {
+          "role": "Method and results",
+          "flow": {
+            "start": "Method",
+            "end": "Volume of CO"
+          }
+        },
+        {
+          "role": "Analysis and evaluation",
+          "flow": {
+            "start": "Analysis",
+            "end": "CONCLUSION"
+          }
+        }
+      ]
+    },
+    {
+      "board": "LessonPlan",
+      "id": "lessonPlan",
+      "name": "Lesson Plan Pack",
+      "blurb": "Lesson plan, worksheet and answers",
+      "pack": true,
+      "pages": [
+        {
+          "role": "Lesson plan"
+        },
+        {
+          "role": "Worksheet"
+        },
+        {
+          "role": "Answer sheet"
+        }
+      ]
+    },
+    {
+      "board": "WeddingPack",
+      "id": "weddingPack",
+      "name": "Wedding Stationery",
+      "blurb": "Invitation, RSVP card and order of service",
+      "pack": true,
+      "pages": [
+        {
+          "role": "Invitation"
+        },
+        {
+          "role": "RSVP card"
+        },
+        {
+          "role": "Order of service"
+        }
+      ]
+    },
+    {
+      "board": "TravelBrochure",
+      "id": "travelBrochure",
+      "name": "Brochure",
+      "blurb": "Cover, rooms and prices, things to do",
+      "pages": [
+        {
+          "role": "Cover"
+        },
+        {
+          "role": "Rooms and prices"
+        },
+        {
+          "role": "Things to do and booking"
+        }
+      ]
+    },
+    {
+      "board": "BusinessPlan",
+      "id": "businessPlan",
+      "name": "Business Launch Pack",
+      "blurb": "Plan summary, press release and price sheet",
+      "pack": true,
+      "pages": [
+        {
+          "role": "Plan summary"
+        },
+        {
+          "role": "Press release",
+          "flow": {
+            "start": "Restored 1974 Van",
+            "end": "Notes to Editors"
+          }
+        },
+        {
+          "role": "Price sheet"
+        }
+      ]
+    },
+    {
+      "board": "ClubHandbook",
+      "id": "clubHandbook",
+      "name": "Club Handbook",
+      "blurb": "Welcome, schedule and rules, contacts",
+      "pages": [
+        {
+          "role": "Welcome and values"
+        },
+        {
+          "role": "Schedule and rules"
+        },
+        {
+          "role": "Tournaments and contacts"
+        }
+      ]
+    }
+  ]
+}

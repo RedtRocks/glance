@@ -10,6 +10,8 @@ import {
   activeDoc,
   activeId,
   addDoc,
+  DeckDoc,
+  GDoc,
   docs,
   findByPath,
   ImageDoc,
@@ -22,6 +24,8 @@ import {
 } from './documents'
 import { alertDialog, opening, promptText, showDialog, toast, withBusy } from './ui'
 import { applyImageRedactions, editableImage, rotateImage, saveImage, saveImageAs } from './imageActions'
+import { openDeck, saveDeck, saveDeckAs } from './deck'
+import { isSheetName, openSheet, saveSheet, saveSheetAs } from './sheet'
 import * as versions from './versions'
 import { flushAutosave } from './autosave'
 import { msg, t } from '../i18n'
@@ -46,7 +50,8 @@ export const OPEN_FILTERS: platform.FileFilter[] = [
       'cr2', 'cr3', 'crw', 'nef', 'nrw', 'arw', 'srf', 'sr2', 'raf', 'orf', 'rw2', 'raw', 'dng', 'pef',
       'srw', 'x3f', 'erf', 'mef', 'mos', 'mrw', 'kdc', 'dcr', '3fr', 'fff', 'iiq', 'rwl', 'gpr',
       'glb', 'gltf', 'obj', 'stl', 'ply', 'fbx', 'usdz', 'usda', 'usdc', 'dae', '3mf', '3ds',
-      ...PREVIEWS
+      ...PREVIEWS,
+      'gdeck', 'gdoc'
     ]
   },
   { name: msg('PDF documents'), extensions: ['pdf', 'ai'] },
@@ -169,10 +174,16 @@ async function openFresh(path: string): Promise<Doc | null> {
       return doc
     }
     case 'preview': {
+      // Workbooks open in the grid to edit; the read-only preview is the fallback.
+      if (isSheetName(probe.name)) return openSheet(probe)
       const doc = new PreviewDoc(probe)
       addDoc(doc)
       return doc
     }
+    case 'deck':
+      return openDeck(probe)
+    case 'gdoc':
+      return (await import('./gdoc')).openGdoc(probe)
     default:
       return notice(probe, t('Glance can’t open this file'), t('This file type isn’t supported. If you think it should be, please open an issue on GitHub.'))
   }
@@ -267,6 +278,9 @@ async function resolvePendingRedactions(doc: PdfDoc): Promise<boolean> {
 
 export async function save(doc: Doc | null = activeDoc.value, opts: { auto?: boolean } = {}): Promise<void> {
   if (doc instanceof ImageDoc) return saveImage(doc, opts)
+  if (doc instanceof DeckDoc) return saveDeck(doc, opts)
+  if (doc instanceof GDoc) return (await import('./gdoc')).saveGdoc(doc, opts)
+  if (doc?.kind === 'sheet') return saveSheet(doc, opts)
   if (!doc || doc.kind !== 'pdf') return
   const path = doc.path.value
   if (!path) return opts.auto ? undefined : saveAs(doc)
@@ -315,6 +329,9 @@ export async function offerToDeleteRedactedVersions(doc: Doc, path: string): Pro
 
 export async function saveAs(doc: Doc | null = activeDoc.value): Promise<void> {
   if (doc instanceof ImageDoc) return saveImageAs(doc)
+  if (doc instanceof DeckDoc) return saveDeckAs(doc)
+  if (doc instanceof GDoc) return (await import('./gdoc')).saveGdocAs(doc)
+  if (doc?.kind === 'sheet') return saveSheetAs(doc)
   if (!doc || doc.kind !== 'pdf') return
   const base = doc.name.value.replace(/\.[^.]+$/, '')
   const target = await platform.saveDialog(`${base}.pdf`, [{ name: msg('PDF document'), extensions: ['pdf'] }])
@@ -701,10 +718,10 @@ export function selectAllPages(doc = activeDoc.value): void {
 }
 
 export async function undo(doc = activeDoc.value): Promise<void> {
-  if (doc?.kind === 'pdf' || doc?.kind === 'image') await doc.undo()
+  if (doc?.kind === 'pdf' || doc?.kind === 'image' || doc?.kind === 'deck' || doc?.kind === 'gdoc' || doc?.kind === 'sheet') await doc.undo()
 }
 export async function redo(doc = activeDoc.value): Promise<void> {
-  if (doc?.kind === 'pdf' || doc?.kind === 'image') await doc.redo()
+  if (doc?.kind === 'pdf' || doc?.kind === 'image' || doc?.kind === 'deck' || doc?.kind === 'gdoc' || doc?.kind === 'sheet') await doc.redo()
 }
 
 export async function showAbout(): Promise<void> {

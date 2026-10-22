@@ -7,6 +7,8 @@ import { McpServer, type ToolDefinition } from '../core/mcp/protocol'
 import * as platform from '../platform'
 import { handlers } from './mcpTools'
 import { settings } from './settings'
+import { guidance } from '../core/mcp/guidance'
+import { activeSkills } from './skills'
 
 /**
  * A hidden window (Glance started by an AI app, or minimized) gets no animation frames,
@@ -41,7 +43,8 @@ export async function startMcp(): Promise<() => void> {
     { name: 'glance', title: 'Glance', version: await getVersion(), instructions: catalog.instructions },
     catalog.tools as ToolDefinition[],
     handlers,
-    () => (settings.peek().aiApps === false ? 'The user turned off AI access in Glance (Settings → AI apps).' : null)
+    () => (settings.peek().aiApps === false ? 'The user turned off AI access in Glance (Settings → AI apps).' : null),
+    guidance(activeSkills)
   )
   return platform.onMcp((e) => {
     if (e.type !== 'message') return

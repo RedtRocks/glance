@@ -101,6 +101,9 @@ export const signaturesOpen = signal(false)
 /** View → Ask AI: the AI sidebar (src/ui/ai). */
 export const aiOpen = signal(false)
 
+/** File → New: "What do you want to make?" (src/ui/deck/MakeScreen.tsx). */
+export const makeOpen = signal(false)
+
 /** File → Clean Up PDF. */
 export const cleanupOpen = signal(false)
 

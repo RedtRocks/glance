@@ -1,8 +1,9 @@
 //! glance-mcp: lets AI apps (Claude Code, Claude Desktop, Codex, Cursor, …) use Glance.
 //!
 //! AI apps start MCP servers as a command and talk JSON-RPC over its stdin and stdout.
-//! glance-mcp answers the handshake and the tool list itself (from src/core/mcp/tools.json),
-//! so an AI app starting up doesn't start Glance. The first tool call connects to the
+//! glance-mcp answers the handshake, the tool list (src/core/mcp/tools.json), the prompt list
+//! (src/core/mcp/prompts.json) and, until Glance is running, Glance's own skills (src/skills)
+//! itself, so an AI app starting up doesn't start Glance. The first tool call connects to the
 //! Glance app, starting it without a window if it isn't running, and from then on calls are
 //! relayed unchanged to Glance, which implements the tools (src/state/mcp.ts). If Glance
 //! goes away (the user quit it), the next call starts or finds it again, so the AI app
@@ -33,6 +34,42 @@ const PROTOCOL_VERSIONS: [&str; 4] = ["2025-11-25", "2025-06-18", "2025-03-26", 
 
 const TOOLS_JSON: &str = include_str!("../../../src/core/mcp/tools.json");
 const TAURI_CONF: &str = include_str!("../../tauri.conf.json");
+const PROMPTS_JSON: &str = include_str!("../../../src/core/mcp/prompts.json");
+
+/// Glance's skills (src/skills), by path inside that folder; a test checks none is missing.
+/// Glance itself also serves the skills the person added, and leaves out ones turned off.
+const SKILLS: &[(&str, &str)] = &[
+    ("document-writing/SKILL.md", include_str!("../../../src/skills/document-writing/SKILL.md")),
+    ("document-writing/examples/cover-letter.md", include_str!("../../../src/skills/document-writing/examples/cover-letter.md")),
+    ("editing/SKILL.md", include_str!("../../../src/skills/editing/SKILL.md")),
+    ("slide-design/SKILL.md", include_str!("../../../src/skills/slide-design/SKILL.md")),
+    ("slide-design/examples/bake-sale-plan.md", include_str!("../../../src/skills/slide-design/examples/bake-sale-plan.md")),
+    ("spreadsheet-building/SKILL.md", include_str!("../../../src/skills/spreadsheet-building/SKILL.md")),
+    ("spreadsheet-building/examples/trip-budget.md", include_str!("../../../src/skills/spreadsheet-building/examples/trip-budget.md")),
+];
+
+/// A top-level frontmatter field of a SKILL.md.
+fn front(text: &str, key: &str) -> Option<String> {
+    let body = text.strip_prefix("---")?;
+    let end = body.find("\n---")?;
+    body[..end].lines().find_map(|l| Some(l.strip_prefix(key)?.strip_prefix(':')?.trim().trim_matches('"').to_string()))
+}
+
+/// The skills as MCP resources, in the same shape as src/core/mcp/guidance.ts.
+fn skill_resources() -> Vec<Value> {
+    SKILLS
+        .iter()
+        .map(|(path, text)| {
+            let (name, file) = path.split_once('/').unwrap();
+            let uri = format!("skill://glance/{path}");
+            if file == "SKILL.md" {
+                json!({ "uri": uri, "name": name, "title": format!("Skill: {name}"), "description": front(text, "description").unwrap_or_default(), "mimeType": "text/markdown" })
+            } else {
+                json!({ "uri": uri, "name": path, "title": format!("Skill {name}: {file}"), "description": format!("An example for the {name} skill."), "mimeType": "text/markdown" })
+            }
+        })
+        .collect()
+}
 
 /// Whether this process was started as glance-mcp. The Store package has no glance-mcp.exe:
 /// its glance-mcp.exe alias starts Glance.exe, which then runs [`run`] instead of the app
@@ -93,6 +130,7 @@ struct Bridge<W: Write + Send + 'static> {
     /// Ids (as JSON) of relayed requests Glance hasn't answered yet.
     pending: Arc<Mutex<HashSet<String>>>,
     catalog: Value,
+    prompts: Value,
 }
 
 impl<W: Write + Send + 'static> Bridge<W> {
@@ -103,6 +141,7 @@ impl<W: Write + Send + 'static> Bridge<W> {
             link: None,
             pending: Arc::default(),
             catalog: serde_json::from_str(TOOLS_JSON).expect("tools.json is valid JSON"),
+            prompts: serde_json::from_str(PROMPTS_JSON).expect("prompts.json is valid JSON"),
         }
     }
 
@@ -133,16 +172,22 @@ impl<W: Write + Send + 'static> Bridge<W> {
                 let version = PROTOCOL_VERSIONS.iter().find(|v| **v == asked).unwrap_or(&PROTOCOL_VERSIONS[0]);
                 json!({
                     "protocolVersion": version,
-                    "capabilities": { "tools": { "listChanged": false } },
+                    "capabilities": { "tools": { "listChanged": false }, "prompts": { "listChanged": false }, "resources": { "listChanged": false } },
                     "serverInfo": { "name": "glance", "title": "Glance", "version": app_version() },
                     "instructions": self.catalog["instructions"],
                 })
             }
             "ping" => json!({}),
             "tools/list" => json!({ "tools": self.catalog["tools"] }),
-            "resources/list" => json!({ "resources": [] }),
+            // A running Glance also knows the person's own skills and which are off.
+            "resources/list" if !self.connected() => json!({ "resources": skill_resources() }),
+            "resources/read" if !self.connected() => {
+                let uri = params.and_then(|p| p.get("uri")).and_then(Value::as_str).unwrap_or("");
+                let (_, text) = SKILLS.iter().find(|(p, _)| uri.strip_prefix("skill://glance/") == Some(*p))?;
+                json!({ "contents": [{ "uri": uri, "mimeType": "text/markdown", "text": text }] })
+            }
             "resources/templates/list" => json!({ "resourceTemplates": [] }),
-            "prompts/list" => json!({ "prompts": [] }),
+            "prompts/list" => json!({ "prompts": self.prompts["prompts"] }),
             _ => return None,
         })
     }
@@ -481,6 +526,41 @@ mod tests {
         let mut b = Bridge::new(out.clone(), || Err("not installed".to_string()));
         b.handle(r#"{"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"glance_info"}}"#);
         assert_eq!(out.line(0)["error"]["message"], "Couldn't reach Glance: not installed");
+    }
+
+    #[test]
+    fn serves_prompts_and_skills_without_starting_glance() {
+        let out = Out::default();
+        let mut b = Bridge::new(out.clone(), || -> Result<TcpStream, String> { panic!("started Glance") });
+        b.handle(r#"{"jsonrpc":"2.0","id":1,"method":"prompts/list"}"#);
+        b.handle(r#"{"jsonrpc":"2.0","id":2,"method":"resources/list"}"#);
+        b.handle(r#"{"jsonrpc":"2.0","id":3,"method":"resources/read","params":{"uri":"skill://glance/slide-design/SKILL.md"}}"#);
+        let prompts: Vec<String> = out.line(0)["result"]["prompts"].as_array().unwrap().iter().map(|p| p["name"].as_str().unwrap().to_string()).collect();
+        assert_eq!(prompts, ["create-deck", "create-document", "create-spreadsheet", "edit-file"]);
+        let resources = out.line(1)["result"]["resources"].as_array().unwrap().clone();
+        let editing = resources.iter().find(|r| r["uri"] == "skill://glance/editing/SKILL.md").unwrap();
+        assert!(editing["description"].as_str().unwrap().contains("targeted change"));
+        assert!(out.line(2)["result"]["contents"][0]["text"].as_str().unwrap().contains("name: slide-design"));
+    }
+
+    #[test]
+    fn every_skill_file_is_bundled() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../src/skills");
+        fn walk(dir: &std::path::Path, base: &std::path::Path, out: &mut Vec<String>) {
+            for e in std::fs::read_dir(dir).unwrap().flatten() {
+                let p = e.path();
+                if p.is_dir() {
+                    walk(&p, base, out)
+                } else if p.extension().is_some_and(|x| x == "md") {
+                    out.push(p.strip_prefix(base).unwrap().to_string_lossy().replace('\\', "/"));
+                }
+            }
+        }
+        let mut found = vec![];
+        walk(&root, &root, &mut found);
+        found.sort();
+        let bundled: Vec<String> = SKILLS.iter().map(|(p, _)| p.to_string()).collect();
+        assert_eq!(found, bundled, "list every file in src/skills in SKILLS, sorted");
     }
 
     #[test]

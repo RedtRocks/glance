@@ -7,6 +7,7 @@ mod encode;
 mod explorer;
 mod files;
 mod fonts;
+mod handoff;
 mod history;
 #[cfg(target_os = "linux")]
 mod keyring_store;
@@ -18,6 +19,7 @@ mod scan;
 mod protocol;
 mod shell;
 mod signatures;
+mod skills;
 mod subject;
 mod website;
 
@@ -200,6 +202,11 @@ pub fn run() {
             mcp::apps::ai_apps,
             mcp::apps::ai_app_connect,
             mcp::apps::ai_app_disconnect,
+            skills::skills_user_list,
+            skills::skills_folder,
+            skills::skills_install,
+            skills::skills_uninstall,
+            skills::skills_installed,
             agents::agents_list,
             agents::agent_add,
             agents::agent_remove,
@@ -210,6 +217,10 @@ pub fn run() {
             website::website_close_all,
             website::website_back,
             website::website_home,
+            website::website_go,
+            handoff::hand_off_folder,
+            handoff::hand_off_files,
+            handoff::hand_off_keep,
             agents::agent_start,
             agents::agent_send,
             agents::agent_stop,

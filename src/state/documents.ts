@@ -10,6 +10,14 @@ import { t } from '../i18n'
 import type { Affine } from '../core/image/transform'
 import { previewExt, previewFlavor, type PreviewFlavor } from '../core/previews'
 import { pathKey } from '../core/paths'
+import { emptyDeck, slideIdMaker, type Deck } from '../core/deck/model'
+import { applyOps, type ApplyResult, type DeckOp } from '../core/deck/ops'
+import { findDesign } from './designs'
+import { releaseMedia } from './deckMedia'
+import { emptyDoc, type Doc as GDocData } from '../core/doc/model'
+import { applyDocOps, type DocApplyResult, type DocOp } from '../core/doc/ops'
+import { findLook } from './docLooks'
+import type { SheetDoc } from './sheetDoc'
 
 let seq = 0
 const nextId = (): string => `doc${++seq}`
@@ -18,7 +26,7 @@ export type Zoom = number | 'fit-width' | 'fit-page'
 export type ViewMode = 'continuous' | 'single' | 'two'
 export type SidebarMode = 'thumbnails' | 'toc' | 'notes' | 'bookmarks' | 'none'
 
-abstract class BaseDoc {
+export abstract class BaseDoc {
   readonly id = nextId()
   readonly name: Signal<string>
   /** On-disk path; null for documents that must be saved with Save As. */
@@ -372,7 +380,154 @@ export class PreviewDoc extends BaseDoc {
   }
 }
 
-export type Doc = PdfDoc | ImageDoc | NoticeDoc | ModelDoc | PreviewDoc
+/**
+ * A deck (.gdeck, ADR 0018). Every change, the person's or an AI app's, is a list of deck
+ * operations applied as one undo step.
+ */
+export class DeckDoc extends BaseDoc {
+  readonly kind = 'deck' as const
+  readonly deck = signal<Deck>(emptyDeck())
+  /** Pictures by media/ path. Only grows while open; saving keeps the ones slides use. */
+  readonly media = new Map<string, Uint8Array>()
+  /** Bumped when media changes, so views re-read picture URLs. */
+  readonly mediaVersion = signal(0)
+  readonly current = signal(0)
+  readonly pageCount = computed(() => this.deck.value.slides.length)
+  /** Times the fitted size, as in previews. */
+  readonly zoom = signal(1)
+  /** Slides picked in the slide sorter, for moving or deleting several at once. */
+  readonly selection = signal<string[]>([])
+  readonly history = new History<Deck>(80)
+  readonly historyVersion = signal(0)
+  constructor(name: string, path: string | null) {
+    super(name, path)
+    this.sidebar.value = 'thumbnails'
+  }
+
+  /** Applies `ops` as one undo step. Throws DeckError, changing nothing, if any is invalid. */
+  apply(label: string, ops: DeckOp[]): ApplyResult {
+    const before = this.deck.peek()
+    const result = applyOps(before, ops, slideIdMaker(before), findDesign)
+    this.history.push(label, before)
+    this.deck.value = result.deck
+    this.dirty.value = true
+    this.historyVersion.value++
+    this.current.value = Math.min(this.current.peek(), Math.max(0, result.deck.slides.length - 1))
+    return result
+  }
+
+  /** Stores a picture under a media/ name no other picture uses, and returns that path. */
+  addMedia(fileName: string, bytes: Uint8Array): string {
+    const dot = fileName.lastIndexOf('.')
+    const ext = (dot > 0 ? fileName.slice(dot + 1) : 'png').toLowerCase()
+    const stem = (dot > 0 ? fileName.slice(0, dot) : fileName).replace(/[^\w .()-]/g, '').replace(/^[^\w]+/, '').slice(0, 60) || 'picture'
+    let path = `media/${stem}.${ext}`
+    for (let n = 2; this.media.has(path); n++) path = `media/${stem} (${n}).${ext}`
+    this.media.set(path, bytes)
+    this.mediaVersion.value++
+    return path
+  }
+
+  undo(): void {
+    const e = this.history.undo(this.deck.peek())
+    if (e) this.restore(e.state)
+  }
+
+  redo(): void {
+    const e = this.history.redo(this.deck.peek())
+    if (e) this.restore(e.state)
+  }
+
+  private restore(deck: Deck): void {
+    this.deck.value = deck
+    this.dirty.value = true
+    this.historyVersion.value++
+    this.current.value = Math.min(this.current.peek(), Math.max(0, deck.slides.length - 1))
+  }
+}
+
+/** Where the person is in a document: the section, and the block or text box picked. */
+export interface DocSelection {
+  section: string
+  block?: string
+  box?: string
+}
+
+/**
+ * A Glance document (.gdoc, ADR 0018): a look's pages with text boxes, tables and flowing
+ * blocks. Every change, the person's or an AI app's, is a list of document operations
+ * applied as one undo step.
+ */
+export class GDoc extends BaseDoc {
+  readonly kind = 'gdoc' as const
+  readonly doc = signal<GDocData>(emptyDoc('essay'))
+  readonly media = new Map<string, Uint8Array>()
+  readonly mediaVersion = signal(0)
+  /** The page on screen, 0-based, once laid out. */
+  readonly current = signal(0)
+  /** Pages, once laid out (sections can flow onto several). */
+  readonly pageCount = signal(1)
+  readonly zoom = signal(1)
+  readonly selection = signal<DocSelection | null>(null)
+  /** The last change an AI app made, until the person keeps or undoes it. */
+  readonly aiChange = signal<{ label: string; before: GDocData; added: string[] } | null>(null)
+  readonly history = new History<GDocData>(80)
+  readonly historyVersion = signal(0)
+  constructor(name: string, path: string | null) {
+    super(name, path)
+    this.sidebar.value = 'thumbnails'
+  }
+
+  /** Applies `ops` as one undo step. Throws DocError, changing nothing, if any is invalid. */
+  apply(label: string, ops: DocOp[], opts: { ai?: boolean } = {}): DocApplyResult {
+    const before = this.doc.peek()
+    const result = applyDocOps(before, ops, findLook)
+    this.history.push(label, before)
+    this.doc.value = result.doc
+    this.dirty.value = true
+    this.historyVersion.value++
+    if (opts.ai) this.aiChange.value = { label, before: this.aiChange.peek()?.before ?? before, added: [...(this.aiChange.peek()?.added ?? []), ...result.added] }
+    return result
+  }
+
+  addMedia(fileName: string, bytes: Uint8Array): string {
+    const dot = fileName.lastIndexOf('.')
+    const ext = (dot > 0 ? fileName.slice(dot + 1) : 'png').toLowerCase()
+    const stem = (dot > 0 ? fileName.slice(0, dot) : fileName).replace(/[^\w .()-]/g, '').replace(/^[^\w]+/, '').slice(0, 60) || 'picture'
+    let path = `media/${stem}.${ext}`
+    for (let n = 2; this.media.has(path); n++) path = `media/${stem} (${n}).${ext}`
+    this.media.set(path, bytes)
+    this.mediaVersion.value++
+    return path
+  }
+
+  /** Puts the document back as it was before the AI app's changes, as one undo step. */
+  undoAiChange(): void {
+    const c = this.aiChange.peek()
+    if (!c) return
+    this.history.push('Undo AI change', this.doc.peek())
+    this.aiChange.value = null
+    this.restore(c.before)
+  }
+
+  undo(): void {
+    const e = this.history.undo(this.doc.peek())
+    if (e) this.restore(e.state)
+  }
+
+  redo(): void {
+    const e = this.history.redo(this.doc.peek())
+    if (e) this.restore(e.state)
+  }
+
+  private restore(doc: GDocData): void {
+    this.doc.value = doc
+    this.dirty.value = true
+    this.historyVersion.value++
+  }
+}
+
+export type Doc = PdfDoc | ImageDoc | NoticeDoc | ModelDoc | PreviewDoc | DeckDoc | GDoc | SheetDoc
 
 export const docs = signal<Doc[]>([])
 export const activeId = signal<string | null>(null)
@@ -389,6 +544,7 @@ export function removeDoc(id: string): void {
   if (idx < 0) return
   const doc = list[idx]
   if (doc.kind === 'pdf') void doc.proxy.peek()?.loadingTask.destroy()
+  if (doc.kind === 'deck' || doc.kind === 'gdoc') releaseMedia(doc)
   const path = doc.path.peek() ?? (doc.kind === 'pdf' ? doc.convertedFrom : null)
   if (path) {
     void releaseFile(path)

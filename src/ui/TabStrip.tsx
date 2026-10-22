@@ -12,9 +12,23 @@ function openTip(): string {
   return k ? t('Open ({shortcut})', { shortcut: displayCombo(k) }) : t('Open')
 }
 
+/** The file's kind as a coloured icon, so the name can drop its type (as in Word, Excel and Google Docs). */
 function kindIcon(doc: Doc) {
+  if (doc.kind === 'deck') return <span class="tab-kind tab-kind-deck"><Icon name="slideshow" size={16} /></span>
+  if (doc.kind === 'gdoc') return <span class="tab-kind tab-kind-gdoc"><Icon name="document" size={16} /></span>
+  if (doc.kind === 'sheet') return <span class="tab-kind tab-kind-sheet"><Icon name="table" size={16} /></span>
+  if (doc.kind === 'pdf') return <span class="tab-kind tab-kind-pdf"><Icon name="document" size={16} /></span>
   if (doc.kind === 'image') return <Icon name="image" size={16} />
   return <Icon name="document" size={16} />
+}
+
+/** A file's name without its type: "Bake sale.gdeck" shows as "Bake sale". */
+const shownName = (name: string) => name.replace(/\.[A-Za-z0-9]{1,6}$/, '') || name
+
+/** The tab's tooltip: the whole name and where it lives, and whether it has unsaved changes. */
+function tabTip(doc: Doc): string {
+  const where = doc.path.value ?? doc.name.value
+  return doc.dirty.value ? t('{name} · not saved yet', { name: where }) : where
 }
 
 function collapseTip(collapsed: boolean): string {
@@ -68,7 +82,7 @@ export function TabStrip({ vertical = false }: { vertical?: boolean }) {
             aria-selected={active}
             data-tab-id={doc.id}
             class={`tab ${active ? 'active' : ''} ${dropTabId.value === doc.id ? 'drop-target' : ''}`}
-            title={doc.path.value ?? doc.name.value}
+            title={tabTip(doc)}
             onPointerDown={(e) => {
               if (e.button === 1) {
                 e.preventDefault()
@@ -79,8 +93,8 @@ export function TabStrip({ vertical = false }: { vertical?: boolean }) {
             }}
           >
             {kindIcon(doc)}
-            <span class="tab-title">{doc.name.value}</span>
-            {doc.dirty.value && <span class="tab-dirty" aria-label={t('Edited')}>•</span>}
+            <span class="tab-title">{shownName(doc.name.value)}</span>
+            {doc.dirty.value && <span class="tab-dirty" role="img" aria-label={t('Edited')} />}
             <button
               class="tab-close"
               aria-label={t('Close {name}', { name: doc.name.value })}

@@ -8,6 +8,8 @@ import { beginPageDrag, pageContextMenu, selectPage } from './pageDrag'
 import { PageThumb } from './PageThumb'
 import { NotesList } from './NotesList'
 import { BookmarksList } from './BookmarksList'
+import { SlideList } from '../deck/SlideList'
+import { PageStrip } from '../doc/PageStrip'
 import { Icon } from '../Icon'
 import type { IconName } from '../icons'
 import { t } from '../../i18n'
@@ -127,6 +129,8 @@ export function sidebarBody(doc: Doc, thumbWidth = THUMB_WIDTH): JSX.Element | n
     return mode === 'toc' ? <Toc doc={doc} /> : mode === 'notes' ? <NotesList doc={doc} /> : mode === 'bookmarks' ? <BookmarksList doc={doc} /> : <ThumbList doc={doc} width={thumbWidth} />
   }
   if (doc.kind === 'image' && doc.pageCount.value > 1) return <ImageThumbList doc={doc} width={thumbWidth} />
+  if (doc.kind === 'deck') return <SlideList doc={doc} width={Math.max(thumbWidth, settings.value.sidebarWidth - 48)} />
+  if (doc.kind === 'gdoc') return <PageStrip doc={doc} width={Math.max(thumbWidth, settings.value.sidebarWidth - 48)} />
   return null
 }
 

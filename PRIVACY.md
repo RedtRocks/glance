@@ -9,6 +9,7 @@ Glance doesn't collect, store or send any personal information. There is no acco
 - Once a day, unless you turn off **Settings → Count this install**, Glance tells [Umami](https://umami.is) that a copy is in use. It sends the version number, whether the copy came from the Microsoft Store, a Flatpak or GitHub, and what any web request carries (the app's language, and the country worked out from your IP address, which isn't stored). It has no install ID, nothing about you, and never a file name or anything you open, so it only adds up to a number of copies in use. The Microsoft Store version does this too.
 - Sharing a file through the Windows share sheet sends it only to the app you pick.
 - AI apps you connect (Settings → AI apps) can use Glance's tools on your files. Glance itself sends nothing; the AI app sends what it reads through Glance (page images, text, file names) to its AI provider, under that provider's terms. Turn AI access off in Settings → AI apps at any time.
+- Ask AI sends your files to the AI company you picked only when you hand a job off to it (**Do more with <company>…**, or when Glance can't make something and asks that company's agent). Files Glance just made go with the request; a file you opened yourself is sent only after you say yes, once for each file. Turn automatic hand-offs off in **Settings → AI apps → Ask Claude or ChatGPT when Glance can't do it**. Files you download from an AI website in the sidebar are saved in your Downloads folder; Glance never types into or reads those websites.
 
 ## The website
 

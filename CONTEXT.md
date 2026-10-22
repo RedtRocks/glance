@@ -5,12 +5,20 @@ A free, open-source reader and light editor for documents, images, 3D models and
 ## Documents
 
 **Document**:
-One opened file, shown in its own tab. It is a *PDF document*, an *image document*, or a *model document*.
+One opened file, shown in its own tab. It is a *PDF document*, an *image document*, a *model document*, or a *deck*.
 _Avoid_: File (on-disk only), tab (UI only)
 
 **Page**:
 One page of a PDF document or of a multi-page TIFF. Pages can be reordered, rotated, deleted, and dragged between documents.
-_Avoid_: Slide, sheet
+_Avoid_: Slide (that belongs to a deck), sheet
+
+**Deck**:
+A document Glance creates and edits as a set of slides, which people or AI apps build, rearrange and restyle, and export as PowerPoint, PDF or images. A PowerPoint file that is only viewed is not a deck until it is converted.
+_Avoid_: Presentation, slideshow, PPT
+
+**Slide**:
+One part of a deck: a layout with its content filled in. Slides can be added, reordered, restyled, hidden and deleted.
+_Avoid_: Page (that belongs to page-based documents), card
 
 **Frame**:
 One still image of an animated GIF. Frames are shown for inspection and export but can't be reordered or edited.
@@ -57,6 +65,32 @@ A new image composed from several images arranged on a layout.
 
 **Quartz Filter**:
 An appearance filter applied at export time (Black & White, Sepia, Reduce File Size, and so on).
+
+## Creating
+
+**Template**:
+A finished deck or document, with sample content, that a person or an AI app starts from. A deck template is a set of designs; its look (like "Confetti") names their style, which a theme doesn't change.
+_Avoid_: Blank, starter, preset
+
+**Design**:
+One hand-made slide of a template: its art and its text boxes. A slide made from it is a designed slide; its slots are the design's text boxes, not a layout's, and a deck can use a design as often as it likes.
+_Avoid_: Master, slide layout
+
+**Theme**:
+The fonts, colours, sizes and spacing a deck or document uses. Switching theme restyles every slide at once.
+_Avoid_: Style, skin, look (that means the app's own Wollo or Windows look)
+
+**Brand Kit**:
+A person's own logo, colours, fonts and tone, which every template and theme can use.
+_Avoid_: Brand, style guide
+
+**Skill**:
+Know-how for one kind of work, such as slide design or writing a resume, that Glance gives to whichever AI is helping.
+_Avoid_: Prompt, plugin
+
+**Check**:
+An automatic review of a file, such as design, spelling or accessibility, that lists what to fix.
+_Avoid_: Lint, validation
 
 ## Inspection
 

@@ -88,6 +88,15 @@ select {
   font: inherit;
   color: inherit;
 }
+/* Anything clickable shows the hand, as on the website; :where keeps it weaker than any
+   rule that sets its own cursor (text boxes, resize handles, tabs that drag). */
+:where(button, select, summary, a[href], [role='button'], [role='tab'], [role='menuitem'], [role='menuitemcheckbox'], [role='menuitemradio'], [role='option'], [role='switch'], input[type='checkbox'], input[type='radio'], input[type='range'], input[type='color'], label:has(> input[type='checkbox'], > input[type='radio'])) {
+  cursor: pointer;
+}
+:where(button, select, input):disabled,
+:where([aria-disabled='true']) {
+  cursor: default;
+}
 /* Windows draws a select's list with the option colours; the controls' see-through
    backgrounds would leave it white, with white text in dark mode. */
 select option,
@@ -164,7 +173,39 @@ select optgroup {
   font-size: 12px;
 }
 .tab-dirty {
-  color: var(--accent);
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text);
+}
+.tab-kind {
+  display: inline-flex;
+  flex: none;
+}
+.tab-kind-deck {
+  color: #6312f6;
+}
+.tab-kind-gdoc {
+  color: #e0651f;
+}
+.tab-kind-sheet {
+  color: #1e8e4e;
+}
+.tab-kind-pdf {
+  color: #d13438;
+}
+:root[data-theme='dark'] .tab-kind-deck {
+  color: #a98bff;
+}
+:root[data-theme='dark'] .tab-kind-gdoc {
+  color: #ff9a5c;
+}
+:root[data-theme='dark'] .tab-kind-sheet {
+  color: #4cc38a;
+}
+:root[data-theme='dark'] .tab-kind-pdf {
+  color: #ff7b7f;
 }
 .page-total {
   white-space: nowrap;
@@ -3845,6 +3886,9 @@ input[type='range'] {
 .ai-card p,
 .ai-welcome p { margin: 0; line-height: 1.45; }
 .ai-card .btn { max-width: 100%; }
+.ai-hand-off { align-items: stretch; text-align: start; }
+.ai-hand-off-head { display: flex; align-items: center; gap: 8px; }
+.ai-hand-off .ai-plan .completed { text-decoration: none; }
 .ai-permission-buttons {
   display: flex;
   flex-wrap: wrap;
@@ -4327,3 +4371,653 @@ input[type='range'] {
   border-bottom: 2px solid var(--accent);
   background: var(--layer-alt);
 }
+
+/* ---------- Decks (src/ui/deck) ---------- */
+.slide-frame {
+  position: relative;
+  overflow: hidden;
+  flex: none;
+}
+.slide-frame-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1920px;
+  height: 1080px;
+  transform-origin: 0 0;
+}
+.deck-view {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+.deck-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--stroke);
+  background: var(--chrome);
+}
+.deck-bar-gap {
+  width: 12px;
+}
+.deck-bar-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+}
+.deck-bar-button:hover:not(:disabled) {
+  background: var(--subtle-hover);
+}
+.deck-bar-button:disabled {
+  color: var(--text-3);
+}
+.deck-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  background: var(--canvas);
+}
+.deck-current,
+.deck-empty {
+  margin: auto;
+}
+.deck-current {
+  padding: 32px;
+}
+.deck-current .slide-frame {
+  box-shadow: var(--page-shadow);
+  border-radius: 4px;
+}
+.deck-current .deck-box {
+  cursor: text;
+}
+.deck-current .deck-image {
+  cursor: pointer;
+}
+.deck-current .deck-box:hover {
+  outline: calc(2px / var(--deck-scale, 1)) dashed var(--accent);
+  outline-offset: calc(4px / var(--deck-scale, 1));
+}
+.deck-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-2);
+}
+.deck-typing {
+  position: absolute;
+  z-index: 3;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  background: transparent;
+  resize: none;
+  overflow: hidden;
+}
+/* Documents (.gdoc): every page down the stage, typed into in place. */
+.sheet-toolbar {
+  flex-wrap: wrap;
+}
+.sheet-tool {
+  padding: 0 7px;
+}
+.sheet-tool.on {
+  background: var(--subtle-hover);
+  box-shadow: inset 0 0 0 1px var(--stroke);
+}
+.sheet-tool-sep {
+  width: 1px;
+  height: 20px;
+  margin: 0 6px;
+  background: var(--stroke);
+}
+.sheet-font {
+  min-width: 96px;
+  justify-content: space-between;
+}
+.doc-bar-fill {
+  flex: 1;
+}
+.doc-zoom {
+  min-width: 44px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+}
+.doc-view .deck-bar {
+  flex-wrap: wrap;
+}
+.doc-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: var(--canvas);
+}
+.doc-pages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 0;
+}
+.doc-frame {
+  position: relative;
+  flex: none;
+  overflow: hidden;
+  box-shadow: var(--page-shadow);
+  cursor: text;
+}
+.doc-frame-inner {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+.doc-frame .doc-box.empty {
+  outline: 1px dashed var(--accent);
+}
+.doc-selected {
+  position: absolute;
+  pointer-events: none;
+  border: 2px solid var(--accent);
+  border-radius: 3px;
+}
+.doc-hint {
+  position: absolute;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  color: #8a8a8a;
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.doc-typing {
+  position: absolute;
+  z-index: 3;
+  margin: 0;
+  padding: 3px;
+  border: 0;
+  outline: 2px solid var(--accent);
+  border-radius: 3px;
+  background: #ffffff;
+  color: #1a1a1a;
+  line-height: 1.4;
+  resize: none;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.18);
+}
+/* Typing on the page: the paper's colour and the block's own font, so bold shows as it is typed. */
+.doc-rich {
+  box-shadow: none;
+  outline-offset: 1px;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  cursor: text;
+}
+/* Bold must show while typing, even in the Wollo look, which sets every b to one weight. */
+:root .app .doc-rich.doc-rich :is(b, strong) {
+  font-weight: bolder;
+}
+.doc-rich a {
+  color: inherit;
+  text-decoration: underline;
+}
+.doc-rich-list > div {
+  display: list-item;
+  margin-left: 1.3em;
+  list-style: disc;
+}
+.doc-rich-list.ordered {
+  counter-reset: none;
+}
+.doc-rich-list.ordered > div {
+  list-style: decimal;
+}
+.doc-ai-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--stroke);
+  background: var(--accent-subtle, var(--chrome));
+}
+.doc-ai-bar span {
+  flex: 1;
+}
+.doc-thumb {
+  box-shadow: var(--page-shadow);
+}
+.doc-pick {
+  padding: 4px;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  background: none;
+}
+.doc-pick:disabled {
+  cursor: default;
+}
+.doc-pick.on {
+  border-color: var(--accent);
+}
+.make-kind-tabs {
+  margin-bottom: 4px;
+}
+.hidden-slide .slide-frame {
+  opacity: 0.45;
+}
+.slide-thumb .thumb-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.slide-thumb .slide-frame {
+  border-radius: 4px;
+  box-shadow: var(--page-shadow);
+}
+.slide-thumb.current .slide-frame {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.slide-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(100% - 16px);
+  height: 40px;
+  margin: 4px 8px 12px;
+  border: 1px dashed var(--stroke-strong);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-2);
+}
+.slide-add:hover {
+  background: var(--subtle-hover);
+  color: var(--text);
+}
+.welcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* File → New: "What do you want to make?" (ui/deck/MakeScreen.tsx) */
+.make-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  padding: 72px 24px 40px;
+  overflow: auto;
+  background: var(--bg-solid);
+  color: var(--text);
+}
+.make-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+.make-screen h1 {
+  margin: 0;
+  font: 400 clamp(32px, 5vw, 52px) / 1.12 var(--font-display);
+  letter-spacing: -0.5px;
+  text-align: center;
+}
+.make-ask {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(760px, 100%);
+  padding: 8px 8px 8px 24px;
+  box-sizing: border-box;
+  border-radius: 9999px;
+  background: var(--subtle);
+}
+.make-ask input {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 17px;
+  outline: none;
+}
+.make-ask input::placeholder {
+  color: var(--text-3);
+}
+.make-mic,
+.make-go {
+  flex: none;
+  height: 48px;
+  border: 0;
+  border-radius: 9999px;
+  font: inherit;
+}
+.make-mic {
+  width: 48px;
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.make-mic.on {
+  outline: 3px solid var(--selection);
+}
+.make-go {
+  padding: 0 28px;
+  background: var(--text);
+  color: var(--bg-solid);
+  font-size: 15px;
+}
+.make-signin {
+  width: min(760px, 100%);
+  box-sizing: border-box;
+  padding: 16px 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--stroke);
+  text-align: center;
+}
+.make-signin p {
+  margin: 0 0 12px;
+}
+.make-signin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.make-kinds {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  width: min(960px, 100%);
+}
+.make-kind {
+  height: 168px;
+  border: 0;
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  text-align: left;
+  font: inherit;
+  background: var(--subtle);
+  color: var(--text);
+}
+.make-kind.slides {
+  background: #6312f6;
+  color: #ffffff;
+}
+.make-kind > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.make-kind-name {
+  font-size: 24px;
+}
+.make-kind-sub {
+  font-size: 13px;
+}
+.make-templates-title {
+  font-size: 20px;
+  font-weight: 400;
+  margin: 8px 0 0;
+  width: min(960px, 100%);
+}
+.make-templates {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  width: min(960px, 100%);
+}
+.make-template {
+  border: 0;
+  border-radius: 20px;
+  padding: 8px 8px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  text-align: left;
+  font: inherit;
+  background: var(--subtle);
+  color: var(--text);
+  cursor: pointer;
+}
+.make-template .slide-frame {
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 10px;
+  box-shadow: 0 0 0 1px var(--stroke);
+}
+.make-template .make-kind-name {
+  font-size: 18px;
+  padding: 0 8px;
+}
+.make-template .make-kind-sub {
+  padding: 0 8px;
+  color: var(--text-2);
+}
+.make-template:hover {
+  background: var(--subtle-hover);
+}
+.make-ask input:focus-visible {
+  outline: none;
+}
+.make-ask:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.make-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: min(960px, 100%);
+  margin-top: -12px;
+}
+.make-tab {
+  height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--subtle);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.make-tab:hover {
+  background: var(--subtle-hover);
+}
+.make-tab.on {
+  background: var(--text);
+  color: var(--bg-solid);
+}
+.make-template-empty {
+  display: block;
+  width: 284px;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  background: var(--subtle-hover);
+}
+/* A template up close: its slides, then use it or make it about something. */
+.make-preview {
+  position: fixed;
+  inset: 0;
+  z-index: 91;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 32px 24px 40px;
+  overflow: auto;
+  background: var(--bg-solid);
+}
+.make-preview-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: min(960px, 100%);
+}
+.make-preview-head h2 {
+  margin: 0;
+  font: 400 28px / 1.2 var(--font-display);
+}
+.make-preview-head p {
+  margin: 4px 0 0;
+  color: var(--text-2);
+}
+.make-preview-slides {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  width: min(960px, 100%);
+  justify-items: center;
+}
+.make-preview-slides .slide-frame {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--stroke);
+}
+.make-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  width: min(960px, 100%);
+}
+.make-preview-actions .btn {
+  height: 48px;
+  padding: 0 24px;
+  border-radius: 9999px;
+}
+.make-about {
+  flex: 1;
+  min-width: 280px;
+  width: auto;
+}
+.make-about .make-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Guided editing: the character count beside a slot being typed in, and placeholders like [date]. */
+.deck-count {
+  position: absolute;
+  z-index: 4;
+  transform: translateX(-100%);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--flyout);
+  color: var(--text-2);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+.deck-count.near {
+  color: var(--text);
+}
+.deck-count.over {
+  background: #c42b1c;
+  color: #fff;
+}
+.deck-placeholder {
+  background: rgba(255, 214, 0, 0.5);
+  color: inherit;
+  border-radius: 0.12em;
+  box-shadow: 0 0 0 0.06em rgba(255, 214, 0, 0.5);
+}
+/* Starts for a request about a deck, document or spreadsheet; one fills the box to finish. */
+.ai-starts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 8px;
+}
+.ai-start {
+  padding: 4px 10px;
+  border: 1px solid var(--stroke-strong);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--text);
+  font: 12px var(--font);
+  cursor: pointer;
+}
+.ai-start:hover { background: var(--subtle-hover); }
+/* "Here's the plan" (Outline): the AI's plan for a new file, changed before it builds. */
+.outline-screen { align-items: stretch; gap: 28px; padding: 24px 40px 40px; }
+.outline-screen > * { width: 100%; max-width: 1360px; margin: 0 auto; }
+.outline-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; }
+.outline-head > div { display: flex; flex-direction: column; gap: 8px; }
+.outline-screen h1 { text-align: left; }
+.outline-screen h2 { margin: 0; font: 400 32px / 40px var(--font-display); }
+.outline-asked { font-size: 17px; color: var(--text-2); }
+.outline-side .outline-asked, .outline-questions .outline-asked { font-size: 15px; }
+.outline-waiting { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 64px 0; color: var(--text-2); }
+.outline-body { display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start; }
+.outline-plan { flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.outline-side { flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.outline-controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.outline-label { font-size: 13px; color: var(--text-2); }
+.outline-label + .outline-words { margin-left: 0; }
+.outline-stepper + .outline-label { margin-left: 12px; }
+.outline-stepper { display: flex; align-items: center; gap: 4px; border: 1px solid var(--stroke-strong); border-radius: 9999px; padding: 4px; }
+.outline-stepper button { width: 36px; height: 36px; border-radius: 9999px; border: 0; background: var(--subtle-hover); color: var(--text); font-size: 18px; cursor: pointer; }
+.outline-stepper span { width: 28px; text-align: center; font-size: 17px; }
+.outline-words { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--text); border-radius: 9999px; }
+.outline-words button { height: 36px; padding: 0 14px; border-radius: 9999px; border: 0; background: transparent; color: var(--text); font: inherit; font-size: 15px; cursor: pointer; }
+.outline-words button[aria-pressed='true'] { background: var(--text); color: var(--bg-solid); }
+.outline-items { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.outline-items li { display: flex; gap: 16px; align-items: flex-start; padding: 16px 20px; border-radius: 20px; background: var(--subtle-hover); border: 2px solid transparent; cursor: text; }
+.outline-items li.on { background: var(--card); border-color: var(--accent); }
+.outline-num { width: 32px; height: 32px; flex-shrink: 0; border-radius: 9999px; display: flex; align-items: center; justify-content: center; font-size: 15px; color: #0a0a0a; }
+.outline-text { display: flex; flex-direction: column; gap: 4px; flex-grow: 1; min-width: 0; }
+.outline-title, .outline-text input { font-size: 20px; }
+.outline-text input, :root[data-look] .outline-text input:focus-visible { border: 0; outline: none; padding: 0; background: transparent; color: var(--text); font-family: inherit; }
+.outline-detail { font-size: 15px; color: var(--text-2); }
+.outline-item-buttons { display: flex; gap: 2px; opacity: 0; }
+.outline-items li:hover .outline-item-buttons, .outline-items li.on .outline-item-buttons, .outline-item-buttons:focus-within { opacity: 1; }
+.outline-item-buttons button { width: 36px; height: 36px; border-radius: 9999px; border: 0; background: transparent; color: var(--text-2); display: grid; place-items: center; cursor: pointer; }
+.outline-item-buttons button:hover { background: var(--subtle-hover); }
+.outline-add { align-self: flex-start; height: 44px; padding: 0 18px; border-radius: 9999px; border: 1px dashed var(--text-3); background: var(--card); color: var(--text); font: inherit; font-size: 15px; cursor: pointer; }
+.outline-questions { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.outline-questions label { display: flex; flex-direction: column; gap: 4px; font-size: 15px; }
+.outline-questions input { height: 40px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--stroke-strong); background: var(--card); color: var(--text); font: inherit; }
+.outline-look { padding: 6px; border-radius: 16px; border: 1px solid var(--stroke-strong); background: var(--card); color: var(--text); text-align: left; display: flex; flex-direction: column; gap: 6px; font: inherit; font-size: 15px; cursor: pointer; overflow: hidden; }
+.outline-look .slide-frame { border-radius: 10px; overflow: hidden; }
+.outline-look span { padding: 0 6px 4px; }
+.outline-look.big { padding: 8px; border: 2px solid var(--accent); border-radius: 20px; font-size: 17px; }
+.outline-looks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; max-height: 300px; overflow: auto; }
+.outline-look-empty { display: block; aspect-ratio: 16 / 9; background: var(--subtle-hover); }
+.outline-build { height: 56px; border-radius: 9999px; border: 0; background: var(--accent); color: var(--on-accent); font: inherit; font-size: 17px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+.settings-subhead { margin: 16px 0 4px; font-size: 14px; font-weight: 600; }

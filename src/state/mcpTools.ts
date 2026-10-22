@@ -31,6 +31,10 @@ import { imageForPdf, makeRasterizer, openFiles, serialize } from './actions'
 import { activeDoc, activeId, docs, findByPath, ImageDoc, PdfDoc, type Doc } from './documents'
 import { pageOps, redact } from './pdfModules'
 import { editHandlers } from './aiEdit'
+import { deckHandlers } from './deckTools'
+import { planHandlers } from './planTools'
+import { docHandlers } from './docTools'
+import { sheetHandlers } from './sheetTools'
 import { toast } from './ui'
 import { t } from '../i18n'
 
@@ -672,5 +676,9 @@ export const handlers: Record<string, ToolHandler> = {
   glance_current_view: currentView,
   glance_go_to_page: goToPage,
   glance_mark_redactions: markRedactions,
-  ...editHandlers
+  ...editHandlers,
+  ...deckHandlers,
+  ...planHandlers,
+  ...docHandlers,
+  ...sheetHandlers
 }
