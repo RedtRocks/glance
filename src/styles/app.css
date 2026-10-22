@@ -4474,6 +4474,16 @@ input[type='range'] {
   border: 2px solid var(--accent);
   border-radius: 3px;
 }
+.doc-hint {
+  position: absolute;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  color: #8a8a8a;
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+}
 .doc-typing {
   position: absolute;
   z-index: 3;

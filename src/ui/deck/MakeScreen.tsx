@@ -112,9 +112,9 @@ export function MakeScreen() {
       return
     }
     if (want === 'sheet') return void makeSheet(request, null, state === 'ready' && !!request.trim())
-    // A template with nothing typed opens as it is, ready to fill in by hand.
-    if (state === 'ready' && (request.trim() || !tpl)) return void makeWithAi(request, tpl)
+    // Nothing typed: a blank deck (or the template as it is), ready to fill in by hand.
     if (state === 'none' || !request.trim()) return void makeByHand(request, tpl)
+    if (state === 'ready') return void makeWithAi(request, tpl)
     setPicked(tpl)
     setAsked(true)
   }
@@ -197,7 +197,7 @@ export function MakeScreen() {
             <span class="make-kind-sub">{t('Letters, reports, posters and forms')}</span>
           </span>
         </button>
-        <button class="make-kind sheet" onClick={() => make('sheet')}>
+        <button class="make-kind spreadsheet" onClick={() => make('sheet')}>
           <Icon name="table" size={32} />
           <span>
             <span class="make-kind-name">{t('Spreadsheet')}</span>

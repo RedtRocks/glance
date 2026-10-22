@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { makeOpen } from '../../state/ui'
 import { DOC_BOARDS } from '../../doc/designs'
 import { findLook, loadLook, looksVersion } from '../../state/docLooks'
-import { changeGdoc, newGdoc, templateGdoc } from '../../state/gdoc'
+import { changeGdoc, editRequest, newGdoc, templateGdoc } from '../../state/gdoc'
 import { docPrompt, docTemplatePrompt, nameFromRequest } from '../../core/ai/make'
 import type { DocBoardInfo } from '../../core/doc/look'
 import { PAGE_H, PAGE_W } from '../../core/doc/look'
@@ -33,8 +33,15 @@ export const gdocPromptFor = (request: string, info: DocBoardInfo | null, tab: s
 
 export async function makeGdocByHand(request: string, info: DocBoardInfo | null, design?: string): Promise<void> {
   const g = await startGdoc(request, info, design)
-  if (!info) changeGdoc(g, msg('New Document'), [{ op: 'addBlocks', section: 'p1', blocks: [{ type: 'heading', level: 1, text: nameFromRequest(request, '') }, { type: 'paragraph', text: '' }] }])
   makeOpen.value = false
+  if (info) return
+  const r = changeGdoc(g, msg('New Document'), [{ op: 'addBlocks', section: 'p1', blocks: [{ type: 'heading', level: 1, text: nameFromRequest(request, '') }, { type: 'paragraph', text: '' }] }])
+  // Ready to type: the title when it has none yet, otherwise the first paragraph.
+  const open = r && (request.trim() ? r.added[1] : r.added[0])
+  if (open) {
+    g.selection.value = { section: 'p1', block: open }
+    editRequest.value = open
+  }
 }
 
 export async function makeGdocWithAi(request: string, info: DocBoardInfo | null, design?: string): Promise<void> {

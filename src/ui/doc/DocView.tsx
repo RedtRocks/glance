@@ -26,9 +26,19 @@ interface Editing {
   font: string
   text: string
   multiline: boolean
+  /** Enter starts a new paragraph after it, as in a word processor (headings, paragraphs, quotes). */
+  splits: boolean
 }
 
 const findBlock = (g: GDoc, id: string): Block | undefined => [...allBlocks(g.doc.peek())].find((x) => x.block.id === id)?.block
+
+/** What an empty block shows while it waits to be typed in; only on screen, never saved or exported. */
+function hintOf(b: Block | undefined): string | null {
+  if (!b) return null
+  if ((b.type === 'heading' || b.type === 'paragraph' || b.type === 'quote') && !runsToText(b.runs).trim()) return b.type === 'heading' ? t('Heading') : t('Type here')
+  if (b.type === 'list' && !b.items.some((i) => runsToText(i).trim())) return t('List item')
+  return null
+}
 
 /** The text a block is typed as: light marks for runs, one line per list item. */
 function blockEditText(b: Block, row?: number, col?: number): string | null {
@@ -85,10 +95,20 @@ function PageView({ g, page, scale, selected }: { g: GDoc; page: PageLayout; sca
   const board = findLook(g.doc.value.look)
   const media = g.mediaVersion.value
   const html = useMemo(() => pageHtml(page, board, { resolveSrc: (src) => mediaUrl(g, src), placeholder: (s) => (/[{}]/.test(s) ? s : t(s)) }), [page, board, media])
+  const hints = page.hits.flatMap((h) => {
+    if (h.target.kind !== 'block' || !h.target.first || h.target.row !== undefined) return []
+    const text = hintOf(findBlock(g, h.target.id))
+    return text ? [{ h, text }] : []
+  })
   const marks = selected ? page.hits.filter((h) => (h.target.kind === 'block' && h.target.id === selected) || (h.target.kind === 'box' && `box:${h.target.name}` === selected)) : []
   return (
     <div class="doc-frame" style={{ width: `${PAGE_W * scale}px`, height: `${PAGE_H * scale}px` }} data-page-index={page.number - 1}>
       <div class="doc-frame-inner" style={{ transform: `scale(${scale})` }} dangerouslySetInnerHTML={{ __html: html }} />
+      {hints.map(({ h, text }, i) => (
+        <div key={`hint${i}`} class="doc-hint" style={{ left: `${h.x * scale}px`, top: `${h.y * scale}px`, width: `${h.w * scale}px`, height: `${h.h * scale}px`, fontSize: `${Math.min(h.h * 0.7, 16) * scale}px` }}>
+          {text}
+        </div>
+      ))}
       {marks.map((h, i) => (
         <div key={i} class="doc-selected" style={{ left: `${h.x * scale - 3}px`, top: `${h.y * scale - 3}px`, width: `${h.w * scale + 6}px`, height: `${h.h * scale + 6}px` }} />
       ))}
@@ -166,6 +186,44 @@ export function DocView({ doc: g }: { doc: GDoc }) {
     if (ops.length) changeGdoc(g, msg('Typing'), ops)
   }
 
+  /** Enter: the text after the caret moves into a new paragraph, which opens for typing. */
+  const split = (e: Editing, el: HTMLTextAreaElement) => {
+    if (open.current !== e || e.target.kind !== 'block') return
+    const id = e.target.id
+    const before = el.value.slice(0, el.selectionStart).replace(/\n+$/, '')
+    const after = el.value.slice(el.selectionEnd).replace(/^\n+/, '')
+    setEditing(null)
+    const edit = before !== e.text ? editOps(g, e, before) : []
+    // An empty paragraph already waiting below is where the typing goes next.
+    const list = g.doc.peek().sections.find((x) => x.id === e.section)?.blocks ?? []
+    const next = list[list.findIndex((x) => x.id === id) + 1]
+    if (!after && next && next.type === 'paragraph' && hintOf(next)) {
+      if (edit.length) changeGdoc(g, msg('Typing'), edit)
+      g.selection.value = { section: e.section, block: next.id }
+      editRequest.value = next.id
+      return
+    }
+    const ops: DocOp[] = [...edit, { op: 'addBlocks', section: e.section, after: id, blocks: [{ type: 'paragraph', text: after }] }]
+    const r = changeGdoc(g, msg('Typing'), ops)
+    const added = r?.added.at(-1)
+    if (!added) return
+    g.selection.value = { section: e.section, block: added }
+    editRequest.value = added
+  }
+
+  /** Backspace in an empty block: it goes, and the block before it opens for typing. */
+  const removeEmpty = (e: Editing) => {
+    if (open.current !== e || e.target.kind !== 'block') return
+    const id = e.target.id
+    const list = g.doc.peek().sections.find((x) => x.id === e.section)?.blocks ?? []
+    const i = list.findIndex((b) => b.id === id)
+    const prev = i > 0 ? list[i - 1] : undefined
+    setEditing(null)
+    if (!changeGdoc(g, msg('Delete Block'), [{ op: 'deleteBlocks', ids: [id] }])) return
+    g.selection.value = { section: e.section, ...(prev ? { block: prev.id } : {}) }
+    if (prev && blockEditText(prev) !== null) editRequest.value = prev.id
+  }
+
   const startEdit = (page: PageLayout, hit: Hit) => {
     const tg = hit.target
     const section = page.section
@@ -179,7 +237,7 @@ export function DocView({ doc: g }: { doc: GDoc }) {
       const tb = d?.texts.find((x) => x.name === tg.name)
       if (!tb || d?.auto?.[tg.name] || d?.calcs?.[tg.name]) return
       const s = g.doc.peek().sections.find((x) => x.id === section)
-      setEditing({ page: page.number - 1, target: tg, section, rect: { x: hit.x, y: hit.y, w: hit.w, h: hit.h }, size: tb.size, font: tb.font, text: s?.texts[tg.name] ?? '', multiline: true })
+      setEditing({ page: page.number - 1, target: tg, section, rect: { x: hit.x, y: hit.y, w: hit.w, h: hit.h }, size: tb.size, font: tb.font, text: s?.texts[tg.name] ?? '', multiline: true, splits: false })
       return
     }
     if (tg.kind === 'cell') {
@@ -190,7 +248,7 @@ export function DocView({ doc: g }: { doc: GDoc }) {
       if (row < 0 || region?.calc?.some((c) => c.col === tg.col)) return
       const s = g.doc.peek().sections.find((x) => x.id === section)
       const target = { ...tg, row }
-      setEditing({ page: page.number - 1, target, section, rect: { x: hit.x, y: hit.y, w: hit.w, h: hit.h }, size: region?.style.text.size ?? 10, font: region?.style.text.font ?? 'Urbanist', text: s?.tables[tg.table]?.[row]?.[tg.col] ?? '', multiline: true })
+      setEditing({ page: page.number - 1, target, section, rect: { x: hit.x, y: hit.y, w: hit.w, h: hit.h }, size: region?.style.text.size ?? 10, font: region?.style.text.font ?? 'Urbanist', text: s?.tables[tg.table]?.[row]?.[tg.col] ?? '', multiline: true, splits: false })
       return
     }
     g.selection.value = { section, block: tg.id }
@@ -204,7 +262,7 @@ export function DocView({ doc: g }: { doc: GDoc }) {
     const y = Math.min(...all.map((h) => h.y))
     const rect = { x, y, w: Math.max(...all.map((h) => h.x + h.w)) - x, h: Math.max(...all.map((h) => h.y + h.h)) - y }
     const st = board?.styles[('style' in b && b.style) || (b.type === 'heading' ? `h${b.level}` : b.type === 'quote' ? 'quote' : b.type === 'list' ? 'list' : 'body')] ?? board?.styles.body
-    setEditing({ page: page.number - 1, target: tg, section, rect, size: tg.row !== undefined ? 10 : st?.size ?? 11, font: st?.font ?? 'Urbanist', text, multiline: b.type !== 'heading' && tg.row === undefined })
+    setEditing({ page: page.number - 1, target: tg, section, rect, size: tg.row !== undefined ? 10 : st?.size ?? 11, font: st?.font ?? 'Urbanist', text, multiline: b.type !== 'heading' && tg.row === undefined, splits: tg.row === undefined && (b.type === 'heading' || b.type === 'paragraph' || b.type === 'quote') })
   }
 
   // A block just added from the toolbar opens for typing once it is laid out.
@@ -232,6 +290,18 @@ export function DocView({ doc: g }: { doc: GDoc }) {
     const under = page.hits.filter((h) => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h).sort((a, b) => a.w * a.h - b.w * b.h)
     if (!under.length) {
       g.selection.value = { section: page.section }
+      // Below the last block of flowing text: type there, as in a word processor.
+      const s = g.doc.peek().sections.find((x) => x.id === page.section)
+      const last = s?.blocks?.at(-1)
+      const lastPage = pages.filter((p) => p.section === page.section).at(-1)
+      const bottom = Math.max(0, ...page.hits.filter((h) => h.target.kind === 'block').map((h) => h.y + h.h))
+      if (!s?.blocks || lastPage !== page || y < bottom) return
+      if (last && hintOf(last) && last.type !== 'list') {
+        const at = page.hits.find((h) => h.target.kind === 'block' && h.target.id === last.id)
+        if (at) return startEdit(page, at)
+      }
+      g.selection.value = { section: page.section, ...(last ? { block: last.id } : {}) }
+      void addBlock(g, { type: 'paragraph', text: '' })
       return
     }
     startEdit(page, under[0])
@@ -344,9 +414,15 @@ export function DocView({ doc: g }: { doc: GDoc }) {
               else if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'i')) {
                 e.preventDefault()
                 wrapSelection(el, e.key === 'b' ? '**' : '*')
+              } else if (e.key === 'Enter' && !e.shiftKey && editing.splits && editing.target.kind === 'block') {
+                e.preventDefault()
+                split(editing, el)
               } else if (e.key === 'Enter' && !e.shiftKey && !editing.multiline) {
                 e.preventDefault()
                 commit(editing, el.value)
+              } else if (e.key === 'Backspace' && !el.value && editing.splits && editing.target.kind === 'block') {
+                e.preventDefault()
+                removeEmpty(editing)
               }
             }}
           />
