@@ -99,11 +99,31 @@ export function DeckView({ doc }: { doc: DeckDoc }) {
     return () => ro.disconnect()
   }, [])
 
+  // Arrow keys step through the slides when nothing is being typed, as in PowerPoint and Google Slides.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || open.current) return
+      const el = e.target as HTMLElement | null
+      if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return
+      if (document.querySelector('.make-screen, [role="dialog"], [role="menu"]')) return
+      const dir = e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? -1 : 0
+      if (!dir) return
+      e.preventDefault()
+      const n = doc.deck.peek().slides.length
+      doc.current.value = Math.min(Math.max(doc.current.peek() + dir, 0), n - 1)
+      doc.selection.value = []
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [doc])
+
   // Moving to another slide (or undo) ends typing; what was typed is kept.
   useEffect(() => setEditing(null), [slide?.id, doc.historyVersion.value])
   useEffect(() => {
-    box.current?.focus()
-    box.current?.select()
+    // The caret goes to the end of the text, as in PowerPoint; nothing is selected to be typed over.
+    const el = box.current
+    el?.focus()
+    el?.setSelectionRange(el.value.length, el.value.length)
     setTyped(editing?.text ?? '')
   }, [editing?.slideId, editing && editing.ref])
   const count = editing ? charCount(typed, editing.maxChars, editing.perLine) : null

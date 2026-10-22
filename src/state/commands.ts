@@ -101,6 +101,8 @@ function goPage(delta: number | 'first' | 'last'): void {
   const target = delta === 'first' ? 0 : delta === 'last' ? n - 1 : d.current.value + delta
   if (d.kind === 'pdf') d.goTo(target)
   else d.current.value = Math.min(Math.max(target, 0), n - 1)
+  // Picked slides stay picked only while you stay on them, so Delete acts on the slide you see.
+  if (d.kind === 'deck') d.selection.value = []
 }
 
 function setView(mode: ViewMode): void {
