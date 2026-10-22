@@ -410,7 +410,8 @@ export function DocView({ doc: g }: { doc: GDoc }) {
             onKeyDown={(e) => {
               e.stopPropagation()
               const el = e.currentTarget
-              if (e.key === 'Escape') setEditing(null)
+              // Escape leaves the box and keeps what was typed, as in Word.
+              if (e.key === 'Escape') commit(editing, el.value)
               else if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'i')) {
                 e.preventDefault()
                 wrapSelection(el, e.key === 'b' ? '**' : '*')

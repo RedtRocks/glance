@@ -226,7 +226,8 @@ export function DeckView({ doc }: { doc: DeckDoc }) {
             onBlur={(e) => commit(editing, (e.currentTarget as HTMLTextAreaElement).value)}
             onKeyDown={(e) => {
               e.stopPropagation()
-              if (e.key === 'Escape') setEditing(null)
+              // Escape leaves the box and keeps what was typed, as in PowerPoint.
+              if (e.key === 'Escape') commit(editing, e.currentTarget.value)
               else if (e.key === 'Enter' && !e.shiftKey && !editing.multiline) {
                 e.preventDefault()
                 commit(editing, e.currentTarget.value)

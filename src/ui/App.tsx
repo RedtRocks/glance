@@ -86,9 +86,9 @@ function Viewer() {
       {sidebarVisible.value && narrowWindow.value && !phone && <div class="scrim" onClick={() => (sidebarVisible.value = false)} />}
       <main class="viewer" aria-label={doc.name.value}>
         {(doc.kind === 'pdf' || doc.kind === 'image') && <RedactionBar doc={doc} />}
-        <ExternalAppBar key={doc.id} doc={doc} />
+        <ExternalAppBar key={`${doc.id}-app`} doc={doc} />
         <ConflictBar doc={doc} />
-        {doc.kind === 'pdf' && <SignatureBar key={doc.id} doc={doc} />}
+        {doc.kind === 'pdf' && <SignatureBar key={`${doc.id}-sig`} doc={doc} />}
         <div class="viewer-stage">
           {doc.kind === 'pdf' && <PdfView key={doc.id} doc={doc} />}
           {doc.kind === 'image' && <ImageView key={doc.id} doc={doc} />}
