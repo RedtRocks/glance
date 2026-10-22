@@ -113,6 +113,15 @@ export function AiAppsPanel() {
           <Icon name="infoFilled" /> {t('Also supported when installed: {apps}', { apps: missing.map((a) => a.name).join(', ') })}
         </p>
       )}
+      <h3 class="settings-subhead">{t('Ask AI')}</h3>
+      <SettingsCard icon="sparkle" title={t('Ask Claude or ChatGPT when Glance can’t do it')}
+        description={t('When Glance can’t make something, it hands the request to the company you use in Ask AI and opens the file it makes. Files you opened yourself are sent only after you say yes.')}>
+        <Toggle checked={settings.value.handOff} label={t('Ask Claude or ChatGPT when Glance can’t do it')} onChange={(v) => updateSettings({ handOff: v })} />
+      </SettingsCard>
+      <SettingsCard icon="globe" title={t('Open files made on AI websites in Glance')}
+        description={t('Files you download from claude.ai, chatgpt.com and other AI websites in the sidebar open in a new tab. They’re also saved in Downloads.')}>
+        <Toggle checked={settings.value.openSiteDownloads} label={t('Open files made on AI websites in Glance')} onChange={(v) => updateSettings({ openSiteDownloads: v })} />
+      </SettingsCard>
       <SkillsPanel />
     </div>
   )

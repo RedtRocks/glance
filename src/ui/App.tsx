@@ -50,6 +50,7 @@ import { RedactionBar } from './RedactionBar'
 import { ExternalAppBar } from './ExternalAppBar'
 import { InspectorPane } from './InspectorPane'
 import { ConflictBar } from './ConflictBar'
+import { OriginBar } from './OriginBar'
 import { SignatureBar } from './SignatureBar'
 import { SignaturesPane } from './SignaturesPane'
 import { AiSidebar } from './ai/AiSidebar'
@@ -88,6 +89,7 @@ function Viewer() {
         {(doc.kind === 'pdf' || doc.kind === 'image') && <RedactionBar doc={doc} />}
         <ExternalAppBar key={`${doc.id}-app`} doc={doc} />
         <ConflictBar doc={doc} />
+        {platform.isTauri && <OriginBar doc={doc} />}
         {doc.kind === 'pdf' && <SignatureBar key={`${doc.id}-sig`} doc={doc} />}
         <div class="viewer-stage">
           {doc.kind === 'pdf' && <PdfView key={doc.id} doc={doc} />}

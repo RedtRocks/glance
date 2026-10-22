@@ -7,6 +7,8 @@ import { aiOpen, dialog, menuOpen, settingsOpen, toast } from '../../state/ui'
 import * as ai from '../../state/ai'
 import * as changes from '../../state/aiChanges'
 import * as voice from '../../state/voice'
+import * as handOff from '../../state/handOff'
+import { prefilledUrl, siteHost, withoutHandOff } from '../../core/ai/handOff'
 import type { Part } from '../../core/ai/transcript'
 import { cleanFragment, adopt, keepImagesLocal } from '../../preview/sanitize'
 import * as platform from '../../platform'
@@ -116,7 +118,7 @@ function PartView({ part, agent, index }: { part: Part; agent: string; index: nu
       return (
         <div class="ai-answer">
           <div class="ai-who">{ai.agentName(agent)}</div>
-          <Markdown text={part.text} />
+          <Markdown text={withoutHandOff(part.text)} />
         </div>
       )
     case 'thought':
@@ -683,6 +685,12 @@ function Composer({ doc }: { doc: Doc }) {
                   {t('This page')}
                 </button>
               )}
+              {platform.isTauri && !working && (
+                <button class="ai-tool-button" title={t('Hand this file and a request to {agent}, for what Glance can’t make', { agent: ai.agentName(ai.chat.value.agentId) })} onClick={() => void doMore(doc)}>
+                  <Icon name="sparkle" size={16} />
+                  {t('Do more with {agent}…', { agent: ai.agentName(ai.chat.value.agentId) })}
+                </button>
+              )}
             </>
           )}
           <div class="tb-spacer" />
@@ -710,6 +718,62 @@ function Composer({ doc }: { doc: Doc }) {
       </div>
     </div>
   )
+}
+
+/** "Asking <company>…": the job handed off to the company's agent, with Stop. */
+function HandOffCard() {
+  const h = handOff.handOff.value
+  if (!h) return null
+  const name = ai.agentName(h.agentId)
+  const steps: { text: string; state: 'done' | 'now' | 'next' }[] = [
+    { text: h.file ? t('Sent the request and {file}', { file: platform.baseName(h.file) }) : t('Sent the request'), state: h.step === 'sending' ? 'now' : 'done' },
+    { text: t('Waiting for {agent}’s file', { agent: name }), state: h.step === 'waiting' ? 'now' : h.step === 'opening' ? 'done' : 'next' },
+    { text: t('Open it in Glance'), state: h.step === 'opening' ? 'now' : 'next' }
+  ]
+  return (
+    <div class="ai-card ai-hand-off" role="status">
+      <div class="ai-hand-off-head">
+        <Badge id={h.agentId} size={18} />
+        <strong>{t('Asking {agent}…', { agent: name })}</strong>
+        <div class="tb-spacer" />
+        <button class="btn" onClick={() => void handOff.stopHandOff()}>
+          {t('Stop')}
+        </button>
+      </div>
+      <p class="muted small">{h.request}</p>
+      <ol class="ai-plan">
+        {steps.map((s) => (
+          <li key={s.text} class={s.state === 'done' ? 'completed' : s.state === 'now' ? 'in_progress' : 'pending'}>
+            {s.text}
+          </li>
+        ))}
+      </ol>
+      {h.doing && <p class="muted small">{h.doing}</p>}
+    </div>
+  )
+}
+
+/** "Do more with <company>…": hand the open file and a request to the company's agent. */
+async function doMore(doc: Doc): Promise<void> {
+  const { promptText } = await import('../../state/ui')
+  const company = ai.agentName(ai.chat.peek().agentId)
+  const request = await promptText(t('Do more with {agent}', { agent: company }), t('What should {agent} make from {file}?', { agent: company, file: doc.name.peek() }), { ok: t('Ask {agent}', { agent: company }) })
+  if (request?.trim()) await handOff.startHandOff(request)
+}
+
+/** "Do more on <site>…": the site's new chat with the request filled in; the user sends it. */
+async function doMoreOnSite(doc: Doc, id: string, website: string): Promise<void> {
+  const { promptText } = await import('../../state/ui')
+  const site = siteHost(website)
+  const request = await promptText(t('Do more on {site}', { site }), t('What should {site} do with {file}?', { site, file: doc.name.peek() }), { ok: t('Open {site}', { site }) })
+  const url = request?.trim() ? prefilledUrl(website, request) : null
+  if (!url) return
+  try {
+    await handOff.doMoreOnSite(id, url)
+    toast(t('Check the request on {site}, attach the file if it needs it, and press send.', { site }))
+  } catch (e) {
+    toast(String(e), 'error')
+  }
 }
 
 /**
@@ -773,6 +837,7 @@ function SiteNav({ id }: { id: string }) {
 
 /** Under the website: show the AI the page or an area by copying it, to paste into the site's chat. */
 function SiteBar({ doc, id }: { doc: Doc; id: string }) {
+  const website = ai.agents.value.find((a) => a.id === id)?.website
   const canShow = doc.kind === 'pdf' || doc.kind === 'image'
   const copyPage = async (): Promise<void> => {
     try {
@@ -797,6 +862,12 @@ function SiteBar({ doc, id }: { doc: Doc; id: string }) {
             {t('Copy this page')}
           </button>
         )}
+        {website && prefilledUrl(website, '-') && (
+          <button class="ai-tool-button" onClick={() => void doMoreOnSite(doc, id, website)}>
+            <Icon name="sparkle" size={16} />
+            {t('Do more on {site}…', { site: siteHost(website) })}
+          </button>
+        )}
       </div>
     </div>
   )
@@ -812,6 +883,7 @@ export function AiSidebar({ doc }: { doc: Doc }) {
   const site = ai.siteView.value && !!ai.agents.value.find((a) => a.id === c.agentId)?.website && view === 'chat'
 
   useEffect(() => {
+    handOff.listenForSiteDownloads()
     void ai.refreshAgents().then(() => {
       if (ai.welcomed.peek() && ai.status.peek() === 'idle' && !(ai.siteView.peek() && ai.WEBSITE_FIRST.has(ai.chat.peek().agentId))) void ai.ensureSession()
     })
@@ -920,6 +992,7 @@ export function AiSidebar({ doc }: { doc: Doc }) {
                 {t('{agent} is working…', { agent: agent?.name ?? c.agentId })}
               </p>
             )}
+            <HandOffCard />
             <PermissionCard />
             <StatusCard />
           </>

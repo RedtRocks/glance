@@ -7,6 +7,7 @@ mod encode;
 mod explorer;
 mod files;
 mod fonts;
+mod handoff;
 mod history;
 #[cfg(target_os = "linux")]
 mod keyring_store;
@@ -216,6 +217,10 @@ pub fn run() {
             website::website_close_all,
             website::website_back,
             website::website_home,
+            website::website_go,
+            handoff::hand_off_folder,
+            handoff::hand_off_files,
+            handoff::hand_off_keep,
             agents::agent_start,
             agents::agent_send,
             agents::agent_stop,

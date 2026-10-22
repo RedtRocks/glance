@@ -3845,6 +3845,9 @@ input[type='range'] {
 .ai-card p,
 .ai-welcome p { margin: 0; line-height: 1.45; }
 .ai-card .btn { max-width: 100%; }
+.ai-hand-off { align-items: stretch; text-align: start; }
+.ai-hand-off-head { display: flex; align-items: center; gap: 8px; }
+.ai-hand-off .ai-plan .completed { text-decoration: none; }
 .ai-permission-buttons {
   display: flex;
   flex-wrap: wrap;

@@ -9,6 +9,7 @@
  */
 import type { FileKind, Mode, Skill } from './skills'
 import { pickSkills, skillUri } from './skills'
+import { HAND_OFF_RULE } from './handOff'
 
 export type { FileKind } from './skills'
 
@@ -221,7 +222,7 @@ function skillLines(skills: Skill[], sent: ReadonlySet<string>): { lines: string
 
 const toolRule = (kind: FileKind) => {
   const k = KIND_TOOLS[kind]
-  return `Use Glance's tools: read with ${k.read}, change with ${k.edit}. Don't write files, scripts or a ${k.office} yourself.`
+  return `Use Glance's tools: read with ${k.read}, change with ${k.edit}. Don't write files, scripts or a ${k.office} yourself. ${HAND_OFF_RULE}`
 }
 
 const loop = (kind: FileKind, what: string) => {

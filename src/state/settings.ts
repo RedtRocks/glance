@@ -48,6 +48,10 @@ export interface Settings {
   countInstall: boolean
   /** Skills turned off in Settings → AI apps, by name (state/skills.ts). */
   skillsOff: string[]
+  /** When Glance can't make something, ask the Ask AI company's agent to (state/handOff.ts). */
+  handOff: boolean
+  /** Files downloaded from AI websites in the sidebar open in a new tab. */
+  openSiteDownloads: boolean
 }
 
 export const DEFAULT_TOOLBAR = ['sidebar', 'pageControls', 'spacer', 'zoomOut', 'zoomIn', 'rotate', 'highlight', 'markup', 'askAi', 'search', 'overflow']
@@ -72,7 +76,9 @@ const DEFAULTS: Settings = {
   reopenTabs: false,
   aiApps: true,
   countInstall: true,
-  skillsOff: []
+  skillsOff: [],
+  handOff: true,
+  openSiteDownloads: true
 }
 
 const KEY = 'glance.settings.v1'
