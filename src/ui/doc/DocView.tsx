@@ -149,8 +149,15 @@ export function DocView({ doc: g }: { doc: GDoc }) {
     return () => ro.disconnect()
   }, [])
   useEffect(() => setEditing(null), [g.historyVersion.value])
+  // Where the caret goes in the box that opens next; the end of its text unless a key says otherwise.
+  const caret = useRef<number | null>(null)
   useEffect(() => {
-    box.current?.focus()
+    const el = box.current
+    if (!el) return
+    el.focus()
+    const n = Math.min(caret.current ?? el.value.length, el.value.length)
+    el.setSelectionRange(n, n)
+    caret.current = null
   }, [editing])
 
   // Fits the page's width, up to about its printed size.
@@ -199,6 +206,7 @@ export function DocView({ doc: g }: { doc: GDoc }) {
     const next = list[list.findIndex((x) => x.id === id) + 1]
     if (!after && next && next.type === 'paragraph' && hintOf(next)) {
       if (edit.length) changeGdoc(g, msg('Typing'), edit)
+      caret.current = 0
       g.selection.value = { section: e.section, block: next.id }
       editRequest.value = next.id
       return
@@ -207,6 +215,7 @@ export function DocView({ doc: g }: { doc: GDoc }) {
     const r = changeGdoc(g, msg('Typing'), ops)
     const added = r?.added.at(-1)
     if (!added) return
+    caret.current = 0
     g.selection.value = { section: e.section, block: added }
     editRequest.value = added
   }
@@ -222,6 +231,48 @@ export function DocView({ doc: g }: { doc: GDoc }) {
     if (!changeGdoc(g, msg('Delete Block'), [{ op: 'deleteBlocks', ids: [id] }])) return
     g.selection.value = { section: e.section, ...(prev ? { block: prev.id } : {}) }
     if (prev && blockEditText(prev) !== null) editRequest.value = prev.id
+  }
+
+  /** The text block before or after a block, skipping none: tables, pictures and the like stop the move. */
+  const neighbour = (e: Editing, dir: -1 | 1): Block | undefined => {
+    if (e.target.kind !== 'block') return undefined
+    const id = e.target.id
+    const list = g.doc.peek().sections.find((x) => x.id === e.section)?.blocks ?? []
+    return list[list.findIndex((b) => b.id === id) + dir]
+  }
+  const typable = (b: Block | undefined): b is Extract<Block, { type: 'heading' | 'paragraph' | 'quote' }> => !!b && (b.type === 'heading' || b.type === 'paragraph' || b.type === 'quote')
+
+  /** Up at the start of a box or Down at its end: on to the block before or after, as in a word processor. */
+  const step = (e: Editing, el: HTMLTextAreaElement, dir: -1 | 1): boolean => {
+    const next = neighbour(e, dir)
+    if (!next || blockEditText(next) === null || next.type === 'table' || next.type === 'chart') return false
+    caret.current = dir < 0 ? null : 0
+    commit(e, el.value)
+    g.selection.value = { section: e.section, block: next.id }
+    editRequest.value = next.id
+    return true
+  }
+
+  /** Backspace at the start joins the block onto the one before; Delete at the end pulls the next one in. */
+  const join = (e: Editing, el: HTMLTextAreaElement, dir: -1 | 1): boolean => {
+    if (open.current !== e || e.target.kind !== 'block') return false
+    const here = findBlock(g, e.target.id)
+    const other = neighbour(e, dir)
+    if (!typable(here) || !typable(other)) return false
+    const [first, second] = dir < 0 ? [other, here] : [here, other]
+    const a = dir < 0 ? runsToText(other.runs) : el.value
+    const b = dir < 0 ? el.value : runsToText(other.runs)
+    const keep = (x: typeof first) => ({ ...(x.style ? { style: x.style } : {}), ...(x.type === 'heading' ? { level: x.level } : {}) })
+    setEditing(null)
+    const r = changeGdoc(g, msg('Typing'), [
+      { op: 'replaceBlock', id: first.id, block: { type: first.type, text: a + b, ...keep(first) } },
+      { op: 'deleteBlocks', ids: [second.id] }
+    ])
+    if (!r) return true
+    caret.current = a.length
+    g.selection.value = { section: e.section, block: first.id }
+    editRequest.value = first.id
+    return true
   }
 
   const startEdit = (page: PageLayout, hit: Hit) => {
@@ -412,7 +463,12 @@ export function DocView({ doc: g }: { doc: GDoc }) {
               const el = e.currentTarget
               // Escape leaves the box and keeps what was typed, as in Word.
               if (e.key === 'Escape') commit(editing, el.value)
-              else if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'i')) {
+              else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey && el.value === editing.text) {
+                // Nothing typed in this box yet: Ctrl+Z undoes the document's last change, as in Word.
+                e.preventDefault()
+                setEditing(null)
+                void g.undo()
+              } else if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'i')) {
                 e.preventDefault()
                 wrapSelection(el, e.key === 'b' ? '**' : '*')
               } else if (e.key === 'Enter' && !e.shiftKey && editing.splits && editing.target.kind === 'block') {
@@ -424,6 +480,15 @@ export function DocView({ doc: g }: { doc: GDoc }) {
               } else if (e.key === 'Backspace' && !el.value && editing.splits && editing.target.kind === 'block') {
                 e.preventDefault()
                 removeEmpty(editing)
+              } else if (editing.splits && el.selectionStart === el.selectionEnd) {
+                const at = el.selectionStart
+                const end = el.value.length
+                const done =
+                  (e.key === 'Backspace' && at === 0 && join(editing, el, -1)) ||
+                  (e.key === 'Delete' && at === end && join(editing, el, 1)) ||
+                  (e.key === 'ArrowUp' && at === 0 && step(editing, el, -1)) ||
+                  (e.key === 'ArrowDown' && at === end && step(editing, el, 1))
+                if (done) e.preventDefault()
               }
             }}
           />

@@ -228,6 +228,12 @@ export function DeckView({ doc }: { doc: DeckDoc }) {
               e.stopPropagation()
               // Escape leaves the box and keeps what was typed, as in PowerPoint.
               if (e.key === 'Escape') commit(editing, e.currentTarget.value)
+              else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey && e.currentTarget.value === editing.text) {
+                // Nothing typed in this box yet: Ctrl+Z undoes the deck's last change, as in PowerPoint.
+                e.preventDefault()
+                setEditing(null)
+                void doc.undo()
+              }
               else if (e.key === 'Enter' && !e.shiftKey && !editing.multiline) {
                 e.preventDefault()
                 commit(editing, e.currentTarget.value)
