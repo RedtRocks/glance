@@ -69,6 +69,10 @@ function PhoneStart() {
           <Icon name="folderOpen" size={24} />
           {t('Choose a File')}
         </button>
+        <button class="w-btn big" onClick={() => (makeOpen.value = true)}>
+          <Icon name="add" size={24} />
+          {t('Make Slides, Documents or Spreadsheets')}
+        </button>
         <p class="ww-fine">
           <Icon name="lock" size={16} />
           {t('Works offline once installed')}
