@@ -164,7 +164,39 @@ select optgroup {
   font-size: 12px;
 }
 .tab-dirty {
-  color: var(--accent);
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text);
+}
+.tab-kind {
+  display: inline-flex;
+  flex: none;
+}
+.tab-kind.deck {
+  color: #6312f6;
+}
+.tab-kind.gdoc {
+  color: #e0651f;
+}
+.tab-kind.sheet {
+  color: #1e8e4e;
+}
+.tab-kind.pdf {
+  color: #d13438;
+}
+:root[data-theme='dark'] .tab-kind.deck {
+  color: #a98bff;
+}
+:root[data-theme='dark'] .tab-kind.gdoc {
+  color: #ff9a5c;
+}
+:root[data-theme='dark'] .tab-kind.sheet {
+  color: #4cc38a;
+}
+:root[data-theme='dark'] .tab-kind.pdf {
+  color: #ff7b7f;
 }
 .page-total {
   white-space: nowrap;
