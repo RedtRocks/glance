@@ -88,6 +88,15 @@ select {
   font: inherit;
   color: inherit;
 }
+/* Anything clickable shows the hand, as on the website; :where keeps it weaker than any
+   rule that sets its own cursor (text boxes, resize handles, tabs that drag). */
+:where(button, select, summary, a[href], [role='button'], [role='tab'], [role='menuitem'], [role='menuitemcheckbox'], [role='menuitemradio'], [role='option'], [role='switch'], input[type='checkbox'], input[type='radio'], input[type='range'], input[type='color'], label:has(> input[type='checkbox'], > input[type='radio'])) {
+  cursor: pointer;
+}
+:where(button, select, input):disabled,
+:where([aria-disabled='true']) {
+  cursor: default;
+}
 /* Windows draws a select's list with the option colours; the controls' see-through
    backgrounds would leave it white, with white text in dark mode. */
 select option,

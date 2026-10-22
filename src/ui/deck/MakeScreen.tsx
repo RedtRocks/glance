@@ -74,6 +74,8 @@ export function MakeScreen() {
   const [tab, setTab] = useState<Purpose | 'All'>('All')
   const [preview, setPreview] = useState<Template | null>(null)
   const [kind, setKind] = useState<Kind>('slides')
+  // Which kind of templates show; slides, documents and spreadsheets each have a tab, as in Office's New screen.
+  const [shelf, setShelf] = useState<Kind>('slides')
   const [docPreview, setDocPreview] = useState<DocBoardInfo | null>(null)
   const input = useRef<HTMLInputElement>(null)
   const latest = useRef('')
@@ -207,8 +209,9 @@ export function MakeScreen() {
       </div>
       <h2 class="make-templates-title">{t('Or start from a template')}</h2>
       <div class="make-tabs make-kind-tabs" role="tablist" aria-label={t('Kind of template')}>
-        <button role="tab" aria-selected={kind === 'slides'} class={`make-tab${kind === 'slides' ? ' on' : ''}`} onClick={() => setKind('slides')}>{t('Slides')}</button>
-        <button role="tab" aria-selected={kind === 'document'} class={`make-tab${kind === 'document' ? ' on' : ''}`} onClick={() => setKind('document')}>{t('Documents')}</button>
+        <button role="tab" aria-selected={shelf === 'slides'} class={`make-tab${shelf === 'slides' ? ' on' : ''}`} onClick={() => (setShelf('slides'), setKind('slides'))}>{t('Slides')}</button>
+        <button role="tab" aria-selected={shelf === 'document'} class={`make-tab${shelf === 'document' ? ' on' : ''}`} onClick={() => (setShelf('document'), setKind('document'))}>{t('Documents')}</button>
+        <button role="tab" aria-selected={shelf === 'sheet'} class={`make-tab${shelf === 'sheet' ? ' on' : ''}`} onClick={() => setShelf('sheet')}>{t('Spreadsheets')}</button>
       </div>
       <div class="make-tabs" role="tablist" aria-label={t('Templates for')}>
         {(['All', ...PURPOSES] as const).map((p) => (
@@ -218,13 +221,13 @@ export function MakeScreen() {
         ))}
       </div>
       <div class="make-templates" role="tabpanel">
-        {kind === 'slides' && TEMPLATES.filter((tpl) => tab === 'All' || tpl.purpose === tab).map((tpl) => (
+        {shelf === 'slides' && TEMPLATES.filter((tpl) => tab === 'All' || tpl.purpose === tab).map((tpl) => (
           <TemplateTile key={tpl.id} tpl={tpl} onPick={() => setPreview(tpl)} />
         ))}
-        {kind === 'document' && docTemplatesFor(tab).map((info) => <DocTemplateTile key={info.id} info={info} onPick={() => setDocPreview(info)} />)}
+        {shelf === 'document' && docTemplatesFor(tab).map((info) => <DocTemplateTile key={info.id} info={info} onPick={() => setDocPreview(info)} />)}
+        {shelf === 'sheet' && <SheetTemplates tab={tab} canAsk={state === 'ready'} onUse={(x) => void makeSheet('', x, false)} onAbout={(x, about) => void makeSheet(about, x, true)} />}
       </div>
       {docPreview && <DocTemplatePreview info={docPreview} aiReady={state === 'ready'} onClose={() => setDocPreview(null)} />}
-      <SheetTemplates canAsk={state === 'ready'} onUse={(x) => void makeSheet('', x, false)} onAbout={(x, about) => void makeSheet(about, x, true)} />
       {preview && (
         <TemplatePreview
           tpl={preview}

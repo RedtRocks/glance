@@ -1,9 +1,8 @@
 /** File → New: the spreadsheet templates, by purpose, with a preview of every sheet. */
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { SHEET_TEMPLATES, sheetTemplate } from '../../state/sheetTemplates'
-import { PURPOSES, type Purpose } from '../../core/deck/design'
+import type { Purpose } from '../../core/deck/design'
 import type { SheetTemplateInfo } from '../../core/sheet/template'
-import { purposeLabel } from '../deck/labels'
 import { t } from '../../i18n'
 import { Icon } from '../Icon'
 
@@ -33,24 +32,14 @@ function useSheetPictures(id: string, scale: number, all: boolean): string[] {
   return urls
 }
 
-export function SheetTemplates({ canAsk, onUse, onAbout }: { canAsk: boolean; onUse: (tpl: SheetTemplateInfo) => void; onAbout: (tpl: SheetTemplateInfo, about: string) => void }) {
-  const [tab, setTab] = useState<Purpose | 'All'>('All')
+/** The spreadsheet templates for a purpose, shown under File → New's Spreadsheets tab. */
+export function SheetTemplates({ tab, canAsk, onUse, onAbout }: { tab: Purpose | 'All'; canAsk: boolean; onUse: (tpl: SheetTemplateInfo) => void; onAbout: (tpl: SheetTemplateInfo, about: string) => void }) {
   const [preview, setPreview] = useState<SheetTemplateInfo | null>(null)
   return (
     <>
-      <h2 class="make-templates-title">{t('Spreadsheets')}</h2>
-      <div class="make-tabs" role="tablist" aria-label={t('Spreadsheet templates for')}>
-        {(['All', ...PURPOSES] as const).map((p) => (
-          <button key={p} role="tab" aria-selected={tab === p} class={`make-tab${tab === p ? ' on' : ''}`} onClick={() => setTab(p)}>
-            {purposeLabel(p)}
-          </button>
-        ))}
-      </div>
-      <div class="make-templates" role="tabpanel">
-        {SHEET_TEMPLATES.filter((x) => tab === 'All' || x.purpose === tab).map((x) => (
-          <SheetTile key={x.id} tpl={x} onPick={() => setPreview(x)} />
-        ))}
-      </div>
+      {SHEET_TEMPLATES.filter((x) => tab === 'All' || x.purpose === tab).map((x) => (
+        <SheetTile key={x.id} tpl={x} onPick={() => setPreview(x)} />
+      ))}
       {preview && <SheetPreview tpl={preview} canAsk={canAsk} onClose={() => setPreview(null)} onUse={() => onUse(preview)} onAbout={(about) => onAbout(preview, about)} />}
     </>
   )
