@@ -149,6 +149,12 @@ describe('drawing designed slides', () => {
     expect(fitDesignText(t, 'x'.repeat(400))).toBe(48)
   })
 
+  it('shrinks the sample too when the real font needs more room than the box', () => {
+    const t: DesignText = { ...board.designs[0].texts[0], wrap: undefined }
+    const wide = (_b: DesignText, line: string, size: number) => line.length * size * 4
+    expect(fitDesignText(t, t.sample, wide)).toBeLessThan(96)
+  })
+
   it('applies the box’s text transform for exports', () => {
     expect(shownText(text('a', 'x', { transform: 'uppercase' }), 'Bake sale')).toBe('BAKE SALE')
     expect(shownText(text('a', 'x', { transform: 'capitalize' }), 'bake sale')).toBe('Bake Sale')

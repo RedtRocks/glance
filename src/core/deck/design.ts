@@ -197,8 +197,10 @@ function measure(t: DesignText, text: string, size: number, m?: MeasureText): { 
  * shows at the design's size.
  */
 export function fitDesignText(t: DesignText, text: string, m?: MeasureText): number {
-  if (text === t.sample) return t.size
-  const own = measure(t, t.sample, t.size, m)
+  if (text === t.sample && !m) return t.size
+  // The sample's own room only stretches the box for other text; the sample itself must
+  // fit the box, since a real font can wrap it onto more lines than the board drew.
+  const own = text === t.sample ? { height: t.h, width: t.w } : measure(t, t.sample, t.size, m)
   const h = Math.max(t.h, own.height)
   const w = Math.max(t.w, own.width)
   // Unwrapped text can only get narrower by getting smaller, so it may go further.
