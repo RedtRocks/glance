@@ -93,6 +93,12 @@ export function SheetView({ doc }: { doc: SheetDoc }) {
     el.focus()
     el.setSelectionRange(el.value.length, el.value.length)
   }, [isEditing])
+  // A sheet that opens takes the keyboard, so typing goes straight into its first cell.
+  useEffect(() => {
+    if (!document.activeElement || document.activeElement === document.body) scroller.current?.focus({ preventScroll: true })
+  }, [doc])
+  // Where a run of Tab entries started: Enter goes back to that column, as in Excel.
+  const tabFrom = useRef<number | null>(null)
   const [pictures, setPictures] = useState<Map<string, CanvasImageSource>>(new Map())
   const [list, setList] = useState<string[] | null>(null)
   const [, redraw] = useState(0)
@@ -262,7 +268,9 @@ export function SheetView({ doc }: { doc: SheetDoc }) {
       const op = text.startsWith('=') && text.length > 1 ? { op: 'set' as const, sheet: s.name, cell: ref, formula: text } : { op: 'set' as const, sheet: s.name, cell: ref, value: text }
       sheet.change(doc, t('Edit {cell}', { cell: ref }), [op])
     }
-    if (move === 'down') select({ r: r + 1, c, r2: r + 1, c2: c })
+    const back = tabFrom.current
+    tabFrom.current = move === 'right' ? back ?? c : null
+    if (move === 'down') select({ r: r + 1, c: back ?? c, r2: r + 1, c2: back ?? c })
     if (move === 'right') select({ r, c: c + 1, r2: r, c2: c + 1 })
     scroller.current?.focus()
   }
@@ -278,6 +286,7 @@ export function SheetView({ doc }: { doc: SheetDoc }) {
   const onPointerDown = (e: PointerEvent) => {
     const { r, c } = cellAt(e)
     if (editing !== null) commit(editing, 'none')
+    tabFrom.current = null
     if (r < 0 && c < 0) return select({ r: 0, c: 0, r2: 1_048_575, c2: 16_383 })
     if (r < 0) return select({ r: 0, c, r2: 1_048_575, c2: c })
     if (c < 0) return select({ r, c: 0, r2: r, c2: 16_383 })
@@ -326,6 +335,7 @@ export function SheetView({ doc }: { doc: SheetDoc }) {
     const move = (dr: number, dc: number) => {
       e.preventDefault()
       e.stopPropagation()
+      tabFrom.current = e.key === 'Tab' && !e.shiftKey ? tabFrom.current ?? sel.c : null
       if (e.shiftKey) return select({ ...sel, r2: Math.max(0, sel.r2 + dr), c2: Math.max(0, sel.c2 + dc) })
       const a = layout.area(sel.r, sel.c)
       const r = Math.max(0, dr > 0 ? a.r2 + 1 : dr < 0 ? sel.r - 1 : sel.r)

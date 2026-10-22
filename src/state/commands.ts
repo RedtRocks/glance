@@ -139,8 +139,8 @@ export const COMMANDS: Command[] = [
   { id: 'file.newFromClipboard', label: msg('New from Clipboard'), keys: ['Ctrl+N'], run: () => img.newFromClipboard(), enabled: () => platform.isTauri },
   { id: 'file.scan', label: msg('Import from Scanner…'), run: () => void (scanOpen.value = true), enabled: () => platform.scanAvailable },
   { id: 'file.newWindow', label: msg('New Window'), keys: ['Ctrl+Shift+N'], run: () => platform.openNewWindow([]) },
-  { id: 'file.save', label: msg('Save'), keys: ['Ctrl+S'], run: () => actions.save(), enabled: () => isPdf() || isImage() || !!deck() || !!gdoc() },
-  { id: 'file.saveAs', label: msg('Save As…'), keys: ['Ctrl+Shift+S'], run: () => actions.saveAs(), enabled: () => isPdf() || isImage() || !!deck() || !!gdoc() },
+  { id: 'file.save', label: msg('Save'), keys: ['Ctrl+S'], run: () => actions.save(), enabled: () => isPdf() || isImage() || !!deck() || !!gdoc() || isSheet() },
+  { id: 'file.saveAs', label: msg('Save As…'), keys: ['Ctrl+Shift+S'], run: () => actions.saveAs(), enabled: () => isPdf() || isImage() || !!deck() || !!gdoc() || isSheet() },
   {
     id: 'file.export',
     label: msg('Export…'),
