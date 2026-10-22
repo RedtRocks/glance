@@ -99,6 +99,8 @@ export function SheetView({ doc }: { doc: SheetDoc }) {
   }, [doc])
   // Where a run of Tab entries started: Enter goes back to that column, as in Excel.
   const tabFrom = useRef<number | null>(null)
+  // The editor was opened by typing over the cell (not F2 or a double-click): arrow keys enter it and move on, as in Excel.
+  const typedIn = useRef(false)
   const [pictures, setPictures] = useState<Map<string, CanvasImageSource>>(new Map())
   const [list, setList] = useState<string[] | null>(null)
   const [, redraw] = useState(0)
@@ -257,7 +259,7 @@ export function SheetView({ doc }: { doc: SheetDoc }) {
     reveal(next.r2, next.c2)
   }
 
-  const commit = (text: string, move: 'down' | 'right' | 'none' = 'down') => {
+  const commit = (text: string, move: 'down' | 'right' | 'up' | 'left' | 'none' = 'down', tab = false) => {
     const { r, c } = sel
     const ref = cellName(r, c)
     const before = entryText(s, r, c)
@@ -269,9 +271,11 @@ export function SheetView({ doc }: { doc: SheetDoc }) {
       sheet.change(doc, t('Edit {cell}', { cell: ref }), [op])
     }
     const back = tabFrom.current
-    tabFrom.current = move === 'right' ? back ?? c : null
+    tabFrom.current = tab && move === 'right' ? back ?? c : null
     if (move === 'down') select({ r: r + 1, c: back ?? c, r2: r + 1, c2: back ?? c })
     if (move === 'right') select({ r, c: c + 1, r2: r, c2: c + 1 })
+    if (move === 'up') select({ r: Math.max(0, r - 1), c, r2: Math.max(0, r - 1), c2: c })
+    if (move === 'left') select({ r, c: Math.max(0, c - 1), r2: r, c2: Math.max(0, c - 1) })
     scroller.current?.focus()
   }
 
@@ -343,6 +347,37 @@ export function SheetView({ doc }: { doc: SheetDoc }) {
       const b = layout.area(r, c)
       select({ r: b.r1, c: b.c1, r2: b.r1, c2: b.c1 })
     }
+    // Ctrl+arrows jump to the edge of the data, Home to column A and Ctrl+Home to A1, as in Excel.
+    const jump = (r: number, c: number) => {
+      e.preventDefault()
+      e.stopPropagation()
+      tabFrom.current = null
+      if (e.shiftKey) return select({ ...sel, r2: r, c2: c })
+      select({ r, c, r2: r, c2: c })
+    }
+    const filled = (r: number, c: number) => r >= 0 && c >= 0 && plainText(getCell(s, r, c)?.v) !== ''
+    const edge = (dr: number, dc: number) => {
+      const lastR = Math.max(used.rows, sel.r2)
+      const lastC = Math.max(used.cols, sel.c2)
+      let r = sel.r2
+      let c = sel.c2
+      const inside = (y: number, x: number) => y >= 0 && x >= 0 && y <= lastR && x <= lastC
+      if (filled(r, c) && filled(r + dr, c + dc)) {
+        while (inside(r + dr, c + dc) && filled(r + dr, c + dc)) (r += dr), (c += dc)
+      } else {
+        do (r += dr), (c += dc)
+        while (inside(r, c) && !filled(r, c))
+        if (!inside(r, c)) (r = dr > 0 ? lastR : dr < 0 ? 0 : r - dr), (c = dc > 0 ? lastC : dc < 0 ? 0 : c - dc)
+      }
+      return jump(Math.max(0, r), Math.max(0, c))
+    }
+    if (mod && e.key === 'ArrowDown') return edge(1, 0)
+    if (mod && e.key === 'ArrowUp') return edge(-1, 0)
+    if (mod && e.key === 'ArrowRight') return edge(0, 1)
+    if (mod && e.key === 'ArrowLeft') return edge(0, -1)
+    if (mod && e.key === 'Home') return jump(0, 0)
+    if (mod && e.key === 'End') return jump(Math.max(0, used.rows), Math.max(0, used.cols))
+    if (e.key === 'Home') return jump(sel.r2, 0)
     if (e.key === 'ArrowDown') return move(1, 0)
     if (e.key === 'ArrowUp') return move(-1, 0)
     if (e.key === 'ArrowRight') return move(0, 1)
@@ -351,9 +386,13 @@ export function SheetView({ doc }: { doc: SheetDoc }) {
     if (e.key === 'Enter') {
       e.preventDefault()
       e.stopPropagation()
+      typedIn.current = false
       return setEditing(entryText(s, sel.r, sel.c))
     }
-    if (e.key === 'F2') return void setEditing(entryText(s, sel.r, sel.c))
+    if (e.key === 'F2') {
+      typedIn.current = false
+      return void setEditing(entryText(s, sel.r, sel.c))
+    }
     if (e.key === 'Delete' || e.key === 'Backspace') {
       e.preventDefault()
       e.stopPropagation()
@@ -379,9 +418,19 @@ export function SheetView({ doc }: { doc: SheetDoc }) {
     }
     if (mod && e.key === 'c') return void copy(e)
     if (mod && e.key === 'v') return
+    if (mod && e.key === 'x') {
+      copy(e)
+      return sheet.clearSelection(doc)
+    }
+    if (mod && e.key === 'a') {
+      e.preventDefault()
+      e.stopPropagation()
+      return select({ r: 0, c: 0, r2: Math.max(0, used.rows), c2: Math.max(0, used.cols) })
+    }
     if (!mod && !e.altKey && e.key.length === 1) {
       e.stopPropagation()
       e.preventDefault()
+      typedIn.current = true
       setEditing((now) => (now === null ? e.key : now + e.key))
     }
   }
@@ -465,7 +514,10 @@ export function SheetView({ doc }: { doc: SheetDoc }) {
           onPointerUp={onPointerUp}
           onDblClick={(e) => {
             const { r, c } = cellAt(e)
-            if (r >= 0 && c >= 0) setEditing(entryText(s, sel.r, sel.c))
+            if (r >= 0 && c >= 0) {
+              typedIn.current = false
+              setEditing(entryText(s, sel.r, sel.c))
+            }
           }}
           onKeyDown={onKeyDown}
           onPaste={onPaste}
@@ -513,12 +565,16 @@ export function SheetView({ doc }: { doc: SheetDoc }) {
             onInput={(e) => setEditing((e.currentTarget as HTMLInputElement).value)}
             onKeyDown={(e) => {
               e.stopPropagation()
+              const arrows: Record<string, 'down' | 'up' | 'left' | 'right'> = { ArrowDown: 'down', ArrowUp: 'up', ArrowLeft: 'left', ArrowRight: 'right' }
               if (e.key === 'Enter') {
                 e.preventDefault()
-                commit(editing, 'down')
+                commit(editing, e.shiftKey ? 'up' : 'down')
               } else if (e.key === 'Tab') {
                 e.preventDefault()
-                commit(editing, 'right')
+                commit(editing, e.shiftKey ? 'left' : 'right', !e.shiftKey)
+              } else if (typedIn.current && arrows[e.key] && !e.shiftKey) {
+                e.preventDefault()
+                commit(editing, arrows[e.key])
               } else if (e.key === 'Escape') {
                 closed.current = true
                 setEditing(null)
