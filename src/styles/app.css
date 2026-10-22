@@ -4554,6 +4554,33 @@ input[type='range'] {
   overflow: hidden;
   box-shadow: 0 4px 16px rgb(0 0 0 / 0.18);
 }
+/* Typing on the page: the paper's colour and the block's own font, so bold shows as it is typed. */
+.doc-rich {
+  box-shadow: none;
+  outline-offset: 1px;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  cursor: text;
+}
+/* Bold must show while typing, even in the Wollo look, which sets every b to one weight. */
+:root .app .doc-rich.doc-rich :is(b, strong) {
+  font-weight: bolder;
+}
+.doc-rich a {
+  color: inherit;
+  text-decoration: underline;
+}
+.doc-rich-list > div {
+  display: list-item;
+  margin-left: 1.3em;
+  list-style: disc;
+}
+.doc-rich-list.ordered {
+  counter-reset: none;
+}
+.doc-rich-list.ordered > div {
+  list-style: decimal;
+}
 .doc-ai-bar {
   display: flex;
   align-items: center;

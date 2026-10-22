@@ -61,7 +61,12 @@ export function DialogHost() {
             type={req.input.password ? 'password' : 'text'}
             value={text}
             onInput={(e) => setText((e.target as HTMLInputElement).value)}
-            onKeyDown={(e) => e.key === 'Enter' && primary && done(primary.value)}
+            onKeyDown={(e) => {
+              if (e.key !== 'Enter' || !primary) return
+              // Focus goes back to where it was; the Enter must not land there too.
+              e.preventDefault()
+              done(primary.value)
+            }}
           />
         </label>
       )}

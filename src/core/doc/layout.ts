@@ -180,14 +180,14 @@ const fontOf = (st: TextStyle, run: Run | null): FontSpec => ({
 
 /** Words and spaces of some runs, each with its font, for filling lines. */
 function tokens(runs: Run[], st: TextStyle, palette: Record<string, string>, link: string) {
-  const out: { text: string; font: FontSpec; colour: string; href?: string; space: boolean; br: boolean }[] = []
+  const out: { text: string; font: FontSpec; colour: string; href?: string; u: boolean; space: boolean; br: boolean }[] = []
   for (const r of runs) {
     const font = fontOf(st, r)
     const colour = r.href ? link : (r.c && palette[r.c]) || st.colour
     const text = st.transform === 'uppercase' ? r.text.toUpperCase() : st.transform === 'lowercase' ? r.text.toLowerCase() : r.text
     for (const part of text.split(/(\n|[ \t]+)/)) {
       if (!part) continue
-      out.push({ text: part === '\n' ? '' : part.replace(/\t/g, ' '), font, colour, href: r.href, space: /^[ \t]+$/.test(part), br: part === '\n' })
+      out.push({ text: part === '\n' ? '' : part.replace(/\t/g, ' '), font, colour, href: r.href, u: !!r.u || !!r.href, space: /^[ \t]+$/.test(part), br: part === '\n' })
     }
   }
   return out
@@ -207,15 +207,15 @@ export function breakLines(runs: Run[], st: TextStyle, width: number, measure: M
     lines.push(cur)
     cur = { segs: [], w: 0, x: rest }
   }
-  const add = (text: string, font: FontSpec, colour: string, href?: string) => {
+  const add = (text: string, font: FontSpec, colour: string, href?: string, u = false) => {
     const w = measure(font, text)
     const last = cur.segs.at(-1)
-    if (last && last.font === font && last.colour === colour && last.href === href) {
+    if (last && last.font === font && last.colour === colour && last.href === href && !!last.underline === u) {
       last.text += text
       last.w = measure(font, last.text)
       cur.w = last.x + last.w
     } else {
-      cur.segs.push({ text, x: cur.w, w, font, colour, ...(href ? { href, underline: true } : {}) })
+      cur.segs.push({ text, x: cur.w, w, font, colour, ...(href ? { href } : {}), ...(u ? { underline: true } : {}) })
       cur.w += w
     }
   }
@@ -225,13 +225,13 @@ export function breakLines(runs: Run[], st: TextStyle, width: number, measure: M
       continue
     }
     if (t.space) {
-      if (cur.segs.length) add(' ', t.font, t.colour, t.href)
+      if (cur.segs.length) add(' ', t.font, t.colour, t.href, t.u)
       continue
     }
     let word = t.text
     const w = measure(t.font, word)
     if (cur.w + w <= room() + 0.01 || (!cur.segs.length && w <= room() + 0.01)) {
-      add(word, t.font, t.colour, t.href)
+      add(word, t.font, t.colour, t.href, t.u)
       continue
     }
     if (cur.segs.some((s) => /\S/.test(s.text))) push()
@@ -241,11 +241,11 @@ export function breakLines(runs: Run[], st: TextStyle, width: number, measure: M
       const chars = [...word]
       let n = 1
       while (n < chars.length && measure(t.font, chars.slice(0, n + 1).join('')) <= room()) n++
-      add(chars.slice(0, n).join(''), t.font, t.colour, t.href)
+      add(chars.slice(0, n).join(''), t.font, t.colour, t.href, t.u)
       push()
       word = chars.slice(n).join('')
     }
-    add(word, t.font, t.colour, t.href)
+    add(word, t.font, t.colour, t.href, t.u)
   }
   push()
   return lines
