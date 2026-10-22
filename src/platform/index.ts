@@ -1052,6 +1052,44 @@ export async function websiteHome(id: string): Promise<void> {
   await invoke('website_home', { id })
 }
 
+/** Opens an address on the company's own site (a pre-filled new chat); other sites are refused. */
+export async function websiteGo(id: string, url: string): Promise<void> {
+  await invoke('website_go', { id, url })
+}
+
+/** A file the user downloaded from a company website, saved in Downloads. */
+export interface WebsiteDownload {
+  site: string
+  url: string
+  path: string | null
+  ok: boolean
+}
+
+export async function onWebsiteDownload(cb: (e: WebsiteDownload) => void): Promise<() => void> {
+  if (!isTauri) return () => {}
+  const { listen } = await import('@tauri-apps/api/event')
+  return listen<WebsiteDownload>('website-download', (e) => cb(e.payload))
+}
+
+// Handing off to the AI company's agent (see src-tauri/src/handoff.rs). Not in the browser
+// version, which has no agents.
+
+/** Makes a new folder for one hand-off under Glance's app data. */
+export async function handOffFolder(name: string): Promise<string> {
+  if (!isTauri) throw new Error(t('Not available in the browser version'))
+  return invoke<string>('hand_off_folder', { name })
+}
+
+export async function handOffFiles(dir: string): Promise<{ path: string; name: string; size: number; modified: number }[]> {
+  return isTauri ? invoke('hand_off_files', { dir }) : []
+}
+
+/** Moves a handed-off file to `dir` (or Downloads) as `name`; resolves with its new path. */
+export async function handOffKeep(path: string, dir: string | null, name: string): Promise<string> {
+  if (!isTauri) throw new Error(t('Not available in the browser version'))
+  return invoke<string>('hand_off_keep', { path, dir, name })
+}
+
 /** Closes any website left over from before Glance's page reloaded. */
 export async function websiteCloseAll(): Promise<void> {
   if (isTauri) await invoke('website_close_all')

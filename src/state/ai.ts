@@ -8,6 +8,7 @@ import type * as acp from '@agentclientprotocol/sdk'
 import * as platform from '../platform'
 import { applyUpdate, chatTitle, modelOption, preamble, type Choice, type Part } from '../core/ai/transcript'
 import { guideEdit } from '../core/ai/guide'
+import { beyondGlance, findHandOff } from '../core/ai/handOff'
 import { fileContext } from './guideContext'
 import { activeSkills } from './skills'
 import { changeCount, changesSince, keep as keepChanges, undoChanges } from './aiChanges'
@@ -265,6 +266,8 @@ function client(): acp.Client {
         return
       }
       if (replaying.has(sessionId)) return
+      const task = tasks.get(sessionId)
+      if (task) return task(update)
       const c = chat.peek()
       if (c.sessionId !== sessionId) return
       const parts = applyUpdate(c.parts, update)
@@ -283,6 +286,29 @@ function client(): acp.Client {
       })
     }
   }
+}
+
+/** Hand-off sessions (state/handOff.ts): their updates go to the hand-off, not the chat. */
+const tasks = new Map<string, (update: acp.SessionNotification['update']) => void>()
+
+export interface Task {
+  done: Promise<acp.StopReason>
+  cancel: () => Promise<void>
+}
+
+/**
+ * Runs one job in a new session of company `id`'s agent, working in `cwd`, apart from the
+ * chat. Glance's own tools are not given: the job is what they can't do.
+ */
+export async function runTask(id: string, cwd: string, prompt: string, onUpdate: (update: acp.SessionNotification['update']) => void): Promise<Task> {
+  const l = await link(id)
+  const { sessionId } = await l.conn.newSession({ cwd, mcpServers: [] })
+  tasks.set(sessionId, onUpdate)
+  const done = l.conn
+    .prompt({ sessionId, prompt: [{ type: 'text', text: prompt }] })
+    .then((r) => r.stopReason)
+    .finally(() => tasks.delete(sessionId))
+  return { done, cancel: () => l.conn.cancel({ sessionId }) }
 }
 
 export const agentName = (id: string): string => agents.peek().find((a) => a.id === id)?.name ?? id
@@ -510,6 +536,12 @@ export async function send(text: string, shaped?: Outgoing): Promise<void> {
   const files = attachments.peek()
   if (!text && !files.length) return
   if (status.peek() === 'working') return
+  if (!shaped && text && !files.length && settings.peek().handOff && beyondGlance(text)) {
+    const c0 = chat.peek()
+    chat.value = { ...c0, parts: [...c0.parts, { kind: 'user', text }], updatedAt: Date.now() }
+    await (await import('./handOff')).handOffFromChat(text)
+    return
+  }
   if (!(await ensureSession())) return
   const l = await link(chat.peek().agentId)
   const c = chat.peek()
@@ -555,6 +587,12 @@ export async function send(text: string, shaped?: Outgoing): Promise<void> {
     if (res.stopReason === 'refusal') addNotice(t('{agent} declined to answer that.', { agent: agentName(c.agentId) }), false, c.id)
     else if (res.stopReason === 'max_tokens' || res.stopReason === 'max_turn_requests') addNotice(t('{agent} stopped early. Ask it to continue.', { agent: agentName(c.agentId) }), false, c.id)
     if (here()) status.value = 'ready'
+    // The AI reached the limit of Glance's tools: hand the rest to the company's agent.
+    const last = chat.peek().parts.at(-1)
+    if (here() && last?.kind === 'text') {
+      const left = findHandOff(last.text)
+      if (left) queueMicrotask(() => void import('./handOff').then((h) => h.handOffFromChat(left)))
+    }
   } catch (e) {
     if (here() && isAuthRequired(e)) {
       signInMethods.value = usableMethods(l.init.authMethods)

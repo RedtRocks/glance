@@ -8,8 +8,14 @@
 //!
 //! The main window holds more than one webview while a site is open, so Glance's own
 //! commands take `tauri::Window`, never `WebviewWindow` (which then fails to resolve).
+//!
+//! Files the user downloads from a site are saved in Downloads, as in a browser, and Glance
+//! is told (`website-download`) so it can open them in a tab. Glance never scripts the sites.
 
-use tauri::{AppHandle, LogicalPosition, LogicalSize, Manager, Webview, WebviewUrl};
+use serde::Serialize;
+use std::path::{Path, PathBuf};
+use tauri::webview::DownloadEvent;
+use tauri::{AppHandle, Emitter, LogicalPosition, LogicalSize, Manager, Webview, WebviewUrl};
 use tauri_plugin_opener::OpenerExt;
 
 const PREFIX: &str = "site-";
@@ -61,6 +67,8 @@ pub async fn website_show(app: AppHandle, id: String, x: f64, y: f64, width: f64
     }
     let window = app.get_window("main").ok_or("no main window")?;
     let opener = app.clone();
+    let downloads = app.clone();
+    let site_id = id.clone();
     let builder = tauri::webview::WebviewBuilder::new(&label, WebviewUrl::External(url))
         // Sign-in pages hop between domains; only web addresses are allowed.
         .on_navigation(|u| matches!(u.scheme(), "https" | "about"))
@@ -76,11 +84,64 @@ pub async fn website_show(app: AppHandle, id: String, x: f64, y: f64, width: f64
             }
             let _ = opener.opener().open_url(u.as_str(), None::<&str>);
             tauri::webview::NewWindowResponse::Deny
+        })
+        .on_download(move |_, event| {
+            match event {
+                DownloadEvent::Requested { destination, .. } => {
+                    if let Ok(dir) = downloads.path().download_dir() {
+                        *destination = into_downloads(&dir, destination);
+                    }
+                }
+                DownloadEvent::Finished { url, path, success } => {
+                    let _ = downloads.emit("website-download", Download { site: site_id.clone(), url: url.to_string(), path: path.map(|p| p.to_string_lossy().into_owned()), ok: success });
+                }
+                _ => {}
+            }
+            true
         });
     #[cfg(windows)]
     let builder = builder.user_agent(&edge_user_agent());
     window.add_child(builder, position, size).map_err(|e| e.to_string())?;
     Ok(())
+}
+
+/// A finished download from a company website, for Glance's page.
+#[derive(Serialize, Clone)]
+struct Download {
+    site: String,
+    url: String,
+    /// Where it was saved; missing on macOS.
+    path: Option<String>,
+    ok: bool,
+}
+
+/// Where a site's download goes: Downloads, with the name the site suggested, numbered when
+/// that name is taken (WebView2 and WebKitGTK suggest a path; only its name is used).
+fn into_downloads(dir: &Path, suggested: &Path) -> PathBuf {
+    let name = suggested.file_name().map(|n| n.to_string_lossy().into_owned()).filter(|n| !n.is_empty()).unwrap_or_else(|| "download".into());
+    let first = dir.join(&name);
+    if suggested == first || !first.exists() {
+        return first;
+    }
+    let p = Path::new(&name);
+    let stem = p.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+    let ext = p.extension().map(|e| format!(".{}", e.to_string_lossy())).unwrap_or_default();
+    (1..).map(|n| dir.join(format!("{stem} ({n}){ext}"))).find(|c| !c.exists()).unwrap()
+}
+
+/// Opens an address on the shown company's own site, such as its new-chat page with a
+/// prompt filled in (`claude.ai/new?q=…`). Other sites are refused.
+#[tauri::command]
+pub fn website_go(app: AppHandle, id: String, url: String) -> Result<(), String> {
+    let target: url::Url = url.parse().map_err(|e: url::ParseError| e.to_string())?;
+    if !same_site(&home(&id)?, &target) {
+        return Err("not this company's site".into());
+    }
+    site(&app, &id)?.navigate(target).map_err(|e| e.to_string())
+}
+
+fn same_site(home: &url::Url, target: &url::Url) -> bool {
+    target.scheme() == "https" && target.host_str().is_some() && target.host_str() == home.host_str()
 }
 
 /// Hides every company website (the sidebar closed or went back to Glance's chat).
@@ -129,6 +190,26 @@ mod tests {
         let ua = edge_user_agent();
         assert!(ua.contains(" Edg/") && ua.contains(" Chrome/"));
         assert!(!ua.contains("WebView"));
+    }
+
+    #[test]
+    fn prompts_only_go_to_the_company_site() {
+        let home: url::Url = "https://claude.ai/".parse().unwrap();
+        assert!(same_site(&home, &"https://claude.ai/new?q=hi".parse().unwrap()));
+        assert!(!same_site(&home, &"https://evil.example/?q=hi".parse().unwrap()));
+        assert!(!same_site(&home, &"http://claude.ai/new".parse().unwrap()));
+    }
+
+    #[test]
+    fn downloads_are_numbered_not_overwritten() {
+        let dir = std::env::temp_dir().join(format!("glance-dl-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        assert_eq!(into_downloads(&dir, Path::new("/elsewhere/deck.pptx")), dir.join("deck.pptx"));
+        std::fs::write(dir.join("deck.pptx"), "x").unwrap();
+        assert_eq!(into_downloads(&dir, Path::new("/elsewhere/deck.pptx")), dir.join("deck (1).pptx"));
+        // Already numbered by the web view: keep it.
+        assert_eq!(into_downloads(&dir, &dir.join("deck (1).pptx")), dir.join("deck (1).pptx"));
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

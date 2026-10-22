@@ -79,6 +79,14 @@ AI apps start `glance-mcp.exe` and talk JSON-RPC over its standard input and out
 
 You never need to open Glance for an AI app: when a tool is first used and Glance isn't running, `glance-mcp` starts it with its window hidden, and if you quit Glance, the next tool call starts it again. Glance quits again a few seconds after the last AI app disconnects, unless a tool or you showed the window. The tools run in Glance itself (src/state/mcpTools.ts), with the same decoders, PDF engine, OCR and redaction as the app ([ADR 0014](adr/0014-ai-apps-through-mcp.md)).
 
+## Handing off from Ask AI
+
+The Ask AI sidebar works the other way round: Glance asks the AI company's own agent (Claude through claude-agent-acp, ChatGPT through codex-acp, or whichever company you picked) for what its tools can't make ([ADR 0020](adr/0020-hand-off-to-the-company-agent.md)). It happens when the in-app AI says the rest of a request is beyond Glance's tools, when you ask for a kind of file Glance can't make (a video, audio, an animated GIF, a web page, an SVG, a 3D model or an e-book), or when you tap **Do more with <company>…**.
+
+Glance starts a separate session of that agent, without Glance's tools, gives it your request, the file's path and an empty folder under Glance's app data (`hand-off\<date>`), and opens the file it writes there in a new tab with a **Made by <company>** bar. **Keep** moves the file next to the original (or into Downloads); **Edit with Glance AI** goes back to the chat. Files Glance just made are sent as they are; a file you opened yourself is sent only after you say yes, once per file. Turn this off in **Settings → AI apps → Ask Claude or ChatGPT when Glance can't do it**.
+
+In the website view, files you download from the site are saved in Downloads and open in Glance with an **Opened from <site>** bar (**Settings → AI apps → Open files made on AI websites in Glance**, on by default). **Do more on <site>…** opens the site's new chat with your request filled in, where the site supports it (claude.ai, chatgpt.com, chat.mistral.ai); you press send. Glance never types into or reads the sites. Neither feature is in the browser version.
+
 ## Privacy
 
 Glance sends nothing anywhere. An AI app you connect, however, sends what it reads through Glance (page images, text, file names) to its AI provider, like anything else it reads on your PC.

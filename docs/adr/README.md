@@ -21,6 +21,7 @@ Each file records one decision: the problem, what was chosen and why, and what f
 - [0017](0017-linux-builds.md): Ship Linux as RPM and .deb packages
 - [0018](0018-own-formats-for-decks-and-documents.md): Decks and documents Glance creates use its own formats, with Office and PDF as exports
 - [0019](0019-skills-given-to-any-agent.md): Glance gives design and writing skills to whichever agent is running
+- [0020](0020-hand-off-to-the-company-agent.md): When Glance can't make something, it hands the job to the AI company's own agent
 
 ## Writing one
 
